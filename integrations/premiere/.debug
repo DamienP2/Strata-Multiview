@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Remote debugging: open http://localhost:8095 in Chrome while the panel is open. -->
+<ExtensionList>
+  <Extension Id="io.stratagraphics.premiere.panel">
+    <HostList>
+      <Host Name="PPRO" Port="8095" />
+    </HostList>
+  </Extension>
+</ExtensionList>

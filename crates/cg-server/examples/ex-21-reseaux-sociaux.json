@@ -1,0 +1,1601 @@
+{
+ "meta": {
+  "id": "ex-21-reseaux-sociaux",
+  "name": "Réseaux sociaux",
+  "category": "Info",
+  "tags": [
+   "Réseaux sociaux",
+   "Messages",
+   "Modération",
+   "Mot-dièse",
+   "Bandeau"
+  ],
+  "description": "Les messages des téléspectateurs à l’antenne, venus de YouTube, Twitch, Facebook, Instagram, X, TikTok, WhatsApp ou SMS et validés par la modération : carte du message à l’antenne, mur des messages validés qui arrivent en douceur, bandeau « VOS MESSAGES » et compteur du mot-dièse avec sa courbe. Tout se lit dans la source Social du projet.", "summary": "Messages validés des réseaux sociaux : carte, mur, bandeau, compteur.",
+  "en": {
+   "name": "Social media",
+   "description": "The viewers' messages on air, from YouTube, Twitch, Facebook, Instagram, X, TikTok, WhatsApp or SMS, approved by the moderation: the card of the message on air, a wall of approved messages sliding in, a \"YOUR MESSAGES\" band and the hashtag counter with its curve. Everything reads the project's Social source.", "summary": "Approved social messages: card, wall, ticker, counter."
+  },
+  "cover": "card"
+ },
+ "project": {
+  "id": "ex-21-reseaux-sociaux",
+  "name": "Réseaux sociaux",
+  "description": "Les messages des téléspectateurs à l’antenne, venus de YouTube, Twitch, Facebook, Instagram, X, TikTok, WhatsApp ou SMS et validés par la modération : carte du message à l’antenne, mur des messages validés qui arrivent en douceur, bandeau « VOS MESSAGES » et compteur du mot-dièse avec sa courbe. Tout se lit dans la source Social du projet.",
+  "width": 1920,
+  "height": 1080,
+  "frameRate": {
+   "num": 50,
+   "den": 1
+  },
+  "templates": [
+   {
+    "id": "card",
+    "name": "Carte message",
+    "duration": 100.0,
+    "markers": [
+     {
+      "id": "card-air",
+      "frame": 50.0,
+      "name": "On air",
+      "kind": "out"
+     }
+    ],
+    "fields": [
+     {
+      "key": "name",
+      "label": "Nom",
+      "kind": "text",
+      "default": "Jean-Marc Ollivier",
+      "binding": {
+       "source": "social-{{project}}",
+       "path": "onAir.name"
+      }
+     },
+     {
+      "key": "platform",
+      "label": "Plateforme",
+      "kind": "text",
+      "default": "facebook",
+      "binding": {
+       "source": "social-{{project}}",
+       "path": "onAir.platform"
+      }
+     },
+     {
+      "key": "city",
+      "label": "Ville",
+      "kind": "text",
+      "default": "Nantes",
+      "binding": {
+       "source": "social-{{project}}",
+       "path": "onAir.city"
+      }
+     },
+     {
+      "key": "text",
+      "label": "Message",
+      "kind": "multiline",
+      "default": "Bravo pour l’invité, enfin quelqu’un qui explique clairement.",
+      "binding": {
+       "source": "social-{{project}}",
+       "path": "onAir.text"
+      }
+     },
+     {
+      "key": "avatar",
+      "label": "Avatar",
+      "kind": "image",
+      "default": "",
+      "binding": {
+       "source": "social-{{project}}",
+       "path": "onAir.avatar"
+      }
+     },
+     {
+      "key": "edge",
+      "label": "Couleur de la plateforme",
+      "kind": "color",
+      "default": "#1877f2",
+      "binding": {
+       "source": "social-{{project}}",
+       "path": "onAir.platform",
+       "filters": [
+        {
+         "type": "map",
+         "when": "youtube",
+         "then": "#ff0033"
+        },
+        {
+         "type": "map",
+         "when": "twitch",
+         "then": "#9146ff"
+        },
+        {
+         "type": "map",
+         "when": "facebook",
+         "then": "#1877f2"
+        },
+        {
+         "type": "map",
+         "when": "instagram",
+         "then": "#e1306c"
+        },
+        {
+         "type": "map",
+         "when": "x",
+         "then": "#000000"
+        },
+        {
+         "type": "map",
+         "when": "tiktok",
+         "then": "#000000"
+        },
+        {
+         "type": "map",
+         "when": "whatsapp",
+         "then": "#25d366"
+        },
+        {
+         "type": "map",
+         "when": "sms",
+         "then": "#64748b"
+        }
+       ]
+      }
+     }
+    ],
+    "layers": [
+     {
+      "id": "card-1",
+      "name": "Carte",
+      "parent": null,
+      "type": "group",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 100.0,
+       "y": 70.0,
+       "width": 860.0,
+       "height": 140.0,
+       "anchorX": 0.0,
+       "anchorY": 0.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "clip": false
+     },
+     {
+      "id": "card-2",
+      "name": "Carte",
+      "parent": "card-1",
+      "type": "group",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 860.0,
+       "height": 140.0
+      },
+      "tracks": {
+       "x": [
+        {
+         "frame": 0.0,
+         "value": -80.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.16,
+          "y1": 1.0,
+          "x2": 0.3,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 18.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 50.0,
+         "value": 0.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.7,
+          "y1": 0.0,
+          "x2": 0.84,
+          "y2": 0.0
+         }
+        },
+        {
+         "frame": 62.0,
+         "value": -80.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ],
+       "opacity": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 10.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 50.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 60.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "clip": false
+     },
+     {
+      "id": "card-3",
+      "name": "Fond",
+      "parent": "card-2",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 860.0,
+       "height": 140.0,
+       "fill": [
+        0.0431,
+        0.0588,
+        0.102,
+        0.94
+       ],
+       "cornerRadius": 16.0,
+       "shadowColor": [
+        0.0,
+        0.0,
+        0.0,
+        0.45
+       ],
+       "shadowX": 0.0,
+       "shadowY": 12.0,
+       "shadowBlur": 36.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "dropShadow": true
+     },
+     {
+      "id": "card-4",
+      "name": "Bord",
+      "parent": "card-2",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 8.0,
+       "height": 140.0,
+       "fill": [
+        0.0941,
+        0.4667,
+        0.949,
+        1.0
+       ]
+      },
+      "tracks": {},
+      "bindings": {
+       "fill": "edge"
+      },
+      "perCorner": true,
+      "corners": [
+       16.0,
+       0.0,
+       0.0,
+       16.0
+      ]
+     },
+     {
+      "id": "card-5",
+      "name": "Avatar",
+      "parent": "card-2",
+      "type": "socialBadge",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 32.0,
+       "y": 30.0,
+       "width": 80.0,
+       "height": 80.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "show": "avatar",
+      "avatar": "{{avatar}}",
+      "author": "{{name}}",
+      "font": "Inter"
+     },
+     {
+      "id": "card-6",
+      "name": "Nom",
+      "parent": "card-2",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 136.0,
+       "y": 22.0,
+       "width": 520.0,
+       "height": 44.0,
+       "fill": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+       ],
+       "fontSize": 30.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "text": "{{name}}",
+      "fontFamily": "Inter",
+      "fontWeight": 700,
+      "align": "left",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "overflow": "ellipsis",
+      "lang": "fr"
+     },
+     {
+      "id": "card-7",
+      "name": "Plateforme",
+      "parent": "card-2",
+      "type": "socialBadge",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 30.0,
+       "width": 28.0,
+       "height": 28.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "show": "platform",
+      "platform": "{{platform}}",
+      "font": "Inter"
+     },
+     {
+      "id": "card-8",
+      "name": "Ville",
+      "parent": "card-2",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 22.0,
+       "width": 220.0,
+       "height": 44.0,
+       "fill": [
+        0.6039,
+        0.6392,
+        0.7098,
+        1.0
+       ],
+       "fontSize": 22.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "text": "· {{city}}",
+      "fontFamily": "Inter",
+      "fontWeight": 500,
+      "align": "left",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "lang": "fr"
+     },
+     {
+      "id": "card-9",
+      "name": "Message",
+      "parent": "card-2",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 136.0,
+       "y": 68.0,
+       "width": 690.0,
+       "height": 52.0,
+       "fill": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+       ],
+       "fontSize": 28.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "text": "{{text}}",
+      "fontFamily": "Inter",
+      "fontWeight": 500,
+      "align": "left",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "overflow": "ellipsis",
+      "lang": "fr"
+     }
+    ],
+    "zone": "card",
+    "revision": 1,
+    "markerModel": 2,
+    "logic": {
+     "nodes": [
+      {
+       "id": "n0m",
+       "type": "textSize",
+       "layer": "card-6",
+       "metric": "width",
+       "x": 40,
+       "y": 60
+      },
+      {
+       "id": "n0p",
+       "type": "constant",
+       "value": 148,
+       "x": 40,
+       "y": 160
+      },
+      {
+       "id": "n0s",
+       "type": "math",
+       "op": "add",
+       "x": 300,
+       "y": 100
+      },
+      {
+       "id": "n0c",
+       "type": "constant",
+       "value": 0,
+       "x": 300,
+       "y": 220
+      },
+      {
+       "id": "n0x",
+       "type": "math",
+       "op": "max",
+       "x": 560,
+       "y": 120
+      },
+      {
+       "id": "n0t0",
+       "type": "target",
+       "layer": "card-7",
+       "prop": "x",
+       "mode": "set",
+       "x": 820,
+       "y": 60
+      },
+      {
+       "id": "n6m",
+       "type": "textSize",
+       "layer": "card-6",
+       "metric": "width",
+       "x": 40,
+       "y": 300
+      },
+      {
+       "id": "n6p",
+       "type": "constant",
+       "value": 188,
+       "x": 40,
+       "y": 400
+      },
+      {
+       "id": "n6s",
+       "type": "math",
+       "op": "add",
+       "x": 300,
+       "y": 340
+      },
+      {
+       "id": "n6c",
+       "type": "constant",
+       "value": 0,
+       "x": 300,
+       "y": 460
+      },
+      {
+       "id": "n6x",
+       "type": "math",
+       "op": "max",
+       "x": 560,
+       "y": 360
+      },
+      {
+       "id": "n6t0",
+       "type": "target",
+       "layer": "card-8",
+       "prop": "x",
+       "mode": "set",
+       "x": 820,
+       "y": 300
+      }
+     ],
+     "edges": [
+      {
+       "from": "n0m",
+       "to": "n0s",
+       "port": "a"
+      },
+      {
+       "from": "n0p",
+       "to": "n0s",
+       "port": "b"
+      },
+      {
+       "from": "n0s",
+       "to": "n0x",
+       "port": "a"
+      },
+      {
+       "from": "n0c",
+       "to": "n0x",
+       "port": "b"
+      },
+      {
+       "from": "n0x",
+       "to": "n0t0",
+       "port": "in"
+      },
+      {
+       "from": "n6m",
+       "to": "n6s",
+       "port": "a"
+      },
+      {
+       "from": "n6p",
+       "to": "n6s",
+       "port": "b"
+      },
+      {
+       "from": "n6s",
+       "to": "n6x",
+       "port": "a"
+      },
+      {
+       "from": "n6c",
+       "to": "n6x",
+       "port": "b"
+      },
+      {
+       "from": "n6x",
+       "to": "n6t0",
+       "port": "in"
+      }
+     ]
+    }
+   },
+   {
+    "id": "wall",
+    "name": "Mur",
+    "duration": 100.0,
+    "markers": [
+     {
+      "id": "wall-air",
+      "frame": 50.0,
+      "name": "On air",
+      "kind": "out"
+     }
+    ],
+    "fields": [
+     {
+      "key": "wall",
+      "label": "Messages validés",
+      "kind": "multiline",
+      "default": "[{\"id\":\"m2\",\"platform\":\"youtube\",\"platformName\":\"YouTube\",\"name\":\"Sophie L.\",\"handle\":\"Sophie L.\",\"city\":\"Lyon\",\"text\":\"Pourquoi la réforme ne concerne pas les indépendants ?\",\"avatar\":\"\",\"photo\":\"\",\"amount\":null,\"at\":\"2026-10-24T20:13:00+02:00\",\"time\":\"20:13\"},{\"id\":\"m3\",\"platform\":\"x\",\"platformName\":\"X\",\"name\":\"@claire.v\",\"handle\":\"@claire.v\",\"city\":\"\",\"text\":\"Et les retraités agricoles ?\",\"avatar\":\"\",\"photo\":\"\",\"amount\":null,\"at\":\"2026-10-24T20:13:00+02:00\",\"time\":\"20:13\"},{\"id\":\"m4\",\"platform\":\"whatsapp\",\"platformName\":\"WhatsApp\",\"name\":\"Lecteur\",\"handle\":\"Lecteur\",\"city\":\"Quimperlé\",\"text\":\"Photo des inondations ce soir\",\"avatar\":\"\",\"photo\":\"https://picsum.photos/seed/quimperle/640/360\",\"amount\":null,\"at\":\"2026-10-24T20:14:00+02:00\",\"time\":\"20:14\"}]",
+      "binding": {
+       "source": "social-{{project}}",
+       "path": "approved"
+      }
+     }
+    ],
+    "layers": [
+     {
+      "id": "wall-1",
+      "name": "Mur",
+      "parent": null,
+      "type": "group",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 1220.0,
+       "y": 60.0,
+       "width": 620.0,
+       "height": 640.0,
+       "anchorX": 0.0,
+       "anchorY": 0.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "clip": false
+     },
+     {
+      "id": "wall-2",
+      "name": "Cartes",
+      "parent": "wall-1",
+      "type": "group",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 620.0,
+       "height": 640.0
+      },
+      "tracks": {
+       "x": [
+        {
+         "frame": 0.0,
+         "value": 80.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.16,
+          "y1": 1.0,
+          "x2": 0.3,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 20.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 50.0,
+         "value": 0.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.7,
+          "y1": 0.0,
+          "x2": 0.84,
+          "y2": 0.0
+         }
+        },
+        {
+         "frame": 62.0,
+         "value": 80.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ],
+       "opacity": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 12.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 50.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 60.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "clip": false
+     },
+     {
+      "id": "wall-3",
+      "name": "Messages",
+      "parent": "wall-2",
+      "type": "socialWall",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 620.0,
+       "height": 640.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "items": "{{wall}}",
+      "max": 4,
+      "gap": 12,
+      "pad": 16,
+      "radius": 14,
+      "bg": "#f2f3f5",
+      "nameSize": 20,
+      "textSize": 20,
+      "lines": 3,
+      "avatarSize": 40,
+      "photoH": 150,
+      "anim": 0.6,
+      "font": "Inter"
+     }
+    ],
+    "zone": "wall",
+    "revision": 1,
+    "markerModel": 2
+   },
+   {
+    "id": "band",
+    "name": "Bandeau messages",
+    "duration": 100.0,
+    "markers": [
+     {
+      "id": "band-air",
+      "frame": 50.0,
+      "name": "On air",
+      "kind": "out"
+     }
+    ],
+    "fields": [
+     {
+      "key": "msgs",
+      "label": "Messages validés",
+      "kind": "multiline",
+      "default": "[{\"id\":\"m2\",\"platform\":\"youtube\",\"platformName\":\"YouTube\",\"name\":\"Sophie L.\",\"handle\":\"Sophie L.\",\"city\":\"Lyon\",\"text\":\"Pourquoi la réforme ne concerne pas les indépendants ?\",\"avatar\":\"\",\"photo\":\"\",\"amount\":null,\"at\":\"2026-10-24T20:13:00+02:00\",\"time\":\"20:13\"},{\"id\":\"m3\",\"platform\":\"x\",\"platformName\":\"X\",\"name\":\"@claire.v\",\"handle\":\"@claire.v\",\"city\":\"\",\"text\":\"Et les retraités agricoles ?\",\"avatar\":\"\",\"photo\":\"\",\"amount\":null,\"at\":\"2026-10-24T20:13:00+02:00\",\"time\":\"20:13\"},{\"id\":\"m4\",\"platform\":\"whatsapp\",\"platformName\":\"WhatsApp\",\"name\":\"Lecteur\",\"handle\":\"Lecteur\",\"city\":\"Quimperlé\",\"text\":\"Photo des inondations ce soir\",\"avatar\":\"\",\"photo\":\"https://picsum.photos/seed/quimperle/640/360\",\"amount\":null,\"at\":\"2026-10-24T20:14:00+02:00\",\"time\":\"20:14\"},{\"id\":\"m5\",\"platform\":\"twitch\",\"platformName\":\"Twitch\",\"name\":\"kevin_bzh\",\"handle\":\"kevin_bzh\",\"city\":\"Brest\",\"text\":\"Super le reportage sur Brest !!\",\"avatar\":\"\",\"photo\":\"\",\"amount\":null,\"at\":\"2026-10-24T20:14:00+02:00\",\"time\":\"20:14\"},{\"id\":\"m6\",\"platform\":\"instagram\",\"platformName\":\"Instagram\",\"name\":\"Anne\",\"handle\":\"Anne\",\"city\":\"Caen\",\"text\":\"Merci pour ce sujet sur les urgences\",\"avatar\":\"\",\"photo\":\"\",\"amount\":null,\"at\":\"2026-10-24T20:15:00+02:00\",\"time\":\"20:15\"},{\"id\":\"m7\",\"platform\":\"tiktok\",\"platformName\":\"TikTok\",\"name\":\"@lea.mtp\",\"handle\":\"@lea.mtp\",\"city\":\"Montpellier\",\"text\":\"On veut plus de reportages en région !\",\"avatar\":\"\",\"photo\":\"\",\"amount\":null,\"at\":\"2026-10-24T20:15:00+02:00\",\"time\":\"20:15\"},{\"id\":\"m8\",\"platform\":\"sms\",\"platformName\":\"SMS\",\"name\":\"Michel\",\"handle\":\"Michel\",\"city\":\"Reims\",\"text\":\"Et le prix du fioul cet hiver ?\",\"avatar\":\"\",\"photo\":\"\",\"amount\":null,\"at\":\"2026-10-24T20:16:00+02:00\",\"time\":\"20:16\"}]",
+      "binding": {
+       "source": "social-{{project}}",
+       "path": "approved"
+      }
+     }
+    ],
+    "layers": [
+     {
+      "id": "band-1",
+      "name": "Bandeau",
+      "parent": null,
+      "type": "group",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 952.0,
+       "width": 1920.0,
+       "height": 82.0,
+       "anchorX": 0.0,
+       "anchorY": 0.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "clip": false
+     },
+     {
+      "id": "band-2",
+      "name": "Bande",
+      "parent": "band-1",
+      "type": "group",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 1920.0,
+       "height": 82.0
+      },
+      "tracks": {
+       "y": [
+        {
+         "frame": 0.0,
+         "value": 90.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.16,
+          "y1": 1.0,
+          "x2": 0.3,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 16.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 50.0,
+         "value": 0.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.7,
+          "y1": 0.0,
+          "x2": 0.84,
+          "y2": 0.0
+         }
+        },
+        {
+         "frame": 62.0,
+         "value": 90.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ],
+       "opacity": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 10.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 50.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 60.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "clip": false
+     },
+     {
+      "id": "band-3",
+      "name": "Messages",
+      "parent": "band-2",
+      "type": "ticker",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 1920.0,
+       "height": 82.0,
+       "fill": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+       ],
+       "fontSize": 30.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "text": "{{msgs}}",
+      "separator": "   ",
+      "speed": 120.0,
+      "mode": "crawl",
+      "fontFamily": "Inter",
+      "fontWeight": 600,
+      "align": "left",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "sepType": "symbol",
+      "startFull": true,
+      "itemFormat": "{name} · {text}",
+      "barBg": "#0b0f1a",
+      "sepSymbol": "◆",
+      "sepColor": "#ffffff80",
+      "spacing": 40,
+      "title": {
+       "on": true,
+       "text": "VOS MESSAGES",
+       "bg": "#e11d48",
+       "color": "#ffffff",
+       "w": 250.0
+      }
+     }
+    ],
+    "zone": "band",
+    "revision": 1,
+    "markerModel": 2
+   },
+   {
+    "id": "tag",
+    "name": "Compteur #JT20H",
+    "duration": 100.0,
+    "markers": [
+     {
+      "id": "tag-air",
+      "frame": 50.0,
+      "name": "On air",
+      "kind": "out"
+     }
+    ],
+    "fields": [
+     {
+      "key": "tag",
+      "label": "Mot-dièse",
+      "kind": "text",
+      "default": "#JT20H",
+      "binding": {
+       "source": "social-{{project}}",
+       "path": "hashtags.JT20H.tag"
+      }
+     },
+     {
+      "key": "count",
+      "label": "Messages",
+      "kind": "number",
+      "default": "3412",
+      "binding": {
+       "source": "social-{{project}}",
+       "path": "hashtags.JT20H.count"
+      }
+     },
+     {
+      "key": "perMin",
+      "label": "Par minute",
+      "kind": "number",
+      "default": "58",
+      "binding": {
+       "source": "social-{{project}}",
+       "path": "hashtags.JT20H.perMin"
+      }
+     },
+     {
+      "key": "series",
+      "label": "Messages par minute",
+      "kind": "multiline",
+      "default": "[12,15,14,18,22,20,25,24,28,31,30,33,35,34,38,41,39,44,46,45,48,50,47,52,55,53,57,60,58,62,61,59,63,66,64,62,65,68,66,63,61,64,60,58,62,59,57,60,56,58,61,57,55,59,56,58,60,57,59,58]",
+      "binding": {
+       "source": "social-{{project}}",
+       "path": "hashtags.JT20H.series"
+      }
+     }
+    ],
+    "layers": [
+     {
+      "id": "tag-1",
+      "name": "Compteur",
+      "parent": null,
+      "type": "group",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 1430.0,
+       "y": 790.0,
+       "width": 420.0,
+       "height": 120.0,
+       "anchorX": 0.0,
+       "anchorY": 0.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "clip": false
+     },
+     {
+      "id": "tag-2",
+      "name": "Pastille",
+      "parent": "tag-1",
+      "type": "group",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 420.0,
+       "height": 120.0
+      },
+      "tracks": {
+       "y": [
+        {
+         "frame": 0.0,
+         "value": 40.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.16,
+          "y1": 1.0,
+          "x2": 0.3,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 16.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 50.0,
+         "value": 0.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.7,
+          "y1": 0.0,
+          "x2": 0.84,
+          "y2": 0.0
+         }
+        },
+        {
+         "frame": 62.0,
+         "value": 40.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ],
+       "opacity": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 10.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 50.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 60.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "clip": false
+     },
+     {
+      "id": "tag-3",
+      "name": "Fond",
+      "parent": "tag-2",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 420.0,
+       "height": 120.0,
+       "fill": [
+        0.0431,
+        0.0588,
+        0.102,
+        0.94
+       ],
+       "cornerRadius": 18.0,
+       "shadowColor": [
+        0.0,
+        0.0,
+        0.0,
+        0.4
+       ],
+       "shadowX": 0.0,
+       "shadowY": 6.0,
+       "shadowBlur": 20.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "dropShadow": true
+     },
+     {
+      "id": "tag-4",
+      "name": "Mot-dièse",
+      "parent": "tag-2",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 24.0,
+       "y": 0.0,
+       "width": 120.0,
+       "height": 120.0,
+       "fill": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+       ],
+       "fontSize": 24.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "text": "{{tag}}",
+      "fontFamily": "Inter",
+      "fontWeight": 800,
+      "align": "left",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "lang": "fr"
+     },
+     {
+      "id": "tag-5",
+      "name": "Total",
+      "parent": "tag-2",
+      "type": "counter",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 150.0,
+       "y": 14.0,
+       "width": 180.0,
+       "height": 66.0,
+       "fill": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+       ],
+       "fontSize": 52.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "from": "0",
+      "to": "{{count}}",
+      "duration": 1.0,
+      "decimals": 0,
+      "prefix": "",
+      "suffix": "",
+      "grouping": true,
+      "fontFamily": "Inter",
+      "fontWeight": 800,
+      "align": "left",
+      "verticalAlign": "middle",
+      "uppercase": false
+     },
+     {
+      "id": "tag-6",
+      "name": "Par minute",
+      "parent": "tag-2",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 152.0,
+       "y": 80.0,
+       "width": 170.0,
+       "height": 26.0,
+       "fill": [
+        0.6039,
+        0.6392,
+        0.7098,
+        1.0
+       ],
+       "fontSize": 18.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "text": "{{perMin}} / min",
+      "fontFamily": "Inter",
+      "fontWeight": 600,
+      "align": "left",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "lang": "fr"
+     },
+     {
+      "id": "tag-7",
+      "name": "Courbe",
+      "parent": "tag-2",
+      "type": "chart",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 334.0,
+       "y": 34.0,
+       "width": 64.0,
+       "height": 52.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "chartType": "areas",
+      "source": "csv",
+      "csv": "{{series}}",
+      "spark": true,
+      "smooth": true,
+      "onAir": "auto",
+      "areaOpacity": 0.25,
+      "series": [
+       {
+        "color": "#ffffff",
+        "width": 3.0
+       }
+      ],
+      "anim": {
+       "fx": "draw",
+       "dur": 1.2
+      }
+     }
+    ],
+    "zone": "tag",
+    "revision": 1,
+    "markerModel": 2
+   }
+  ],
+  "rundown": [
+   {
+    "id": "jt-00-message-à-l-antenne",
+    "name": "Message à l’antenne",
+    "templateId": "card",
+    "zone": "card",
+    "playlist": "jt",
+    "layer": 20,
+    "data": {}
+   },
+   {
+    "id": "jt-01-mur-des-messages",
+    "name": "Mur des messages",
+    "templateId": "wall",
+    "zone": "wall",
+    "playlist": "jt",
+    "layer": 15,
+    "data": {}
+   },
+   {
+    "id": "jt-02-bandeau-vos-messages",
+    "name": "Bandeau VOS MESSAGES",
+    "templateId": "band",
+    "zone": "band",
+    "playlist": "jt",
+    "layer": 10,
+    "data": {}
+   },
+   {
+    "id": "jt-03-compteur--jt20h",
+    "name": "Compteur #JT20H",
+    "templateId": "tag",
+    "zone": "tag",
+    "playlist": "jt",
+    "layer": 25,
+    "data": {}
+   }
+  ],
+  "zones": [
+   {
+    "id": "card",
+    "name": "Carte message",
+    "layer": 20,
+    "color": "#1877f2",
+    "transition": "sequential",
+    "areas": {
+     "main": {
+      "x": 0.03,
+      "y": 0.03,
+      "width": 0.5,
+      "height": 0.22
+     }
+    }
+   },
+   {
+    "id": "wall",
+    "name": "Mur",
+    "layer": 15,
+    "color": "#9146ff",
+    "transition": "sequential",
+    "areas": {
+     "main": {
+      "x": 0.63,
+      "y": 0.04,
+      "width": 0.34,
+      "height": 0.66
+     }
+    }
+   },
+   {
+    "id": "tag",
+    "name": "Compteur",
+    "layer": 25,
+    "color": "#22c55e",
+    "transition": "sequential",
+    "areas": {
+     "main": {
+      "x": 0.72,
+      "y": 0.7,
+      "width": 0.26,
+      "height": 0.17
+     }
+    }
+   },
+   {
+    "id": "band",
+    "name": "Bandeau",
+    "layer": 10,
+    "color": "#e11d48",
+    "transition": "sequential",
+    "areas": {
+     "main": {
+      "x": 0.0,
+      "y": 0.88,
+      "width": 1.0,
+      "height": 0.09
+     }
+    }
+   }
+  ],
+  "playlists": [
+   {
+    "id": "jt",
+    "name": "JT 20 h · réseaux sociaux"
+   }
+  ],
+  "formats": [],
+  "language": "fr",
+  "guides": {
+   "vertical": [],
+   "horizontal": [],
+   "actionSafe": 0.035,
+   "titleSafe": 0.05,
+   "exclusions": []
+  }
+ },
+ "sources": [
+  {
+   "id": "social-{{project}}",
+   "name": "Modération",
+   "type": "push",
+   "format": "json",
+   "value": {
+    "onAir": {
+     "id": "m1",
+     "platform": "facebook",
+     "platformName": "Facebook",
+     "name": "Jean-Marc Ollivier",
+     "handle": "Jean-Marc Ollivier",
+     "city": "Nantes",
+     "text": "Bravo pour l’invité, enfin quelqu’un qui explique clairement.",
+     "avatar": "",
+     "photo": "",
+     "amount": null,
+     "at": "2026-10-24T20:12:00+02:00",
+     "time": "20:12"
+    },
+    "next": {
+     "id": "m2",
+     "platform": "youtube",
+     "platformName": "YouTube",
+     "name": "Sophie L.",
+     "handle": "Sophie L.",
+     "city": "Lyon",
+     "text": "Pourquoi la réforme ne concerne pas les indépendants ?",
+     "avatar": "",
+     "photo": "",
+     "amount": null,
+     "at": "2026-10-24T20:13:00+02:00",
+     "time": "20:13"
+    },
+    "approved": [
+     {
+      "id": "m2",
+      "platform": "youtube",
+      "platformName": "YouTube",
+      "name": "Sophie L.",
+      "handle": "Sophie L.",
+      "city": "Lyon",
+      "text": "Pourquoi la réforme ne concerne pas les indépendants ?",
+      "avatar": "",
+      "photo": "",
+      "amount": null,
+      "at": "2026-10-24T20:13:00+02:00",
+      "time": "20:13"
+     },
+     {
+      "id": "m3",
+      "platform": "x",
+      "platformName": "X",
+      "name": "@claire.v",
+      "handle": "@claire.v",
+      "city": "",
+      "text": "Et les retraités agricoles ?",
+      "avatar": "",
+      "photo": "",
+      "amount": null,
+      "at": "2026-10-24T20:13:00+02:00",
+      "time": "20:13"
+     },
+     {
+      "id": "m4",
+      "platform": "whatsapp",
+      "platformName": "WhatsApp",
+      "name": "Lecteur",
+      "handle": "Lecteur",
+      "city": "Quimperlé",
+      "text": "Photo des inondations ce soir",
+      "avatar": "",
+      "photo": "https://picsum.photos/seed/quimperle/640/360",
+      "amount": null,
+      "at": "2026-10-24T20:14:00+02:00",
+      "time": "20:14"
+     },
+     {
+      "id": "m5",
+      "platform": "twitch",
+      "platformName": "Twitch",
+      "name": "kevin_bzh",
+      "handle": "kevin_bzh",
+      "city": "Brest",
+      "text": "Super le reportage sur Brest !!",
+      "avatar": "",
+      "photo": "",
+      "amount": null,
+      "at": "2026-10-24T20:14:00+02:00",
+      "time": "20:14"
+     },
+     {
+      "id": "m6",
+      "platform": "instagram",
+      "platformName": "Instagram",
+      "name": "Anne",
+      "handle": "Anne",
+      "city": "Caen",
+      "text": "Merci pour ce sujet sur les urgences",
+      "avatar": "",
+      "photo": "",
+      "amount": null,
+      "at": "2026-10-24T20:15:00+02:00",
+      "time": "20:15"
+     },
+     {
+      "id": "m7",
+      "platform": "tiktok",
+      "platformName": "TikTok",
+      "name": "@lea.mtp",
+      "handle": "@lea.mtp",
+      "city": "Montpellier",
+      "text": "On veut plus de reportages en région !",
+      "avatar": "",
+      "photo": "",
+      "amount": null,
+      "at": "2026-10-24T20:15:00+02:00",
+      "time": "20:15"
+     },
+     {
+      "id": "m8",
+      "platform": "sms",
+      "platformName": "SMS",
+      "name": "Michel",
+      "handle": "Michel",
+      "city": "Reims",
+      "text": "Et le prix du fioul cet hiver ?",
+      "avatar": "",
+      "photo": "",
+      "amount": null,
+      "at": "2026-10-24T20:16:00+02:00",
+      "time": "20:16"
+     }
+    ],
+    "count": 7,
+    "hashtags": {
+     "JT20H": {
+      "tag": "#JT20H",
+      "count": 3412,
+      "perMin": 58,
+      "series": [
+       12,
+       15,
+       14,
+       18,
+       22,
+       20,
+       25,
+       24,
+       28,
+       31,
+       30,
+       33,
+       35,
+       34,
+       38,
+       41,
+       39,
+       44,
+       46,
+       45,
+       48,
+       50,
+       47,
+       52,
+       55,
+       53,
+       57,
+       60,
+       58,
+       62,
+       61,
+       59,
+       63,
+       66,
+       64,
+       62,
+       65,
+       68,
+       66,
+       63,
+       61,
+       64,
+       60,
+       58,
+       62,
+       59,
+       57,
+       60,
+       56,
+       58,
+       61,
+       57,
+       55,
+       59,
+       56,
+       58,
+       60,
+       57,
+       59,
+       58
+      ],
+      "platforms": {
+       "x": 61,
+       "youtube": 24,
+       "instagram": 9,
+       "tiktok": 6
+      }
+     }
+    }
+   }
+  }
+ ]
+}

@@ -1,0 +1,15 @@
+{
+  "st2110": [
+    {
+      "name": "CG1",
+      "fill": "239.100.1.1:5004",
+      "key": "239.100.1.2:5004",
+      "interface": "10.10.0.21",
+      "ttl": 32,
+      "payloadType": 96
+    }
+  ],
+  "sdi": [
+    { "name": "CG1-SDI", "device": 0, "externalKey": true }
+  ]
+}

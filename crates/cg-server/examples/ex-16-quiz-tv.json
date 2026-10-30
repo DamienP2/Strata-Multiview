@@ -1,0 +1,7812 @@
+{
+ "meta": {
+  "id": "ex-16-quiz-tv",
+  "name": "Jeu télévisé",
+  "category": "Divertissement",
+  "tags": [
+   "Jeu",
+   "Quiz",
+   "Chrono",
+   "Scores",
+   "Déclencheur"
+  ],
+  "description": "Un jeu de questions-réponses de prime : question et quatre réponses (la bonne s’allume en vert quand la régie continue), chrono de 30 secondes en anneau qui passe au rouge, tableau des scores, titre de manche sur fond de rayons, présentation des candidats et vainqueur. Les questions peuvent venir d’une source de données.", "summary": "Question, quatre réponses, chrono et scores des candidats.",
+  "en": {
+   "name": "TV quiz show",
+   "description": "A prime-time quiz: a question and four answers (the right one lights up green when the gallery continues), a 30-second ring timer that turns red, the scores, a round title over a sunburst, contestant straps and the winner. The questions may come from a data source.", "summary": "Question, four answers, timer and contestant scores."
+  },
+  "cover": "question"
+ },
+ "project": {
+  "id": "ex-16-quiz-tv",
+  "name": "Jeu télévisé",
+  "description": "Un jeu de questions-réponses de prime : question et quatre réponses (la bonne s’allume en vert quand la régie continue), chrono de 30 secondes en anneau qui passe au rouge, tableau des scores, titre de manche sur fond de rayons, présentation des candidats et vainqueur. Les questions peuvent venir d’une source de données.",
+  "width": 1920,
+  "height": 1080,
+  "frameRate": {
+   "num": 50,
+   "den": 1
+  },
+  "templates": [
+   {
+    "id": "question",
+    "name": "Question",
+    "duration": 140.0,
+    "markers": [
+     {
+      "id": "question-air",
+      "frame": 90.0,
+      "name": "On air",
+      "kind": "out"
+     },
+     {
+      "id": "question-p1",
+      "frame": 46.0,
+      "name": "Réponses à l’écran",
+      "kind": "pause"
+     }
+    ],
+    "fields": [
+     {
+      "key": "quiz_num",
+      "label": "Numéro",
+      "kind": "text",
+      "default": "QUESTION 7"
+     },
+     {
+      "key": "quiz_q",
+      "label": "Question",
+      "kind": "multiline",
+      "default": "Quel peintre a réalisé « Impression, soleil levant » en 1872 ?"
+     },
+     {
+      "key": "quiz_aA",
+      "label": "Réponse A",
+      "kind": "text",
+      "default": "Édouard Manet"
+     },
+     {
+      "key": "quiz_aB",
+      "label": "Réponse B",
+      "kind": "text",
+      "default": "Claude Monet"
+     },
+     {
+      "key": "quiz_aC",
+      "label": "Réponse C",
+      "kind": "text",
+      "default": "Auguste Renoir"
+     },
+     {
+      "key": "quiz_aD",
+      "label": "Réponse D",
+      "kind": "text",
+      "default": "Paul Cézanne"
+     },
+     {
+      "key": "quiz_okA",
+      "label": "Bonne réponse A",
+      "kind": "boolean",
+      "default": "false"
+     },
+     {
+      "key": "quiz_okB",
+      "label": "Bonne réponse B",
+      "kind": "boolean",
+      "default": "true"
+     },
+     {
+      "key": "quiz_okC",
+      "label": "Bonne réponse C",
+      "kind": "boolean",
+      "default": "false"
+     },
+     {
+      "key": "quiz_okD",
+      "label": "Bonne réponse D",
+      "kind": "boolean",
+      "default": "false"
+     },
+     {
+      "key": "lock",
+      "label": "Réponse verrouillée (A–D)",
+      "kind": "text",
+      "default": "B"
+     }
+    ],
+    "layers": [
+     {
+      "id": "question-1",
+      "name": "Question",
+      "parent": null,
+      "type": "group",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 60.0,
+       "y": 510.0,
+       "width": 1800.0,
+       "height": 540.0,
+       "anchorX": 0.0,
+       "anchorY": 0.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "clip": false
+     },
+     {
+      "id": "question-2",
+      "name": "Question",
+      "parent": "question-1",
+      "type": "group",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 1800.0,
+       "height": 170.0
+      },
+      "tracks": {
+       "scaleX": [
+        {
+         "frame": 0.0,
+         "value": 0.2,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.16,
+          "y1": 1.0,
+          "x2": 0.3,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 18.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 90.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.7,
+          "y1": 0.0,
+          "x2": 0.84,
+          "y2": 0.0
+         }
+        },
+        {
+         "frame": 102.0,
+         "value": 0.2,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ],
+       "opacity": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 8.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 90.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 100.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "clip": false
+     },
+     {
+      "id": "question-3",
+      "name": "Question · Tranche",
+      "parent": "question-2",
+      "type": "polygon",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 1800.0,
+       "height": 170.0,
+       "fill": [
+        0.2471,
+        0.8235,
+        1.0,
+        0.9
+       ]
+      },
+      "tracks": {},
+      "bindings": {},
+      "mode": "free",
+      "verts": [
+       [
+        0.0,
+        0.5
+       ],
+       [
+        0.03,
+        0.0
+       ],
+       [
+        0.97,
+        0.0
+       ],
+       [
+        1.0,
+        0.5
+       ],
+       [
+        0.97,
+        1.0
+       ],
+       [
+        0.03,
+        1.0
+       ]
+      ],
+      "round": 0.0,
+      "clickAdd": false
+     },
+     {
+      "id": "question-4",
+      "name": "Question · Plaque",
+      "parent": "question-2",
+      "type": "polygon",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 3.0,
+       "y": 3.0,
+       "width": 1794.0,
+       "height": 164.0,
+       "fill": [
+        0.051,
+        0.1294,
+        0.4706,
+        1.0
+       ]
+      },
+      "tracks": {},
+      "bindings": {},
+      "mode": "free",
+      "verts": [
+       [
+        0.0,
+        0.5
+       ],
+       [
+        0.03,
+        0.0
+       ],
+       [
+        0.97,
+        0.0
+       ],
+       [
+        1.0,
+        0.5
+       ],
+       [
+        0.97,
+        1.0
+       ],
+       [
+        0.03,
+        1.0
+       ]
+      ],
+      "round": 0.0,
+      "clickAdd": false,
+      "fillStyle": {
+       "kind": "linear",
+       "color2": "#050c33",
+       "angle": 180.0
+      }
+     },
+     {
+      "id": "question-5",
+      "name": "Onglet",
+      "parent": "question-2",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 760.0,
+       "y": -40.0,
+       "width": 280.0,
+       "height": 40.0,
+       "fill": [
+        1.0,
+        0.6039,
+        0.1216,
+        1.0
+       ]
+      },
+      "tracks": {},
+      "bindings": {},
+      "perCorner": true,
+      "corners": [
+       12.0,
+       12.0,
+       0.0,
+       0.0
+      ]
+     },
+     {
+      "id": "question-6",
+      "name": "Numéro",
+      "parent": "question-2",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 760.0,
+       "y": -40.0,
+       "width": 280.0,
+       "height": 40.0,
+       "fill": [
+        0.0196,
+        0.0471,
+        0.2,
+        1.0
+       ],
+       "fontSize": 22.0,
+       "letterSpacing": 5.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "text": "{{quiz_num}}",
+      "fontFamily": "Titillium Web",
+      "fontWeight": 900,
+      "align": "center",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "lang": "fr"
+     },
+     {
+      "id": "question-7",
+      "name": "Question",
+      "parent": "question-2",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 90.0,
+       "y": 3.0,
+       "width": 1620.0,
+       "height": 164.0,
+       "fill": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+       ],
+       "fontSize": 50.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "text": "{{quiz_q}}",
+      "fontFamily": "Titillium Web",
+      "fontWeight": 700,
+      "align": "center",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "wrap": true,
+      "lineHeight": 1.12,
+      "lang": "fr"
+     },
+     {
+      "id": "question-8",
+      "name": "Réponse A",
+      "parent": "question-1",
+      "type": "group",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 200.0,
+       "width": 880.0,
+       "height": 100.0
+      },
+      "tracks": {
+       "opacity": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 10.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 18.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 90.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 100.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ],
+       "x": [
+        {
+         "frame": 0.0,
+         "value": -80.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 10.0,
+         "value": -80.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.16,
+          "y1": 1.0,
+          "x2": 0.3,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 26.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 90.0,
+         "value": 0.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.7,
+          "y1": 0.0,
+          "x2": 0.84,
+          "y2": 0.0
+         }
+        },
+        {
+         "frame": 102.0,
+         "value": -80.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "clip": false
+     },
+     {
+      "id": "question-9",
+      "name": "Réponse A · Plaque",
+      "parent": "question-8",
+      "type": "group",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 880.0,
+       "height": 100.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "clip": false
+     },
+     {
+      "id": "question-10",
+      "name": "Réponse A · Plaque · Tranche",
+      "parent": "question-9",
+      "type": "polygon",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 880.0,
+       "height": 100.0,
+       "fill": [
+        0.2471,
+        0.8235,
+        1.0,
+        0.9
+       ]
+      },
+      "tracks": {},
+      "bindings": {},
+      "mode": "free",
+      "verts": [
+       [
+        0.0,
+        0.5
+       ],
+       [
+        0.03,
+        0.0
+       ],
+       [
+        0.97,
+        0.0
+       ],
+       [
+        1.0,
+        0.5
+       ],
+       [
+        0.97,
+        1.0
+       ],
+       [
+        0.03,
+        1.0
+       ]
+      ],
+      "round": 0.0,
+      "clickAdd": false
+     },
+     {
+      "id": "question-11",
+      "name": "Réponse A · Plaque · Plaque",
+      "parent": "question-9",
+      "type": "polygon",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 3.0,
+       "y": 3.0,
+       "width": 874.0,
+       "height": 94.0,
+       "fill": [
+        0.051,
+        0.1294,
+        0.4706,
+        1.0
+       ]
+      },
+      "tracks": {},
+      "bindings": {},
+      "mode": "free",
+      "verts": [
+       [
+        0.0,
+        0.5
+       ],
+       [
+        0.03,
+        0.0
+       ],
+       [
+        0.97,
+        0.0
+       ],
+       [
+        1.0,
+        0.5
+       ],
+       [
+        0.97,
+        1.0
+       ],
+       [
+        0.03,
+        1.0
+       ]
+      ],
+      "round": 0.0,
+      "clickAdd": false,
+      "fillStyle": {
+       "kind": "linear",
+       "color2": "#050c33",
+       "angle": 180.0
+      }
+     },
+     {
+      "id": "question-12",
+      "name": "Réponse A · Bonne réponse",
+      "parent": "question-8",
+      "type": "group",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 880.0,
+       "height": 100.0
+      },
+      "tracks": {},
+      "bindings": {
+       "opacity": "quiz_okA"
+      },
+      "clip": false
+     },
+     {
+      "id": "question-13",
+      "name": "Réponse A · Bonne réponse · Allumage",
+      "parent": "question-12",
+      "type": "group",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 880.0,
+       "height": 100.0
+      },
+      "tracks": {
+       "opacity": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 46.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 50.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 54.0,
+         "value": 0.3,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 58.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 62.0,
+         "value": 0.3,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 66.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "clip": false
+     },
+     {
+      "id": "question-14",
+      "name": "Réponse A · Bonne réponse · Allumage · Verte",
+      "parent": "question-13",
+      "type": "group",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 880.0,
+       "height": 100.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "clip": false
+     },
+     {
+      "id": "question-15",
+      "name": "Réponse A · Bonne réponse · Allumage · Verte · Tranche",
+      "parent": "question-14",
+      "type": "polygon",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 880.0,
+       "height": 100.0,
+       "fill": [
+        1.0,
+        1.0,
+        1.0,
+        0.9
+       ]
+      },
+      "tracks": {},
+      "bindings": {},
+      "mode": "free",
+      "verts": [
+       [
+        0.0,
+        0.5
+       ],
+       [
+        0.03,
+        0.0
+       ],
+       [
+        0.97,
+        0.0
+       ],
+       [
+        1.0,
+        0.5
+       ],
+       [
+        0.97,
+        1.0
+       ],
+       [
+        0.03,
+        1.0
+       ]
+      ],
+      "round": 0.0,
+      "clickAdd": false
+     },
+     {
+      "id": "question-16",
+      "name": "Réponse A · Bonne réponse · Allumage · Verte · Plaque",
+      "parent": "question-14",
+      "type": "polygon",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 3.0,
+       "y": 3.0,
+       "width": 874.0,
+       "height": 94.0,
+       "fill": [
+        0.1333,
+        0.8392,
+        0.5451,
+        1.0
+       ]
+      },
+      "tracks": {},
+      "bindings": {},
+      "mode": "free",
+      "verts": [
+       [
+        0.0,
+        0.5
+       ],
+       [
+        0.03,
+        0.0
+       ],
+       [
+        0.97,
+        0.0
+       ],
+       [
+        1.0,
+        0.5
+       ],
+       [
+        0.97,
+        1.0
+       ],
+       [
+        0.03,
+        1.0
+       ]
+      ],
+      "round": 0.0,
+      "clickAdd": false,
+      "fillStyle": {
+       "kind": "linear",
+       "color2": "#0f8f58",
+       "angle": 180.0
+      }
+     },
+     {
+      "id": "question-17",
+      "name": "Réponse A · Lettre",
+      "parent": "question-8",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 52.0,
+       "y": 0.0,
+       "width": 80.0,
+       "height": 100.0,
+       "fill": [
+        1.0,
+        0.6039,
+        0.1216,
+        1.0
+       ],
+       "fontSize": 36.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "text": "A :",
+      "fontFamily": "Titillium Web",
+      "fontWeight": 900,
+      "align": "left",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "lang": "fr"
+     },
+     {
+      "id": "question-18",
+      "name": "Réponse A · Réponse",
+      "parent": "question-8",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 130.0,
+       "y": 0.0,
+       "width": 700.0,
+       "height": 100.0,
+       "fill": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+       ],
+       "fontSize": 38.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "text": "{{quiz_aA}}",
+      "fontFamily": "Titillium Web",
+      "fontWeight": 700,
+      "align": "left",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "lang": "fr"
+     },
+     {
+      "id": "question-19",
+      "name": "Réponse B",
+      "parent": "question-1",
+      "type": "group",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 920.0,
+       "y": 200.0,
+       "width": 880.0,
+       "height": 100.0
+      },
+      "tracks": {
+       "opacity": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 14.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 22.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 90.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 100.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ],
+       "x": [
+        {
+         "frame": 0.0,
+         "value": 1000.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 14.0,
+         "value": 1000.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.16,
+          "y1": 1.0,
+          "x2": 0.3,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 30.0,
+         "value": 920.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 90.0,
+         "value": 920.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.7,
+          "y1": 0.0,
+          "x2": 0.84,
+          "y2": 0.0
+         }
+        },
+        {
+         "frame": 102.0,
+         "value": 1000.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "clip": false
+     },
+     {
+      "id": "question-20",
+      "name": "Réponse B · Plaque",
+      "parent": "question-19",
+      "type": "group",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 880.0,
+       "height": 100.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "clip": false
+     },
+     {
+      "id": "question-21",
+      "name": "Réponse B · Plaque · Tranche",
+      "parent": "question-20",
+      "type": "polygon",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 880.0,
+       "height": 100.0,
+       "fill": [
+        0.2471,
+        0.8235,
+        1.0,
+        0.9
+       ]
+      },
+      "tracks": {},
+      "bindings": {},
+      "mode": "free",
+      "verts": [
+       [
+        0.0,
+        0.5
+       ],
+       [
+        0.03,
+        0.0
+       ],
+       [
+        0.97,
+        0.0
+       ],
+       [
+        1.0,
+        0.5
+       ],
+       [
+        0.97,
+        1.0
+       ],
+       [
+        0.03,
+        1.0
+       ]
+      ],
+      "round": 0.0,
+      "clickAdd": false
+     },
+     {
+      "id": "question-22",
+      "name": "Réponse B · Plaque · Plaque",
+      "parent": "question-20",
+      "type": "polygon",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 3.0,
+       "y": 3.0,
+       "width": 874.0,
+       "height": 94.0,
+       "fill": [
+        0.051,
+        0.1294,
+        0.4706,
+        1.0
+       ]
+      },
+      "tracks": {},
+      "bindings": {},
+      "mode": "free",
+      "verts": [
+       [
+        0.0,
+        0.5
+       ],
+       [
+        0.03,
+        0.0
+       ],
+       [
+        0.97,
+        0.0
+       ],
+       [
+        1.0,
+        0.5
+       ],
+       [
+        0.97,
+        1.0
+       ],
+       [
+        0.03,
+        1.0
+       ]
+      ],
+      "round": 0.0,
+      "clickAdd": false,
+      "fillStyle": {
+       "kind": "linear",
+       "color2": "#050c33",
+       "angle": 180.0
+      }
+     },
+     {
+      "id": "question-23",
+      "name": "Réponse B · Bonne réponse",
+      "parent": "question-19",
+      "type": "group",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 880.0,
+       "height": 100.0
+      },
+      "tracks": {},
+      "bindings": {
+       "opacity": "quiz_okB"
+      },
+      "clip": false
+     },
+     {
+      "id": "question-24",
+      "name": "Réponse B · Bonne réponse · Allumage",
+      "parent": "question-23",
+      "type": "group",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 880.0,
+       "height": 100.0
+      },
+      "tracks": {
+       "opacity": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 46.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 50.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 54.0,
+         "value": 0.3,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 58.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 62.0,
+         "value": 0.3,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 66.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "clip": false
+     },
+     {
+      "id": "question-25",
+      "name": "Réponse B · Bonne réponse · Allumage · Verte",
+      "parent": "question-24",
+      "type": "group",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 880.0,
+       "height": 100.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "clip": false
+     },
+     {
+      "id": "question-26",
+      "name": "Réponse B · Bonne réponse · Allumage · Verte · Tranche",
+      "parent": "question-25",
+      "type": "polygon",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 880.0,
+       "height": 100.0,
+       "fill": [
+        1.0,
+        1.0,
+        1.0,
+        0.9
+       ]
+      },
+      "tracks": {},
+      "bindings": {},
+      "mode": "free",
+      "verts": [
+       [
+        0.0,
+        0.5
+       ],
+       [
+        0.03,
+        0.0
+       ],
+       [
+        0.97,
+        0.0
+       ],
+       [
+        1.0,
+        0.5
+       ],
+       [
+        0.97,
+        1.0
+       ],
+       [
+        0.03,
+        1.0
+       ]
+      ],
+      "round": 0.0,
+      "clickAdd": false
+     },
+     {
+      "id": "question-27",
+      "name": "Réponse B · Bonne réponse · Allumage · Verte · Plaque",
+      "parent": "question-25",
+      "type": "polygon",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 3.0,
+       "y": 3.0,
+       "width": 874.0,
+       "height": 94.0,
+       "fill": [
+        0.1333,
+        0.8392,
+        0.5451,
+        1.0
+       ]
+      },
+      "tracks": {},
+      "bindings": {},
+      "mode": "free",
+      "verts": [
+       [
+        0.0,
+        0.5
+       ],
+       [
+        0.03,
+        0.0
+       ],
+       [
+        0.97,
+        0.0
+       ],
+       [
+        1.0,
+        0.5
+       ],
+       [
+        0.97,
+        1.0
+       ],
+       [
+        0.03,
+        1.0
+       ]
+      ],
+      "round": 0.0,
+      "clickAdd": false,
+      "fillStyle": {
+       "kind": "linear",
+       "color2": "#0f8f58",
+       "angle": 180.0
+      }
+     },
+     {
+      "id": "question-28",
+      "name": "Réponse B · Lettre",
+      "parent": "question-19",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 52.0,
+       "y": 0.0,
+       "width": 80.0,
+       "height": 100.0,
+       "fill": [
+        1.0,
+        0.6039,
+        0.1216,
+        1.0
+       ],
+       "fontSize": 36.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "text": "B :",
+      "fontFamily": "Titillium Web",
+      "fontWeight": 900,
+      "align": "left",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "lang": "fr"
+     },
+     {
+      "id": "question-29",
+      "name": "Réponse B · Réponse",
+      "parent": "question-19",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 130.0,
+       "y": 0.0,
+       "width": 700.0,
+       "height": 100.0,
+       "fill": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+       ],
+       "fontSize": 38.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "text": "{{quiz_aB}}",
+      "fontFamily": "Titillium Web",
+      "fontWeight": 700,
+      "align": "left",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "lang": "fr"
+     },
+     {
+      "id": "question-30",
+      "name": "Réponse C",
+      "parent": "question-1",
+      "type": "group",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 320.0,
+       "width": 880.0,
+       "height": 100.0
+      },
+      "tracks": {
+       "opacity": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 18.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 26.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 90.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 100.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ],
+       "x": [
+        {
+         "frame": 0.0,
+         "value": -80.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 18.0,
+         "value": -80.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.16,
+          "y1": 1.0,
+          "x2": 0.3,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 34.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 90.0,
+         "value": 0.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.7,
+          "y1": 0.0,
+          "x2": 0.84,
+          "y2": 0.0
+         }
+        },
+        {
+         "frame": 102.0,
+         "value": -80.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "clip": false
+     },
+     {
+      "id": "question-31",
+      "name": "Réponse C · Plaque",
+      "parent": "question-30",
+      "type": "group",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 880.0,
+       "height": 100.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "clip": false
+     },
+     {
+      "id": "question-32",
+      "name": "Réponse C · Plaque · Tranche",
+      "parent": "question-31",
+      "type": "polygon",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 880.0,
+       "height": 100.0,
+       "fill": [
+        0.2471,
+        0.8235,
+        1.0,
+        0.9
+       ]
+      },
+      "tracks": {},
+      "bindings": {},
+      "mode": "free",
+      "verts": [
+       [
+        0.0,
+        0.5
+       ],
+       [
+        0.03,
+        0.0
+       ],
+       [
+        0.97,
+        0.0
+       ],
+       [
+        1.0,
+        0.5
+       ],
+       [
+        0.97,
+        1.0
+       ],
+       [
+        0.03,
+        1.0
+       ]
+      ],
+      "round": 0.0,
+      "clickAdd": false
+     },
+     {
+      "id": "question-33",
+      "name": "Réponse C · Plaque · Plaque",
+      "parent": "question-31",
+      "type": "polygon",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 3.0,
+       "y": 3.0,
+       "width": 874.0,
+       "height": 94.0,
+       "fill": [
+        0.051,
+        0.1294,
+        0.4706,
+        1.0
+       ]
+      },
+      "tracks": {},
+      "bindings": {},
+      "mode": "free",
+      "verts": [
+       [
+        0.0,
+        0.5
+       ],
+       [
+        0.03,
+        0.0
+       ],
+       [
+        0.97,
+        0.0
+       ],
+       [
+        1.0,
+        0.5
+       ],
+       [
+        0.97,
+        1.0
+       ],
+       [
+        0.03,
+        1.0
+       ]
+      ],
+      "round": 0.0,
+      "clickAdd": false,
+      "fillStyle": {
+       "kind": "linear",
+       "color2": "#050c33",
+       "angle": 180.0
+      }
+     },
+     {
+      "id": "question-34",
+      "name": "Réponse C · Bonne réponse",
+      "parent": "question-30",
+      "type": "group",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 880.0,
+       "height": 100.0
+      },
+      "tracks": {},
+      "bindings": {
+       "opacity": "quiz_okC"
+      },
+      "clip": false
+     },
+     {
+      "id": "question-35",
+      "name": "Réponse C · Bonne réponse · Allumage",
+      "parent": "question-34",
+      "type": "group",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 880.0,
+       "height": 100.0
+      },
+      "tracks": {
+       "opacity": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 46.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 50.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 54.0,
+         "value": 0.3,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 58.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 62.0,
+         "value": 0.3,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 66.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "clip": false
+     },
+     {
+      "id": "question-36",
+      "name": "Réponse C · Bonne réponse · Allumage · Verte",
+      "parent": "question-35",
+      "type": "group",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 880.0,
+       "height": 100.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "clip": false
+     },
+     {
+      "id": "question-37",
+      "name": "Réponse C · Bonne réponse · Allumage · Verte · Tranche",
+      "parent": "question-36",
+      "type": "polygon",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 880.0,
+       "height": 100.0,
+       "fill": [
+        1.0,
+        1.0,
+        1.0,
+        0.9
+       ]
+      },
+      "tracks": {},
+      "bindings": {},
+      "mode": "free",
+      "verts": [
+       [
+        0.0,
+        0.5
+       ],
+       [
+        0.03,
+        0.0
+       ],
+       [
+        0.97,
+        0.0
+       ],
+       [
+        1.0,
+        0.5
+       ],
+       [
+        0.97,
+        1.0
+       ],
+       [
+        0.03,
+        1.0
+       ]
+      ],
+      "round": 0.0,
+      "clickAdd": false
+     },
+     {
+      "id": "question-38",
+      "name": "Réponse C · Bonne réponse · Allumage · Verte · Plaque",
+      "parent": "question-36",
+      "type": "polygon",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 3.0,
+       "y": 3.0,
+       "width": 874.0,
+       "height": 94.0,
+       "fill": [
+        0.1333,
+        0.8392,
+        0.5451,
+        1.0
+       ]
+      },
+      "tracks": {},
+      "bindings": {},
+      "mode": "free",
+      "verts": [
+       [
+        0.0,
+        0.5
+       ],
+       [
+        0.03,
+        0.0
+       ],
+       [
+        0.97,
+        0.0
+       ],
+       [
+        1.0,
+        0.5
+       ],
+       [
+        0.97,
+        1.0
+       ],
+       [
+        0.03,
+        1.0
+       ]
+      ],
+      "round": 0.0,
+      "clickAdd": false,
+      "fillStyle": {
+       "kind": "linear",
+       "color2": "#0f8f58",
+       "angle": 180.0
+      }
+     },
+     {
+      "id": "question-39",
+      "name": "Réponse C · Lettre",
+      "parent": "question-30",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 52.0,
+       "y": 0.0,
+       "width": 80.0,
+       "height": 100.0,
+       "fill": [
+        1.0,
+        0.6039,
+        0.1216,
+        1.0
+       ],
+       "fontSize": 36.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "text": "C :",
+      "fontFamily": "Titillium Web",
+      "fontWeight": 900,
+      "align": "left",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "lang": "fr"
+     },
+     {
+      "id": "question-40",
+      "name": "Réponse C · Réponse",
+      "parent": "question-30",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 130.0,
+       "y": 0.0,
+       "width": 700.0,
+       "height": 100.0,
+       "fill": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+       ],
+       "fontSize": 38.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "text": "{{quiz_aC}}",
+      "fontFamily": "Titillium Web",
+      "fontWeight": 700,
+      "align": "left",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "lang": "fr"
+     },
+     {
+      "id": "question-41",
+      "name": "Réponse D",
+      "parent": "question-1",
+      "type": "group",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 920.0,
+       "y": 320.0,
+       "width": 880.0,
+       "height": 100.0
+      },
+      "tracks": {
+       "opacity": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 22.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 30.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 90.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 100.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ],
+       "x": [
+        {
+         "frame": 0.0,
+         "value": 1000.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 22.0,
+         "value": 1000.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.16,
+          "y1": 1.0,
+          "x2": 0.3,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 38.0,
+         "value": 920.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 90.0,
+         "value": 920.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.7,
+          "y1": 0.0,
+          "x2": 0.84,
+          "y2": 0.0
+         }
+        },
+        {
+         "frame": 102.0,
+         "value": 1000.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "clip": false
+     },
+     {
+      "id": "question-42",
+      "name": "Réponse D · Plaque",
+      "parent": "question-41",
+      "type": "group",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 880.0,
+       "height": 100.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "clip": false
+     },
+     {
+      "id": "question-43",
+      "name": "Réponse D · Plaque · Tranche",
+      "parent": "question-42",
+      "type": "polygon",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 880.0,
+       "height": 100.0,
+       "fill": [
+        0.2471,
+        0.8235,
+        1.0,
+        0.9
+       ]
+      },
+      "tracks": {},
+      "bindings": {},
+      "mode": "free",
+      "verts": [
+       [
+        0.0,
+        0.5
+       ],
+       [
+        0.03,
+        0.0
+       ],
+       [
+        0.97,
+        0.0
+       ],
+       [
+        1.0,
+        0.5
+       ],
+       [
+        0.97,
+        1.0
+       ],
+       [
+        0.03,
+        1.0
+       ]
+      ],
+      "round": 0.0,
+      "clickAdd": false
+     },
+     {
+      "id": "question-44",
+      "name": "Réponse D · Plaque · Plaque",
+      "parent": "question-42",
+      "type": "polygon",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 3.0,
+       "y": 3.0,
+       "width": 874.0,
+       "height": 94.0,
+       "fill": [
+        0.051,
+        0.1294,
+        0.4706,
+        1.0
+       ]
+      },
+      "tracks": {},
+      "bindings": {},
+      "mode": "free",
+      "verts": [
+       [
+        0.0,
+        0.5
+       ],
+       [
+        0.03,
+        0.0
+       ],
+       [
+        0.97,
+        0.0
+       ],
+       [
+        1.0,
+        0.5
+       ],
+       [
+        0.97,
+        1.0
+       ],
+       [
+        0.03,
+        1.0
+       ]
+      ],
+      "round": 0.0,
+      "clickAdd": false,
+      "fillStyle": {
+       "kind": "linear",
+       "color2": "#050c33",
+       "angle": 180.0
+      }
+     },
+     {
+      "id": "question-45",
+      "name": "Réponse D · Bonne réponse",
+      "parent": "question-41",
+      "type": "group",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 880.0,
+       "height": 100.0
+      },
+      "tracks": {},
+      "bindings": {
+       "opacity": "quiz_okD"
+      },
+      "clip": false
+     },
+     {
+      "id": "question-46",
+      "name": "Réponse D · Bonne réponse · Allumage",
+      "parent": "question-45",
+      "type": "group",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 880.0,
+       "height": 100.0
+      },
+      "tracks": {
+       "opacity": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 46.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 50.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 54.0,
+         "value": 0.3,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 58.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 62.0,
+         "value": 0.3,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 66.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "clip": false
+     },
+     {
+      "id": "question-47",
+      "name": "Réponse D · Bonne réponse · Allumage · Verte",
+      "parent": "question-46",
+      "type": "group",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 880.0,
+       "height": 100.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "clip": false
+     },
+     {
+      "id": "question-48",
+      "name": "Réponse D · Bonne réponse · Allumage · Verte · Tranche",
+      "parent": "question-47",
+      "type": "polygon",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 880.0,
+       "height": 100.0,
+       "fill": [
+        1.0,
+        1.0,
+        1.0,
+        0.9
+       ]
+      },
+      "tracks": {},
+      "bindings": {},
+      "mode": "free",
+      "verts": [
+       [
+        0.0,
+        0.5
+       ],
+       [
+        0.03,
+        0.0
+       ],
+       [
+        0.97,
+        0.0
+       ],
+       [
+        1.0,
+        0.5
+       ],
+       [
+        0.97,
+        1.0
+       ],
+       [
+        0.03,
+        1.0
+       ]
+      ],
+      "round": 0.0,
+      "clickAdd": false
+     },
+     {
+      "id": "question-49",
+      "name": "Réponse D · Bonne réponse · Allumage · Verte · Plaque",
+      "parent": "question-47",
+      "type": "polygon",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 3.0,
+       "y": 3.0,
+       "width": 874.0,
+       "height": 94.0,
+       "fill": [
+        0.1333,
+        0.8392,
+        0.5451,
+        1.0
+       ]
+      },
+      "tracks": {},
+      "bindings": {},
+      "mode": "free",
+      "verts": [
+       [
+        0.0,
+        0.5
+       ],
+       [
+        0.03,
+        0.0
+       ],
+       [
+        0.97,
+        0.0
+       ],
+       [
+        1.0,
+        0.5
+       ],
+       [
+        0.97,
+        1.0
+       ],
+       [
+        0.03,
+        1.0
+       ]
+      ],
+      "round": 0.0,
+      "clickAdd": false,
+      "fillStyle": {
+       "kind": "linear",
+       "color2": "#0f8f58",
+       "angle": 180.0
+      }
+     },
+     {
+      "id": "question-50",
+      "name": "Réponse D · Lettre",
+      "parent": "question-41",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 52.0,
+       "y": 0.0,
+       "width": 80.0,
+       "height": 100.0,
+       "fill": [
+        1.0,
+        0.6039,
+        0.1216,
+        1.0
+       ],
+       "fontSize": 36.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "text": "D :",
+      "fontFamily": "Titillium Web",
+      "fontWeight": 900,
+      "align": "left",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "lang": "fr"
+     },
+     {
+      "id": "question-51",
+      "name": "Réponse D · Réponse",
+      "parent": "question-41",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 130.0,
+       "y": 0.0,
+       "width": 700.0,
+       "height": 100.0,
+       "fill": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+       ],
+       "fontSize": 38.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "text": "{{quiz_aD}}",
+      "fontFamily": "Titillium Web",
+      "fontWeight": 700,
+      "align": "left",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "lang": "fr"
+     }
+    ],
+    "zone": "board",
+    "revision": 1,
+    "markerModel": 2,
+    "datasets": [
+     {
+      "key": "quiz",
+      "name": "Questions de la manche",
+      "source": "grand-defi-questions",
+      "list": "questions",
+      "change": "outIn"
+     }
+    ]
+   },
+   {
+    "id": "timer",
+    "name": "Chrono 30 s",
+    "duration": 80.0,
+    "markers": [
+     {
+      "id": "timer-air",
+      "frame": 30.0,
+      "name": "On air",
+      "kind": "out"
+     }
+    ],
+    "fields": [
+     {
+      "key": "secs",
+      "label": "Durée (s)",
+      "kind": "number",
+      "default": "30",
+      "min": 5,
+      "max": 120
+     }
+    ],
+    "layers": [
+     {
+      "id": "timer-1",
+      "name": "Chrono",
+      "parent": null,
+      "type": "group",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 1600.0,
+       "y": 70.0,
+       "width": 260.0,
+       "height": 260.0,
+       "anchorX": 0.0,
+       "anchorY": 0.0
+      },
+      "tracks": {
+       "scaleX": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "back"
+         }
+        },
+        {
+         "frame": 16.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 30.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.7,
+          "y1": 0.0,
+          "x2": 0.84,
+          "y2": 0.0
+         }
+        },
+        {
+         "frame": 40.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ],
+       "scaleY": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "back"
+         }
+        },
+        {
+         "frame": 16.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 30.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.7,
+          "y1": 0.0,
+          "x2": 0.84,
+          "y2": 0.0
+         }
+        },
+        {
+         "frame": 40.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "clip": false
+     },
+     {
+      "id": "timer-2",
+      "name": "Disque",
+      "parent": "timer-1",
+      "type": "ellipse",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 260.0,
+       "height": 260.0,
+       "fill": [
+        0.0196,
+        0.0471,
+        0.2,
+        0.92
+       ],
+       "stroke": [
+        0.2471,
+        0.8235,
+        1.0,
+        0.5
+       ],
+       "strokeWidth": 3.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "fillStyle": {
+       "kind": "radial",
+       "color2": "#0d2178"
+      }
+     },
+     {
+      "id": "timer-3",
+      "name": "Secondes",
+      "parent": "timer-1",
+      "type": "clock",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 30.0,
+       "y": 70.0,
+       "width": 200.0,
+       "height": 120.0,
+       "fill": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+       ],
+       "fontSize": 96.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "mode": "timer",
+      "format": "ss",
+      "timezone": "Europe/Paris",
+      "target": "",
+      "timerMode": "countdown",
+      "lang": "fr-FR",
+      "fontFamily": "Titillium Web",
+      "fontWeight": 900,
+      "align": "center",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "cdDuration": 30000,
+      "startMode": "auto",
+      "tabular": true,
+      "steps": [
+       {
+        "on": true,
+        "at": 10,
+        "color": "#ff4d6d",
+        "bg": "",
+        "blink": false
+       }
+      ]
+     },
+     {
+      "id": "timer-4",
+      "name": "Anneau",
+      "parent": "timer-1",
+      "type": "progress",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 14.0,
+       "y": 14.0,
+       "width": 232.0,
+       "height": 232.0,
+       "fill": [
+        0.2471,
+        0.8235,
+        1.0,
+        1.0
+       ]
+      },
+      "tracks": {},
+      "bindings": {},
+      "value": "0",
+      "max": "30",
+      "track": "#ffffff1a",
+      "duration": 0.3,
+      "shape": "ring",
+      "input": "follow",
+      "follow": "timer-3",
+      "thickness": 14.0,
+      "rounded": true,
+      "steps": [
+       {
+        "on": true,
+        "below": 10.0,
+        "color": "#ff4d6d"
+       }
+      ]
+     },
+     {
+      "id": "timer-5",
+      "name": "Unité",
+      "parent": "timer-1",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 30.0,
+       "y": 176.0,
+       "width": 200.0,
+       "height": 30.0,
+       "fill": [
+        0.6235,
+        0.7059,
+        1.0,
+        1.0
+       ],
+       "fontSize": 16.0,
+       "letterSpacing": 3.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "text": "SECONDES",
+      "fontFamily": "Titillium Web",
+      "fontWeight": 700,
+      "align": "center",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "lang": "fr"
+     }
+    ],
+    "zone": "timer",
+    "revision": 1,
+    "markerModel": 2
+   },
+   {
+    "id": "scores",
+    "name": "Scores",
+    "duration": 110.0,
+    "markers": [
+     {
+      "id": "scores-air",
+      "frame": 60.0,
+      "name": "On air",
+      "kind": "out"
+     }
+    ],
+    "fields": [
+     {
+      "key": "p1",
+      "label": "Candidat 1",
+      "kind": "text",
+      "default": "Inès"
+     },
+     {
+      "key": "s1",
+      "label": "Score 1",
+      "kind": "number",
+      "default": "340",
+      "binding": {
+       "source": "grand-defi-scores",
+       "path": "players[0].score"
+      }
+     },
+     {
+      "key": "p2",
+      "label": "Candidat 2",
+      "kind": "text",
+      "default": "Karim"
+     },
+     {
+      "key": "s2",
+      "label": "Score 2",
+      "kind": "number",
+      "default": "280",
+      "binding": {
+       "source": "grand-defi-scores",
+       "path": "players[1].score"
+      }
+     },
+     {
+      "key": "p3",
+      "label": "Candidat 3",
+      "kind": "text",
+      "default": "Léa"
+     },
+     {
+      "key": "s3",
+      "label": "Score 3",
+      "kind": "number",
+      "default": "210",
+      "binding": {
+       "source": "grand-defi-scores",
+       "path": "players[2].score"
+      }
+     },
+     {
+      "key": "p4",
+      "label": "Candidat 4",
+      "kind": "text",
+      "default": "Hugo"
+     },
+     {
+      "key": "s4",
+      "label": "Score 4",
+      "kind": "number",
+      "default": "150",
+      "binding": {
+       "source": "grand-defi-scores",
+       "path": "players[3].score"
+      }
+     }
+    ],
+    "layers": [
+     {
+      "id": "scores-1",
+      "name": "Scores",
+      "parent": null,
+      "type": "group",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 60.0,
+       "y": 60.0,
+       "width": 540.0,
+       "height": 420.0,
+       "anchorX": 0.0,
+       "anchorY": 0.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "clip": false
+     },
+     {
+      "id": "scores-2",
+      "name": "Titre",
+      "parent": "scores-1",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 4.0,
+       "y": 0.0,
+       "width": 400.0,
+       "height": 44.0,
+       "fill": [
+        0.2471,
+        0.8235,
+        1.0,
+        1.0
+       ],
+       "fontSize": 26.0,
+       "letterSpacing": 6.0
+      },
+      "tracks": {
+       "opacity": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 10.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 60.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 70.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "text": "SCORES",
+      "fontFamily": "Titillium Web",
+      "fontWeight": 900,
+      "align": "left",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "lang": "fr"
+     },
+     {
+      "id": "scores-3",
+      "name": "Candidat 1",
+      "parent": "scores-1",
+      "type": "group",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 52.0,
+       "width": 540.0,
+       "height": 76.0
+      },
+      "tracks": {
+       "opacity": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 4.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 12.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 66.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 74.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ],
+       "x": [
+        {
+         "frame": 0.0,
+         "value": -100.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 4.0,
+         "value": -100.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.16,
+          "y1": 1.0,
+          "x2": 0.3,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 20.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 66.0,
+         "value": 0.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.7,
+          "y1": 0.0,
+          "x2": 0.84,
+          "y2": 0.0
+         }
+        },
+        {
+         "frame": 76.0,
+         "value": -100.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "clip": false
+     },
+     {
+      "id": "scores-4",
+      "name": "Candidat 1 · Plaque",
+      "parent": "scores-3",
+      "type": "group",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 540.0,
+       "height": 76.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "clip": false
+     },
+     {
+      "id": "scores-5",
+      "name": "Candidat 1 · Plaque · Tranche",
+      "parent": "scores-4",
+      "type": "polygon",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 540.0,
+       "height": 76.0,
+       "fill": [
+        0.2471,
+        0.8235,
+        1.0,
+        0.6
+       ]
+      },
+      "tracks": {},
+      "bindings": {},
+      "mode": "free",
+      "verts": [
+       [
+        0.0,
+        0.5
+       ],
+       [
+        0.03,
+        0.0
+       ],
+       [
+        0.97,
+        0.0
+       ],
+       [
+        1.0,
+        0.5
+       ],
+       [
+        0.97,
+        1.0
+       ],
+       [
+        0.03,
+        1.0
+       ]
+      ],
+      "round": 0.0,
+      "clickAdd": false
+     },
+     {
+      "id": "scores-6",
+      "name": "Candidat 1 · Plaque · Plaque",
+      "parent": "scores-4",
+      "type": "polygon",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 3.0,
+       "y": 3.0,
+       "width": 534.0,
+       "height": 70.0,
+       "fill": [
+        0.051,
+        0.1294,
+        0.4706,
+        1.0
+       ]
+      },
+      "tracks": {},
+      "bindings": {},
+      "mode": "free",
+      "verts": [
+       [
+        0.0,
+        0.5
+       ],
+       [
+        0.03,
+        0.0
+       ],
+       [
+        0.97,
+        0.0
+       ],
+       [
+        1.0,
+        0.5
+       ],
+       [
+        0.97,
+        1.0
+       ],
+       [
+        0.03,
+        1.0
+       ]
+      ],
+      "round": 0.0,
+      "clickAdd": false,
+      "fillStyle": {
+       "kind": "linear",
+       "color2": "#050c33",
+       "angle": 180.0
+      }
+     },
+     {
+      "id": "scores-7",
+      "name": "Candidat 1 · Couleur",
+      "parent": "scores-3",
+      "type": "ellipse",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 26.0,
+       "y": 22.0,
+       "width": 32.0,
+       "height": 32.0,
+       "fill": [
+        1.0,
+        0.6039,
+        0.1216,
+        1.0
+       ]
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "scores-8",
+      "name": "Candidat 1 · Nom",
+      "parent": "scores-3",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 76.0,
+       "y": 0.0,
+       "width": 300.0,
+       "height": 76.0,
+       "fill": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+       ],
+       "fontSize": 34.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "text": "{{p1}}",
+      "fontFamily": "Titillium Web",
+      "fontWeight": 700,
+      "align": "left",
+      "verticalAlign": "middle",
+      "uppercase": true,
+      "lang": "fr"
+     },
+     {
+      "id": "scores-9",
+      "name": "Candidat 1 · Score",
+      "parent": "scores-3",
+      "type": "counter",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 330.0,
+       "y": 0.0,
+       "width": 180.0,
+       "height": 76.0,
+       "fill": [
+        1.0,
+        0.6039,
+        0.1216,
+        1.0
+       ],
+       "fontSize": 40.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "from": "0",
+      "to": "{{s1}}",
+      "duration": 1.2,
+      "decimals": 0,
+      "prefix": "",
+      "suffix": "",
+      "grouping": false,
+      "fontFamily": "Titillium Web",
+      "fontWeight": 900,
+      "align": "right",
+      "verticalAlign": "middle",
+      "uppercase": false
+     },
+     {
+      "id": "scores-10",
+      "name": "Candidat 2",
+      "parent": "scores-1",
+      "type": "group",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 140.0,
+       "width": 540.0,
+       "height": 76.0
+      },
+      "tracks": {
+       "opacity": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 8.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 16.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 64.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 72.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ],
+       "x": [
+        {
+         "frame": 0.0,
+         "value": -100.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 8.0,
+         "value": -100.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.16,
+          "y1": 1.0,
+          "x2": 0.3,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 24.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 64.0,
+         "value": 0.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.7,
+          "y1": 0.0,
+          "x2": 0.84,
+          "y2": 0.0
+         }
+        },
+        {
+         "frame": 74.0,
+         "value": -100.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "clip": false
+     },
+     {
+      "id": "scores-11",
+      "name": "Candidat 2 · Plaque",
+      "parent": "scores-10",
+      "type": "group",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 540.0,
+       "height": 76.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "clip": false
+     },
+     {
+      "id": "scores-12",
+      "name": "Candidat 2 · Plaque · Tranche",
+      "parent": "scores-11",
+      "type": "polygon",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 540.0,
+       "height": 76.0,
+       "fill": [
+        0.2471,
+        0.8235,
+        1.0,
+        0.6
+       ]
+      },
+      "tracks": {},
+      "bindings": {},
+      "mode": "free",
+      "verts": [
+       [
+        0.0,
+        0.5
+       ],
+       [
+        0.03,
+        0.0
+       ],
+       [
+        0.97,
+        0.0
+       ],
+       [
+        1.0,
+        0.5
+       ],
+       [
+        0.97,
+        1.0
+       ],
+       [
+        0.03,
+        1.0
+       ]
+      ],
+      "round": 0.0,
+      "clickAdd": false
+     },
+     {
+      "id": "scores-13",
+      "name": "Candidat 2 · Plaque · Plaque",
+      "parent": "scores-11",
+      "type": "polygon",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 3.0,
+       "y": 3.0,
+       "width": 534.0,
+       "height": 70.0,
+       "fill": [
+        0.051,
+        0.1294,
+        0.4706,
+        1.0
+       ]
+      },
+      "tracks": {},
+      "bindings": {},
+      "mode": "free",
+      "verts": [
+       [
+        0.0,
+        0.5
+       ],
+       [
+        0.03,
+        0.0
+       ],
+       [
+        0.97,
+        0.0
+       ],
+       [
+        1.0,
+        0.5
+       ],
+       [
+        0.97,
+        1.0
+       ],
+       [
+        0.03,
+        1.0
+       ]
+      ],
+      "round": 0.0,
+      "clickAdd": false,
+      "fillStyle": {
+       "kind": "linear",
+       "color2": "#050c33",
+       "angle": 180.0
+      }
+     },
+     {
+      "id": "scores-14",
+      "name": "Candidat 2 · Couleur",
+      "parent": "scores-10",
+      "type": "ellipse",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 26.0,
+       "y": 22.0,
+       "width": 32.0,
+       "height": 32.0,
+       "fill": [
+        0.2471,
+        0.8235,
+        1.0,
+        1.0
+       ]
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "scores-15",
+      "name": "Candidat 2 · Nom",
+      "parent": "scores-10",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 76.0,
+       "y": 0.0,
+       "width": 300.0,
+       "height": 76.0,
+       "fill": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+       ],
+       "fontSize": 34.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "text": "{{p2}}",
+      "fontFamily": "Titillium Web",
+      "fontWeight": 700,
+      "align": "left",
+      "verticalAlign": "middle",
+      "uppercase": true,
+      "lang": "fr"
+     },
+     {
+      "id": "scores-16",
+      "name": "Candidat 2 · Score",
+      "parent": "scores-10",
+      "type": "counter",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 330.0,
+       "y": 0.0,
+       "width": 180.0,
+       "height": 76.0,
+       "fill": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+       ],
+       "fontSize": 40.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "from": "0",
+      "to": "{{s2}}",
+      "duration": 1.2,
+      "decimals": 0,
+      "prefix": "",
+      "suffix": "",
+      "grouping": false,
+      "fontFamily": "Titillium Web",
+      "fontWeight": 900,
+      "align": "right",
+      "verticalAlign": "middle",
+      "uppercase": false
+     },
+     {
+      "id": "scores-17",
+      "name": "Candidat 3",
+      "parent": "scores-1",
+      "type": "group",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 228.0,
+       "width": 540.0,
+       "height": 76.0
+      },
+      "tracks": {
+       "opacity": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 12.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 20.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 62.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 70.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ],
+       "x": [
+        {
+         "frame": 0.0,
+         "value": -100.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 12.0,
+         "value": -100.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.16,
+          "y1": 1.0,
+          "x2": 0.3,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 28.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 62.0,
+         "value": 0.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.7,
+          "y1": 0.0,
+          "x2": 0.84,
+          "y2": 0.0
+         }
+        },
+        {
+         "frame": 72.0,
+         "value": -100.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "clip": false
+     },
+     {
+      "id": "scores-18",
+      "name": "Candidat 3 · Plaque",
+      "parent": "scores-17",
+      "type": "group",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 540.0,
+       "height": 76.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "clip": false
+     },
+     {
+      "id": "scores-19",
+      "name": "Candidat 3 · Plaque · Tranche",
+      "parent": "scores-18",
+      "type": "polygon",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 540.0,
+       "height": 76.0,
+       "fill": [
+        0.2471,
+        0.8235,
+        1.0,
+        0.6
+       ]
+      },
+      "tracks": {},
+      "bindings": {},
+      "mode": "free",
+      "verts": [
+       [
+        0.0,
+        0.5
+       ],
+       [
+        0.03,
+        0.0
+       ],
+       [
+        0.97,
+        0.0
+       ],
+       [
+        1.0,
+        0.5
+       ],
+       [
+        0.97,
+        1.0
+       ],
+       [
+        0.03,
+        1.0
+       ]
+      ],
+      "round": 0.0,
+      "clickAdd": false
+     },
+     {
+      "id": "scores-20",
+      "name": "Candidat 3 · Plaque · Plaque",
+      "parent": "scores-18",
+      "type": "polygon",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 3.0,
+       "y": 3.0,
+       "width": 534.0,
+       "height": 70.0,
+       "fill": [
+        0.051,
+        0.1294,
+        0.4706,
+        1.0
+       ]
+      },
+      "tracks": {},
+      "bindings": {},
+      "mode": "free",
+      "verts": [
+       [
+        0.0,
+        0.5
+       ],
+       [
+        0.03,
+        0.0
+       ],
+       [
+        0.97,
+        0.0
+       ],
+       [
+        1.0,
+        0.5
+       ],
+       [
+        0.97,
+        1.0
+       ],
+       [
+        0.03,
+        1.0
+       ]
+      ],
+      "round": 0.0,
+      "clickAdd": false,
+      "fillStyle": {
+       "kind": "linear",
+       "color2": "#050c33",
+       "angle": 180.0
+      }
+     },
+     {
+      "id": "scores-21",
+      "name": "Candidat 3 · Couleur",
+      "parent": "scores-17",
+      "type": "ellipse",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 26.0,
+       "y": 22.0,
+       "width": 32.0,
+       "height": 32.0,
+       "fill": [
+        0.8941,
+        0.3569,
+        1.0,
+        1.0
+       ]
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "scores-22",
+      "name": "Candidat 3 · Nom",
+      "parent": "scores-17",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 76.0,
+       "y": 0.0,
+       "width": 300.0,
+       "height": 76.0,
+       "fill": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+       ],
+       "fontSize": 34.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "text": "{{p3}}",
+      "fontFamily": "Titillium Web",
+      "fontWeight": 700,
+      "align": "left",
+      "verticalAlign": "middle",
+      "uppercase": true,
+      "lang": "fr"
+     },
+     {
+      "id": "scores-23",
+      "name": "Candidat 3 · Score",
+      "parent": "scores-17",
+      "type": "counter",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 330.0,
+       "y": 0.0,
+       "width": 180.0,
+       "height": 76.0,
+       "fill": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+       ],
+       "fontSize": 40.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "from": "0",
+      "to": "{{s3}}",
+      "duration": 1.2,
+      "decimals": 0,
+      "prefix": "",
+      "suffix": "",
+      "grouping": false,
+      "fontFamily": "Titillium Web",
+      "fontWeight": 900,
+      "align": "right",
+      "verticalAlign": "middle",
+      "uppercase": false
+     },
+     {
+      "id": "scores-24",
+      "name": "Candidat 4",
+      "parent": "scores-1",
+      "type": "group",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 316.0,
+       "width": 540.0,
+       "height": 76.0
+      },
+      "tracks": {
+       "opacity": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 16.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 24.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 60.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 68.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ],
+       "x": [
+        {
+         "frame": 0.0,
+         "value": -100.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 16.0,
+         "value": -100.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.16,
+          "y1": 1.0,
+          "x2": 0.3,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 32.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 60.0,
+         "value": 0.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.7,
+          "y1": 0.0,
+          "x2": 0.84,
+          "y2": 0.0
+         }
+        },
+        {
+         "frame": 70.0,
+         "value": -100.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "clip": false
+     },
+     {
+      "id": "scores-25",
+      "name": "Candidat 4 · Plaque",
+      "parent": "scores-24",
+      "type": "group",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 540.0,
+       "height": 76.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "clip": false
+     },
+     {
+      "id": "scores-26",
+      "name": "Candidat 4 · Plaque · Tranche",
+      "parent": "scores-25",
+      "type": "polygon",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 540.0,
+       "height": 76.0,
+       "fill": [
+        0.2471,
+        0.8235,
+        1.0,
+        0.6
+       ]
+      },
+      "tracks": {},
+      "bindings": {},
+      "mode": "free",
+      "verts": [
+       [
+        0.0,
+        0.5
+       ],
+       [
+        0.03,
+        0.0
+       ],
+       [
+        0.97,
+        0.0
+       ],
+       [
+        1.0,
+        0.5
+       ],
+       [
+        0.97,
+        1.0
+       ],
+       [
+        0.03,
+        1.0
+       ]
+      ],
+      "round": 0.0,
+      "clickAdd": false
+     },
+     {
+      "id": "scores-27",
+      "name": "Candidat 4 · Plaque · Plaque",
+      "parent": "scores-25",
+      "type": "polygon",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 3.0,
+       "y": 3.0,
+       "width": 534.0,
+       "height": 70.0,
+       "fill": [
+        0.051,
+        0.1294,
+        0.4706,
+        1.0
+       ]
+      },
+      "tracks": {},
+      "bindings": {},
+      "mode": "free",
+      "verts": [
+       [
+        0.0,
+        0.5
+       ],
+       [
+        0.03,
+        0.0
+       ],
+       [
+        0.97,
+        0.0
+       ],
+       [
+        1.0,
+        0.5
+       ],
+       [
+        0.97,
+        1.0
+       ],
+       [
+        0.03,
+        1.0
+       ]
+      ],
+      "round": 0.0,
+      "clickAdd": false,
+      "fillStyle": {
+       "kind": "linear",
+       "color2": "#050c33",
+       "angle": 180.0
+      }
+     },
+     {
+      "id": "scores-28",
+      "name": "Candidat 4 · Couleur",
+      "parent": "scores-24",
+      "type": "ellipse",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 26.0,
+       "y": 22.0,
+       "width": 32.0,
+       "height": 32.0,
+       "fill": [
+        0.1333,
+        0.8392,
+        0.5451,
+        1.0
+       ]
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "scores-29",
+      "name": "Candidat 4 · Nom",
+      "parent": "scores-24",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 76.0,
+       "y": 0.0,
+       "width": 300.0,
+       "height": 76.0,
+       "fill": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+       ],
+       "fontSize": 34.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "text": "{{p4}}",
+      "fontFamily": "Titillium Web",
+      "fontWeight": 700,
+      "align": "left",
+      "verticalAlign": "middle",
+      "uppercase": true,
+      "lang": "fr"
+     },
+     {
+      "id": "scores-30",
+      "name": "Candidat 4 · Score",
+      "parent": "scores-24",
+      "type": "counter",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 330.0,
+       "y": 0.0,
+       "width": 180.0,
+       "height": 76.0,
+       "fill": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+       ],
+       "fontSize": 40.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "from": "0",
+      "to": "{{s4}}",
+      "duration": 1.2,
+      "decimals": 0,
+      "prefix": "",
+      "suffix": "",
+      "grouping": false,
+      "fontFamily": "Titillium Web",
+      "fontWeight": 900,
+      "align": "right",
+      "verticalAlign": "middle",
+      "uppercase": false
+     }
+    ],
+    "zone": "scores",
+    "revision": 1,
+    "markerModel": 2
+   },
+   {
+    "id": "round",
+    "name": "Titre de manche",
+    "duration": 150.0,
+    "markers": [
+     {
+      "id": "round-air",
+      "frame": 100.0,
+      "name": "On air",
+      "kind": "out"
+     }
+    ],
+    "fields": [
+     {
+      "key": "round",
+      "label": "Manche",
+      "kind": "text",
+      "default": "MANCHE 2"
+     },
+     {
+      "key": "title",
+      "label": "Titre",
+      "kind": "text",
+      "default": "Le sprint"
+     },
+     {
+      "key": "rule",
+      "label": "Règle",
+      "kind": "text",
+      "default": "8 questions · 30 secondes · 20 points par bonne réponse"
+     }
+    ],
+    "layers": [
+     {
+      "id": "round-1",
+      "name": "Manche",
+      "parent": null,
+      "type": "group",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 1920.0,
+       "height": 1080.0
+      },
+      "tracks": {
+       "opacity": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 10.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 100.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 114.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "clip": false
+     },
+     {
+      "id": "round-2",
+      "name": "Fond",
+      "parent": "round-1",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 1920.0,
+       "height": 1080.0,
+       "fill": [
+        0.102,
+        0.2314,
+        0.8196,
+        1.0
+       ]
+      },
+      "tracks": {},
+      "bindings": {},
+      "fillStyle": {
+       "kind": "radial",
+       "color2": "#050c33"
+      }
+     },
+     {
+      "id": "round-3",
+      "name": "Rayons",
+      "parent": "round-1",
+      "type": "polygon",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": -440.0,
+       "y": -860.0,
+       "width": 2800.0,
+       "height": 2800.0,
+       "fill": [
+        0.2471,
+        0.8235,
+        1.0,
+        0.1
+       ]
+      },
+      "tracks": {
+       "rotation": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 160.0,
+         "value": 24.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "mode": "regular",
+      "sides": 24.0,
+      "star": true,
+      "inner": 4.0
+     },
+     {
+      "id": "round-4",
+      "name": "Manche",
+      "parent": "round-1",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 330.0,
+       "width": 1920.0,
+       "height": 80.0,
+       "fill": [
+        1.0,
+        0.6039,
+        0.1216,
+        1.0
+       ],
+       "fontSize": 56.0,
+       "letterSpacing": 14.0
+      },
+      "tracks": {
+       "scaleX": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 6.0,
+         "value": 0.0,
+         "easing": {
+          "type": "back"
+         }
+        },
+        {
+         "frame": 24.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 100.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.7,
+          "y1": 0.0,
+          "x2": 0.84,
+          "y2": 0.0
+         }
+        },
+        {
+         "frame": 110.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ],
+       "scaleY": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 6.0,
+         "value": 0.0,
+         "easing": {
+          "type": "back"
+         }
+        },
+        {
+         "frame": 24.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 100.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.7,
+          "y1": 0.0,
+          "x2": 0.84,
+          "y2": 0.0
+         }
+        },
+        {
+         "frame": 110.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "text": "{{round}}",
+      "fontFamily": "Titillium Web",
+      "fontWeight": 900,
+      "align": "center",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "lang": "fr"
+     },
+     {
+      "id": "round-5",
+      "name": "Titre",
+      "parent": "round-1",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 410.0,
+       "width": 1920.0,
+       "height": 220.0,
+       "fill": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+       ],
+       "fontSize": 190.0
+      },
+      "tracks": {
+       "scaleX": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 12.0,
+         "value": 0.0,
+         "easing": {
+          "type": "back"
+         }
+        },
+        {
+         "frame": 32.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 100.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.7,
+          "y1": 0.0,
+          "x2": 0.84,
+          "y2": 0.0
+         }
+        },
+        {
+         "frame": 110.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ],
+       "scaleY": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 12.0,
+         "value": 0.0,
+         "easing": {
+          "type": "back"
+         }
+        },
+        {
+         "frame": 32.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 100.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.7,
+          "y1": 0.0,
+          "x2": 0.84,
+          "y2": 0.0
+         }
+        },
+        {
+         "frame": 110.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "text": "{{title}}",
+      "fontFamily": "Titillium Web",
+      "fontWeight": 900,
+      "align": "center",
+      "verticalAlign": "middle",
+      "uppercase": true,
+      "shadow": true,
+      "shadowColor": "#00000080",
+      "shadowBlur": 30.0,
+      "shadowY": 8.0,
+      "lang": "fr"
+     },
+     {
+      "id": "round-6",
+      "name": "Manche · Règle",
+      "parent": "round-1",
+      "type": "group",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 360.0,
+       "y": 680.0,
+       "width": 1200.0,
+       "height": 80.0
+      },
+      "tracks": {
+       "opacity": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 24.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 34.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 100.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 110.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ],
+       "y": [
+        {
+         "frame": 0.0,
+         "value": 720.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 24.0,
+         "value": 720.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.16,
+          "y1": 1.0,
+          "x2": 0.3,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 40.0,
+         "value": 680.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 100.0,
+         "value": 680.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.7,
+          "y1": 0.0,
+          "x2": 0.84,
+          "y2": 0.0
+         }
+        },
+        {
+         "frame": 112.0,
+         "value": 720.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "clip": false
+     },
+     {
+      "id": "round-7",
+      "name": "Tranche",
+      "parent": "round-6",
+      "type": "polygon",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 1200.0,
+       "height": 80.0,
+       "fill": [
+        0.2471,
+        0.8235,
+        1.0,
+        0.9
+       ]
+      },
+      "tracks": {},
+      "bindings": {},
+      "mode": "free",
+      "verts": [
+       [
+        0.0,
+        0.5
+       ],
+       [
+        0.03,
+        0.0
+       ],
+       [
+        0.97,
+        0.0
+       ],
+       [
+        1.0,
+        0.5
+       ],
+       [
+        0.97,
+        1.0
+       ],
+       [
+        0.03,
+        1.0
+       ]
+      ],
+      "round": 0.0,
+      "clickAdd": false
+     },
+     {
+      "id": "round-8",
+      "name": "Plaque",
+      "parent": "round-6",
+      "type": "polygon",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 3.0,
+       "y": 3.0,
+       "width": 1194.0,
+       "height": 74.0,
+       "fill": [
+        0.051,
+        0.1294,
+        0.4706,
+        1.0
+       ]
+      },
+      "tracks": {},
+      "bindings": {},
+      "mode": "free",
+      "verts": [
+       [
+        0.0,
+        0.5
+       ],
+       [
+        0.03,
+        0.0
+       ],
+       [
+        0.97,
+        0.0
+       ],
+       [
+        1.0,
+        0.5
+       ],
+       [
+        0.97,
+        1.0
+       ],
+       [
+        0.03,
+        1.0
+       ]
+      ],
+      "round": 0.0,
+      "clickAdd": false,
+      "fillStyle": {
+       "kind": "linear",
+       "color2": "#050c33",
+       "angle": 180.0
+      }
+     },
+     {
+      "id": "round-9",
+      "name": "Manche · Règle",
+      "parent": "round-1",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 360.0,
+       "y": 680.0,
+       "width": 1200.0,
+       "height": 80.0,
+       "fill": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+       ],
+       "fontSize": 30.0
+      },
+      "tracks": {
+       "opacity": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 24.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 34.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 100.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 110.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ],
+       "y": [
+        {
+         "frame": 0.0,
+         "value": 720.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 24.0,
+         "value": 720.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.16,
+          "y1": 1.0,
+          "x2": 0.3,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 40.0,
+         "value": 680.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 100.0,
+         "value": 680.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.7,
+          "y1": 0.0,
+          "x2": 0.84,
+          "y2": 0.0
+         }
+        },
+        {
+         "frame": 112.0,
+         "value": 720.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "text": "{{rule}}",
+      "fontFamily": "Titillium Web",
+      "fontWeight": 700,
+      "align": "center",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "lang": "fr"
+     }
+    ],
+    "zone": "full",
+    "revision": 1,
+    "markerModel": 2
+   },
+   {
+    "id": "lower",
+    "name": "Candidat",
+    "duration": 110.0,
+    "markers": [
+     {
+      "id": "lower-air",
+      "frame": 60.0,
+      "name": "On air",
+      "kind": "out"
+     }
+    ],
+    "fields": [
+     {
+      "key": "name",
+      "label": "Nom",
+      "kind": "text",
+      "default": "Inès Morvan"
+     },
+     {
+      "key": "town",
+      "label": "Ville",
+      "kind": "text",
+      "default": "Rennes · professeure de musique"
+     },
+     {
+      "key": "wins",
+      "label": "Victoires",
+      "kind": "text",
+      "default": "3 VICTOIRES"
+     }
+    ],
+    "layers": [
+     {
+      "id": "lower-1",
+      "name": "Candidat",
+      "parent": null,
+      "type": "group",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 96.0,
+       "y": 820.0,
+       "width": 1050.0,
+       "height": 150.0,
+       "anchorX": 0.0,
+       "anchorY": 0.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "clip": false
+     },
+     {
+      "id": "lower-2",
+      "name": "Candidat · Nom",
+      "parent": "lower-1",
+      "type": "group",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 1050.0,
+       "height": 96.0
+      },
+      "tracks": {
+       "scaleX": [
+        {
+         "frame": 0.0,
+         "value": 0.3,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.16,
+          "y1": 1.0,
+          "x2": 0.3,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 16.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 60.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.7,
+          "y1": 0.0,
+          "x2": 0.84,
+          "y2": 0.0
+         }
+        },
+        {
+         "frame": 72.0,
+         "value": 0.3,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ],
+       "opacity": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 8.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 60.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 70.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "clip": false
+     },
+     {
+      "id": "lower-3",
+      "name": "Tranche",
+      "parent": "lower-2",
+      "type": "polygon",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 1050.0,
+       "height": 96.0,
+       "fill": [
+        0.2471,
+        0.8235,
+        1.0,
+        0.9
+       ]
+      },
+      "tracks": {},
+      "bindings": {},
+      "mode": "free",
+      "verts": [
+       [
+        0.0,
+        0.5
+       ],
+       [
+        0.03,
+        0.0
+       ],
+       [
+        0.97,
+        0.0
+       ],
+       [
+        1.0,
+        0.5
+       ],
+       [
+        0.97,
+        1.0
+       ],
+       [
+        0.03,
+        1.0
+       ]
+      ],
+      "round": 0.0,
+      "clickAdd": false
+     },
+     {
+      "id": "lower-4",
+      "name": "Plaque",
+      "parent": "lower-2",
+      "type": "polygon",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 3.0,
+       "y": 3.0,
+       "width": 1044.0,
+       "height": 90.0,
+       "fill": [
+        0.051,
+        0.1294,
+        0.4706,
+        1.0
+       ]
+      },
+      "tracks": {},
+      "bindings": {},
+      "mode": "free",
+      "verts": [
+       [
+        0.0,
+        0.5
+       ],
+       [
+        0.03,
+        0.0
+       ],
+       [
+        0.97,
+        0.0
+       ],
+       [
+        1.0,
+        0.5
+       ],
+       [
+        0.97,
+        1.0
+       ],
+       [
+        0.03,
+        1.0
+       ]
+      ],
+      "round": 0.0,
+      "clickAdd": false,
+      "fillStyle": {
+       "kind": "linear",
+       "color2": "#050c33",
+       "angle": 180.0
+      }
+     },
+     {
+      "id": "lower-5",
+      "name": "Candidat · Nom",
+      "parent": "lower-1",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 60.0,
+       "y": 0.0,
+       "width": 700.0,
+       "height": 96.0,
+       "fill": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+       ],
+       "fontSize": 52.0
+      },
+      "tracks": {
+       "opacity": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 6.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 16.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 60.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 70.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "text": "{{name}}",
+      "fontFamily": "Titillium Web",
+      "fontWeight": 900,
+      "align": "left",
+      "verticalAlign": "middle",
+      "uppercase": true,
+      "lang": "fr"
+     },
+     {
+      "id": "lower-6",
+      "name": "Pastille",
+      "parent": "lower-1",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 780.0,
+       "y": 24.0,
+       "width": 220.0,
+       "height": 48.0,
+       "fill": [
+        1.0,
+        0.6039,
+        0.1216,
+        1.0
+       ],
+       "cornerRadius": 24.0
+      },
+      "tracks": {
+       "scaleX": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 12.0,
+         "value": 0.0,
+         "easing": {
+          "type": "back"
+         }
+        },
+        {
+         "frame": 26.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 60.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.7,
+          "y1": 0.0,
+          "x2": 0.84,
+          "y2": 0.0
+         }
+        },
+        {
+         "frame": 70.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ],
+       "scaleY": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 12.0,
+         "value": 0.0,
+         "easing": {
+          "type": "back"
+         }
+        },
+        {
+         "frame": 26.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 60.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.7,
+          "y1": 0.0,
+          "x2": 0.84,
+          "y2": 0.0
+         }
+        },
+        {
+         "frame": 70.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {}
+     },
+     {
+      "id": "lower-7",
+      "name": "Victoires",
+      "parent": "lower-1",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 780.0,
+       "y": 24.0,
+       "width": 220.0,
+       "height": 48.0,
+       "fill": [
+        0.0196,
+        0.0471,
+        0.2,
+        1.0
+       ],
+       "fontSize": 22.0,
+       "letterSpacing": 2.0
+      },
+      "tracks": {
+       "scaleX": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 12.0,
+         "value": 0.0,
+         "easing": {
+          "type": "back"
+         }
+        },
+        {
+         "frame": 26.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 60.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.7,
+          "y1": 0.0,
+          "x2": 0.84,
+          "y2": 0.0
+         }
+        },
+        {
+         "frame": 70.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ],
+       "scaleY": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 12.0,
+         "value": 0.0,
+         "easing": {
+          "type": "back"
+         }
+        },
+        {
+         "frame": 26.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 60.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.7,
+          "y1": 0.0,
+          "x2": 0.84,
+          "y2": 0.0
+         }
+        },
+        {
+         "frame": 70.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "text": "{{wins}}",
+      "fontFamily": "Titillium Web",
+      "fontWeight": 900,
+      "align": "center",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "lang": "fr"
+     },
+     {
+      "id": "lower-8",
+      "name": "Ville",
+      "parent": "lower-1",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 64.0,
+       "y": 104.0,
+       "width": 900.0,
+       "height": 40.0,
+       "fill": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+       ],
+       "fontSize": 26.0
+      },
+      "tracks": {
+       "opacity": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 12.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 22.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 60.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 70.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ],
+       "y": [
+        {
+         "frame": 0.0,
+         "value": 84.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 12.0,
+         "value": 84.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.16,
+          "y1": 1.0,
+          "x2": 0.3,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 26.0,
+         "value": 104.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 60.0,
+         "value": 104.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.7,
+          "y1": 0.0,
+          "x2": 0.84,
+          "y2": 0.0
+         }
+        },
+        {
+         "frame": 72.0,
+         "value": 84.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "text": "{{town}}",
+      "fontFamily": "Titillium Web",
+      "fontWeight": 600,
+      "align": "left",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "shadow": true,
+      "shadowColor": "#000000a0",
+      "shadowBlur": 12.0,
+      "lang": "fr"
+     }
+    ],
+    "zone": "lower",
+    "revision": 1,
+    "markerModel": 2
+   },
+   {
+    "id": "winner",
+    "name": "Vainqueur",
+    "duration": 200.0,
+    "markers": [
+     {
+      "id": "winner-air",
+      "frame": 140.0,
+      "name": "On air",
+      "kind": "out"
+     }
+    ],
+    "fields": [
+     {
+      "key": "name",
+      "label": "Vainqueur",
+      "kind": "text",
+      "default": "Inès Morvan"
+     },
+     {
+      "key": "score",
+      "label": "Score final",
+      "kind": "number",
+      "default": "520"
+     },
+     {
+      "key": "prize",
+      "label": "Gain",
+      "kind": "text",
+      "default": "remporte 25 000 €"
+     }
+    ],
+    "layers": [
+     {
+      "id": "winner-1",
+      "name": "Vainqueur",
+      "parent": null,
+      "type": "group",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 1920.0,
+       "height": 1080.0
+      },
+      "tracks": {
+       "opacity": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 10.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 140.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 156.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "clip": false
+     },
+     {
+      "id": "winner-2",
+      "name": "Fond",
+      "parent": "winner-1",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 1920.0,
+       "height": 1080.0,
+       "fill": [
+        0.1647,
+        0.102,
+        0.4314,
+        1.0
+       ]
+      },
+      "tracks": {},
+      "bindings": {},
+      "fillStyle": {
+       "kind": "radial",
+       "color2": "#050c33"
+      }
+     },
+     {
+      "id": "winner-3",
+      "name": "Rayons",
+      "parent": "winner-1",
+      "type": "polygon",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": -440.0,
+       "y": -860.0,
+       "width": 2800.0,
+       "height": 2800.0,
+       "fill": [
+        1.0,
+        0.6039,
+        0.1216,
+        0.14
+       ]
+      },
+      "tracks": {
+       "rotation": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 200.0,
+         "value": 24.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "mode": "regular",
+      "sides": 24.0,
+      "star": true,
+      "inner": 4.0
+     },
+     {
+      "id": "winner-4",
+      "name": "Titre",
+      "parent": "winner-1",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 250.0,
+       "width": 1920.0,
+       "height": 80.0,
+       "fill": [
+        1.0,
+        0.6039,
+        0.1216,
+        1.0
+       ],
+       "fontSize": 50.0,
+       "letterSpacing": 20.0
+      },
+      "tracks": {
+       "scaleX": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 4.0,
+         "value": 0.0,
+         "easing": {
+          "type": "back"
+         }
+        },
+        {
+         "frame": 20.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 140.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.7,
+          "y1": 0.0,
+          "x2": 0.84,
+          "y2": 0.0
+         }
+        },
+        {
+         "frame": 150.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ],
+       "scaleY": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 4.0,
+         "value": 0.0,
+         "easing": {
+          "type": "back"
+         }
+        },
+        {
+         "frame": 20.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 140.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.7,
+          "y1": 0.0,
+          "x2": 0.84,
+          "y2": 0.0
+         }
+        },
+        {
+         "frame": 150.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "text": "VAINQUEUR",
+      "fontFamily": "Titillium Web",
+      "fontWeight": 900,
+      "align": "center",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "lang": "fr"
+     },
+     {
+      "id": "winner-5",
+      "name": "Nom",
+      "parent": "winner-1",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 330.0,
+       "width": 1920.0,
+       "height": 200.0,
+       "fill": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+       ],
+       "fontSize": 150.0
+      },
+      "tracks": {
+       "scaleX": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 10.0,
+         "value": 0.0,
+         "easing": {
+          "type": "back"
+         }
+        },
+        {
+         "frame": 32.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 140.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.7,
+          "y1": 0.0,
+          "x2": 0.84,
+          "y2": 0.0
+         }
+        },
+        {
+         "frame": 150.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ],
+       "scaleY": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 10.0,
+         "value": 0.0,
+         "easing": {
+          "type": "back"
+         }
+        },
+        {
+         "frame": 32.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 140.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.7,
+          "y1": 0.0,
+          "x2": 0.84,
+          "y2": 0.0
+         }
+        },
+        {
+         "frame": 150.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "text": "{{name}}",
+      "fontFamily": "Titillium Web",
+      "fontWeight": 900,
+      "align": "center",
+      "verticalAlign": "middle",
+      "uppercase": true,
+      "shadow": true,
+      "shadowColor": "#00000080",
+      "shadowBlur": 30.0,
+      "shadowY": 8.0,
+      "lang": "fr"
+     },
+     {
+      "id": "winner-6",
+      "name": "Score",
+      "parent": "winner-1",
+      "type": "counter",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 560.0,
+       "y": 560.0,
+       "width": 800.0,
+       "height": 140.0,
+       "fill": [
+        0.2471,
+        0.8235,
+        1.0,
+        1.0
+       ],
+       "fontSize": 110.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "from": "0",
+      "to": "{{score}}",
+      "duration": 2.0,
+      "decimals": 0,
+      "prefix": "",
+      "suffix": " PTS",
+      "grouping": true,
+      "fontFamily": "Titillium Web",
+      "fontWeight": 900,
+      "align": "center",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "affixSize": 40.0
+     },
+     {
+      "id": "winner-7",
+      "name": "Gain",
+      "parent": "winner-1",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 720.0,
+       "width": 1920.0,
+       "height": 60.0,
+       "fill": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+       ],
+       "fontSize": 40.0
+      },
+      "tracks": {
+       "opacity": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 40.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 54.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 140.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 150.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "text": "{{prize}}",
+      "fontFamily": "Titillium Web",
+      "fontWeight": 700,
+      "align": "center",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "lang": "fr"
+     },
+     {
+      "id": "winner-8",
+      "name": "Confetti 1",
+      "parent": "winner-1",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 1480.0,
+       "y": 520.0,
+       "width": 16.0,
+       "height": 16.0,
+       "fill": [
+        1.0,
+        0.6039,
+        0.1216,
+        1.0
+       ],
+       "cornerRadius": 3.0
+      },
+      "tracks": {
+       "opacity": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 14.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 20.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ],
+       "rotation": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 200.0,
+         "value": 240.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ],
+       "y": [
+        {
+         "frame": 0.0,
+         "value": 400.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.16,
+          "y1": 1.0,
+          "x2": 0.3,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 40.0,
+         "value": 520.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 200.0,
+         "value": 580.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {}
+     },
+     {
+      "id": "winner-9",
+      "name": "Confetti 2",
+      "parent": "winner-1",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 1561.4032773029815,
+       "y": 653.3878558970108,
+       "width": 16.0,
+       "height": 30.0,
+       "fill": [
+        0.2471,
+        0.8235,
+        1.0,
+        1.0
+       ],
+       "cornerRadius": 3.0
+      },
+      "tracks": {
+       "opacity": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 15.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 21.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ],
+       "rotation": [
+        {
+         "frame": 0.0,
+         "value": 37.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 200.0,
+         "value": 277.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ],
+       "y": [
+        {
+         "frame": 0.0,
+         "value": 533.3878558970108,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.16,
+          "y1": 1.0,
+          "x2": 0.3,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 41.0,
+         "value": 653.3878558970108,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 200.0,
+         "value": 713.3878558970108,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {}
+     },
+     {
+      "id": "winner-10",
+      "name": "Confetti 3",
+      "parent": "winner-1",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 1542.1937767704233,
+       "y": 809.2544243589427,
+       "width": 16.0,
+       "height": 16.0,
+       "fill": [
+        0.1333,
+        0.8392,
+        0.5451,
+        1.0
+       ],
+       "cornerRadius": 3.0
+      },
+      "tracks": {
+       "opacity": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 16.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 22.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ],
+       "rotation": [
+        {
+         "frame": 0.0,
+         "value": 74.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 200.0,
+         "value": 314.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ],
+       "y": [
+        {
+         "frame": 0.0,
+         "value": 689.2544243589427,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.16,
+          "y1": 1.0,
+          "x2": 0.3,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 42.0,
+         "value": 809.2544243589427,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 200.0,
+         "value": 869.2544243589427,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {}
+     },
+     {
+      "id": "winner-11",
+      "name": "Confetti 4",
+      "parent": "winner-1",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 1220.0,
+       "y": 961.6729559300636,
+       "width": 16.0,
+       "height": 30.0,
+       "fill": [
+        0.8941,
+        0.3569,
+        1.0,
+        1.0
+       ],
+       "cornerRadius": 3.0
+      },
+      "tracks": {
+       "opacity": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 17.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 23.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ],
+       "rotation": [
+        {
+         "frame": 0.0,
+         "value": 21.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 200.0,
+         "value": 261.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ],
+       "y": [
+        {
+         "frame": 0.0,
+         "value": 841.6729559300636,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.16,
+          "y1": 1.0,
+          "x2": 0.3,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 43.0,
+         "value": 961.6729559300636,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 200.0,
+         "value": 1021.6729559300636,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {}
+     },
+     {
+      "id": "winner-12",
+      "name": "Confetti 5",
+      "parent": "winner-1",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 1071.1348337068355,
+       "y": 844.9865584940287,
+       "width": 16.0,
+       "height": 16.0,
+       "fill": [
+        1.0,
+        0.6039,
+        0.1216,
+        1.0
+       ],
+       "cornerRadius": 3.0
+      },
+      "tracks": {
+       "opacity": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 18.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 24.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ],
+       "rotation": [
+        {
+         "frame": 0.0,
+         "value": 58.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 200.0,
+         "value": 298.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ],
+       "y": [
+        {
+         "frame": 0.0,
+         "value": 724.9865584940287,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.16,
+          "y1": 1.0,
+          "x2": 0.3,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 44.0,
+         "value": 844.9865584940287,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 200.0,
+         "value": 904.9865584940287,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {}
+     },
+     {
+      "id": "winner-13",
+      "name": "Confetti 6",
+      "parent": "winner-1",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 828.0273849731329,
+       "y": 904.0750236747612,
+       "width": 16.0,
+       "height": 30.0,
+       "fill": [
+        0.2471,
+        0.8235,
+        1.0,
+        1.0
+       ],
+       "cornerRadius": 3.0
+      },
+      "tracks": {
+       "opacity": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 19.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 25.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ],
+       "rotation": [
+        {
+         "frame": 0.0,
+         "value": 5.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 200.0,
+         "value": 245.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ],
+       "y": [
+        {
+         "frame": 0.0,
+         "value": 784.0750236747612,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.16,
+          "y1": 1.0,
+          "x2": 0.3,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 45.0,
+         "value": 904.0750236747612,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 200.0,
+         "value": 964.0750236747612,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {}
+     },
+     {
+      "id": "winner-14",
+      "name": "Confetti 7",
+      "parent": "winner-1",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 700.0000000000001,
+       "y": 909.7114317029974,
+       "width": 16.0,
+       "height": 16.0,
+       "fill": [
+        0.1333,
+        0.8392,
+        0.5451,
+        1.0
+       ],
+       "cornerRadius": 3.0
+      },
+      "tracks": {
+       "opacity": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 14.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 20.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ],
+       "rotation": [
+        {
+         "frame": 0.0,
+         "value": 42.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 200.0,
+         "value": 282.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ],
+       "y": [
+        {
+         "frame": 0.0,
+         "value": 789.7114317029974,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.16,
+          "y1": 1.0,
+          "x2": 0.3,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 40.0,
+         "value": 909.7114317029974,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 200.0,
+         "value": 969.7114317029974,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {}
+     },
+     {
+      "id": "winner-15",
+      "name": "Confetti 8",
+      "parent": "winner-1",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 469.73155640385414,
+       "y": 847.8216809401351,
+       "width": 16.0,
+       "height": 30.0,
+       "fill": [
+        0.8941,
+        0.3569,
+        1.0,
+        1.0
+       ],
+       "cornerRadius": 3.0
+      },
+      "tracks": {
+       "opacity": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 15.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 21.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ],
+       "rotation": [
+        {
+         "frame": 0.0,
+         "value": 79.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 200.0,
+         "value": 319.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ],
+       "y": [
+        {
+         "frame": 0.0,
+         "value": 727.8216809401351,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.16,
+          "y1": 1.0,
+          "x2": 0.3,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 41.0,
+         "value": 847.8216809401351,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 200.0,
+         "value": 907.8216809401351,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {}
+     },
+     {
+      "id": "winner-16",
+      "name": "Confetti 9",
+      "parent": "winner-1",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 245.83360820270968,
+       "y": 632.8666472974708,
+       "width": 16.0,
+       "height": 16.0,
+       "fill": [
+        1.0,
+        0.6039,
+        0.1216,
+        1.0
+       ],
+       "cornerRadius": 3.0
+      },
+      "tracks": {
+       "opacity": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 16.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 22.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ],
+       "rotation": [
+        {
+         "frame": 0.0,
+         "value": 26.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 200.0,
+         "value": 266.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ],
+       "y": [
+        {
+         "frame": 0.0,
+         "value": 512.8666472974708,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.16,
+          "y1": 1.0,
+          "x2": 0.3,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 42.0,
+         "value": 632.8666472974708,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 200.0,
+         "value": 692.8666472974708,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {}
+     },
+     {
+      "id": "winner-17",
+      "name": "Confetti 10",
+      "parent": "winner-1",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 440.0,
+       "y": 520.0,
+       "width": 16.0,
+       "height": 30.0,
+       "fill": [
+        0.2471,
+        0.8235,
+        1.0,
+        1.0
+       ],
+       "cornerRadius": 3.0
+      },
+      "tracks": {
+       "opacity": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 17.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 23.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ],
+       "rotation": [
+        {
+         "frame": 0.0,
+         "value": 63.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 200.0,
+         "value": 303.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ],
+       "y": [
+        {
+         "frame": 0.0,
+         "value": 400.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.16,
+          "y1": 1.0,
+          "x2": 0.3,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 43.0,
+         "value": 520.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 200.0,
+         "value": 580.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {}
+     },
+     {
+      "id": "winner-18",
+      "name": "Confetti 11",
+      "parent": "winner-1",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 358.59672269701855,
+       "y": 366.09093550344915,
+       "width": 16.0,
+       "height": 16.0,
+       "fill": [
+        0.1333,
+        0.8392,
+        0.5451,
+        1.0
+       ],
+       "cornerRadius": 3.0
+      },
+      "tracks": {
+       "opacity": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 18.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 24.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ],
+       "rotation": [
+        {
+         "frame": 0.0,
+         "value": 10.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 200.0,
+         "value": 250.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ],
+       "y": [
+        {
+         "frame": 0.0,
+         "value": 246.09093550344915,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.16,
+          "y1": 1.0,
+          "x2": 0.3,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 44.0,
+         "value": 366.09093550344915,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 200.0,
+         "value": 426.09093550344915,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {}
+     },
+     {
+      "id": "winner-19",
+      "name": "Confetti 12",
+      "parent": "winner-1",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 377.80622322957674,
+       "y": 192.17831905986498,
+       "width": 16.0,
+       "height": 30.0,
+       "fill": [
+        0.8941,
+        0.3569,
+        1.0,
+        1.0
+       ],
+       "cornerRadius": 3.0
+      },
+      "tracks": {
+       "opacity": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 19.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 25.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ],
+       "rotation": [
+        {
+         "frame": 0.0,
+         "value": 47.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 200.0,
+         "value": 287.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ],
+       "y": [
+        {
+         "frame": 0.0,
+         "value": 72.17831905986498,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.16,
+          "y1": 1.0,
+          "x2": 0.3,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 45.0,
+         "value": 192.17831905986498,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 200.0,
+         "value": 252.17831905986498,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {}
+     },
+     {
+      "id": "winner-20",
+      "name": "Confetti 13",
+      "parent": "winner-1",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 699.9999999999998,
+       "y": 234.21161675113535,
+       "width": 16.0,
+       "height": 16.0,
+       "fill": [
+        1.0,
+        0.6039,
+        0.1216,
+        1.0
+       ],
+       "cornerRadius": 3.0
+      },
+      "tracks": {
+       "opacity": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 14.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 20.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ],
+       "rotation": [
+        {
+         "frame": 0.0,
+         "value": 84.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 200.0,
+         "value": 324.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ],
+       "y": [
+        {
+         "frame": 0.0,
+         "value": 114.21161675113535,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.16,
+          "y1": 1.0,
+          "x2": 0.3,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 40.0,
+         "value": 234.21161675113535,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 200.0,
+         "value": 294.21161675113535,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {}
+     },
+     {
+      "id": "winner-21",
+      "name": "Confetti 14",
+      "parent": "winner-1",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 848.8651662931646,
+       "y": 135.92497632523884,
+       "width": 16.0,
+       "height": 30.0,
+       "fill": [
+        0.2471,
+        0.8235,
+        1.0,
+        1.0
+       ],
+       "cornerRadius": 3.0
+      },
+      "tracks": {
+       "opacity": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 15.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 21.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ],
+       "rotation": [
+        {
+         "frame": 0.0,
+         "value": 31.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 200.0,
+         "value": 271.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ],
+       "y": [
+        {
+         "frame": 0.0,
+         "value": 15.924976325238845,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.16,
+          "y1": 1.0,
+          "x2": 0.3,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 41.0,
+         "value": 135.92497632523884,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 200.0,
+         "value": 195.92497632523884,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {}
+     },
+     {
+      "id": "winner-22",
+      "name": "Confetti 15",
+      "parent": "winner-1",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 1091.9726150268668,
+       "y": 76.83651114450635,
+       "width": 16.0,
+       "height": 16.0,
+       "fill": [
+        0.1333,
+        0.8392,
+        0.5451,
+        1.0
+       ],
+       "cornerRadius": 3.0
+      },
+      "tracks": {
+       "opacity": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 16.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 22.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ],
+       "rotation": [
+        {
+         "frame": 0.0,
+         "value": 68.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 200.0,
+         "value": 308.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ],
+       "y": [
+        {
+         "frame": 0.0,
+         "value": -43.163488855493654,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.16,
+          "y1": 1.0,
+          "x2": 0.3,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 42.0,
+         "value": 76.83651114450635,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 200.0,
+         "value": 136.83651114450635,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {}
+     },
+     {
+      "id": "winner-23",
+      "name": "Confetti 16",
+      "parent": "winner-1",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 1220.0,
+       "y": 78.32704406993633,
+       "width": 16.0,
+       "height": 30.0,
+       "fill": [
+        0.8941,
+        0.3569,
+        1.0,
+        1.0
+       ],
+       "cornerRadius": 3.0
+      },
+      "tracks": {
+       "opacity": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 17.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 23.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ],
+       "rotation": [
+        {
+         "frame": 0.0,
+         "value": 15.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 200.0,
+         "value": 255.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ],
+       "y": [
+        {
+         "frame": 0.0,
+         "value": -41.672955930063665,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.16,
+          "y1": 1.0,
+          "x2": 0.3,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 43.0,
+         "value": 78.32704406993633,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 200.0,
+         "value": 138.32704406993633,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {}
+     },
+     {
+      "id": "winner-24",
+      "name": "Confetti 17",
+      "parent": "winner-1",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 1450.2684435961457,
+       "y": 307.88008880344194,
+       "width": 16.0,
+       "height": 16.0,
+       "fill": [
+        1.0,
+        0.6039,
+        0.1216,
+        1.0
+       ],
+       "cornerRadius": 3.0
+      },
+      "tracks": {
+       "opacity": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 18.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 24.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ],
+       "rotation": [
+        {
+         "frame": 0.0,
+         "value": 52.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 200.0,
+         "value": 292.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ],
+       "y": [
+        {
+         "frame": 0.0,
+         "value": 187.88008880344194,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.16,
+          "y1": 1.0,
+          "x2": 0.3,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 44.0,
+         "value": 307.88008880344194,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 200.0,
+         "value": 367.88008880344194,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {}
+     },
+     {
+      "id": "winner-25",
+      "name": "Confetti 18",
+      "parent": "winner-1",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 1674.1663917972905,
+       "y": 386.61214410298925,
+       "width": 16.0,
+       "height": 30.0,
+       "fill": [
+        0.2471,
+        0.8235,
+        1.0,
+        1.0
+       ],
+       "cornerRadius": 3.0
+      },
+      "tracks": {
+       "opacity": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 19.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 25.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ],
+       "rotation": [
+        {
+         "frame": 0.0,
+         "value": 89.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 200.0,
+         "value": 329.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ],
+       "y": [
+        {
+         "frame": 0.0,
+         "value": 266.61214410298925,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.16,
+          "y1": 1.0,
+          "x2": 0.3,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 45.0,
+         "value": 386.61214410298925,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 200.0,
+         "value": 446.61214410298925,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {}
+     }
+    ],
+    "zone": "full",
+    "revision": 1,
+    "markerModel": 2
+   }
+  ],
+  "rundown": [
+   {
+    "id": "round2-00-manche-2---le-sprint",
+    "name": "Manche 2 · Le sprint",
+    "templateId": "round",
+    "zone": "full",
+    "playlist": "round2",
+    "layer": 50,
+    "data": {}
+   },
+   {
+    "id": "round2-01-scores",
+    "name": "Scores",
+    "templateId": "scores",
+    "zone": "scores",
+    "playlist": "round2",
+    "layer": 20,
+    "data": {}
+   },
+   {
+    "id": "round2-02-inès-morvan",
+    "name": "Inès Morvan",
+    "templateId": "lower",
+    "zone": "lower",
+    "playlist": "round2",
+    "layer": 15,
+    "data": {}
+   },
+   {
+    "id": "round2-03-question-7---monet",
+    "name": "Question 7 · Monet",
+    "templateId": "question",
+    "zone": "board",
+    "playlist": "round2",
+    "layer": 10,
+    "data": {}
+   },
+   {
+    "id": "round2-04-chrono-30-s",
+    "name": "Chrono 30 s",
+    "templateId": "timer",
+    "zone": "timer",
+    "playlist": "round2",
+    "layer": 30,
+    "data": {}
+   },
+   {
+    "id": "round2-05-question-8---fleuves",
+    "name": "Question 8 · Fleuves",
+    "templateId": "question",
+    "zone": "board",
+    "playlist": "round2",
+    "layer": 10,
+    "data": {
+     "quiz__row": "2",
+     "quiz_num": "QUESTION 8",
+     "quiz_q": "Quel est le plus long fleuve de France ?",
+     "quiz_aA": "La Seine",
+     "quiz_aB": "Le Rhône",
+     "quiz_aC": "La Loire",
+     "quiz_aD": "La Garonne",
+     "quiz_okA": "false",
+     "quiz_okB": "false",
+     "quiz_okC": "true",
+     "quiz_okD": "false"
+    }
+   },
+   {
+    "id": "final-06-vainqueur",
+    "name": "Vainqueur",
+    "templateId": "winner",
+    "zone": "full",
+    "playlist": "final",
+    "layer": 50,
+    "data": {}
+   }
+  ],
+  "zones": [
+   {
+    "id": "board",
+    "name": "Question",
+    "layer": 10,
+    "color": "#7c5cff",
+    "transition": "sequential",
+    "areas": {
+     "main": {
+      "x": 0.025,
+      "y": 0.41,
+      "width": 0.95,
+      "height": 0.57
+     }
+    }
+   },
+   {
+    "id": "timer",
+    "name": "Chrono",
+    "layer": 30,
+    "color": "#ff4d6d",
+    "transition": "sequential",
+    "areas": {
+     "main": {
+      "x": 0.82,
+      "y": 0.05,
+      "width": 0.15,
+      "height": 0.3
+     }
+    }
+   },
+   {
+    "id": "scores",
+    "name": "Scores",
+    "layer": 20,
+    "color": "#22c55e",
+    "transition": "sequential",
+    "areas": {
+     "main": {
+      "x": 0.025,
+      "y": 0.05,
+      "width": 0.3,
+      "height": 0.42
+     }
+    }
+   },
+   {
+    "id": "lower",
+    "name": "Candidat",
+    "layer": 15,
+    "color": "#f5a524",
+    "transition": "sequential",
+    "areas": {
+     "main": {
+      "x": 0.04,
+      "y": 0.7,
+      "width": 0.6,
+      "height": 0.26
+     }
+    }
+   },
+   {
+    "id": "full",
+    "name": "Plein écran",
+    "layer": 50,
+    "color": "#38bdf8",
+    "transition": "sequential",
+    "areas": {
+     "main": {
+      "x": 0.0,
+      "y": 0.0,
+      "width": 1.0,
+      "height": 1.0
+     }
+    }
+   }
+  ],
+  "playlists": [
+   {
+    "id": "round2",
+    "name": "Manche 2"
+   },
+   {
+    "id": "final",
+    "name": "Finale"
+   }
+  ],
+  "formats": [],
+  "language": "fr",
+  "guides": {
+   "vertical": [],
+   "horizontal": [],
+   "actionSafe": 0.035,
+   "titleSafe": 0.05,
+   "exclusions": []
+  }
+ },
+ "sources": [
+  {
+   "id": "grand-defi-questions",
+   "name": "Le Grand Défi · questions",
+   "type": "push",
+   "format": "json",
+   "value": {
+    "questions": [
+     {
+      "num": "QUESTION 7",
+      "q": "Quel peintre a réalisé « Impression, soleil levant » en 1872 ?",
+      "aA": "Édouard Manet",
+      "aB": "Claude Monet",
+      "aC": "Auguste Renoir",
+      "aD": "Paul Cézanne",
+      "okA": "false",
+      "okB": "true",
+      "okC": "false",
+      "okD": "false"
+     },
+     {
+      "num": "QUESTION 8",
+      "q": "Quel est le plus long fleuve de France ?",
+      "aA": "La Seine",
+      "aB": "Le Rhône",
+      "aC": "La Loire",
+      "aD": "La Garonne",
+      "okA": "false",
+      "okB": "false",
+      "okC": "true",
+      "okD": "false"
+     },
+     {
+      "num": "QUESTION 9",
+      "q": "En quelle année a eu lieu la première Coupe du monde de football ?",
+      "aA": "1924",
+      "aB": "1930",
+      "aC": "1934",
+      "aD": "1938",
+      "okA": "false",
+      "okB": "true",
+      "okC": "false",
+      "okD": "false"
+     }
+    ]
+   }
+  },
+  {
+   "id": "grand-defi-scores",
+   "name": "Le Grand Défi · scores",
+   "type": "push",
+   "format": "json",
+   "value": {
+    "players": [
+     {
+      "name": "Inès",
+      "score": 340
+     },
+     {
+      "name": "Karim",
+      "score": 280
+     },
+     {
+      "name": "Léa",
+      "score": 210
+     },
+     {
+      "name": "Hugo",
+      "score": 150
+     }
+    ]
+   }
+  }
+ ]
+}

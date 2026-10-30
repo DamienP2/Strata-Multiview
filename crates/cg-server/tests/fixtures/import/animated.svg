@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="400" height="200">
+  <style>
+    @keyframes pulse { from { opacity: 0 } to { opacity: 1 } }
+    .pulse { animation: pulse 1s infinite; }
+  </style>
+  <defs>
+    <symbol id="dot" viewBox="0 0 10 10"><circle cx="5" cy="5" r="5" fill="#f00"/></symbol>
+    <mask id="m"><rect width="40" height="100" fill="#fff"/></mask>
+  </defs>
+  <rect id="slide" x="0" y="50" width="100" height="40" fill="#123456">
+    <animate attributeName="x" from="-100" to="20" begin="0s" dur="1s" fill="freeze"
+             calcMode="spline" keyTimes="0;1" keySplines="0.25 0.1 0.25 1"/>
+    <animate attributeName="opacity" values="0;1" dur="0.5s" fill="freeze"/>
+  </rect>
+  <rect id="spinner" x="200" y="50" width="40" height="40" fill="#0f0">
+    <animateTransform attributeName="transform" type="rotate" from="0 220 70" to="360 220 70"
+                      begin="0.5s" dur="1s" repeatCount="indefinite"/>
+  </rect>
+  <circle id="pop" cx="300" cy="100" r="20" fill="#00f" visibility="hidden">
+    <set attributeName="visibility" to="visible" begin="1s"/>
+    <animate attributeName="fill" from="#0000ff" to="#ff0000" begin="1s" dur="1s" fill="freeze"/>
+  </circle>
+  <g id="mover">
+    <animateMotion from="0,0" to="50,0" dur="2s" fill="freeze"/>
+    <rect x="10" y="150" width="20" height="20" fill="#fff"/>
+  </g>
+  <rect id="pulse" class="pulse" x="350" y="10" width="20" height="20"/>
+  <use id="dot-use" xlink:href="#dot" x="10" y="10" width="20" height="20"/>
+  <rect id="masked" x="10" y="100" width="50" height="30" fill="#abc" mask="url(#m)"/>
+  <text id="title" x="200" y="190" font-family="Comic Sans MS" font-size="24" text-anchor="middle" fill="#fff">Breaking <tspan font-weight="bold">news</tspan></text>
+  <rect id="clicky" x="0" y="0" width="10" height="10">
+    <animate attributeName="opacity" from="1" to="0" begin="click" dur="1s"/>
+  </rect>
+  <path id="curve" d="M0 0 C 10 10 20 10 30 0" stroke="#fff" fill="none">
+    <animateMotion path="M0 0 Q 50 50 100 0" dur="1s"/>
+  </path>
+</svg>

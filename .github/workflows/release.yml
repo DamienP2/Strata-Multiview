@@ -1,0 +1,292 @@
+name: Release
+
+# Builds the release files: Strata for macOS (.dmg and .pkg), Windows (.msi)
+# and Ubuntu (server .tar.gz), the Premiere Pro panel for macOS (.pkg) and
+# Windows (.msi), and the update packages installed servers download
+# (Strata-<version>-<platform>: the server alone).
+# Push a tag `v*` to publish a GitHub release, or run manually for artifacts.
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Version from the tag
+        shell: bash
+        run: packaging/stamp-version.sh
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - run: npm ci && npm run build
+        working-directory: web
+      - uses: actions/upload-artifact@v4
+        with:
+          name: web-dist
+          path: web/dist
+
+  # The Ubuntu server package and the Windows installer (macOS: below).
+  build:
+    needs: web
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # glibc (Ubuntu 22.04 and later): loads the DeckLink driver, which
+          # a static binary cannot.
+          - { os: ubuntu-22.04, target: x86_64-unknown-linux-gnu, platform: linux-x86_64, pkg: linux, name: ubuntu-x64 }
+          - { os: windows-latest, target: x86_64-pc-windows-msvc, platform: windows-x86_64, pkg: windows, name: windows-x64 }
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Version from the tag
+        shell: bash
+        run: packaging/stamp-version.sh
+      - uses: actions/download-artifact@v4
+        with:
+          name: web-dist
+          path: web/dist
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: ${{ matrix.target }}
+          # A tag's cache serves no other run (caches are scoped to their ref): restore only.
+          save-if: false
+      - name: Build
+        # The tray app ships with the Windows installer (macOS builds it in macos-installer).
+        run: cargo build --release --locked -p cg-server ${{ matrix.pkg == 'windows' && '-p cg-tray' || '' }} --target ${{ matrix.target }}
+      - name: NDI runtime
+        if: matrix.pkg == 'windows'
+        shell: bash
+        run: packaging/ndi/fetch-runtime.sh windows dist/ndi
+      # Required: without it (or without SRT) a release has no streams.
+      - name: ffmpeg
+        shell: bash
+        env:
+          FFMPEG_REQUIRED: 1
+        run: packaging/ffmpeg/fetch.sh ${{ matrix.platform }} dist/ffmpeg
+      - name: Version
+        shell: bash
+        run: |
+          VERSION=$(grep -m1 '^version' Cargo.toml | cut -d'"' -f2)
+          SUFFIX=$VERSION; [ "$GITHUB_REF_TYPE" = tag ] || SUFFIX=dev-${GITHUB_SHA::7}
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+          echo "SUFFIX=$SUFFIX" >> "$GITHUB_ENV"
+      - name: Ubuntu server package
+        if: matrix.pkg == 'linux'
+        shell: bash
+        run: |
+          NAME=Strata-$SUFFIX-${{ matrix.name }}
+          mkdir -p "dist/$NAME"
+          cp "target/${{ matrix.target }}/release/strata-server" "dist/$NAME/"
+          find packaging/linux -maxdepth 1 -type f -exec cp {} "dist/$NAME/" \;
+          cp docs/INSTALL.md docs/SYNC.md assets/fonts/OFL.txt docs/outputs.example.json "dist/$NAME/"
+          # ffmpeg in bin/ next to the server.
+          if [ -f dist/ffmpeg/ffmpeg ]; then
+            mkdir -p "dist/$NAME/bin" && cp dist/ffmpeg/* "dist/$NAME/bin/"
+          fi
+          ls -la "dist/$NAME" "dist/$NAME/bin" 2>/dev/null || true
+          (cd dist && tar czf "$NAME.tar.gz" "$NAME")
+      # Update package: the server alone, what installed servers download
+      # to update themselves (named as every version looks for it).
+      - name: Update package
+        shell: bash
+        run: |
+          NAME=Strata-$SUFFIX-${{ matrix.platform }}
+          mkdir -p "dist/update/$NAME"
+          EXT=""; [ "${{ matrix.pkg }}" = windows ] && EXT=.exe
+          cp "target/${{ matrix.target }}/release/strata-server$EXT" "dist/update/$NAME/"
+          cd dist/update
+          if [ "${{ matrix.pkg }}" = windows ]; then
+            7z a "../$NAME.zip" "$NAME" >/dev/null
+          else
+            tar czf "../$NAME.tar.gz" "$NAME"
+          fi
+      - name: Windows installer (MSI)
+        if: matrix.pkg == 'windows'
+        shell: bash
+        run: |
+          dotnet tool install --global wix --version 5.0.2
+          export PATH="$PATH:$HOME/.dotnet/tools"
+          wix extension add --global WixToolset.Util.wixext/5.0.2 WixToolset.Firewall.wixext/5.0.2
+          NDI=(); [ -f dist/ndi/Processing.NDI.Lib.x64.dll ] && NDI=(-d NdiDir=dist/ndi)
+          [ -f dist/ffmpeg/ffmpeg.exe ] && NDI+=(-d FfmpegDir=dist/ffmpeg)
+          wix build packaging/windows/msi/strata.wxs -arch x64 \
+            -ext WixToolset.Util.wixext -ext WixToolset.Firewall.wixext \
+            -d Version="$VERSION" -d BinDir="target/${{ matrix.target }}/release" -d DocsDir=. "${NDI[@]}" \
+            -o "dist/Strata-$SUFFIX-${{ matrix.name }}.msi"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: strata-${{ matrix.name }}
+          path: |
+            dist/*.tar.gz
+            dist/*.zip
+            dist/*.msi
+
+  macos-installer:
+    needs: web
+    runs-on: macos-latest
+    env:
+      # Secrets cannot be tested in `if:` directly.
+      HAS_SIGNING: ${{ secrets.MACOS_CERTS_P12 != '' }}
+      HAS_NOTARY: ${{ secrets.APPLE_ID != '' }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Version from the tag
+        shell: bash
+        run: packaging/stamp-version.sh
+      - uses: actions/download-artifact@v4
+        with:
+          name: web-dist
+          path: web/dist
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-darwin,x86_64-apple-darwin
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: macos-universal
+          # A tag's cache serves no other run (caches are scoped to their ref): restore only.
+          save-if: false
+      - name: Build universal binary
+        run: |
+          for t in aarch64-apple-darwin x86_64-apple-darwin; do
+            cargo build --release --locked -p cg-server -p cg-tray --target $t
+          done
+          mkdir -p dist
+          for b in strata-server strata-tray; do
+            lipo -create -output dist/$b target/aarch64-apple-darwin/release/$b target/x86_64-apple-darwin/release/$b
+            lipo -info dist/$b
+          done
+      # Signing / notarization run only when the Apple secrets are configured.
+      - name: Import signing certificates
+        if: env.HAS_SIGNING == 'true'
+        env:
+          MACOS_CERTS_P12: ${{ secrets.MACOS_CERTS_P12 }}
+          MACOS_CERTS_PASSWORD: ${{ secrets.MACOS_CERTS_PASSWORD }}
+        run: |
+          echo "$MACOS_CERTS_P12" | base64 --decode > certs.p12
+          security create-keychain -p ci build.keychain
+          security default-keychain -s build.keychain
+          security unlock-keychain -p ci build.keychain
+          security import certs.p12 -k build.keychain -P "$MACOS_CERTS_PASSWORD" -T /usr/bin/codesign -T /usr/bin/productsign -T /usr/bin/productbuild
+          security set-key-partition-list -S apple-tool:,apple: -s -k ci build.keychain
+          rm certs.p12
+      - name: NDI runtime
+        run: packaging/ndi/fetch-runtime.sh macos dist/ndi
+      # Required as above; when Martin Riedl's site is down, the ffmpeg of
+      # an earlier release's macOS package (gh, hence the token).
+      - name: ffmpeg (universal)
+        env:
+          FFMPEG_REQUIRED: 1
+          GH_TOKEN: ${{ github.token }}
+        run: packaging/ffmpeg/fetch.sh macos dist/ffmpeg
+      - name: Build installer package
+        env:
+          NDI_DIR: dist/ndi
+          FFMPEG_DIR: dist/ffmpeg
+          MACOS_APP_IDENTITY: ${{ secrets.MACOS_APP_IDENTITY }}
+          MACOS_INSTALLER_IDENTITY: ${{ secrets.MACOS_INSTALLER_IDENTITY }}
+        run: |
+          VERSION=$(grep -m1 '^version' Cargo.toml | cut -d'"' -f2)
+          SUFFIX=$VERSION; [ "$GITHUB_REF_TYPE" = tag ] || SUFFIX=dev-${GITHUB_SHA::7}
+          packaging/macos/pkg/build.sh dist/strata-server dist/strata-tray "$VERSION" "dist/Strata-$SUFFIX-macos-universal.pkg"
+          pkgutil --payload-files dist/*.pkg | grep -E "Applications|strata-server$|bin/ffmpeg$"
+          pkgutil --payload-files dist/*.pkg | grep -q "bin/ffmpeg$" || { echo "::error::the macOS package has no ffmpeg"; exit 1; }
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+          echo "SUFFIX=$SUFFIX" >> "$GITHUB_ENV"
+      - name: Notarize
+        if: env.HAS_NOTARY == 'true'
+        env:
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
+        run: |
+          xcrun notarytool submit dist/*.pkg --apple-id "$APPLE_ID" --team-id "$APPLE_TEAM_ID" --password "$APPLE_APP_PASSWORD" --wait
+          xcrun stapler staple dist/*.pkg
+      # Disk image: keeps the custom icons on the download (after notarization).
+      - name: Disk image
+        run: packaging/macos/pkg/make-dmg.sh dist/Strata-$SUFFIX-macos-universal.pkg "$VERSION" "dist/Strata-$SUFFIX-macos-universal.dmg"
+      # Update packages (the server alone, per processor), as above.
+      - name: Update packages
+        run: |
+          for a in arm64:aarch64-apple-darwin x86_64:x86_64-apple-darwin; do
+            NAME=Strata-$SUFFIX-macos-${a%%:*}
+            mkdir -p "dist/update/$NAME"
+            cp "target/${a#*:}/release/strata-server" "dist/update/$NAME/"
+            (cd dist/update && tar czf "../$NAME.tar.gz" "$NAME")
+          done
+      - uses: actions/upload-artifact@v4
+        with:
+          name: strata-macos-installer
+          path: |
+            dist/*.dmg
+            dist/*.pkg
+            dist/*.tar.gz
+
+  # The Premiere Pro panel: macOS package and Windows MSI, both per user.
+  # Installed once: it then updates from the server.
+  premiere-panel:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    env:
+      MACOS_INSTALLER_IDENTITY: ${{ secrets.MACOS_INSTALLER_IDENTITY }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Version from the tag
+        shell: bash
+        run: packaging/stamp-version.sh
+      - name: Stage the panel
+        shell: bash
+        run: |
+          VERSION=$(grep -m1 '^version' Cargo.toml | cut -d'"' -f2)
+          SUFFIX=$VERSION; [ "$GITHUB_REF_TYPE" = tag ] || SUFFIX=dev-${GITHUB_SHA::7}
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+          echo "SUFFIX=$SUFFIX" >> "$GITHUB_ENV"
+          packaging/premiere/stage.sh dist/premiere
+      - name: macOS package
+        if: runner.os == 'macOS'
+        run: packaging/premiere/build-pkg.sh "$VERSION" "dist/Strata-Premiere-$SUFFIX-macos.pkg"
+      - name: Windows installer (MSI)
+        if: runner.os == 'Windows'
+        shell: bash
+        run: |
+          dotnet tool install --global wix --version 5.0.2
+          export PATH="$PATH:$HOME/.dotnet/tools"
+          wix extension add --global WixToolset.Util.wixext/5.0.2
+          wix build packaging/premiere/strata-premiere.wxs -ext WixToolset.Util.wixext \
+            -d Version="$VERSION" -d PanelDir=dist/premiere/io.stratagraphics.premiere -d DocsDir=. \
+            -o "dist/Strata-Premiere-$SUFFIX-windows.msi"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: strata-premiere-${{ runner.os }}
+          path: |
+            dist/*.pkg
+            dist/*.msi
+
+  publish:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [build, macos-installer, premiere-panel]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: strata-*
+          merge-multiple: true
+          path: dist
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
+          generate_release_notes: true

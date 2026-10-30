@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<installer-gui-script minSpecVersion="2">
+  <title>Strata Graphics</title>
+  <background file="background.png" alignment="bottomleft" scaling="none"/>
+  <background-darkAqua file="background.png" alignment="bottomleft" scaling="none"/>
+  <welcome file="welcome.html" mime-type="text/html"/>
+  <conclusion file="conclusion.html" mime-type="text/html"/>
+  <options customize="never" require-scripts="true" hostArchitectures="arm64,x86_64"/>
+  <domains enable_anywhere="false" enable_currentUserHome="false" enable_localSystem="true"/>
+  <volume-check>
+    <allowed-os-versions><os-version min="11.0"/></allowed-os-versions>
+  </volume-check>
+  <choices-outline>
+    <line choice="default"><line choice="com.stratagraphics.server"/></line>
+  </choices-outline>
+  <choice id="default"/>
+  <choice id="com.stratagraphics.server" visible="false">
+    <pkg-ref id="com.stratagraphics.server"/>
+  </choice>
+  <pkg-ref id="com.stratagraphics.server" version="__VERSION__" onConclusion="none">component.pkg</pkg-ref>
+</installer-gui-script>

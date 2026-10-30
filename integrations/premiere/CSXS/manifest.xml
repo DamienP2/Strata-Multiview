@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Strata panel for Adobe Premiere Pro (CEP). -->
+<ExtensionManifest Version="9.0" ExtensionBundleId="io.stratagraphics.premiere" ExtensionBundleVersion="0.9.0" ExtensionBundleName="Strata Graphics">
+  <ExtensionList>
+    <Extension Id="io.stratagraphics.premiere.panel" Version="0.9.0" />
+  </ExtensionList>
+  <ExecutionEnvironment>
+    <HostList>
+      <!-- Premiere Pro 2020 (14.0) and later -->
+      <Host Name="PPRO" Version="[14.0,99.9]" />
+    </HostList>
+    <LocaleList>
+      <Locale Code="All" />
+    </LocaleList>
+    <RequiredRuntimeList>
+      <RequiredRuntime Name="CSXS" Version="9.0" />
+    </RequiredRuntimeList>
+  </ExecutionEnvironment>
+  <DispatchInfoList>
+    <Extension Id="io.stratagraphics.premiere.panel">
+      <DispatchInfo>
+        <Resources>
+          <MainPath>./index.html</MainPath>
+          <ScriptPath>./host/premiere.jsx</ScriptPath>
+          <CEFCommandLine>
+            <!-- Node is used to save the rendered clip next to the project. -->
+            <Parameter>--enable-nodejs</Parameter>
+            <Parameter>--mixed-context</Parameter>
+          </CEFCommandLine>
+        </Resources>
+        <Lifecycle>
+          <AutoVisible>true</AutoVisible>
+        </Lifecycle>
+        <UI>
+          <Type>Panel</Type>
+          <Menu>Strata Graphics</Menu>
+          <Geometry>
+            <Size>
+              <Height>760</Height>
+              <Width>380</Width>
+            </Size>
+            <MinSize>
+              <Height>400</Height>
+              <Width>260</Width>
+            </MinSize>
+          </Geometry>
+        </UI>
+      </DispatchInfo>
+    </Extension>
+  </DispatchInfoList>
+</ExtensionManifest>

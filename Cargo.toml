@@ -1,0 +1,24 @@
+[workspace]
+resolver = "2"
+members = ["crates/cg-core", "crates/cg-render", "crates/cg-output", "crates/cg-server", "crates/cg-tray"]
+
+[workspace.package]
+version = "0.7.1"
+edition = "2021"
+license = "UNLICENSED"
+
+[workspace.dependencies]
+serde = { version = "1", features = ["derive", "rc"] }
+serde_json = { version = "1", features = ["preserve_order"] }
+thiserror = "2"
+anyhow = "1"
+tracing = "0.1"
+uuid = { version = "1", features = ["v4", "serde"] }
+cg-core = { path = "crates/cg-core" }
+cg-render = { path = "crates/cg-render" }
+cg-output = { path = "crates/cg-output" }
+
+[profile.release]
+lto = "thin"
+codegen-units = 1
+strip = true

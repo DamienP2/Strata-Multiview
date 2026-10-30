@@ -1,0 +1,419 @@
+/* Light theme (user menu: Theme › Light, or System on a light computer).
+   src/theme.ts sets data-theme="light" on <html>; the dark look stays the
+   default in styles.css and these rules only add the light overrides.
+   Pictures stay dark in both themes: the Designer stage and its
+   surroundings, the Operator monitors, output previews and video
+   thumbnails. */
+
+:root[data-theme='light'] {
+  --bg: #eef0f5;
+  --panel: #ffffff;
+  --panel-2: #f5f6fa;
+  --panel-3: #e9ecf3;
+  --line: #dde1ea;
+  --line-2: #cfd4e0;
+  --text: #161925;
+  --text-2: #4f5670;
+  --text-3: #6b7290;
+  --accent: #4f63e6;
+  --accent-2: #3a4bc4;
+  --accent-soft: rgba(79, 99, 230, 0.12);
+  --on-accent: #ffffff;
+  --live: #e11d48;
+  --live-soft: rgba(225, 29, 72, 0.12);
+  --live-btn: #e11d48;
+  /* Darker green and amber so text and dots read on white; the filled
+     tags with dark ink keep the bright ones (--pvw-fill, --warn-fill). */
+  --pvw: #15803d;
+  --warn: #b45309;
+  --key: #a16207;
+  --pvw-fill: #22c55e;
+  --warn-fill: #f5a524;
+  /* Text in a status hue on a light surface (the dark theme uses pale tints). */
+  --t-red: #c8183f;
+  --t-green: #15803d;
+  --t-blue: #0369a1;
+  --t-yellow: #a16207;
+  --t-pink: #be185d;
+  --t-violet: #6d28d9;
+  --t-orange: #c2410c;
+  color-scheme: light;
+}
+
+/* Pictures stay dark: the Designer stage and its rulers, project and
+   example covers, monitors, previews and thumbnails keep the dark tokens
+   (and what is drawn over them: badges, labels, safe areas). */
+:root[data-theme='light']
+  :is(
+    .stage-wrap,
+    .project-cover,
+    .example-cover,
+    .opx-screen,
+    .monitor-screen,
+    .media-preview,
+    .mos-preview,
+    .video-live,
+    .imp-stage,
+    .seq-frame,
+    .lib-im,
+    .opx-addpic,
+    .dc-thumb
+  ) {
+  --bg: #0b0c12;
+  --panel: #12141d;
+  --panel-2: #181b26;
+  --panel-3: #1f2331;
+  --line: #262a3a;
+  --line-2: #323750;
+  --text: #e6e8f2;
+  --text-2: #a3a8bf;
+  --text-3: #8a90ad;
+  --accent: #8fa3ff;
+  --accent-2: #bfcaff;
+  --accent-soft: rgba(143, 163, 255, 0.16);
+  --on-accent: #0b1236;
+  --live: #ff3b5c;
+  --live-soft: rgba(255, 59, 92, 0.16);
+  --pvw: #22c55e;
+  --warn: #f5a524;
+  --key: #f5c542;
+  color-scheme: dark;
+}
+
+/* The Operator's local surfaces. */
+:root[data-theme='light'] :is(.opx, .wk-op, .opx-spec, .modal.opx-addmodal, .ux1-transport, .opx-top) {
+  --op-1: #ffffff;
+  --op-2: #f3f4f8;
+  --op-3: #e6e9f0;
+  --op-4: #d6dbe6;
+}
+
+/* ---------- surfaces ---------- */
+:root[data-theme='light'] .topbar {
+  background: var(--panel);
+}
+:root[data-theme='light'] .brand .brand-f-lead,
+:root[data-theme='light'] .brand-name {
+  color: var(--text);
+}
+:root[data-theme='light'] .tabs button.on {
+  box-shadow: 0 1px 2px rgba(22, 25, 37, 0.08);
+}
+:root[data-theme='light'] :is(.op-center, .settings, .library) {
+  background: var(--bg);
+}
+:root[data-theme='light'] .login-page {
+  background: radial-gradient(ellipse at 30% 0%, #dfe3fb 0%, var(--bg) 60%);
+}
+:root[data-theme='light'] .modal-back {
+  background: rgba(22, 25, 37, 0.35);
+}
+:root[data-theme='light'] .lock-overlay {
+  background: rgba(238, 240, 245, 0.7);
+}
+
+/* Shadows: softer on light. */
+:root[data-theme='light']
+  :is(
+    .toast,
+    .popover,
+    .save-bar,
+    .menu,
+    .login-card,
+    .modal,
+    .dc-menu,
+    .history-pop,
+    .dd-list,
+    .tip,
+    .te-modal,
+    .tb-card,
+    .dc-setmenu,
+    .lock-card,
+    .sch-list,
+    .sch-pop,
+    .dr-tip,
+    .mod-menu,
+    .cv-controls,
+    .cv-ghost,
+    .te-readv
+  ) {
+  box-shadow: 0 12px 32px rgba(22, 25, 37, 0.16);
+}
+:root[data-theme='light'] :is(.project-card:hover, .user-card:hover, .logic-node, .oc-node) {
+  box-shadow: 0 6px 18px rgba(22, 25, 37, 0.1);
+}
+:root[data-theme='light'] .oc-main .oc-inspector {
+  box-shadow: -8px 0 24px rgba(22, 25, 37, 0.06);
+}
+
+/* ---------- timeline ---------- */
+:root[data-theme='light'] :is(.tl-label.group, .tl-label.prop, .tl-row.prop) {
+  background: var(--panel-2);
+}
+:root[data-theme='light'] .tl-end {
+  background: rgba(22, 25, 37, 0.06);
+}
+:root[data-theme='light'] .tl-marker.onair:not(:hover)::before {
+  border-left-color: var(--text);
+}
+:root[data-theme='light'] :is(.tl-marker.onair.moving .mk-time, .tl-marker.onair .mk-hold) {
+  background: var(--text);
+  color: var(--panel);
+}
+:root[data-theme='light'] :is(.tl-marker.moving, .tl-marker.editing) {
+  box-shadow: 0 0 0 2px var(--accent);
+}
+
+/* ---------- node canvases (Logic, Data, Outputs) ---------- */
+:root[data-theme='light'] .oc-canvas {
+  background-image: radial-gradient(#c9cfdc 1px, transparent 1px);
+}
+:root[data-theme='light'] .oc-node {
+  background: var(--panel);
+  border-color: var(--line-2);
+}
+:root[data-theme='light'] .oc-node-status {
+  border-top-color: var(--line);
+}
+:root[data-theme='light'] .oc-col {
+  color: var(--text-3);
+}
+:root[data-theme='light'] .oc-node-sub {
+  color: var(--text-3);
+}
+:root[data-theme='light'] .te-canvas {
+  background: radial-gradient(circle, #c9cfdc 1px, transparent 1px) 0 0 / 18px 18px;
+}
+
+/* ---------- small fixed tints that were made for dark ---------- */
+:root[data-theme='light'] .lock-banner {
+  background: #fdf3e2;
+  border-color: #e7c88f;
+  color: #7a4a06;
+}
+:root[data-theme='light'] .lock-card {
+  border-color: #e7c88f;
+}
+:root[data-theme='light'] :is(.project-badge, .project-channel) {
+  border-color: var(--line);
+}
+:root[data-theme='light'] .ux1-cap {
+  border-color: color-mix(in srgb, currentColor 30%, transparent);
+  background: color-mix(in srgb, currentColor 8%, transparent);
+}
+:root[data-theme='light'] .ux1-user-btn.on .avatar {
+  box-shadow:
+    0 0 0 2px var(--panel),
+    0 0 0 4px var(--accent);
+}
+:root[data-theme='light'] .opl-person {
+  box-shadow: 0 0 0 2px var(--panel);
+}
+:root[data-theme='light'] .opl-person.me {
+  box-shadow:
+    0 0 0 2px var(--panel),
+    0 0 0 3.5px var(--accent);
+}
+/* Ink on the accent (dark on the dark theme's periwinkle, white on light). */
+:root[data-theme='light'] :is(.opl-undo, .opl-undo kbd, .asr-av) {
+  color: var(--on-accent);
+}
+:root[data-theme='light'] .opl-undo kbd {
+  border-color: rgba(255, 255, 255, 0.5);
+}
+:root[data-theme='light'] .tb-preview th {
+  background: var(--accent);
+}
+:root[data-theme='light'] .opx-tile.cont:not(.waits) {
+  color: var(--warn);
+}
+:root[data-theme='light'] .mod-msg:hover {
+  background: rgba(22, 25, 37, 0.025);
+}
+:root[data-theme='light'] .dc-table .dc-swatch {
+  border-color: rgba(22, 25, 37, 0.2);
+}
+:root[data-theme='light'] .te-pair i {
+  box-shadow: inset 0 0 0 1px rgba(22, 25, 37, 0.15);
+}
+:root[data-theme='light'] .pick-th {
+  box-shadow: inset 0 0 0 1px rgba(22, 25, 37, 0.1);
+}
+
+/* Pale red text → deep red. */
+:root[data-theme='light']
+  :is(
+    .project-menu .danger,
+    .media-actions .icon-btn.danger:hover,
+    .upload-row.error,
+    .chip.live,
+    .badge.role-admin,
+    .m-delete,
+    .modal.dialog.danger .dialog-icon,
+    .exclusion span,
+    .fit-state.bad,
+    .opx-fit.bad,
+    .wk-msg.error,
+    .imp-error,
+    .imp-chip.ignored,
+    .data-table td.dr-bad,
+    .mod-tag.bad,
+    .ux1-mi.danger,
+    .ux1-mi.danger svg,
+    .ux1-transport .ux1-clear,
+    .tl-erase:hover,
+    .jt-val.t-boolean,
+    .jt-val.t-null
+  ) {
+  color: var(--t-red);
+}
+:root[data-theme='light'] .user-card.role-admin {
+  --role: var(--t-red);
+}
+/* Pale green → deep green. */
+:root[data-theme='light'] :is(.dc-type.t-boolean, .media-kind.audio, .m-post, .imp-chip.ok, .btn1-chip.on, .btn1-state.on, .mod-tag.ok, .opx-vt-src, .wk-msg.ok, .jt-val.t-string) {
+  color: var(--t-green);
+}
+/* Pale blue → deep blue. */
+:root[data-theme='light'] :is(.media-kind.video, .m-get, .pp-op.on, .wk-msg.info, .imp-badge.b-ps, .ods-manual-title, .ods-left, .wk-exposed, .wk-chip.op.on, .dc-type.t-image) {
+  color: var(--t-blue);
+}
+/* Pale yellow / amber → deep amber. */
+:root[data-theme='light']
+  :is(
+    .media-kind.font,
+    .m-put,
+    .fit-state.warn,
+    .opx-fit,
+    .wk-msg.warn,
+    .imp-chip.partial,
+    .soc-amount,
+    .opx-vt-src.hand,
+    .opx-trig-k,
+    .ods-icon,
+    .opx-ds-badge,
+    .te-chip.data,
+    .tb-build,
+    .tb-card h4 > svg,
+    .opx-fed-icon,
+    .jt-val.t-number,
+    .imp-badge.b-svg
+  ) {
+  color: var(--t-yellow);
+}
+:root[data-theme='light'] :is(.dc-armed, .dc-addfilter, .dc-step-n, .dc-type.t-color) {
+  color: var(--t-pink);
+}
+:root[data-theme='light'] .imp-badge.b-ae {
+  background: #ede5ff;
+  color: var(--t-violet);
+}
+:root[data-theme='light'] .imp-badge.b-ps {
+  background: #e0f0ff;
+}
+:root[data-theme='light'] .imp-badge.b-svg {
+  background: #fdf0d8;
+}
+:root[data-theme='light'] .imp-thumb {
+  background: linear-gradient(135deg, #dfe4ff, #c9d0f5);
+}
+
+/* As-run and Operator action chips: light tints. */
+:root[data-theme='light'] :is(.opl-act.update, .asr-a-update) {
+  background: #ebe5ff;
+  color: #5b3fc4;
+}
+:root[data-theme='light'] .asr-a-auto {
+  background: #dcf5e6;
+  color: var(--t-green);
+}
+:root[data-theme='light'] .asr-a-clear {
+  background: #fde3e8;
+  color: var(--t-red);
+}
+:root[data-theme='light'] :is(.asr-a-row, .asr-a-widget) {
+  background: #e0eefc;
+  color: var(--t-blue);
+}
+
+/* Filled tags and buttons with dark ink: the bright hues. */
+:root[data-theme='light'] :is(.opx-sq.green, .opx-tally.green, .ods-badge.next, .opx-btn.green, .opx-cue, .ods-badge.chosen) {
+  background: var(--pvw-fill);
+}
+:root[data-theme='light']
+  :is(
+    .tally.next,
+    .btn.warn,
+    .opx-sq.amber,
+    .opx-tally.amber,
+    .opx-btn.amber,
+    [data-fit]::after,
+    .imp-mk.pause,
+    .opl-act.continue,
+    .asr-a-continue,
+    .opx-tile.cont.waits
+  ) {
+  background: var(--warn-fill);
+}
+:root[data-theme='light'] .btn.warn {
+  border-color: var(--warn-fill);
+}
+:root[data-theme='light'] .opx-tile.cont.waits {
+  border-color: var(--warn-fill);
+}
+
+/* Neutral square buttons of the Operator: dark icons. */
+:root[data-theme='light'] :is(.opx-sq:not(.red, .amber, .green), .opx-hover button:not(.violet, .red), .cc.operator .cc-sq:not(.red, .violet, .main)) {
+  color: var(--text-2);
+}
+:root[data-theme='light'] .opx-sq:not(.red, .amber, .green):hover:not(:disabled) {
+  filter: brightness(0.94);
+}
+/* Update: Fade | Cut while not ready. */
+:root[data-theme='light'] .ux1-transport .opx-upd:not(.ready) .opx-upd-mode {
+  background: rgba(22, 25, 37, 0.07);
+}
+:root[data-theme='light'] .ux1-transport .opx-upd:not(.ready) .opx-upd-mode button:not(.on) {
+  color: var(--text-2);
+}
+:root[data-theme='light'] .ux1-transport .opx-upd:not(.ready) .opx-upd-mode button.on {
+  background: var(--panel);
+  box-shadow: 0 1px 2px rgba(22, 25, 37, 0.12);
+}
+
+/* Server lost. */
+:root[data-theme='light'] .ux1-pill.lost {
+  color: var(--t-red);
+  background: rgba(225, 29, 72, 0.1);
+}
+
+/* The Strata mark (white by its own style). */
+:root[data-theme='light'] svg.logo {
+  color: var(--text) !important;
+}
+
+/* Outputs: the kind colours as text and icons, deepened. */
+:root[data-theme='light'] :is(.oc-node-head small, .oc-ins-head small, .oc-icon) {
+  color: color-mix(in srgb, var(--k) 62%, #000);
+}
+:root[data-theme='light'] .oc-node.program {
+  --k: var(--accent) !important;
+}
+
+/* Logic wires being armed. */
+:root[data-theme='light'] .logic-canvas.arming .wire.data:hover {
+  stroke: var(--text);
+}
+
+/* Colours picked per zone or per kind, as icons or text on light: deepened. */
+:root[data-theme='light'] .tpl-zones button svg {
+  color: color-mix(in srgb, var(--z) 65%, #000);
+}
+:root[data-theme='light'] :is(.ln-head > svg, .logic-palette button > svg, .logic-palette .dc-pal-grid button.on) {
+  color: color-mix(in srgb, var(--kind) 72%, #000);
+}
+
+/* Orange (pause) text. */
+:root[data-theme='light'] :is(.c-pause, .btn.mk-pause svg, .zone-card.paused .air-phase, .tally.paused, .wc-row.paused .wc-name::before, .dc-type.t-number) {
+  color: var(--t-orange);
+}

@@ -1,0 +1,73 @@
+[package]
+name = "cg-server"
+version.workspace = true
+edition.workspace = true
+# examples/ holds the example projects (JSON), not cargo examples.
+autoexamples = false
+
+[[bin]]
+name = "strata-server"
+path = "src/main.rs"
+
+[features]
+default = ["decklink"]
+# DeckLink SDI outputs and inputs (see crates/cg-output/build.rs: left out,
+# with a build warning, where the shim cannot be built, e.g. static musl).
+decklink = ["cg-output/decklink"]
+
+[dependencies]
+cg-core.workspace = true
+cg-render.workspace = true
+cg-output.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+anyhow.workspace = true
+tracing.workspace = true
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "sync", "time", "fs", "signal", "net"] }
+axum = { version = "0.8", features = ["ws"] }
+tower-http = { version = "0.6", features = ["fs", "cors", "trace"] }
+clap = { version = "4", features = ["derive", "env"] }
+futures-util = "0.3"
+rust-embed = { version = "8", features = ["mime-guess", "include-exclude"] }
+directories = "6"
+if-addrs = "0.15"
+gethostname = "1"
+jiff = "0.2"
+argon2 = "0.5"
+uuid.workspace = true
+rpassword = "7"
+# Over-the-air updates: GitHub releases client and package extraction.
+ureq = { version = "3", default-features = false, features = ["rustls", "platform-verifier"] }
+sha2 = "0.10"
+# Sealed copies of the API keys (shown again to an admin).
+ring = "0.17"
+flate2 = "1"
+tar = "0.4"
+roxmltree = "0.20"
+# Data source rules: text patterns (already in the build, through tracing).
+regex-automata = "0.4"
+base64 = "0.22"
+tiny-skia = "0.11"
+sysinfo = { version = "0.37", default-features = false, features = ["system", "disk"] }
+zip = { version = "9", default-features = false, features = ["deflate-flate2"] }
+# Import (src/import): pictures of a PSD saved as PNG, SVG parts rasterised.
+image = { version = "0.25", default-features = false, features = ["png", "jpeg"] }
+resvg = { version = "0.45", default-features = false }
+# Illustrator files (.ai, PDF inside) uploaded as SVG pictures.
+hayro-svg = "0.8"
+
+[target.'cfg(unix)'.dependencies]
+# Thread priorities of the playout (src/rt.rs).
+libc = "0.2"
+
+[target.'cfg(windows)'.dependencies]
+windows-service = "0.8"
+windows-sys = { version = "0.61", features = ["Win32_System_Threading"] }
+
+[build-dependencies]
+# Gzipped copies of the web app, made at build time (build.rs).
+flate2 = "1"
+
+[target.'cfg(windows)'.build-dependencies]
+winresource = "0.1"

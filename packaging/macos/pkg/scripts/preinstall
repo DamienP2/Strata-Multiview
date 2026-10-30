@@ -1,0 +1,31 @@
+#!/bin/sh
+# Upgrade: stop the running daemon and menu bar app; data is kept.
+launchctl bootout system/com.stratagraphics.server 2>/dev/null || true
+USER_ID=$(stat -f %u /dev/console 2>/dev/null || echo 0)
+if [ "$USER_ID" != "0" ]; then
+  launchctl bootout "gui/$USER_ID/com.stratagraphics.tray" 2>/dev/null || true
+fi
+pkill -x strata-tray 2>/dev/null || true
+
+# An install from before the rename (Pulse CG): stop it, move its data and
+# logs to their new place, remove the rest.
+launchctl bootout system/com.pulsecg.server 2>/dev/null || true
+if [ "$USER_ID" != "0" ]; then
+  launchctl bootout "gui/$USER_ID/com.pulsecg.tray" 2>/dev/null || true
+fi
+pkill -x pulse-cg-tray 2>/dev/null || true
+OLD_DATA="/Library/Application Support/PulseCG"
+NEW_DATA="/Library/Application Support/Strata Graphics"
+if [ -d "$OLD_DATA" ] && [ ! -e "$NEW_DATA" ]; then mv "$OLD_DATA" "$NEW_DATA"; fi
+if [ -d /Library/Logs/PulseCG ] && [ ! -e "/Library/Logs/Strata Graphics" ]; then
+  mv /Library/Logs/PulseCG "/Library/Logs/Strata Graphics"
+  mv "/Library/Logs/Strata Graphics/cg-server.log" "/Library/Logs/Strata Graphics/strata-server.log" 2>/dev/null || true
+fi
+rm -f /Library/LaunchDaemons/com.pulsecg.server.plist /Library/LaunchAgents/com.pulsecg.tray.plist
+/usr/libexec/ApplicationFirewall/socketfilterfw --remove /usr/local/pulse-cg/cg-server >/dev/null 2>&1 || true
+rm -f /usr/local/bin/cg-server
+rm -rf /usr/local/pulse-cg
+pkgutil --forget com.pulsecg.server >/dev/null 2>&1 || true
+# Former app folders: /Applications/Pulse CG(.app), then /Applications/Strata.
+rm -rf "/Applications/Pulse CG.app" "/Applications/Pulse CG" "/Applications/Strata"
+exit 0

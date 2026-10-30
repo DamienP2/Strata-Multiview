@@ -1,0 +1,33 @@
+#!/bin/sh
+# Runs as root after the payload is copied.
+set -e
+PREFIX=/usr/local/strata
+mkdir -p /usr/local/bin
+ln -sf "$PREFIX/strata-server" /usr/local/bin/strata-server
+# Let other machines reach the web UI and NDI outputs through the macOS
+# firewall. Done here, before the service starts: it signs the program in
+# place, which must never happen to a running one.
+FW=/usr/libexec/ApplicationFirewall/socketfilterfw
+if "$FW" --getglobalstate 2>/dev/null | grep -q "State = [12]"; then
+  "$FW" --add "$PREFIX/strata-server" >/dev/null 2>&1 || true
+  "$FW" --unblockapp "$PREFIX/strata-server" >/dev/null 2>&1 || true
+fi
+"$PREFIX/strata-server" service install
+
+# Let administrators start the server from the menu bar without a password
+# prompt (stop and restart go through the server itself). Only this exact
+# command, and only if sudo accepts the file.
+RULE=/etc/sudoers.d/strata-graphics
+TMP=$(mktemp)
+echo "%admin ALL=(root) NOPASSWD: $PREFIX/strata-server service start" > "$TMP"
+if visudo -cf "$TMP" >/dev/null 2>&1; then
+  install -m 0440 -o root -g wheel "$TMP" "$RULE"
+fi
+rm -f "$TMP"
+
+# Start the menu bar app for the logged-in user (it also starts at login).
+USER_ID=$(stat -f %u /dev/console 2>/dev/null || echo 0)
+if [ "$USER_ID" != "0" ]; then
+  launchctl bootstrap "gui/$USER_ID" /Library/LaunchAgents/com.stratagraphics.tray.plist 2>/dev/null || true
+fi
+exit 0

@@ -1,0 +1,7401 @@
+{
+ "meta": {
+  "id": "ex-02-info-continu",
+  "name": "Info en continu 24/7",
+  "category": "Info",
+  "tags": [
+   "Bandeau permanent",
+   "Alerte info",
+   "Direct",
+   "Rubriques"
+  ],
+  "description": "L’antenne d’une chaîne d’info en continu : bandeau permanent (rubrique, titre, heure et fil info), ALERTE INFO qui clignote, logo, direct avec lieu, titres de rubrique et synthés. Graphite et jaune signal, Barlow Condensed. Bandeau, alerte, logo et direct ont leur version 9:16 pour les réseaux sociaux.", "summary": "Bandeau permanent, alerte info et fil d’une chaîne d’info.",
+  "en": {
+   "name": "24/7 news channel",
+   "description": "A rolling news channel on air: permanent strap (section, headline, clock and news wire), flashing NEWS ALERT, logo, live tag, section titles and lower thirds. Strap, alert, logo and live tag also exist in 9:16 for social networks.", "summary": "Permanent strap, breaking alert and news ticker for a news channel."
+  },
+  "cover": "bandeau"
+ },
+ "project": {
+  "id": "ex-02-info-continu",
+  "name": "Info en continu 24/7",
+  "description": "L’antenne d’une chaîne d’info en continu : bandeau permanent (rubrique, titre, heure et fil info), ALERTE INFO qui clignote, logo, direct avec lieu, titres de rubrique et synthés. Graphite et jaune signal, Barlow Condensed. Bandeau, alerte, logo et direct ont leur version 9:16 pour les réseaux sociaux.",
+  "width": 1920,
+  "height": 1080,
+  "frameRate": {
+   "num": 50,
+   "den": 1
+  },
+  "templates": [
+   {
+    "id": "bandeau",
+    "name": "Bandeau permanent",
+    "duration": 70.0,
+    "markers": [
+     {
+      "id": "bandeau-air",
+      "frame": 40.0,
+      "name": "On air",
+      "kind": "out"
+     }
+    ],
+    "fields": [
+     {
+      "key": "section",
+      "label": "Rubrique",
+      "kind": "text",
+      "default": "POLITIQUE"
+     },
+     {
+      "key": "headline",
+      "label": "Titre",
+      "kind": "text",
+      "default": "Budget 2027 : le gouvernement engage sa responsabilité à l’Assemblée"
+     },
+     {
+      "key": "wire",
+      "label": "Fil info",
+      "kind": "multiline",
+      "default": "Grève SNCF : trafic perturbé jeudi sur les lignes TER\nLe prix de l’électricité baissera de 4 % au 1er février\nLigue des champions : Brest affronte le Real Madrid mardi\nIntempéries : 4 000 foyers privés d’électricité en Bretagne"
+     }
+    ],
+    "layers": [
+     {
+      "id": "bandeau-1",
+      "name": "Bandeau",
+      "parent": null,
+      "type": "group",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 856.0,
+       "width": 1920.0,
+       "height": 188.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "clip": false,
+      "overrides": {
+       "vertical": {
+        "props": {
+         "y": 1478.0,
+         "width": 1080.0
+        }
+       }
+      }
+     },
+     {
+      "id": "bandeau-2",
+      "name": "Rubrique fond",
+      "parent": "bandeau-1",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 96.0,
+       "y": 0.0,
+       "width": 200.0,
+       "height": 38.0,
+       "fill": [
+        1.0,
+        0.8392,
+        0.0392,
+        1.0
+       ]
+      },
+      "tracks": {
+       "cropRight": [
+        {
+         "frame": 0.0,
+         "value": 1.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 8.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.16,
+          "y1": 1.0,
+          "x2": 0.3,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 22.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 48.0,
+         "value": 0.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.7,
+          "y1": 0.0,
+          "x2": 0.84,
+          "y2": 0.0
+         }
+        },
+        {
+         "frame": 58.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "overrides": {
+       "vertical": {
+        "props": {
+         "x": 60.0
+        }
+       }
+      }
+     },
+     {
+      "id": "bandeau-3",
+      "name": "Rubrique",
+      "parent": "bandeau-1",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 112.0,
+       "y": 0.0,
+       "width": 600.0,
+       "height": 38.0,
+       "fill": [
+        0.051,
+        0.0549,
+        0.0667,
+        1.0
+       ],
+       "fontSize": 25.0,
+       "letterSpacing": 1.5
+      },
+      "tracks": {
+       "opacity": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 14.0,
+         "value": 0.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.16,
+          "y1": 1.0,
+          "x2": 0.3,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 24.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 48.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.7,
+          "y1": 0.0,
+          "x2": 0.84,
+          "y2": 0.0
+         }
+        },
+        {
+         "frame": 54.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "text": "{{section}}",
+      "fontFamily": "Barlow Condensed",
+      "fontWeight": 700,
+      "align": "left",
+      "verticalAlign": "middle",
+      "uppercase": true,
+      "lang": "fr",
+      "overrides": {
+       "vertical": {
+        "props": {
+         "x": 76.0
+        }
+       }
+      }
+     },
+     {
+      "id": "bandeau-4",
+      "name": "Titre fond",
+      "parent": "bandeau-1",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 96.0,
+       "y": 38.0,
+       "width": 1560.0,
+       "height": 96.0,
+       "fill": [
+        0.0863,
+        0.0941,
+        0.1137,
+        0.96
+       ]
+      },
+      "tracks": {
+       "cropRight": [
+        {
+         "frame": 0.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.16,
+          "y1": 1.0,
+          "x2": 0.3,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 20.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 44.0,
+         "value": 0.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.7,
+          "y1": 0.0,
+          "x2": 0.84,
+          "y2": 0.0
+         }
+        },
+        {
+         "frame": 56.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "fillStyle": {
+       "kind": "linear",
+       "color2": "#22252cf5",
+       "angle": 180.0
+      },
+      "overrides": {
+       "vertical": {
+        "props": {
+         "x": 60.0,
+         "width": 808.0,
+         "height": 124.0
+        }
+       }
+      }
+     },
+     {
+      "id": "bandeau-5",
+      "name": "Filet",
+      "parent": "bandeau-1",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 96.0,
+       "y": 38.0,
+       "width": 8.0,
+       "height": 96.0,
+       "fill": [
+        1.0,
+        0.8392,
+        0.0392,
+        1.0
+       ]
+      },
+      "tracks": {},
+      "bindings": {},
+      "overrides": {
+       "vertical": {
+        "props": {
+         "x": 60.0,
+         "height": 124.0
+        }
+       }
+      }
+     },
+     {
+      "id": "bandeau-6",
+      "name": "Titre",
+      "parent": "bandeau-1",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 130.0,
+       "y": 38.0,
+       "width": 1500.0,
+       "height": 96.0,
+       "fill": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+       ],
+       "fontSize": 52.0,
+       "letterSpacing": 0.2
+      },
+      "tracks": {
+       "opacity": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 10.0,
+         "value": 0.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.16,
+          "y1": 1.0,
+          "x2": 0.3,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 24.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 40.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.7,
+          "y1": 0.0,
+          "x2": 0.84,
+          "y2": 0.0
+         }
+        },
+        {
+         "frame": 48.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ],
+       "y": [
+        {
+         "frame": 0.0,
+         "value": 58.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 10.0,
+         "value": 58.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.16,
+          "y1": 1.0,
+          "x2": 0.3,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 30.0,
+         "value": 38.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 40.0,
+         "value": 38.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.7,
+          "y1": 0.0,
+          "x2": 0.84,
+          "y2": 0.0
+         }
+        },
+        {
+         "frame": 48.0,
+         "value": 58.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "text": "{{headline}}",
+      "fontFamily": "Barlow Condensed",
+      "fontWeight": 600,
+      "align": "left",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "lang": "fr",
+      "overrides": {
+       "vertical": {
+        "props": {
+         "x": 92.0,
+         "width": 752.0,
+         "height": 124.0,
+         "fontSize": 44.0
+        }
+       }
+      },
+      "wrap": true,
+      "lineHeight": 1.0,
+      "maxLines": 2
+     },
+     {
+      "id": "bandeau-7",
+      "name": "Heure fond",
+      "parent": "bandeau-1",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 1664.0,
+       "y": 38.0,
+       "width": 160.0,
+       "height": 96.0,
+       "fill": [
+        1.0,
+        0.8392,
+        0.0392,
+        1.0
+       ]
+      },
+      "tracks": {
+       "cropBottom": [
+        {
+         "frame": 0.0,
+         "value": 1.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 4.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.16,
+          "y1": 1.0,
+          "x2": 0.3,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 20.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 44.0,
+         "value": 0.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.7,
+          "y1": 0.0,
+          "x2": 0.84,
+          "y2": 0.0
+         }
+        },
+        {
+         "frame": 54.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "overrides": {
+       "vertical": {
+        "props": {
+         "x": 876.0,
+         "width": 144.0,
+         "height": 124.0
+        }
+       }
+      }
+     },
+     {
+      "id": "bandeau-8",
+      "name": "Heure",
+      "parent": "bandeau-1",
+      "type": "clock",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 1664.0,
+       "y": 38.0,
+       "width": 160.0,
+       "height": 96.0,
+       "fill": [
+        0.051,
+        0.0549,
+        0.0667,
+        1.0
+       ],
+       "fontSize": 50.0
+      },
+      "tracks": {
+       "opacity": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 12.0,
+         "value": 0.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.16,
+          "y1": 1.0,
+          "x2": 0.3,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 22.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 44.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.7,
+          "y1": 0.0,
+          "x2": 0.84,
+          "y2": 0.0
+         }
+        },
+        {
+         "frame": 50.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "mode": "time",
+      "format": "HH:mm",
+      "timezone": "Europe/Paris",
+      "target": "",
+      "timerMode": "clock",
+      "lang": "fr-FR",
+      "fontFamily": "Barlow Condensed",
+      "fontWeight": 800,
+      "align": "center",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "overrides": {
+       "vertical": {
+        "props": {
+         "x": 876.0,
+         "width": 144.0,
+         "height": 124.0
+        }
+       }
+      }
+     },
+     {
+      "id": "bandeau-9",
+      "name": "Fil info",
+      "parent": "bandeau-1",
+      "type": "group",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 96.0,
+       "y": 140.0,
+       "width": 1728.0,
+       "height": 46.0
+      },
+      "tracks": {
+       "cropRight": [
+        {
+         "frame": 0.0,
+         "value": 1.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 14.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.16,
+          "y1": 1.0,
+          "x2": 0.3,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 36.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 40.0,
+         "value": 0.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.7,
+          "y1": 0.0,
+          "x2": 0.84,
+          "y2": 0.0
+         }
+        },
+        {
+         "frame": 50.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "clip": true,
+      "overrides": {
+       "vertical": {
+        "props": {
+         "x": 60.0,
+         "y": 170.0,
+         "width": 960.0
+        }
+       }
+      }
+     },
+     {
+      "id": "bandeau-10",
+      "name": "Fil fond",
+      "parent": "bandeau-9",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 1728.0,
+       "height": 46.0,
+       "fill": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+       ]
+      },
+      "tracks": {},
+      "bindings": {},
+      "overrides": {
+       "vertical": {
+        "props": {
+         "width": 960.0
+        }
+       }
+      }
+     },
+     {
+      "id": "bandeau-11",
+      "name": "Fil étiquette",
+      "parent": "bandeau-9",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 160.0,
+       "height": 46.0,
+       "fill": [
+        0.051,
+        0.0549,
+        0.0667,
+        1.0
+       ]
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "bandeau-12",
+      "name": "FIL INFO",
+      "parent": "bandeau-9",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 160.0,
+       "height": 46.0,
+       "fill": [
+        1.0,
+        0.8392,
+        0.0392,
+        1.0
+       ],
+       "fontSize": 24.0,
+       "letterSpacing": 1.5
+      },
+      "tracks": {},
+      "bindings": {},
+      "text": "FIL INFO",
+      "fontFamily": "Barlow Condensed",
+      "fontWeight": 800,
+      "align": "center",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "lang": "fr"
+     },
+     {
+      "id": "bandeau-13",
+      "name": "Défilant",
+      "parent": "bandeau-9",
+      "type": "ticker",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 176.0,
+       "y": 0.0,
+       "width": 1552.0,
+       "height": 46.0,
+       "fill": [
+        0.051,
+        0.0549,
+        0.0667,
+        1.0
+       ],
+       "fontSize": 25.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "text": "{{wire}}",
+      "separator": "   ",
+      "speed": 110.0,
+      "mode": "crawl",
+      "fontFamily": "Inter",
+      "fontWeight": 600,
+      "align": "left",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "sepType": "symbol",
+      "startFull": true,
+      "sepSymbol": "■",
+      "sepColor": "#ffd60a",
+      "spacing": 26.0,
+      "overrides": {
+       "vertical": {
+        "props": {
+         "width": 784.0
+        }
+       }
+      }
+     }
+    ],
+    "zone": "bandeau",
+    "revision": 1,
+    "markerModel": 2,
+    "logic": {
+     "nodes": [
+      {
+       "id": "n0m",
+       "type": "textSize",
+       "layer": "bandeau-3",
+       "metric": "width",
+       "x": 40,
+       "y": 60
+      },
+      {
+       "id": "n0p",
+       "type": "constant",
+       "value": 32,
+       "x": 40,
+       "y": 160
+      },
+      {
+       "id": "n0s",
+       "type": "math",
+       "op": "add",
+       "x": 300,
+       "y": 100
+      },
+      {
+       "id": "n0c",
+       "type": "constant",
+       "value": 120,
+       "x": 300,
+       "y": 220
+      },
+      {
+       "id": "n0x",
+       "type": "math",
+       "op": "max",
+       "x": 560,
+       "y": 120
+      },
+      {
+       "id": "n0t0",
+       "type": "target",
+       "layer": "bandeau-2",
+       "prop": "width",
+       "mode": "set",
+       "x": 820,
+       "y": 60
+      }
+     ],
+     "edges": [
+      {
+       "from": "n0m",
+       "to": "n0s",
+       "port": "a"
+      },
+      {
+       "from": "n0p",
+       "to": "n0s",
+       "port": "b"
+      },
+      {
+       "from": "n0s",
+       "to": "n0x",
+       "port": "a"
+      },
+      {
+       "from": "n0c",
+       "to": "n0x",
+       "port": "b"
+      },
+      {
+       "from": "n0x",
+       "to": "n0t0",
+       "port": "in"
+      }
+     ]
+    }
+   },
+   {
+    "id": "alerte",
+    "name": "Alerte info",
+    "duration": 110.0,
+    "markers": [
+     {
+      "id": "alerte-air",
+      "frame": 80.0,
+      "name": "On air",
+      "kind": "out"
+     }
+    ],
+    "fields": [
+     {
+      "key": "headline",
+      "label": "Titre",
+      "kind": "text",
+      "default": "Explosion dans une usine chimique près de Rouen, un périmètre de sécurité mis en place"
+     },
+     {
+      "key": "time",
+      "label": "Heure",
+      "kind": "text",
+      "default": "14:32"
+     }
+    ],
+    "layers": [
+     {
+      "id": "alerte-1",
+      "name": "Alerte",
+      "parent": null,
+      "type": "group",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 676.0,
+       "width": 1920.0,
+       "height": 150.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "clip": false,
+      "overrides": {
+       "vertical": {
+        "props": {
+         "y": 1170.0,
+         "width": 1080.0
+        }
+       }
+      }
+     },
+     {
+      "id": "alerte-2",
+      "name": "Rouge",
+      "parent": "alerte-1",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 1824.0,
+       "height": 64.0,
+       "fill": [
+        1.0,
+        0.1647,
+        0.1647,
+        1.0
+       ]
+      },
+      "tracks": {
+       "cropRight": [
+        {
+         "frame": 0.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.16,
+          "y1": 1.0,
+          "x2": 0.3,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 18.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 86.0,
+         "value": 0.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.7,
+          "y1": 0.0,
+          "x2": 0.84,
+          "y2": 0.0
+         }
+        },
+        {
+         "frame": 98.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ],
+       "fill": [
+        {
+         "frame": 0.0,
+         "value": [
+          1.0,
+          0.1647,
+          0.1647,
+          1.0
+         ],
+         "easing": {
+          "type": "bezier",
+          "x1": 0.16,
+          "y1": 1.0,
+          "x2": 0.3,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 24.0,
+         "value": [
+          1.0,
+          0.1647,
+          0.1647,
+          1.0
+         ],
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 30.0,
+         "value": [
+          0.7216,
+          0.0588,
+          0.0588,
+          1.0
+         ],
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 36.0,
+         "value": [
+          1.0,
+          0.1647,
+          0.1647,
+          1.0
+         ],
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 42.0,
+         "value": [
+          0.7216,
+          0.0588,
+          0.0588,
+          1.0
+         ],
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 48.0,
+         "value": [
+          1.0,
+          0.1647,
+          0.1647,
+          1.0
+         ],
+         "easing": {
+          "type": "hold"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "overrides": {
+       "vertical": {
+        "props": {
+         "width": 1020.0
+        }
+       }
+      }
+     },
+     {
+      "id": "alerte-3",
+      "name": "Éclair",
+      "parent": "alerte-1",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 40.0,
+       "height": 64.0,
+       "fill": [
+        1.0,
+        1.0,
+        1.0,
+        0.85
+       ]
+      },
+      "tracks": {
+       "x": [
+        {
+         "frame": 0.0,
+         "value": -60.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.16,
+          "y1": 1.0,
+          "x2": 0.3,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 22.0,
+         "value": 1900.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ],
+       "opacity": [
+        {
+         "frame": 0.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 20.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 24.0,
+         "value": 0.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.16,
+          "y1": 1.0,
+          "x2": 0.3,
+          "y2": 1.0
+         }
+        }
+       ]
+      },
+      "bindings": {}
+     },
+     {
+      "id": "alerte-4",
+      "name": "ALERTE INFO",
+      "parent": "alerte-1",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 140.0,
+       "y": 0.0,
+       "width": 600.0,
+       "height": 64.0,
+       "fill": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+       ],
+       "fontSize": 44.0,
+       "letterSpacing": 3.0
+      },
+      "tracks": {
+       "opacity": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 8.0,
+         "value": 0.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.16,
+          "y1": 1.0,
+          "x2": 0.3,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 16.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 86.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.7,
+          "y1": 0.0,
+          "x2": 0.84,
+          "y2": 0.0
+         }
+        },
+        {
+         "frame": 92.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "text": "ALERTE INFO",
+      "fontFamily": "Barlow Condensed",
+      "fontWeight": 800,
+      "align": "left",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "lang": "fr",
+      "overrides": {
+       "vertical": {
+        "props": {
+         "x": 104.0
+        }
+       }
+      }
+     },
+     {
+      "id": "alerte-5",
+      "name": "Point",
+      "parent": "alerte-1",
+      "type": "ellipse",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 96.0,
+       "y": 20.0,
+       "width": 24.0,
+       "height": 24.0,
+       "fill": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+       ]
+      },
+      "tracks": {
+       "opacity": [
+        {
+         "frame": 0.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 20.0,
+         "value": 0.2,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 40.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 60.0,
+         "value": 0.2,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 80.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 100.0,
+         "value": 0.2,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 120.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 140.0,
+         "value": 0.2,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 160.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 180.0,
+         "value": 0.2,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 200.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 220.0,
+         "value": 0.2,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 240.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 260.0,
+         "value": 0.2,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 280.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 300.0,
+         "value": 0.2,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 320.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 340.0,
+         "value": 0.2,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 360.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 380.0,
+         "value": 0.2,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 400.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 420.0,
+         "value": 0.2,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 440.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 460.0,
+         "value": 0.2,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 480.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 500.0,
+         "value": 0.2,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 520.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 540.0,
+         "value": 0.2,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 560.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 580.0,
+         "value": 0.2,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 600.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 620.0,
+         "value": 0.2,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 640.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 660.0,
+         "value": 0.2,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 680.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 700.0,
+         "value": 0.2,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 720.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 740.0,
+         "value": 0.2,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 760.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 780.0,
+         "value": 0.2,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 800.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 820.0,
+         "value": 0.2,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 840.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 860.0,
+         "value": 0.2,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 880.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 900.0,
+         "value": 0.2,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 920.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 940.0,
+         "value": 0.2,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 960.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 980.0,
+         "value": 0.2,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 1000.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 1020.0,
+         "value": 0.2,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 1040.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 1060.0,
+         "value": 0.2,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 1080.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 1100.0,
+         "value": 0.2,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 1120.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 1140.0,
+         "value": 0.2,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 1160.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 1180.0,
+         "value": 0.2,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 1200.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 1220.0,
+         "value": 0.2,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 1240.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 1260.0,
+         "value": 0.2,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 1280.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 1300.0,
+         "value": 0.2,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 1320.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 1340.0,
+         "value": 0.2,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 1360.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 1380.0,
+         "value": 0.2,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 1400.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 1420.0,
+         "value": 0.2,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 1440.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 1460.0,
+         "value": 0.2,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 1480.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 1500.0,
+         "value": 0.2,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 1520.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 1540.0,
+         "value": 0.2,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 1560.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 1580.0,
+         "value": 0.2,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 1600.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 1620.0,
+         "value": 0.2,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 1640.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 1660.0,
+         "value": 0.2,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 1680.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 1700.0,
+         "value": 0.2,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 1720.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 1740.0,
+         "value": 0.2,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 1760.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 1780.0,
+         "value": 0.2,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 1800.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 1820.0,
+         "value": 0.2,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 1840.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 1860.0,
+         "value": 0.2,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 1880.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 1900.0,
+         "value": 0.2,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 1920.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 1940.0,
+         "value": 0.2,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 1960.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 1980.0,
+         "value": 0.2,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 2000.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 2020.0,
+         "value": 0.2,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 2040.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 2060.0,
+         "value": 0.2,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 2080.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 2100.0,
+         "value": 0.2,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 2120.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 2140.0,
+         "value": 0.2,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 2160.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 2180.0,
+         "value": 0.2,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 2200.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 2220.0,
+         "value": 0.2,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 2240.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 2260.0,
+         "value": 0.2,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 2280.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 2300.0,
+         "value": 0.2,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 2320.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 2340.0,
+         "value": 0.2,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 2360.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 2380.0,
+         "value": 0.2,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 2400.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 2420.0,
+         "value": 0.2,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 2440.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 2460.0,
+         "value": 0.2,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 2480.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 2500.0,
+         "value": 0.2,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 2520.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 2540.0,
+         "value": 0.2,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 2560.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 2580.0,
+         "value": 0.2,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 2600.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 2620.0,
+         "value": 0.2,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 2640.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 2660.0,
+         "value": 0.2,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 2680.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 2700.0,
+         "value": 0.2,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 2720.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 2740.0,
+         "value": 0.2,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 2760.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 2780.0,
+         "value": 0.2,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 2800.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 2820.0,
+         "value": 0.2,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 2840.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 2860.0,
+         "value": 0.2,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 2880.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 2900.0,
+         "value": 0.2,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 2920.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 2940.0,
+         "value": 0.2,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 2960.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 2980.0,
+         "value": 0.2,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 3000.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 3020.0,
+         "value": 0.2,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 3040.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 3060.0,
+         "value": 0.2,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 3080.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 3100.0,
+         "value": 0.2,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 3120.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 3140.0,
+         "value": 0.2,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 3160.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 3180.0,
+         "value": 0.2,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 3200.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 3220.0,
+         "value": 0.2,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 3240.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 3260.0,
+         "value": 0.2,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 3280.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 3300.0,
+         "value": 0.2,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 3320.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 3340.0,
+         "value": 0.2,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 3360.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 3380.0,
+         "value": 0.2,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 3400.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 3420.0,
+         "value": 0.2,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 3440.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 3460.0,
+         "value": 0.2,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 3480.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 3500.0,
+         "value": 0.2,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 3520.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 3540.0,
+         "value": 0.2,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 3560.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 3580.0,
+         "value": 0.2,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 3600.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 3620.0,
+         "value": 0.2,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 3640.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 3660.0,
+         "value": 0.2,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 3680.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 3700.0,
+         "value": 0.2,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 3720.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 3740.0,
+         "value": 0.2,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 3760.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 3780.0,
+         "value": 0.2,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 3800.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 3820.0,
+         "value": 0.2,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 3840.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 3860.0,
+         "value": 0.2,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 3880.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 3900.0,
+         "value": 0.2,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 3920.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 3940.0,
+         "value": 0.2,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 3960.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 3980.0,
+         "value": 0.2,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 4000.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 4020.0,
+         "value": 0.2,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 4040.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 4060.0,
+         "value": 0.2,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 4080.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 4100.0,
+         "value": 0.2,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 4120.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 4140.0,
+         "value": 0.2,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 4160.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 4180.0,
+         "value": 0.2,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 4200.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 4220.0,
+         "value": 0.2,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 4240.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 4260.0,
+         "value": 0.2,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 4280.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 4300.0,
+         "value": 0.2,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 4320.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 4340.0,
+         "value": 0.2,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 4360.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 4380.0,
+         "value": 0.2,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 4400.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 4420.0,
+         "value": 0.2,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 4440.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 4460.0,
+         "value": 0.2,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 4480.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 4500.0,
+         "value": 0.2,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 4520.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 4540.0,
+         "value": 0.2,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 4560.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 4580.0,
+         "value": 0.2,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 4600.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 4620.0,
+         "value": 0.2,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 4640.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 4660.0,
+         "value": 0.2,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 4680.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 4700.0,
+         "value": 0.2,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 4720.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 4740.0,
+         "value": 0.2,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 4760.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 4780.0,
+         "value": 0.2,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 4800.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 4820.0,
+         "value": 0.2,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 4840.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 4860.0,
+         "value": 0.2,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 4880.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 4900.0,
+         "value": 0.2,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 4920.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 4940.0,
+         "value": 0.2,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 4960.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 4980.0,
+         "value": 0.2,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 5000.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "overrides": {
+       "vertical": {
+        "props": {
+         "x": 60.0
+        }
+       }
+      }
+     },
+     {
+      "id": "alerte-6",
+      "name": "Heure",
+      "parent": "alerte-1",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 1600.0,
+       "y": 0.0,
+       "width": 200.0,
+       "height": 64.0,
+       "fill": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+       ],
+       "fontSize": 34.0
+      },
+      "tracks": {
+       "opacity": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 12.0,
+         "value": 0.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.16,
+          "y1": 1.0,
+          "x2": 0.3,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 20.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 86.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.7,
+          "y1": 0.0,
+          "x2": 0.84,
+          "y2": 0.0
+         }
+        },
+        {
+         "frame": 92.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "text": "{{time}}",
+      "fontFamily": "Barlow Condensed",
+      "fontWeight": 700,
+      "align": "right",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "lang": "fr",
+      "overrides": {
+       "vertical": {
+        "props": {
+         "x": 800.0
+        }
+       }
+      }
+     },
+     {
+      "id": "alerte-7",
+      "name": "Titre fond",
+      "parent": "alerte-1",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 64.0,
+       "width": 1824.0,
+       "height": 86.0,
+       "fill": [
+        0.051,
+        0.0549,
+        0.0667,
+        0.97
+       ]
+      },
+      "tracks": {
+       "cropRight": [
+        {
+         "frame": 0.0,
+         "value": 1.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 6.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.16,
+          "y1": 1.0,
+          "x2": 0.3,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 28.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 80.0,
+         "value": 0.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.7,
+          "y1": 0.0,
+          "x2": 0.84,
+          "y2": 0.0
+         }
+        },
+        {
+         "frame": 92.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "overrides": {
+       "vertical": {
+        "props": {
+         "width": 1020.0,
+         "height": 170.0
+        }
+       }
+      }
+     },
+     {
+      "id": "alerte-8",
+      "name": "Titre",
+      "parent": "alerte-1",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 96.0,
+       "y": 64.0,
+       "width": 1700.0,
+       "height": 86.0,
+       "fill": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+       ],
+       "fontSize": 46.0
+      },
+      "tracks": {
+       "opacity": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 18.0,
+         "value": 0.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.16,
+          "y1": 1.0,
+          "x2": 0.3,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 30.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 80.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.7,
+          "y1": 0.0,
+          "x2": 0.84,
+          "y2": 0.0
+         }
+        },
+        {
+         "frame": 88.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ],
+       "x": [
+        {
+         "frame": 0.0,
+         "value": 130.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 18.0,
+         "value": 130.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.16,
+          "y1": 1.0,
+          "x2": 0.3,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 38.0,
+         "value": 96.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 80.0,
+         "value": 96.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.7,
+          "y1": 0.0,
+          "x2": 0.84,
+          "y2": 0.0
+         }
+        },
+        {
+         "frame": 88.0,
+         "value": 130.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "text": "{{headline}}",
+      "fontFamily": "Barlow Condensed",
+      "fontWeight": 600,
+      "align": "left",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "lang": "fr",
+      "overrides": {
+       "vertical": {
+        "props": {
+         "x": 60.0,
+         "width": 940.0,
+         "height": 170.0,
+         "fontSize": 48.0
+        },
+        "tracks": {
+         "opacity": [
+          {
+           "frame": 0.0,
+           "value": 0.0,
+           "easing": {
+            "type": "hold"
+           }
+          },
+          {
+           "frame": 18.0,
+           "value": 0.0,
+           "easing": {
+            "type": "bezier",
+            "x1": 0.16,
+            "y1": 1.0,
+            "x2": 0.3,
+            "y2": 1.0
+           }
+          },
+          {
+           "frame": 30.0,
+           "value": 1.0,
+           "easing": {
+            "type": "linear"
+           }
+          },
+          {
+           "frame": 80.0,
+           "value": 1.0,
+           "easing": {
+            "type": "bezier",
+            "x1": 0.7,
+            "y1": 0.0,
+            "x2": 0.84,
+            "y2": 0.0
+           }
+          },
+          {
+           "frame": 88.0,
+           "value": 0.0,
+           "easing": {
+            "type": "linear"
+           }
+          }
+         ]
+        }
+       }
+      },
+      "wrap": true,
+      "lineHeight": 1.02,
+      "maxLines": 3
+     }
+    ],
+    "zone": "alert",
+    "revision": 1,
+    "markerModel": 2
+   },
+   {
+    "id": "direct",
+    "name": "Direct et lieu",
+    "duration": 60.0,
+    "markers": [
+     {
+      "id": "direct-air",
+      "frame": 30.0,
+      "name": "On air",
+      "kind": "out"
+     }
+    ],
+    "fields": [
+     {
+      "key": "place",
+      "label": "Lieu",
+      "kind": "text",
+      "default": "MARSEILLE · Vieux-Port"
+     }
+    ],
+    "layers": [
+     {
+      "id": "direct-1",
+      "name": "Direct",
+      "parent": null,
+      "type": "group",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 110.0,
+       "y": 64.0,
+       "width": 700.0,
+       "height": 52.0
+      },
+      "tracks": {
+       "cropRight": [
+        {
+         "frame": 0.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.16,
+          "y1": 1.0,
+          "x2": 0.3,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 16.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 30.0,
+         "value": 0.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.7,
+          "y1": 0.0,
+          "x2": 0.84,
+          "y2": 0.0
+         }
+        },
+        {
+         "frame": 40.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "clip": false,
+      "overrides": {
+       "vertical": {
+        "props": {
+         "x": 60.0,
+         "y": 160.0
+        }
+       }
+      }
+     },
+     {
+      "id": "direct-2",
+      "name": "Fond direct",
+      "parent": "direct-1",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 170.0,
+       "height": 52.0,
+       "fill": [
+        1.0,
+        0.1647,
+        0.1647,
+        1.0
+       ],
+       "cornerRadius": 3.0
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "direct-3",
+      "name": "Point",
+      "parent": "direct-1",
+      "type": "ellipse",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 18.0,
+       "y": 19.0,
+       "width": 14.0,
+       "height": 14.0,
+       "fill": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+       ]
+      },
+      "tracks": {
+       "opacity": [
+        {
+         "frame": 0.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 25.0,
+         "value": 0.25,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 50.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 75.0,
+         "value": 0.25,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 100.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 125.0,
+         "value": 0.25,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 150.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 175.0,
+         "value": 0.25,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 200.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 225.0,
+         "value": 0.25,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 250.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 275.0,
+         "value": 0.25,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 300.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 325.0,
+         "value": 0.25,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 350.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 375.0,
+         "value": 0.25,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 400.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 425.0,
+         "value": 0.25,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 450.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 475.0,
+         "value": 0.25,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 500.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 525.0,
+         "value": 0.25,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 550.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 575.0,
+         "value": 0.25,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 600.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 625.0,
+         "value": 0.25,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 650.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 675.0,
+         "value": 0.25,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 700.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 725.0,
+         "value": 0.25,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 750.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 775.0,
+         "value": 0.25,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 800.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 825.0,
+         "value": 0.25,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 850.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 875.0,
+         "value": 0.25,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 900.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 925.0,
+         "value": 0.25,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 950.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 975.0,
+         "value": 0.25,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 1000.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 1025.0,
+         "value": 0.25,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 1050.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 1075.0,
+         "value": 0.25,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 1100.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 1125.0,
+         "value": 0.25,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 1150.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 1175.0,
+         "value": 0.25,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 1200.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 1225.0,
+         "value": 0.25,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 1250.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 1275.0,
+         "value": 0.25,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 1300.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 1325.0,
+         "value": 0.25,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 1350.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 1375.0,
+         "value": 0.25,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 1400.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 1425.0,
+         "value": 0.25,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 1450.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 1475.0,
+         "value": 0.25,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 1500.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 1525.0,
+         "value": 0.25,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 1550.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 1575.0,
+         "value": 0.25,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 1600.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 1625.0,
+         "value": 0.25,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 1650.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 1675.0,
+         "value": 0.25,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 1700.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 1725.0,
+         "value": 0.25,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 1750.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 1775.0,
+         "value": 0.25,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 1800.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 1825.0,
+         "value": 0.25,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 1850.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 1875.0,
+         "value": 0.25,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 1900.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 1925.0,
+         "value": 0.25,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 1950.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 1975.0,
+         "value": 0.25,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 2000.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 2025.0,
+         "value": 0.25,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 2050.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 2075.0,
+         "value": 0.25,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 2100.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 2125.0,
+         "value": 0.25,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 2150.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 2175.0,
+         "value": 0.25,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 2200.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 2225.0,
+         "value": 0.25,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 2250.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 2275.0,
+         "value": 0.25,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 2300.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 2325.0,
+         "value": 0.25,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 2350.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 2375.0,
+         "value": 0.25,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 2400.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 2425.0,
+         "value": 0.25,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 2450.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 2475.0,
+         "value": 0.25,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 2500.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 2525.0,
+         "value": 0.25,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 2550.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 2575.0,
+         "value": 0.25,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 2600.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 2625.0,
+         "value": 0.25,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 2650.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 2675.0,
+         "value": 0.25,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 2700.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 2725.0,
+         "value": 0.25,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 2750.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 2775.0,
+         "value": 0.25,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 2800.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 2825.0,
+         "value": 0.25,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 2850.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 2875.0,
+         "value": 0.25,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 2900.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 2925.0,
+         "value": 0.25,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 2950.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 2975.0,
+         "value": 0.25,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 3000.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        }
+       ]
+      },
+      "bindings": {}
+     },
+     {
+      "id": "direct-4",
+      "name": "DIRECT",
+      "parent": "direct-1",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 42.0,
+       "y": 0.0,
+       "width": 128.0,
+       "height": 52.0,
+       "fill": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+       ],
+       "fontSize": 30.0,
+       "letterSpacing": 2.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "text": "DIRECT",
+      "fontFamily": "Barlow Condensed",
+      "fontWeight": 800,
+      "align": "left",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "lang": "fr"
+     },
+     {
+      "id": "direct-5",
+      "name": "Lieu",
+      "parent": "direct-1",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 190.0,
+       "y": 0.0,
+       "width": 520.0,
+       "height": 52.0,
+       "fill": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+       ],
+       "fontSize": 30.0,
+       "letterSpacing": 1.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "text": "{{place}}",
+      "fontFamily": "Barlow Condensed",
+      "fontWeight": 700,
+      "align": "left",
+      "verticalAlign": "middle",
+      "uppercase": true,
+      "shadow": true,
+      "shadowBlur": 10.0,
+      "shadowY": 2.0,
+      "lang": "fr"
+     }
+    ],
+    "zone": "live",
+    "revision": 1,
+    "markerModel": 2
+   },
+   {
+    "id": "logo",
+    "name": "Logo",
+    "duration": 60.0,
+    "markers": [
+     {
+      "id": "logo-air",
+      "frame": 30.0,
+      "name": "On air",
+      "kind": "out"
+     }
+    ],
+    "fields": [],
+    "layers": [
+     {
+      "id": "logo-1",
+      "name": "Logo",
+      "parent": null,
+      "type": "group",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 1704.0,
+       "y": 64.0,
+       "width": 120.0,
+       "height": 120.0
+      },
+      "tracks": {
+       "opacity": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 12.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 30.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 40.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ],
+       "scaleX": [
+        {
+         "frame": 0.0,
+         "value": 0.8,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.16,
+          "y1": 1.0,
+          "x2": 0.3,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 16.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 30.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.7,
+          "y1": 0.0,
+          "x2": 0.84,
+          "y2": 0.0
+         }
+        },
+        {
+         "frame": 40.0,
+         "value": 0.8,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ],
+       "scaleY": [
+        {
+         "frame": 0.0,
+         "value": 0.8,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.16,
+          "y1": 1.0,
+          "x2": 0.3,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 16.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 30.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.7,
+          "y1": 0.0,
+          "x2": 0.84,
+          "y2": 0.0
+         }
+        },
+        {
+         "frame": 40.0,
+         "value": 0.8,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "clip": false,
+      "overrides": {
+       "vertical": {
+        "props": {
+         "x": 900.0,
+         "y": 134.0,
+         "width": 120.0,
+         "height": 120.0
+        }
+       }
+      }
+     },
+     {
+      "id": "logo-2",
+      "name": "Carré",
+      "parent": "logo-1",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 120.0,
+       "height": 120.0,
+       "fill": [
+        1.0,
+        0.8392,
+        0.0392,
+        1.0
+       ],
+       "cornerRadius": 6.0,
+       "shadowColor": [
+        0.0,
+        0.0,
+        0.0,
+        0.35
+       ],
+       "shadowX": 0.0,
+       "shadowY": 6.0,
+       "shadowBlur": 18.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "fillStyle": {
+       "kind": "linear",
+       "color2": "#ffc300",
+       "angle": 160.0
+      },
+      "dropShadow": true
+     },
+     {
+      "id": "logo-3",
+      "name": "INFO",
+      "parent": "logo-1",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 10.0,
+       "width": 120.0,
+       "height": 32.0,
+       "fill": [
+        0.051,
+        0.0549,
+        0.0667,
+        1.0
+       ],
+       "fontSize": 30.0,
+       "letterSpacing": 3.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "text": "INFO",
+      "fontFamily": "Barlow Condensed",
+      "fontWeight": 800,
+      "align": "center",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "lang": "fr"
+     },
+     {
+      "id": "logo-4",
+      "name": "24",
+      "parent": "logo-1",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 30.0,
+       "width": 120.0,
+       "height": 90.0,
+       "fill": [
+        0.051,
+        0.0549,
+        0.0667,
+        1.0
+       ],
+       "fontSize": 92.0,
+       "letterSpacing": -3.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "text": "24",
+      "fontFamily": "Barlow Condensed",
+      "fontWeight": 800,
+      "align": "center",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "lang": "fr"
+     }
+    ],
+    "zone": "logo",
+    "revision": 1,
+    "markerModel": 2
+   },
+   {
+    "id": "rubrique",
+    "name": "Titre de rubrique",
+    "duration": 80.0,
+    "markers": [
+     {
+      "id": "rubrique-air",
+      "frame": 50.0,
+      "name": "On air",
+      "kind": "out"
+     }
+    ],
+    "fields": [
+     {
+      "key": "title",
+      "label": "Rubrique",
+      "kind": "text",
+      "default": "ÉCONOMIE"
+     },
+     {
+      "key": "sub",
+      "label": "Sous-titre",
+      "kind": "text",
+      "default": "Le point sur les marchés avec Julie Morel"
+     }
+    ],
+    "layers": [
+     {
+      "id": "rubrique-1",
+      "name": "Rubrique",
+      "parent": null,
+      "type": "group",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 96.0,
+       "y": 680.0,
+       "width": 1100.0,
+       "height": 140.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "clip": false,
+      "overrides": {
+       "vertical": {
+        "props": {
+         "x": 60.0,
+         "y": 1200.0,
+         "width": 960.0
+        }
+       }
+      }
+     },
+     {
+      "id": "rubrique-2",
+      "name": "Voile",
+      "parent": "rubrique-1",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 1100.0,
+       "height": 140.0,
+       "fill": [
+        0.051,
+        0.0549,
+        0.0667,
+        0.75
+       ]
+      },
+      "tracks": {
+       "cropRight": [
+        {
+         "frame": 0.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.16,
+          "y1": 1.0,
+          "x2": 0.3,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 22.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 54.0,
+         "value": 0.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.7,
+          "y1": 0.0,
+          "x2": 0.84,
+          "y2": 0.0
+         }
+        },
+        {
+         "frame": 66.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "fillStyle": {
+       "kind": "linear",
+       "color2": "#0d0e1100",
+       "angle": 90.0
+      },
+      "overrides": {
+       "vertical": {
+        "props": {
+         "width": 960.0
+        }
+       }
+      }
+     },
+     {
+      "id": "rubrique-3",
+      "name": "Titre",
+      "parent": "rubrique-1",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 28.0,
+       "y": 0.0,
+       "width": 1000.0,
+       "height": 92.0,
+       "fill": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+       ],
+       "fontSize": 92.0,
+       "letterSpacing": 1.0
+      },
+      "tracks": {
+       "opacity": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 6.0,
+         "value": 0.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.16,
+          "y1": 1.0,
+          "x2": 0.3,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 18.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 50.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.7,
+          "y1": 0.0,
+          "x2": 0.84,
+          "y2": 0.0
+         }
+        },
+        {
+         "frame": 58.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ],
+       "x": [
+        {
+         "frame": 0.0,
+         "value": -20.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 6.0,
+         "value": -20.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.16,
+          "y1": 1.0,
+          "x2": 0.3,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 28.0,
+         "value": 28.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 50.0,
+         "value": 28.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.7,
+          "y1": 0.0,
+          "x2": 0.84,
+          "y2": 0.0
+         }
+        },
+        {
+         "frame": 58.0,
+         "value": -20.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "text": "{{title}}",
+      "fontFamily": "Barlow Condensed",
+      "fontWeight": 800,
+      "align": "left",
+      "verticalAlign": "middle",
+      "uppercase": true,
+      "lang": "fr"
+     },
+     {
+      "id": "rubrique-4",
+      "name": "Soulignement",
+      "parent": "rubrique-1",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 28.0,
+       "y": 92.0,
+       "width": 300.0,
+       "height": 8.0,
+       "fill": [
+        1.0,
+        0.8392,
+        0.0392,
+        1.0
+       ]
+      },
+      "tracks": {
+       "cropRight": [
+        {
+         "frame": 0.0,
+         "value": 1.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 14.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.16,
+          "y1": 1.0,
+          "x2": 0.3,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 32.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 50.0,
+         "value": 0.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.7,
+          "y1": 0.0,
+          "x2": 0.84,
+          "y2": 0.0
+         }
+        },
+        {
+         "frame": 58.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {}
+     },
+     {
+      "id": "rubrique-5",
+      "name": "Sous-titre",
+      "parent": "rubrique-1",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 28.0,
+       "y": 102.0,
+       "width": 1000.0,
+       "height": 38.0,
+       "fill": [
+        0.9098,
+        0.9176,
+        0.9333,
+        1.0
+       ],
+       "fontSize": 28.0
+      },
+      "tracks": {
+       "opacity": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 18.0,
+         "value": 0.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.16,
+          "y1": 1.0,
+          "x2": 0.3,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 30.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 50.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.7,
+          "y1": 0.0,
+          "x2": 0.84,
+          "y2": 0.0
+         }
+        },
+        {
+         "frame": 58.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "text": "{{sub}}",
+      "fontFamily": "Inter",
+      "fontWeight": 500,
+      "align": "left",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "lang": "fr"
+     }
+    ],
+    "zone": "over",
+    "revision": 1,
+    "markerModel": 2,
+    "logic": {
+     "nodes": [
+      {
+       "id": "n0m",
+       "type": "textSize",
+       "layer": "rubrique-3",
+       "metric": "width",
+       "x": 40,
+       "y": 60
+      },
+      {
+       "id": "n0p",
+       "type": "constant",
+       "value": 0,
+       "x": 40,
+       "y": 160
+      },
+      {
+       "id": "n0s",
+       "type": "math",
+       "op": "add",
+       "x": 300,
+       "y": 100
+      },
+      {
+       "id": "n0c",
+       "type": "constant",
+       "value": 120,
+       "x": 300,
+       "y": 220
+      },
+      {
+       "id": "n0x",
+       "type": "math",
+       "op": "max",
+       "x": 560,
+       "y": 120
+      },
+      {
+       "id": "n0t0",
+       "type": "target",
+       "layer": "rubrique-4",
+       "prop": "width",
+       "mode": "set",
+       "x": 820,
+       "y": 60
+      }
+     ],
+     "edges": [
+      {
+       "from": "n0m",
+       "to": "n0s",
+       "port": "a"
+      },
+      {
+       "from": "n0p",
+       "to": "n0s",
+       "port": "b"
+      },
+      {
+       "from": "n0s",
+       "to": "n0x",
+       "port": "a"
+      },
+      {
+       "from": "n0c",
+       "to": "n0x",
+       "port": "b"
+      },
+      {
+       "from": "n0x",
+       "to": "n0t0",
+       "port": "in"
+      }
+     ]
+    }
+   },
+   {
+    "id": "invite",
+    "name": "Synthé invité",
+    "duration": 70.0,
+    "markers": [
+     {
+      "id": "invite-air",
+      "frame": 40.0,
+      "name": "On air",
+      "kind": "out"
+     }
+    ],
+    "fields": [
+     {
+      "key": "name",
+      "label": "Nom",
+      "kind": "text",
+      "default": "Antoine Leroy"
+     },
+     {
+      "key": "role",
+      "label": "Fonction",
+      "kind": "text",
+      "default": "Député, rapporteur du budget"
+     }
+    ],
+    "layers": [
+     {
+      "id": "invite-1",
+      "name": "Synthé",
+      "parent": null,
+      "type": "group",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 96.0,
+       "y": 700.0,
+       "width": 1100.0,
+       "height": 116.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "clip": false,
+      "overrides": {
+       "vertical": {
+        "props": {
+         "x": 60.0,
+         "y": 1206.0,
+         "width": 960.0
+        }
+       }
+      }
+     },
+     {
+      "id": "invite-2",
+      "name": "Plaque",
+      "parent": "invite-1",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 600.0,
+       "height": 116.0,
+       "fill": [
+        0.0863,
+        0.0941,
+        0.1137,
+        0.95
+       ]
+      },
+      "tracks": {
+       "cropRight": [
+        {
+         "frame": 0.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.16,
+          "y1": 1.0,
+          "x2": 0.3,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 18.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 44.0,
+         "value": 0.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.7,
+          "y1": 0.0,
+          "x2": 0.84,
+          "y2": 0.0
+         }
+        },
+        {
+         "frame": 54.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {}
+     },
+     {
+      "id": "invite-3",
+      "name": "Filet",
+      "parent": "invite-1",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 8.0,
+       "height": 116.0,
+       "fill": [
+        1.0,
+        0.8392,
+        0.0392,
+        1.0
+       ]
+      },
+      "tracks": {
+       "cropBottom": [
+        {
+         "frame": 0.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.16,
+          "y1": 1.0,
+          "x2": 0.3,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 12.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 46.0,
+         "value": 0.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.7,
+          "y1": 0.0,
+          "x2": 0.84,
+          "y2": 0.0
+         }
+        },
+        {
+         "frame": 54.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {}
+     },
+     {
+      "id": "invite-4",
+      "name": "Nom",
+      "parent": "invite-1",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 32.0,
+       "y": 6.0,
+       "width": 1040.0,
+       "height": 64.0,
+       "fill": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+       ],
+       "fontSize": 50.0,
+       "letterSpacing": 0.5
+      },
+      "tracks": {
+       "opacity": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 8.0,
+         "value": 0.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.16,
+          "y1": 1.0,
+          "x2": 0.3,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 20.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 40.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.7,
+          "y1": 0.0,
+          "x2": 0.84,
+          "y2": 0.0
+         }
+        },
+        {
+         "frame": 48.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ],
+       "x": [
+        {
+         "frame": 0.0,
+         "value": 10.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 8.0,
+         "value": 10.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.16,
+          "y1": 1.0,
+          "x2": 0.3,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 26.0,
+         "value": 32.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 40.0,
+         "value": 32.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.7,
+          "y1": 0.0,
+          "x2": 0.84,
+          "y2": 0.0
+         }
+        },
+        {
+         "frame": 48.0,
+         "value": 10.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "text": "{{name}}",
+      "fontFamily": "Barlow Condensed",
+      "fontWeight": 700,
+      "align": "left",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "lang": "fr",
+      "overrides": {
+       "vertical": {
+        "props": {
+         "width": 900.0
+        }
+       }
+      }
+     },
+     {
+      "id": "invite-5",
+      "name": "Fonction",
+      "parent": "invite-1",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 32.0,
+       "y": 68.0,
+       "width": 1040.0,
+       "height": 38.0,
+       "fill": [
+        0.6549,
+        0.6784,
+        0.7216,
+        1.0
+       ],
+       "fontSize": 26.0
+      },
+      "tracks": {
+       "opacity": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 14.0,
+         "value": 0.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.16,
+          "y1": 1.0,
+          "x2": 0.3,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 26.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 40.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.7,
+          "y1": 0.0,
+          "x2": 0.84,
+          "y2": 0.0
+         }
+        },
+        {
+         "frame": 48.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "text": "{{role}}",
+      "fontFamily": "Inter",
+      "fontWeight": 500,
+      "align": "left",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "lang": "fr",
+      "overrides": {
+       "vertical": {
+        "props": {
+         "width": 900.0
+        }
+       }
+      }
+     }
+    ],
+    "zone": "over",
+    "revision": 1,
+    "markerModel": 2,
+    "logic": {
+     "nodes": [
+      {
+       "id": "n0m",
+       "type": "textSize",
+       "layer": "invite-4",
+       "metric": "width",
+       "x": 40,
+       "y": 60
+      },
+      {
+       "id": "n0p",
+       "type": "constant",
+       "value": 72,
+       "x": 40,
+       "y": 160
+      },
+      {
+       "id": "n0s",
+       "type": "math",
+       "op": "add",
+       "x": 300,
+       "y": 100
+      },
+      {
+       "id": "n0c",
+       "type": "constant",
+       "value": 360,
+       "x": 300,
+       "y": 220
+      },
+      {
+       "id": "n0x",
+       "type": "math",
+       "op": "max",
+       "x": 560,
+       "y": 120
+      },
+      {
+       "id": "n0t0",
+       "type": "target",
+       "layer": "invite-2",
+       "prop": "width",
+       "mode": "set",
+       "x": 820,
+       "y": 60
+      }
+     ],
+     "edges": [
+      {
+       "from": "n0m",
+       "to": "n0s",
+       "port": "a"
+      },
+      {
+       "from": "n0p",
+       "to": "n0s",
+       "port": "b"
+      },
+      {
+       "from": "n0s",
+       "to": "n0x",
+       "port": "a"
+      },
+      {
+       "from": "n0c",
+       "to": "n0x",
+       "port": "b"
+      },
+      {
+       "from": "n0x",
+       "to": "n0t0",
+       "port": "in"
+      }
+     ]
+    }
+   }
+  ],
+  "rundown": [
+   {
+    "id": "antenne-00-bandeau---budget",
+    "name": "Bandeau · Budget",
+    "templateId": "bandeau",
+    "zone": "bandeau",
+    "playlist": "antenne",
+    "layer": 30,
+    "data": {}
+   },
+   {
+    "id": "antenne-01-bandeau---météo",
+    "name": "Bandeau · Météo",
+    "templateId": "bandeau",
+    "zone": "bandeau",
+    "playlist": "antenne",
+    "layer": 30,
+    "data": {
+     "section": "MÉTÉO",
+     "headline": "Tempête Amélie : 14 départements en vigilance orange vent violent"
+    }
+   },
+   {
+    "id": "alertes-02-alerte---rouen",
+    "name": "ALERTE · Rouen",
+    "templateId": "alerte",
+    "zone": "alert",
+    "playlist": "alertes",
+    "layer": 35,
+    "data": {}
+   },
+   {
+    "id": "alertes-03-alerte---démission",
+    "name": "ALERTE · Démission",
+    "templateId": "alerte",
+    "zone": "alert",
+    "playlist": "alertes",
+    "layer": 35,
+    "data": {
+     "headline": "Le président du Sénat annonce sa démission",
+     "time": "17:05"
+    }
+   },
+   {
+    "id": "antenne-04-direct-marseille",
+    "name": "Direct Marseille",
+    "templateId": "direct",
+    "zone": "live",
+    "playlist": "antenne",
+    "layer": 25,
+    "data": {}
+   },
+   {
+    "id": "antenne-05-logo",
+    "name": "Logo",
+    "templateId": "logo",
+    "zone": "logo",
+    "playlist": "antenne",
+    "layer": 60,
+    "data": {}
+   },
+   {
+    "id": "emission-06-économie",
+    "name": "Économie",
+    "templateId": "rubrique",
+    "zone": "over",
+    "playlist": "emission",
+    "layer": 20,
+    "data": {
+     "title": "ÉCONOMIE",
+     "sub": "Le point sur les marchés avec Julie Morel"
+    }
+   },
+   {
+    "id": "emission-07-international",
+    "name": "International",
+    "templateId": "rubrique",
+    "zone": "over",
+    "playlist": "emission",
+    "layer": 20,
+    "data": {
+     "title": "INTERNATIONAL",
+     "sub": "Notre correspondant à Washington"
+    }
+   },
+   {
+    "id": "emission-08-sport",
+    "name": "Sport",
+    "templateId": "rubrique",
+    "zone": "over",
+    "playlist": "emission",
+    "layer": 20,
+    "data": {
+     "title": "SPORT",
+     "sub": "Toute l’actualité du week-end"
+    }
+   },
+   {
+    "id": "emission-09-antoine-leroy",
+    "name": "Antoine Leroy",
+    "templateId": "invite",
+    "zone": "over",
+    "playlist": "emission",
+    "layer": 20,
+    "data": {}
+   },
+   {
+    "id": "emission-10-sarah-kemal",
+    "name": "Sarah Kemal",
+    "templateId": "invite",
+    "zone": "over",
+    "playlist": "emission",
+    "layer": 20,
+    "data": {
+     "name": "Sarah Kemal",
+     "role": "Correspondante à Washington"
+    }
+   }
+  ],
+  "zones": [
+   {
+    "id": "bandeau",
+    "name": "Bandeau",
+    "layer": 30,
+    "color": "#ffd60a",
+    "transition": "sequential",
+    "areas": {
+     "main": {
+      "x": 0.0,
+      "y": 0.77,
+      "width": 1.0,
+      "height": 0.23
+     },
+     "vertical": {
+      "x": 0.0,
+      "y": 0.76,
+      "width": 1.0,
+      "height": 0.16
+     }
+    }
+   },
+   {
+    "id": "alert",
+    "name": "Alerte",
+    "layer": 35,
+    "color": "#ff3b5c",
+    "transition": "sequential",
+    "areas": {
+     "main": {
+      "x": 0.0,
+      "y": 0.6,
+      "width": 1.0,
+      "height": 0.17
+     },
+     "vertical": {
+      "x": 0.0,
+      "y": 0.6,
+      "width": 1.0,
+      "height": 0.15
+     }
+    }
+   },
+   {
+    "id": "over",
+    "name": "Au-dessus du bandeau",
+    "layer": 20,
+    "color": "#7c5cff",
+    "transition": "sequential",
+    "areas": {
+     "main": {
+      "x": 0.05,
+      "y": 0.6,
+      "width": 0.62,
+      "height": 0.17
+     },
+     "vertical": {
+      "x": 0.05,
+      "y": 0.62,
+      "width": 0.9,
+      "height": 0.13
+     }
+    }
+   },
+   {
+    "id": "live",
+    "name": "Direct",
+    "layer": 25,
+    "color": "#22c55e",
+    "transition": "sequential",
+    "areas": {
+     "main": {
+      "x": 0.05,
+      "y": 0.05,
+      "width": 0.4,
+      "height": 0.07
+     },
+     "vertical": {
+      "x": 0.05,
+      "y": 0.08,
+      "width": 0.7,
+      "height": 0.05
+     }
+    }
+   },
+   {
+    "id": "logo",
+    "name": "Logo",
+    "layer": 60,
+    "color": "#38bdf8",
+    "transition": "sequential",
+    "areas": {
+     "main": {
+      "x": 0.86,
+      "y": 0.05,
+      "width": 0.09,
+      "height": 0.12
+     },
+     "vertical": {
+      "x": 0.8,
+      "y": 0.07,
+      "width": 0.15,
+      "height": 0.08
+     }
+    }
+   }
+  ],
+  "playlists": [
+   {
+    "id": "antenne",
+    "name": "Antenne"
+   },
+   {
+    "id": "alertes",
+    "name": "Alertes"
+   },
+   {
+    "id": "emission",
+    "name": "Émission"
+   }
+  ],
+  "formats": [
+   {
+    "id": "vertical",
+    "name": "9:16",
+    "width": 1080,
+    "height": 1920
+   }
+  ],
+  "language": "fr"
+ }
+}

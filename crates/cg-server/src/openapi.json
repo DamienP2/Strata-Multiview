@@ -1,0 +1,7571 @@
+{
+ "openapi": "3.1.0",
+ "info": {
+  "title": "Strata API",
+  "version": "0.0.0",
+  "description": "Everything the web app does goes through this API: automation systems (Companion / Stream Deck, newsroom MOS gateways, sports data feeds) have the same power as the UI.\n\n**Authentication**: `Authorization: Bearer <API key>` (create one in *Users → API keys*), or the `cg_session` cookie of the web app.\n\n**Real time**: `GET /ws` (WebSocket) pushes `hello`, `project`, `projectDeleted`, `channels` and `channel` events, and accepts `{\"type\":\"command\",\"channelId\":\"main\",\"command\":{…}}`. `/ws?channel=<id>` follows one channel (HTML5 output pages; public when *public outputs* is on).\n\nUnits: frames are project frames; times are Unix milliseconds.\n\nPages embedded in other applications (newsroom MOS plugin `/mos/plugin`) may pass an API key as `?key=pcg_…`."
+ },
+ "servers": [
+  {
+   "url": "/"
+  }
+ ],
+ "security": [
+  {
+   "bearer": []
+  },
+  {
+   "cookie": []
+  }
+ ],
+ "tags": [
+  {
+   "name": "Authentication"
+  },
+  {
+   "name": "Users & API keys"
+  },
+  {
+   "name": "Projects"
+  },
+  {
+   "name": "Channels & playout"
+  },
+  {
+   "name": "Assets"
+  },
+  {
+   "name": "System"
+  },
+  {
+   "name": "Updates"
+  },
+  {
+   "name": "Newsroom (MOS)"
+  },
+  {
+   "name": "Post-production"
+  },
+  {
+   "name": "Data",
+   "description": "Data connectors (JSON API, CSV / Google Sheets, RSS, XML, push) and field bindings."
+  },
+  {
+   "name": "Social networks",
+   "description": "Connections to social platforms (YouTube, Twitch, Facebook, Instagram, X, TikTok Live, WhatsApp, SMS), shared by every project, and the messages they bring in. What a project does with them (moderation, on air) is the project’s own."
+  },
+  {
+   "name": "Media",
+   "description": "Shared and project media libraries"
+  },
+  {
+   "name": "Control surfaces (v1)",
+   "description": "Short paths for Bitfocus Buttons / Companion, Stream Deck and scripts: a channel by id or name, a graphic of the rundown by id, name or 1-based position, a zone or a template by id or name. The same actions over OSC (UDP, `/strata/{channel}/…`) and a TCP text protocol (`{channel} take 2`), when enabled in the settings. Rights: admin, designer, operator of the channel."
+  }
+ ],
+ "paths": {
+  "/api/auth/state": {
+   "get": {
+    "tags": [
+     "Authentication"
+    ],
+    "summary": "Who am I",
+    "description": "Public.",
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "needsSetup": {
+           "type": "boolean"
+          },
+          "user": {
+           "oneOf": [
+            {
+             "$ref": "#/components/schemas/User"
+            },
+            {
+             "type": "null"
+            }
+           ]
+          },
+          "serverName": {
+           "type": "string"
+          },
+          "publicOutputs": {
+           "type": "boolean"
+          }
+         }
+        }
+       }
+      }
+     }
+    },
+    "security": []
+   }
+  },
+  "/api/auth/login": {
+   "post": {
+    "tags": [
+     "Authentication"
+    ],
+    "summary": "Log in",
+    "description": "Sets the `cg_session` cookie and returns a session token (14 days, lost when the server restarts). For automation prefer an API key.",
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "required": [
+         "username",
+         "password"
+        ],
+        "properties": {
+         "username": {
+          "type": "string"
+         },
+         "password": {
+          "type": "string"
+         }
+        }
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "user": {
+           "$ref": "#/components/schemas/User"
+          },
+          "token": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "Wrong user name or password"
+     }
+    },
+    "security": []
+   }
+  },
+  "/api/auth/logout": {
+   "post": {
+    "tags": [
+     "Authentication"
+    ],
+    "summary": "Log out",
+    "responses": {
+     "204": {
+      "description": "Done"
+     }
+    }
+   }
+  },
+  "/api/me/lang": {
+   "put": {
+    "tags": [
+     "Authentication"
+    ],
+    "summary": "Set my interface language",
+    "description": "Every user keeps the language of their interface (\"en\" or \"fr\").",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "required": [
+         "lang"
+        ],
+        "properties": {
+         "lang": {
+          "type": "string",
+          "enum": [
+           "en",
+           "fr"
+          ]
+         }
+        }
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "The user",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/User"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/me/theme": {
+   "put": {
+    "tags": [
+     "Authentication"
+    ],
+    "summary": "Set my interface theme",
+    "description": "Every user keeps the colour theme of their interface (\"dark\", \"light\" or \"system\", which follows the computer).",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "required": [
+         "theme"
+        ],
+        "properties": {
+         "theme": {
+          "type": "string",
+          "enum": [
+           "dark",
+           "light",
+           "system"
+          ]
+         }
+        }
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "The user",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/User"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/auth/setup": {
+   "post": {
+    "tags": [
+     "Authentication"
+    ],
+    "summary": "Create the first admin",
+    "description": "Only while no user exists, and only from the server itself (loopback).",
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "properties": {
+         "username": {
+          "type": "string"
+         },
+         "password": {
+          "type": "string"
+         },
+         "displayName": {
+          "type": "string"
+         }
+        }
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "OK"
+     }
+    },
+    "security": []
+   }
+  },
+  "/api/users": {
+   "get": {
+    "tags": [
+     "Users & API keys"
+    ],
+    "summary": "List users",
+    "description": "**Rights:** admin.",
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "array",
+         "items": {
+          "$ref": "#/components/schemas/User"
+         }
+        }
+       }
+      }
+     }
+    }
+   },
+   "post": {
+    "tags": [
+     "Users & API keys"
+    ],
+    "summary": "Create a user",
+    "description": "**Rights:** admin.",
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/UserInput"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/User"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/users/{id}": {
+   "parameters": [
+    {
+     "name": "id",
+     "in": "path",
+     "required": true,
+     "schema": {
+      "type": "string"
+     }
+    }
+   ],
+   "put": {
+    "tags": [
+     "Users & API keys"
+    ],
+    "summary": "Edit a user",
+    "description": "**Rights:** admin.",
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/UserInput"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/User"
+        }
+       }
+      }
+     }
+    }
+   },
+   "delete": {
+    "tags": [
+     "Users & API keys"
+    ],
+    "summary": "Delete a user",
+    "description": "Also revokes their API keys. The last active admin cannot be removed.\n\n**Rights:** admin.",
+    "responses": {
+     "204": {
+      "description": "Done"
+     }
+    }
+   }
+  },
+  "/api/keys": {
+   "get": {
+    "tags": [
+     "Users & API keys"
+    ],
+    "summary": "List API keys",
+    "description": "Admins see every key, others their own.",
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "array",
+         "items": {
+          "$ref": "#/components/schemas/ApiKey"
+         }
+        }
+       }
+      }
+     }
+    }
+   },
+   "post": {
+    "tags": [
+     "Users & API keys"
+    ],
+    "summary": "Create an API key",
+    "description": "The `secret` is returned **once**: use it as `Authorization: Bearer pcg_…`. The key acts with the rights of its user (create a dedicated operator account for automation).\n\n**Rights:** admin for any user; designers and operators for themselves.",
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "required": [
+         "name"
+        ],
+        "properties": {
+         "name": {
+          "type": "string",
+          "example": "Companion régie A"
+         },
+         "userId": {
+          "type": "string"
+         }
+        }
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "key": {
+           "$ref": "#/components/schemas/ApiKey"
+          },
+          "secret": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/keys/{id}": {
+   "parameters": [
+    {
+     "name": "id",
+     "in": "path",
+     "required": true,
+     "schema": {
+      "type": "string"
+     }
+    }
+   ],
+   "delete": {
+    "tags": [
+     "Users & API keys"
+    ],
+    "summary": "Revoke an API key",
+    "description": "**Rights:** admin or the key's user.",
+    "responses": {
+     "204": {
+      "description": "Done"
+     }
+    }
+   }
+  },
+  "/api/keys/{id}/reveal": {
+   "parameters": [
+    {
+     "name": "id",
+     "in": "path",
+     "required": true,
+     "schema": {
+      "type": "string"
+     }
+    }
+   ],
+   "post": {
+    "tags": [
+     "Users & API keys"
+    ],
+    "summary": "Show an API key again",
+    "description": "Body `{\"password\": \"…\"}`: the admin's own password. Answers `{\"secret\": \"pcg_…\"}`. Keys made before this version cannot be shown again (400). Wrong password: 403.\n\n**Rights:** admin.",
+    "responses": {
+     "200": {
+      "description": "The key"
+     }
+    }
+   }
+  },
+  "/api/projects": {
+   "get": {
+    "tags": [
+     "Projects"
+    ],
+    "summary": "List projects",
+    "description": "Only the projects in the caller's scope.",
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "array",
+         "items": {
+          "$ref": "#/components/schemas/ProjectSummary"
+         }
+        }
+       }
+      }
+     }
+    }
+   },
+   "post": {
+    "tags": [
+     "Projects"
+    ],
+    "summary": "Create a project",
+    "description": "With `from`, duplicates an existing project.\n\n**Rights:** admin, designer.",
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "required": [
+         "name"
+        ],
+        "properties": {
+         "name": {
+          "type": "string"
+         },
+         "description": {
+          "type": "string"
+         },
+         "width": {
+          "type": "integer"
+         },
+         "height": {
+          "type": "integer"
+         },
+         "frameRate": {
+          "$ref": "#/components/schemas/FrameRate"
+         },
+         "from": {
+          "type": "string"
+         }
+        }
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ProjectSummary"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/projects/import": {
+   "post": {
+    "tags": [
+     "Projects"
+    ],
+    "summary": "Import a project",
+    "description": "**Rights:** admin, designer.",
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/Project"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ProjectSummary"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/examples": {
+   "get": {
+    "tags": [
+     "Projects"
+    ],
+    "summary": "List the example projects",
+    "description": "Complete graphics packages ready for air (news, sport, elections, weather, finance, gaming…) to start a project from: id, name, category, tags, description (French, with `en` in English), the names of their templates and their other formats.",
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "array",
+         "items": {
+          "type": "object",
+          "properties": {
+           "id": {
+            "type": "string"
+           },
+           "name": {
+            "type": "string"
+           },
+           "category": {
+            "type": "string"
+           },
+           "tags": {
+            "type": "array",
+            "items": {
+             "type": "string"
+            }
+           },
+           "description": {
+            "type": "string"
+           },
+           "cover": {
+            "type": "string"
+           },
+           "en": {
+            "type": "object",
+            "properties": {
+             "name": {
+              "type": "string"
+             },
+             "description": {
+              "type": "string"
+             }
+            }
+           },
+           "templates": {
+            "type": "array",
+            "items": {
+             "type": "string"
+            }
+           },
+           "formats": {
+            "type": "array",
+            "items": {
+             "type": "string"
+            }
+           }
+          }
+         }
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/examples/{id}": {
+   "parameters": [
+    {
+     "name": "id",
+     "in": "path",
+     "required": true,
+     "schema": {
+      "type": "string"
+     },
+     "description": "Example id (ex-01-…)"
+    }
+   ],
+   "post": {
+    "tags": [
+     "Projects"
+    ],
+    "summary": "Create a project from an example",
+    "description": "Adds a copy of the example to the projects, and creates the shared data sources its fields read (with a sample value) when they do not exist yet.\n\n**Rights:** admin, designer.",
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ProjectSummary"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/examples/{id}/cover.png": {
+   "parameters": [
+    {
+     "name": "id",
+     "in": "path",
+     "required": true,
+     "schema": {
+      "type": "string"
+     },
+     "description": "Example id"
+    }
+   ],
+   "get": {
+    "tags": [
+     "Projects"
+    ],
+    "summary": "Picture of an example",
+    "description": "Its cover template on air, PNG with alpha at the project size.",
+    "responses": {
+     "200": {
+      "description": "PNG",
+      "content": {
+       "image/png": {}
+      }
+     }
+    }
+   }
+  },
+  "/api/projects/{id}": {
+   "parameters": [
+    {
+     "name": "id",
+     "in": "path",
+     "required": true,
+     "schema": {
+      "type": "string"
+     },
+     "description": "Project id"
+    }
+   ],
+   "get": {
+    "tags": [
+     "Projects"
+    ],
+    "summary": "Get a project",
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Project"
+        }
+       }
+      }
+     }
+    }
+   },
+   "put": {
+    "tags": [
+     "Projects"
+    ],
+    "summary": "Edit name, description and format",
+    "description": "**Rights:** admin, designer.",
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "properties": {
+         "name": {
+          "type": "string"
+         },
+         "description": {
+          "type": "string"
+         },
+         "width": {
+          "type": "integer"
+         },
+         "height": {
+          "type": "integer"
+         },
+         "frameRate": {
+          "$ref": "#/components/schemas/FrameRate"
+         },
+         "language": {
+          "type": "string",
+          "description": "Language of the texts; unchanged when absent."
+         }
+        }
+       }
+      }
+     }
+    },
+    "responses": {
+     "204": {
+      "description": "Done"
+     }
+    }
+   },
+   "delete": {
+    "tags": [
+     "Projects"
+    ],
+    "summary": "Delete a project",
+    "description": "Unloads it from the channels showing it.\n\n**Rights:** admin, designer.",
+    "responses": {
+     "204": {
+      "description": "Done"
+     }
+    }
+   }
+  },
+  "/api/projects/{id}/export": {
+   "parameters": [
+    {
+     "name": "id",
+     "in": "path",
+     "required": true,
+     "schema": {
+      "type": "string"
+     },
+     "description": "Project id"
+    }
+   ],
+   "get": {
+    "tags": [
+     "Projects"
+    ],
+    "summary": "Export (.strata.json)",
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Project"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/projects/{id}/rundown": {
+   "parameters": [
+    {
+     "name": "id",
+     "in": "path",
+     "required": true,
+     "schema": {
+      "type": "string"
+     },
+     "description": "Project id"
+    }
+   ],
+   "put": {
+    "tags": [
+     "Projects"
+    ],
+    "summary": "Replace the rundown",
+    "description": "Either the whole rundown (an array), or `{ \"base\": [...], \"rundown\": [...] }`: the rundown the client started from and the one it wants. Only that change (items removed, edited, added, moved) is applied over the rundown as it is now, so operators editing at the same time keep each other's changes.\n\n**Rights:** admin, designer, operator.",
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "oneOf": [
+         {
+          "type": "array",
+          "items": {
+           "$ref": "#/components/schemas/RundownItem"
+          }
+         },
+         {
+          "type": "object",
+          "required": [
+           "base",
+           "rundown"
+          ],
+          "properties": {
+           "base": {
+            "type": "array",
+            "items": {
+             "$ref": "#/components/schemas/RundownItem"
+            }
+           },
+           "rundown": {
+            "type": "array",
+            "items": {
+             "$ref": "#/components/schemas/RundownItem"
+            }
+           }
+          }
+         }
+        ]
+       }
+      }
+     }
+    },
+    "responses": {
+     "204": {
+      "description": "Done"
+     }
+    }
+   }
+  },
+  "/api/projects/{id}/zones": {
+   "parameters": [
+    {
+     "name": "id",
+     "in": "path",
+     "required": true,
+     "schema": {
+      "type": "string"
+     },
+     "description": "Project id"
+    }
+   ],
+   "put": {
+    "tags": [
+     "Projects"
+    ],
+    "summary": "Replace the zones",
+    "description": "Zones still used by templates or rundown items cannot be removed. Graphics on air follow their zone when its stacking order changes.\n\n**Rights:** admin, designer.",
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "array",
+        "items": {
+         "$ref": "#/components/schemas/Zone"
+        }
+       }
+      }
+     }
+    },
+    "responses": {
+     "204": {
+      "description": "Done"
+     }
+    }
+   }
+  },
+  "/api/projects/{id}/templates/{tid}": {
+   "parameters": [
+    {
+     "name": "id",
+     "in": "path",
+     "required": true,
+     "schema": {
+      "type": "string"
+     },
+     "description": "Project id"
+    },
+    {
+     "name": "tid",
+     "in": "path",
+     "required": true,
+     "schema": {
+      "type": "string"
+     },
+     "description": "Template id"
+    }
+   ],
+   "put": {
+    "tags": [
+     "Projects"
+    ],
+    "summary": "Save a template draft",
+    "description": "Saves the designer's working copy (draft). The Operator, outputs and playout keep using the published version until it is published (`POST …/publish`), or pass `?publish=true` to publish at once.\n\nA designer tab sends its `X-Strata-Client` id: the save is refused (409) when another tab holds the template's edit lock. Requests without that header (automation, API keys) are not locked out.\n\n**Rights:** admin, designer.",
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/Template"
+       }
+      }
+     }
+    },
+    "responses": {
+     "204": {
+      "description": "Done"
+     },
+     "409": {
+      "description": "Another designer holds the edit lock"
+     }
+    },
+    "parameters": [
+     {
+      "name": "publish",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "boolean"
+      },
+      "description": "Publish to the Operator immediately"
+     },
+     {
+      "name": "X-Strata-Client",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Designer tab id (edit lock)"
+     }
+    ]
+   },
+   "delete": {
+    "tags": [
+     "Projects"
+    ],
+    "summary": "Delete a template",
+    "description": "Also removes its draft and rundown items. The last template of a project cannot be deleted (409).\n\n**Rights:** admin, designer.",
+    "responses": {
+     "204": {
+      "description": "Done"
+     },
+     "409": {
+      "description": "Last template of the project"
+     }
+    }
+   }
+  },
+  "/api/projects/{id}/templates/{tid}/thumbnail.png": {
+   "parameters": [
+    {
+     "name": "id",
+     "in": "path",
+     "required": true,
+     "schema": {
+      "type": "string"
+     },
+     "description": "Project id"
+    },
+    {
+     "name": "tid",
+     "in": "path",
+     "required": true,
+     "schema": {
+      "type": "string"
+     }
+    },
+    {
+     "name": "frame",
+     "in": "query",
+     "schema": {
+      "type": "number"
+     },
+     "description": "Default: first hold point."
+    },
+    {
+     "name": "format",
+     "in": "query",
+     "schema": {
+      "type": "string"
+     },
+     "description": "Project format id (default: main)."
+    },
+    {
+     "name": "data",
+     "in": "query",
+     "schema": {
+      "type": "string"
+     },
+     "description": "Field values as JSON over the defaults."
+    }
+   ],
+   "get": {
+    "tags": [
+     "Projects"
+    ],
+    "summary": "Render a template (PNG)",
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "image/png": {
+        "schema": {
+         "type": "string",
+         "format": "binary"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/channels": {
+   "get": {
+    "tags": [
+     "Channels & playout"
+    ],
+    "summary": "List channels",
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "array",
+         "items": {
+          "$ref": "#/components/schemas/ChannelInfo"
+         }
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/channels/{id}/state": {
+   "parameters": [
+    {
+     "name": "id",
+     "in": "path",
+     "required": true,
+     "schema": {
+      "type": "string"
+     },
+     "description": "Channel id"
+    }
+   ],
+   "get": {
+    "tags": [
+     "Channels & playout"
+    ],
+    "summary": "What is on air",
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ChannelState"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/channels/{id}/project": {
+   "parameters": [
+    {
+     "name": "id",
+     "in": "path",
+     "required": true,
+     "schema": {
+      "type": "string"
+     },
+     "description": "Channel id"
+    }
+   ],
+   "put": {
+    "tags": [
+     "Channels & playout"
+    ],
+    "summary": "Load a project on the channel",
+    "description": "Clears what is on air. `null` unloads.\n\n**Rights:** admin, designer, operator.",
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "properties": {
+         "projectId": {
+          "type": [
+           "string",
+           "null"
+          ]
+         }
+        }
+       }
+      }
+     }
+    },
+    "responses": {
+     "204": {
+      "description": "Done"
+     }
+    }
+   }
+  },
+  "/api/channels/{id}/command": {
+   "parameters": [
+    {
+     "name": "id",
+     "in": "path",
+     "required": true,
+     "schema": {
+      "type": "string"
+     },
+     "description": "Channel id"
+    }
+   ],
+   "post": {
+    "tags": [
+     "Channels & playout"
+    ],
+    "summary": "Playout command",
+    "description": "**Rights:** admin, designer, operator.",
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/Command"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ChannelState"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/asrun": {
+   "get": {
+    "tags": [
+     "Channels & playout"
+    ],
+    "summary": "As-run log",
+    "description": "Every action on air (who, what, when, with which values), newest first, for the channels the user sees. Kept per day on the server. New entries are pushed live on `/ws` as `asRun` events.",
+    "parameters": [
+     {
+      "name": "from",
+      "in": "query",
+      "required": false,
+      "description": "Start, ms since 1970 (default: 24 h before `to`).",
+      "schema": {
+       "type": "integer",
+       "format": "int64"
+      }
+     },
+     {
+      "name": "to",
+      "in": "query",
+      "required": false,
+      "description": "End, ms since 1970 (default: now).",
+      "schema": {
+       "type": "integer",
+       "format": "int64"
+      }
+     },
+     {
+      "name": "channel",
+      "in": "query",
+      "required": false,
+      "description": "Channel id.",
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "actions",
+      "in": "query",
+      "required": false,
+      "description": "Comma-separated: take, out, continue, update, clear, row, widget, trigger, undo, auto (every step of the engine: auto-next, auto-out, auto-continue).",
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "actors",
+      "in": "query",
+      "required": false,
+      "description": "Comma-separated actor ids (user, API key…).",
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "kinds",
+      "in": "query",
+      "required": false,
+      "description": "Comma-separated sources: user, api, mos, auto, schedule, data.",
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "q",
+      "in": "query",
+      "required": false,
+      "description": "Text in the graphic, values, actor, project, channel, zone or detail.",
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "limit",
+      "in": "query",
+      "required": false,
+      "description": "At most this many entries (newest kept; default 5000 for JSON).",
+      "schema": {
+       "type": "integer"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "array",
+         "items": {
+          "type": "object",
+          "properties": {
+           "at": {
+            "type": "integer",
+            "description": "Server time, ms."
+           },
+           "channelId": {
+            "type": "string"
+           },
+           "channelName": {
+            "type": "string"
+           },
+           "projectId": {
+            "type": "string"
+           },
+           "projectName": {
+            "type": "string"
+           },
+           "action": {
+            "type": "string"
+           },
+           "label": {
+            "type": "string",
+            "description": "The graphic."
+           },
+           "zone": {
+            "type": "string"
+           },
+           "actor": {
+            "type": "object",
+            "properties": {
+             "kind": {
+              "type": "string",
+              "enum": [
+               "user",
+               "api",
+               "mos",
+               "auto",
+               "schedule",
+               "data"
+              ]
+             },
+             "id": {
+              "type": "string"
+             },
+             "name": {
+              "type": "string"
+             }
+            }
+           },
+           "values": {
+            "type": "object",
+            "description": "Key → [before (or null), after].",
+            "additionalProperties": {
+             "type": "array",
+             "items": {
+              "type": [
+               "string",
+               "null"
+              ]
+             }
+            }
+           },
+           "detail": {
+            "type": "string"
+           }
+          }
+         }
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/asrun.csv": {
+   "get": {
+    "tags": [
+     "Channels & playout"
+    ],
+    "summary": "As-run log (CSV)",
+    "description": "Same filters as `GET /api/asrun`, in time order, as a CSV download (times to the hundredth of a second in the server time zone).",
+    "parameters": [
+     {
+      "name": "from",
+      "in": "query",
+      "required": false,
+      "description": "Start, ms since 1970 (default: 24 h before `to`).",
+      "schema": {
+       "type": "integer",
+       "format": "int64"
+      }
+     },
+     {
+      "name": "to",
+      "in": "query",
+      "required": false,
+      "description": "End, ms since 1970 (default: now).",
+      "schema": {
+       "type": "integer",
+       "format": "int64"
+      }
+     },
+     {
+      "name": "channel",
+      "in": "query",
+      "required": false,
+      "description": "Channel id.",
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "actions",
+      "in": "query",
+      "required": false,
+      "description": "Comma-separated: take, out, continue, update, clear, row, widget, trigger, undo, auto (every step of the engine: auto-next, auto-out, auto-continue).",
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "actors",
+      "in": "query",
+      "required": false,
+      "description": "Comma-separated actor ids (user, API key…).",
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "kinds",
+      "in": "query",
+      "required": false,
+      "description": "Comma-separated sources: user, api, mos, auto, schedule, data.",
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "q",
+      "in": "query",
+      "required": false,
+      "description": "Text in the graphic, values, actor, project, channel, zone or detail.",
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "limit",
+      "in": "query",
+      "required": false,
+      "description": "At most this many entries (newest kept; default 5000 for JSON).",
+      "schema": {
+       "type": "integer"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "text/csv": {
+        "schema": {
+         "type": "string"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/channels/{id}/items/{item}/{action}": {
+   "parameters": [
+    {
+     "name": "id",
+     "in": "path",
+     "required": true,
+     "schema": {
+      "type": "string"
+     },
+     "description": "Channel id"
+    },
+    {
+     "name": "item",
+     "in": "path",
+     "required": true,
+     "schema": {
+      "type": "string"
+     },
+     "description": "Rundown item id (or its name)"
+    },
+    {
+     "name": "action",
+     "in": "path",
+     "required": true,
+     "schema": {
+      "type": "string",
+      "enum": [
+       "take",
+       "continue",
+       "out",
+       "update",
+       "clear"
+      ]
+     }
+    }
+   ],
+   "post": {
+    "tags": [
+     "Channels & playout"
+    ],
+    "summary": "Play a rundown item",
+    "description": "The simplest call for buttons (Stream Deck / Companion) and newsroom systems: the item's template, zone and data come from the project loaded on the channel. An optional body overrides data for `take` and `update`.\n\n**Rights:** admin, designer, operator.",
+    "requestBody": {
+     "required": false,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "properties": {
+         "data": {
+          "$ref": "#/components/schemas/Data"
+         },
+         "fade": {
+          "type": "boolean",
+          "description": "`update`: the new values cross-fade in (half a second) instead of a cut."
+         }
+        }
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ChannelState"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/channels/{id}/preview.png": {
+   "parameters": [
+    {
+     "name": "id",
+     "in": "path",
+     "required": true,
+     "schema": {
+      "type": "string"
+     },
+     "description": "Channel id"
+    }
+   ],
+   "get": {
+    "tags": [
+     "Channels & playout"
+    ],
+    "summary": "Program snapshot (PNG, Rust renderer)",
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "image/png": {
+        "schema": {
+         "type": "string",
+         "format": "binary"
+        }
+       }
+      }
+     }
+    },
+    "parameters": [
+     {
+      "name": "rendition",
+      "in": "query",
+      "schema": {
+       "type": "string"
+      },
+      "description": "Rendition id (default: main picture)."
+     }
+    ]
+   }
+  },
+  "/api/channels/{id}/slate.png": {
+   "parameters": [
+    {
+     "name": "id",
+     "in": "path",
+     "required": true,
+     "schema": {
+      "type": "string"
+     },
+     "description": "Channel id"
+    }
+   ],
+   "get": {
+    "tags": [
+     "Channels & playout"
+    ],
+    "summary": "Slate of a picture (PNG)",
+    "description": "What the picture's outputs show while no project is loaded, at the picture size: its built-in design (`slateStyle`) or its still picture; transparent when there is none. The HTML5 output shows this picture.\n\n**Rights:** public when HTML5 outputs are (`publicOutputs`); else anyone who sees the channel.",
+    "security": [],
+    "parameters": [
+     {
+      "name": "picture",
+      "in": "query",
+      "schema": {
+       "type": "string"
+      },
+      "description": "Rendition id (default: main picture)."
+     },
+     {
+      "name": "w",
+      "in": "query",
+      "schema": {
+       "type": "integer"
+      },
+      "description": "Width of a smaller copy (at most 640)."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "image/png": {
+        "schema": {
+         "type": "string",
+         "format": "binary"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/slate.png": {
+   "get": {
+    "tags": [
+     "Channels & playout"
+    ],
+    "summary": "Preview a slate (PNG)",
+    "description": "A slate for settings not applied yet (the choices of the Video streams page): a built-in design, or `custom` with `image`.",
+    "parameters": [
+     {
+      "name": "style",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "$ref": "#/components/schemas/SlateStyle"
+      }
+     },
+     {
+      "name": "channel",
+      "in": "query",
+      "schema": {
+       "type": "string"
+      },
+      "description": "Channel name written on the slate."
+     },
+     {
+      "name": "image",
+      "in": "query",
+      "schema": {
+       "type": "string"
+      },
+      "description": "Still picture of the `custom` style (`/assets/…`)."
+     },
+     {
+      "name": "width",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "integer"
+      },
+      "description": "Picture width."
+     },
+     {
+      "name": "height",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "integer"
+      },
+      "description": "Picture height."
+     },
+     {
+      "name": "num",
+      "in": "query",
+      "schema": {
+       "type": "integer",
+       "default": 50
+      },
+      "description": "Frame rate numerator."
+     },
+     {
+      "name": "den",
+      "in": "query",
+      "schema": {
+       "type": "integer",
+       "default": 1
+      },
+      "description": "Frame rate denominator."
+     },
+     {
+      "name": "w",
+      "in": "query",
+      "schema": {
+       "type": "integer",
+       "default": 320
+      },
+      "description": "Width of the PNG (at most 640)."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "image/png": {
+        "schema": {
+         "type": "string",
+         "format": "binary"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/channels/{id}/outputs/{name}/{essence}": {
+   "parameters": [
+    {
+     "name": "id",
+     "in": "path",
+     "required": true,
+     "schema": {
+      "type": "string"
+     },
+     "description": "Channel id"
+    },
+    {
+     "name": "name",
+     "in": "path",
+     "required": true,
+     "schema": {
+      "type": "string"
+     },
+     "description": "ST 2110 output name"
+    },
+    {
+     "name": "essence",
+     "in": "path",
+     "required": true,
+     "schema": {
+      "type": "string",
+      "enum": [
+       "fill.sdp",
+       "key.sdp"
+      ]
+     }
+    }
+   ],
+   "get": {
+    "tags": [
+     "Channels & playout"
+    ],
+    "summary": "SDP of an ST 2110 output",
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/sdp": {
+        "schema": {
+         "type": "string"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/assets": {
+   "get": {
+    "tags": [
+     "Assets"
+    ],
+    "summary": "List media",
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "array",
+         "items": {
+          "type": "string"
+         },
+         "example": [
+          "/assets/logo.png"
+         ]
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/assets/{name}": {
+   "parameters": [
+    {
+     "name": "name",
+     "in": "path",
+     "required": true,
+     "schema": {
+      "type": "string"
+     }
+    }
+   ],
+   "put": {
+    "tags": [
+     "Assets"
+    ],
+    "summary": "Upload a media file",
+    "description": "Raw body. Letters, digits, `.`, `-`, `_`.\n\n**Rights:** everyone but viewers.",
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/octet-stream": {
+       "schema": {
+        "type": "string",
+        "format": "binary"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "src": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/health": {
+   "get": {
+    "tags": [
+     "System"
+    ],
+    "summary": "Health",
+    "description": "Public: monitoring and the desktop app.",
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "name": {
+           "type": "string"
+          },
+          "version": {
+           "type": "string"
+          },
+          "bind": {
+           "type": "string"
+          },
+          "channels": {
+           "type": "integer"
+          },
+          "needsSetup": {
+           "type": "boolean"
+          }
+         }
+        }
+       }
+      }
+     }
+    },
+    "security": []
+   }
+  },
+  "/api/qr": {
+   "get": {
+    "tags": [
+     "System"
+    ],
+    "summary": "QR modules",
+    "description": "Public: lets the HTML5 renderer draw the same QR codes as the Rust one.",
+    "parameters": [
+     {
+      "name": "data",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "size": {
+           "type": "integer"
+          },
+          "modules": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     }
+    },
+    "security": []
+   }
+  },
+  "/api/system": {
+   "get": {
+    "tags": [
+     "System"
+    ],
+    "summary": "Server information",
+    "description": "`config` is only filled for admins.",
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": true
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/system/config": {
+   "put": {
+    "tags": [
+     "System"
+    ],
+    "summary": "Save settings and restart the engine",
+    "description": "**Rights:** admin.",
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/ServerConfig"
+       }
+      }
+     }
+    },
+    "responses": {
+     "202": {
+      "description": "Restarting"
+     }
+    }
+   }
+  },
+  "/api/system/restart": {
+   "post": {
+    "tags": [
+     "System"
+    ],
+    "summary": "Restart the engine",
+    "description": "**Rights:** admin (or a request from the server itself).",
+    "responses": {
+     "202": {
+      "description": "Restarting"
+     }
+    }
+   }
+  },
+  "/api/system/update": {
+   "get": {
+    "tags": [
+     "Updates"
+    ],
+    "summary": "Update status",
+    "description": "**Rights:** admin.",
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/UpdateInfo"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/system/update/settings": {
+   "put": {
+    "tags": [
+     "Updates"
+    ],
+    "summary": "Update source",
+    "description": "**Rights:** admin.",
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "properties": {
+         "repo": {
+          "type": "string"
+         },
+         "token": {
+          "type": [
+           "string",
+           "null"
+          ],
+          "description": "null keeps the stored token, \"\" removes it."
+         },
+         "autoCheck": {
+          "type": "boolean"
+         }
+        }
+       }
+      }
+     }
+    },
+    "responses": {
+     "204": {
+      "description": "Done"
+     }
+    }
+   }
+  },
+  "/api/system/update/check": {
+   "post": {
+    "tags": [
+     "Updates"
+    ],
+    "summary": "Look for the latest release",
+    "description": "**Rights:** admin.",
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Release"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/system/update/install": {
+   "post": {
+    "tags": [
+     "Updates"
+    ],
+    "summary": "Download and install a release",
+    "description": "The latest release with a package for this system, or `version` (one of `status.releases`, older ones included: going back). Runs in the background; follow `GET /api/system/update`. The server restarts.\n\n**Rights:** admin.",
+    "parameters": [
+     {
+      "name": "version",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "example": "0.18.0"
+     }
+    ],
+    "responses": {
+     "202": {
+      "description": "Started"
+     }
+    }
+   }
+  },
+  "/api/system/update/upload": {
+   "post": {
+    "tags": [
+     "Updates"
+    ],
+    "summary": "Install an uploaded release archive",
+    "description": "Body: the `Strata-<version>-<platform>` .tar.gz / .zip. The server restarts.\n\n**Rights:** admin.",
+    "parameters": [
+     {
+      "name": "allowOlder",
+      "in": "query",
+      "schema": {
+       "type": "boolean"
+      }
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/octet-stream": {
+       "schema": {
+        "type": "string",
+        "format": "binary"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "version": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/system/update/rollback": {
+   "post": {
+    "tags": [
+     "Updates"
+    ],
+    "summary": "Go back to the previous version",
+    "description": "**Rights:** admin.",
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "version": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/projects/{id}/playlists": {
+   "parameters": [
+    {
+     "name": "id",
+     "in": "path",
+     "required": true,
+     "schema": {
+      "type": "string"
+     }
+    }
+   ],
+   "put": {
+    "tags": [
+     "Projects"
+    ],
+    "summary": "Replace the playlists (rundown sections)",
+    "description": "Items of a removed playlist move to the first one.\n\n**Rights:** admin, designer, operator.",
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "array",
+        "items": {
+         "$ref": "#/components/schemas/Playlist"
+        }
+       }
+      }
+     }
+    },
+    "responses": {
+     "204": {
+      "description": "Done"
+     }
+    }
+   }
+  },
+  "/api/projects/{id}/formats": {
+   "parameters": [
+    {
+     "name": "id",
+     "in": "path",
+     "required": true,
+     "schema": {
+      "type": "string"
+     }
+    }
+   ],
+   "put": {
+    "tags": [
+     "Projects"
+    ],
+    "summary": "Replace the alternative formats",
+    "description": "Removing a format drops its layer overrides. The web designer lays every template out automatically when a format is added.\n\n**Rights:** admin, designer.",
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "array",
+        "items": {
+         "$ref": "#/components/schemas/Format"
+        }
+       }
+      }
+     }
+    },
+    "responses": {
+     "204": {
+      "description": "Done"
+     }
+    }
+   }
+  },
+  "/api/mos/info": {
+   "get": {
+    "tags": [
+     "Newsroom (MOS)"
+    ],
+    "summary": "MOS ID and schema for plugins",
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "mosId": {
+           "type": "string"
+          },
+          "enabled": {
+           "type": "boolean"
+          },
+          "projectId": {
+           "type": "string"
+          },
+          "schema": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/mos/status": {
+   "get": {
+    "tags": [
+     "Newsroom (MOS)"
+    ],
+    "summary": "MOS device status and running orders",
+    "description": "The MOS 2.8 device itself listens on TCP (default 10540 / 10541, XML in UTF-16). Running orders become project playlists `mos-<roID>`; items whose payload is `<strata project=… template=… zone=…><field key=…>…</field></strata>` (schema https://stratagraphics.io/mos/v1) become rundown items.\n\n**Rights:** admin.",
+    "responses": {
+     "200": {
+      "description": "OK"
+     }
+    }
+   }
+  },
+  "/api/render": {
+   "post": {
+    "tags": [
+     "Post-production"
+    ],
+    "summary": "Render a graphic to a video file with alpha",
+    "description": "QuickTime (.mov), PNG codec with alpha (Premiere, After Effects, Resolve, Avid). The clip plays the template like on air: animation in, `hold` seconds on air, then the out animation (`includeOut`), or the clip timeline given by `timing`. The project format closest to width × height is used (9:16 sequences get the 9:16 layout). At most 300 s.\n\n**Rights:** everyone but viewers.",
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "required": [
+         "projectId",
+         "templateId",
+         "width",
+         "height",
+         "frameRate"
+        ],
+        "properties": {
+         "projectId": {
+          "type": "string"
+         },
+         "templateId": {
+          "type": "string"
+         },
+         "data": {
+          "$ref": "#/components/schemas/Data"
+         },
+         "width": {
+          "type": "integer",
+          "example": 1920
+         },
+         "height": {
+          "type": "integer",
+          "example": 1080
+         },
+         "frameRate": {
+          "$ref": "#/components/schemas/FrameRate"
+         },
+         "hold": {
+          "type": "number",
+          "default": 5
+         },
+         "includeOut": {
+          "type": "boolean",
+          "default": true
+         },
+         "timing": {
+          "type": "object",
+          "description": "The clip's own timeline (the Premiere panel): the clip lasts `duration` seconds and leaves each stop of the template at the second given in `stops`. The stops are the template's pause markers and its on-air (out) marker, in frame order, one per frame. An animation with more time than it needs plays at its speed then holds on its stop; one with less is played faster. `hold` and `includeOut` are then not used.",
+          "required": [
+           "stops",
+           "duration"
+          ],
+          "properties": {
+           "stops": {
+            "type": "array",
+            "items": {
+             "type": "number"
+            },
+            "example": [
+             10,
+             20
+            ]
+           },
+           "duration": {
+            "type": "number",
+            "example": 30
+           }
+          }
+         }
+        }
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "The clip",
+      "content": {
+       "video/quicktime": {
+        "schema": {
+         "type": "string",
+         "format": "binary"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/colors": {
+   "get": {
+    "tags": [
+     "Assets"
+    ],
+    "summary": "Shared colour palettes",
+    "responses": {
+     "200": {
+      "description": "The palettes: [{id, name, colors: [{id, name, value}]}]"
+     }
+    }
+   },
+   "put": {
+    "tags": [
+     "Assets"
+    ],
+    "summary": "Replace the shared colour palettes",
+    "description": "Designers. Layers using a colour whose value changed (same id) take the new value in every project.",
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "array",
+        "items": {
+         "type": "object"
+        }
+       }
+      }
+     }
+    },
+    "responses": {
+     "204": {
+      "description": "Saved"
+     }
+    }
+   }
+  },
+  "/api/projects/{id}/colors": {
+   "parameters": [
+    {
+     "name": "id",
+     "in": "path",
+     "required": true,
+     "schema": {
+      "type": "string"
+     }
+    }
+   ],
+   "put": {
+    "tags": [
+     "Assets"
+    ],
+    "summary": "Replace the project's own palette",
+    "description": "Layers using a colour whose value changed (same id) take the new value.",
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "properties": {
+         "colors": {
+          "type": "array",
+          "items": {
+           "type": "object"
+          }
+         }
+        }
+       }
+      }
+     }
+    },
+    "responses": {
+     "204": {
+      "description": "Saved"
+     }
+    }
+   }
+  },
+  "/api/fonts": {
+   "get": {
+    "tags": [
+     "Assets"
+    ],
+    "summary": "Fonts available to templates",
+    "description": "Bundled, uploaded and system fonts with their weights. Public: output pages load them.",
+    "security": [],
+    "responses": {
+     "200": {
+      "description": "OK"
+     }
+    }
+   }
+  },
+  "/api/fonts/file/{family}/{weight}": {
+   "parameters": [
+    {
+     "name": "family",
+     "in": "path",
+     "required": true,
+     "schema": {
+      "type": "string"
+     }
+    },
+    {
+     "name": "weight",
+     "in": "path",
+     "required": true,
+     "schema": {
+      "type": "integer"
+     }
+    }
+   ],
+   "get": {
+    "tags": [
+     "Assets"
+    ],
+    "summary": "Font file used by the renderer",
+    "security": [],
+    "responses": {
+     "200": {
+      "description": "The font"
+     }
+    }
+   }
+  },
+  "/api/fonts/{name}": {
+   "parameters": [
+    {
+     "name": "name",
+     "in": "path",
+     "required": true,
+     "schema": {
+      "type": "string"
+     }
+    }
+   ],
+   "put": {
+    "tags": [
+     "Assets"
+    ],
+    "summary": "Add a font (.ttf, .otf, .woff, .woff2)",
+    "description": "Raw body. Renderers pick it up without restart.\n\n**Rights:** admin, designer.",
+    "responses": {
+     "200": {
+      "description": "OK"
+     }
+    }
+   }
+  },
+  "/api/projects/{id}/import/after-effects": {
+   "post": {
+    "tags": [
+     "Projects"
+    ],
+    "summary": "Import an After Effects composition",
+    "description": "Creates a template from an After Effects composition exported with the Bodymovin or LottieFiles extension: the `.json`, a `.zip` with `data.json` and `images/`, or a `.lottie`. Rectangles, ellipses, solids, texts (each becomes a data field), images, null objects, parenting, precomps, transforms and keyframes with their easing are converted; markers named “pause” / “on air” / “out” become playout markers. Unsupported features are listed in `warnings`. A `.mogrt` is refused with an explanation: it wraps a binary After Effects project.\n\n**Rights:** admin, designer.",
+    "parameters": [
+     {
+      "name": "id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "name",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Template name (default: the composition name)."
+     },
+     {
+      "name": "layersOnly",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "boolean"
+      },
+      "description": "Only convert (its pictures are saved, no template is created): the result's layers go into an open template."
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "description": "Bodymovin / Lottie JSON"
+       }
+      },
+      "application/zip": {
+       "schema": {
+        "type": "string",
+        "format": "binary"
+       }
+      },
+      "application/octet-stream": {
+       "schema": {
+        "type": "string",
+        "format": "binary"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "The new template and what could not be converted.",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "template": {
+           "$ref": "#/components/schemas/Template"
+          },
+          "warnings": {
+           "type": "array",
+           "items": {
+            "type": "string"
+           }
+          }
+         }
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Not a convertible file (the message explains why).",
+      "content": {
+       "text/plain": {
+        "schema": {
+         "type": "string"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/data/sources": {
+   "get": {
+    "tags": [
+     "Data"
+    ],
+    "summary": "List data sources with their status",
+    "responses": {
+     "200": {
+      "description": "Sources",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "array",
+         "items": {
+          "$ref": "#/components/schemas/DataSource"
+         }
+        }
+       }
+      }
+     }
+    },
+    "parameters": [
+     {
+      "name": "project",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Only this project's connectors and the shared ones."
+     },
+     {
+      "name": "shared",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "boolean"
+      },
+      "description": "Only the shared connectors."
+     }
+    ],
+    "description": "Shared connectors and those of the projects you can see."
+   },
+   "post": {
+    "tags": [
+     "Data"
+    ],
+    "summary": "Create a data source",
+    "description": "**Rights:** admin, designer.",
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/DataSource"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "Created",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/DataSource"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/data/sources/{id}": {
+   "parameters": [
+    {
+     "name": "id",
+     "in": "path",
+     "required": true,
+     "schema": {
+      "type": "string"
+     }
+    }
+   ],
+   "put": {
+    "tags": [
+     "Data"
+    ],
+    "summary": "Replace a data source",
+    "description": "**Rights:** admin, designer.",
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/DataSource"
+       }
+      }
+     }
+    },
+    "responses": {
+     "204": {
+      "description": "Done"
+     }
+    }
+   },
+   "delete": {
+    "tags": [
+     "Data"
+    ],
+    "summary": "Delete a data source",
+    "description": "Bound fields keep their last value. **Rights:** admin, designer.",
+    "responses": {
+     "204": {
+      "description": "Done"
+     }
+    }
+   }
+  },
+  "/api/data/sources/{id}/value": {
+   "parameters": [
+    {
+     "name": "id",
+     "in": "path",
+     "required": true,
+     "schema": {
+      "type": "string"
+     }
+    }
+   ],
+   "get": {
+    "tags": [
+     "Data"
+    ],
+    "summary": "Current value of a source (as JSON)",
+    "description": "CSV becomes `{columns, rows:[{column: value}]}`, RSS / Atom `{title, items:[{title, description, link, date}]}`, XML `{root: {child: …, \"@attr\": …}}`.",
+    "responses": {
+     "200": {
+      "description": "Value",
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      }
+     }
+    }
+   },
+   "put": {
+    "tags": [
+     "Data"
+    ],
+    "summary": "Push the value of a push source",
+    "description": "Body in the source format (JSON, CSV or XML). Graphics on air bound to it update at once.\n\n**Rights:** admin, designer, operator (or an API key).",
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {}
+      },
+      "text/csv": {
+       "schema": {
+        "type": "string"
+       }
+      },
+      "application/xml": {
+       "schema": {
+        "type": "string"
+       }
+      }
+     }
+    },
+    "responses": {
+     "204": {
+      "description": "Done"
+     }
+    }
+   }
+  },
+  "/api/data/sources/{id}/refresh": {
+   "parameters": [
+    {
+     "name": "id",
+     "in": "path",
+     "required": true,
+     "schema": {
+      "type": "string"
+     }
+    }
+   ],
+   "post": {
+    "tags": [
+     "Data"
+    ],
+    "summary": "Fetch a source now",
+    "responses": {
+     "204": {
+      "description": "Done"
+     }
+    }
+   }
+  },
+  "/api/data/test": {
+   "post": {
+    "tags": [
+     "Data"
+    ],
+    "summary": "Fetch a source once without saving it",
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/DataSource"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "Value or error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "value": {},
+          "bytes": {
+           "type": "integer"
+          },
+          "error": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/data/lookup": {
+   "post": {
+    "tags": [
+     "Data"
+    ],
+    "summary": "Resolve a binding path",
+    "description": "Paths: `a.b`, `items[0]`, `items[-1]`, `rows[{row}]` (`{key}` from `data`), `players[number=10]`, `items[*].title` (all, one per line), `items.length`.",
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "required": [
+         "source",
+         "path"
+        ],
+        "properties": {
+         "source": {
+          "type": "string"
+         },
+         "path": {
+          "type": "string"
+         },
+         "data": {
+          "$ref": "#/components/schemas/Data"
+         }
+        }
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "Value (null when nothing is there)",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "value": {
+           "type": "string",
+           "nullable": true
+          }
+         }
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/projects/{id}/templates/{tid}/publish": {
+   "parameters": [
+    {
+     "name": "id",
+     "in": "path",
+     "required": true,
+     "schema": {
+      "type": "string"
+     },
+     "description": "Project id"
+    },
+    {
+     "name": "tid",
+     "in": "path",
+     "required": true,
+     "schema": {
+      "type": "string"
+     },
+     "description": "Template id"
+    }
+   ],
+   "post": {
+    "tags": [
+     "Projects"
+    ],
+    "summary": "Publish a template to the Operator",
+    "description": "Makes the draft the version used by the Operator, outputs and playout, and increments its revision.\n\n**Rights:** admin, designer.",
+    "responses": {
+     "200": {
+      "description": "Published",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "revision": {
+           "type": "integer"
+          }
+         }
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "No such template"
+     }
+    }
+   }
+  },
+  "/api/projects/{id}/templates/{tid}/draft": {
+   "parameters": [
+    {
+     "name": "id",
+     "in": "path",
+     "required": true,
+     "schema": {
+      "type": "string"
+     },
+     "description": "Project id"
+    },
+    {
+     "name": "tid",
+     "in": "path",
+     "required": true,
+     "schema": {
+      "type": "string"
+     },
+     "description": "Template id"
+    }
+   ],
+   "delete": {
+    "tags": [
+     "Projects"
+    ],
+    "summary": "Discard a template's draft",
+    "description": "Goes back to the published version. Refused for a template that was never published.\n\n**Rights:** admin, designer.",
+    "responses": {
+     "204": {
+      "description": "Done"
+     }
+    }
+   }
+  },
+  "/api/projects/{id}/templates/{tid}/lock": {
+   "parameters": [
+    {
+     "name": "id",
+     "in": "path",
+     "required": true,
+     "schema": {
+      "type": "string"
+     },
+     "description": "Project id"
+    },
+    {
+     "name": "tid",
+     "in": "path",
+     "required": true,
+     "schema": {
+      "type": "string"
+     },
+     "description": "Template id"
+    }
+   ],
+   "post": {
+    "tags": [
+     "Projects"
+    ],
+    "summary": "Take or renew a template's edit lock",
+    "description": "One designer tab at a time edits a template. The lock lapses when not renewed for 45 s. `force` takes it over: the previous holder is told by a `lock` WebSocket event and switches to read only.\n\n**Rights:** admin, designer.",
+    "parameters": [
+     {
+      "name": "X-Strata-Client",
+      "in": "header",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Designer tab id"
+     }
+    ],
+    "requestBody": {
+     "required": false,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "properties": {
+         "force": {
+          "type": "boolean"
+         }
+        }
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "`granted` is false when someone else holds it (`lock` is theirs)",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "granted": {
+           "type": "boolean"
+          },
+          "lock": {
+           "$ref": "#/components/schemas/EditLock"
+          }
+         }
+        }
+       }
+      }
+     }
+    }
+   },
+   "delete": {
+    "tags": [
+     "Projects"
+    ],
+    "summary": "Release a template's edit lock",
+    "description": "Only the holding tab releases it.\n\n**Rights:** admin, designer.",
+    "parameters": [
+     {
+      "name": "X-Strata-Client",
+      "in": "header",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Designer tab id"
+     }
+    ],
+    "responses": {
+     "204": {
+      "description": "Done"
+     }
+    }
+   }
+  },
+  "/api/projects/{id}/locks": {
+   "parameters": [
+    {
+     "name": "id",
+     "in": "path",
+     "required": true,
+     "schema": {
+      "type": "string"
+     },
+     "description": "Project id"
+    }
+   ],
+   "get": {
+    "tags": [
+     "Projects"
+    ],
+    "summary": "Edit locks of a project",
+    "description": "By template id.",
+    "responses": {
+     "200": {
+      "description": "Locks",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": {
+          "$ref": "#/components/schemas/EditLock"
+         }
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/media": {
+   "get": {
+    "tags": [
+     "Media"
+    ],
+    "summary": "Shared media",
+    "description": "Files every project can use, served at `/assets/<name>`.",
+    "responses": {
+     "200": {
+      "description": "Files, newest first",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "array",
+         "items": {
+          "$ref": "#/components/schemas/MediaFile"
+         }
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/media/{name}": {
+   "parameters": [
+    {
+     "name": "name",
+     "in": "path",
+     "required": true,
+     "schema": {
+      "type": "string"
+     },
+     "description": "File name (letters, digits, . - _)"
+    }
+   ],
+   "put": {
+    "tags": [
+     "Media"
+    ],
+    "summary": "Upload a shared media file",
+    "description": "Replaces a file of the same name. Up to 2 GB.\n\n**Rights:** admin, designer, operator.",
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/octet-stream": {
+       "schema": {
+        "type": "string",
+        "format": "binary"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "Stored",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/MediaFile"
+        }
+       }
+      }
+     }
+    }
+   },
+   "delete": {
+    "tags": [
+     "Media"
+    ],
+    "summary": "Delete a shared media file",
+    "description": "**Rights:** admin, designer.",
+    "responses": {
+     "204": {
+      "description": "Done"
+     }
+    }
+   }
+  },
+  "/api/projects/{id}/media": {
+   "parameters": [
+    {
+     "name": "id",
+     "in": "path",
+     "required": true,
+     "schema": {
+      "type": "string"
+     },
+     "description": "Project id"
+    }
+   ],
+   "get": {
+    "tags": [
+     "Media"
+    ],
+    "summary": "Media of a project",
+    "description": "Served at `/assets/projects/<id>/<name>`. Duplicating a project copies them; deleting it deletes them.",
+    "responses": {
+     "200": {
+      "description": "Files, newest first",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "array",
+         "items": {
+          "$ref": "#/components/schemas/MediaFile"
+         }
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/projects/{id}/media/{name}": {
+   "parameters": [
+    {
+     "name": "id",
+     "in": "path",
+     "required": true,
+     "schema": {
+      "type": "string"
+     },
+     "description": "Project id"
+    },
+    {
+     "name": "name",
+     "in": "path",
+     "required": true,
+     "schema": {
+      "type": "string"
+     },
+     "description": "File name (letters, digits, . - _)"
+    }
+   ],
+   "put": {
+    "tags": [
+     "Media"
+    ],
+    "summary": "Upload a project media file",
+    "description": "Up to 2 GB.\n\n**Rights:** admin, designer, operator of the project.",
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/octet-stream": {
+       "schema": {
+        "type": "string",
+        "format": "binary"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "Stored",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/MediaFile"
+        }
+       }
+      }
+     }
+    }
+   },
+   "delete": {
+    "tags": [
+     "Media"
+    ],
+    "summary": "Delete a project media file",
+    "description": "**Rights:** admin, designer.",
+    "responses": {
+     "204": {
+      "description": "Done"
+     }
+    }
+   }
+  },
+  "/api/folders": {
+   "get": {
+    "tags": [
+     "Projects"
+    ],
+    "summary": "Folders of the project list",
+    "responses": {
+     "200": {
+      "description": "Folders",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Folders"
+        }
+       }
+      }
+     }
+    }
+   },
+   "put": {
+    "tags": [
+     "Projects"
+    ],
+    "summary": "Replace the folders",
+    "description": "Folder names and the folder of each project (one level). A `folders` WebSocket event tells every client.\n\n**Rights:** admin, designer.",
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/Folders"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "Saved",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Folders"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/outputs/status": {
+   "get": {
+    "tags": [
+     "System"
+    ],
+    "summary": "State of the video outputs",
+    "description": "By channel id, then output id: `{ok, message}` for each SDI, ST 2110 and NDI output (\"Running\", or why it does not run).",
+    "responses": {
+     "200": {
+      "description": "States",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": {
+          "type": "object",
+          "additionalProperties": {
+           "type": "object",
+           "properties": {
+            "ok": {
+             "type": "boolean"
+            },
+            "message": {
+             "type": "string"
+            }
+           }
+          }
+         }
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/data/pipeline": {
+   "post": {
+    "tags": [
+     "Data"
+    ],
+    "summary": "Run a table pipeline",
+    "description": "Reads `list` of the source's value (dotted keys, \"\" = the root) as a table, then applies the `steps` in order: `filter` (`where` conditions, `any`, rows `from`/`count`, `columns`), `sort` (`keys`), `transform` (text `ops` on `columns`). Returns the table after each stage (at most 200 rows each) and the text a field fed by the last step reads (a line per row, cells joined by a space).",
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "required": [
+         "source"
+        ],
+        "properties": {
+         "source": {
+          "type": "string"
+         },
+         "list": {
+          "type": "string"
+         },
+         "steps": {
+          "type": "array",
+          "items": {
+           "type": "object"
+          }
+         },
+         "data": {
+          "$ref": "#/components/schemas/Data"
+         }
+        }
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "Stages and text",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "stages": {
+           "type": "array",
+           "items": {
+            "type": "object",
+            "properties": {
+             "columns": {
+              "type": "array",
+              "items": {
+               "type": "string"
+              }
+             },
+             "rows": {
+              "type": "array",
+              "items": {
+               "type": "array",
+               "items": {
+                "type": "string"
+               }
+              }
+             },
+             "total": {
+              "type": "integer"
+             }
+            }
+           }
+          },
+          "text": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "No value for this source, or no list at this place"
+     }
+    }
+   }
+  },
+  "/api/v1/status": {
+   "get": {
+    "tags": [
+     "Control surfaces (v1)"
+    ],
+    "summary": "Status of every channel",
+    "description": "Tally of every graphic, what each zone shows, countdowns, widgets, zone locks, health.",
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/V1Status"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/v1/feedback": {
+   "get": {
+    "tags": [
+     "Control surfaces (v1)"
+    ],
+    "summary": "Feedback (WebSocket)",
+    "description": "Sends the status (`V1Status`) on connect, then again each time it changes (at most 10 a second; countdowns at least once a second). The API key may come as `?key=pcg_…`.",
+    "parameters": [
+     {
+      "name": "key",
+      "in": "query",
+      "schema": {
+       "type": "string"
+      },
+      "description": "API key"
+     },
+     {
+      "name": "channel",
+      "in": "query",
+      "schema": {
+       "type": "string"
+      },
+      "description": "One channel (id or name)"
+     }
+    ],
+    "responses": {
+     "101": {
+      "description": "WebSocket"
+     }
+    }
+   }
+  },
+  "/api/v1/{channel}/status": {
+   "parameters": [
+    {
+     "name": "channel",
+     "in": "path",
+     "required": true,
+     "schema": {
+      "type": "string"
+     },
+     "description": "Channel id or name"
+    }
+   ],
+   "get": {
+    "tags": [
+     "Control surfaces (v1)"
+    ],
+    "summary": "Status of a channel",
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/V1ChannelStatus"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/v1/{channel}/take/{item}": {
+   "parameters": [
+    {
+     "name": "channel",
+     "in": "path",
+     "required": true,
+     "schema": {
+      "type": "string"
+     },
+     "description": "Channel id or name"
+    },
+    {
+     "name": "item",
+     "in": "path",
+     "required": true,
+     "schema": {
+      "type": "string"
+     },
+     "description": "Rundown item id, name or position (1 = first)"
+    }
+   ],
+   "post": {
+    "tags": [
+     "Control surfaces (v1)"
+    ],
+    "summary": "Take a graphic",
+    "description": "A graphic of the rundown (its values, the body's over them), else a template by id or name. `?zone=` plays it in another zone.",
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/V1Done"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "No such channel, graphic, zone or action"
+     },
+     "409": {
+      "description": "Another operator holds the zone, or nothing next"
+     }
+    },
+    "requestBody": {
+     "required": false,
+     "description": "Values, at the top or under `data` (the query works too).",
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "properties": {
+         "data": {
+          "$ref": "#/components/schemas/Data"
+         },
+         "fade": {
+          "type": "boolean"
+         },
+         "zone": {
+          "type": "string"
+         }
+        },
+        "additionalProperties": {
+         "type": "string"
+        }
+       }
+      },
+      "text/plain": {
+       "schema": {
+        "type": "string"
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/v1/{channel}/next": {
+   "parameters": [
+    {
+     "name": "channel",
+     "in": "path",
+     "required": true,
+     "schema": {
+      "type": "string"
+     },
+     "description": "Channel id or name"
+    }
+   ],
+   "post": {
+    "tags": [
+     "Control surfaces (v1)"
+    ],
+    "summary": "NEXT",
+    "description": "Takes the cued graphic (the one after it when it is already on air), else the one after the last taken, as the Operator's NEXT; then cues the following one.",
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/V1Done"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "No such channel, graphic, zone or action"
+     },
+     "409": {
+      "description": "Another operator holds the zone, or nothing next"
+     }
+    },
+    "requestBody": {
+     "required": false,
+     "description": "Optional.",
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "properties": {
+         "playlist": {
+          "type": "string",
+          "description": "Playlist id, name or position"
+         }
+        }
+       }
+      },
+      "text/plain": {
+       "schema": {
+        "type": "string"
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/v1/{channel}/cue/{item}": {
+   "parameters": [
+    {
+     "name": "channel",
+     "in": "path",
+     "required": true,
+     "schema": {
+      "type": "string"
+     },
+     "description": "Channel id or name"
+    },
+    {
+     "name": "item",
+     "in": "path",
+     "required": true,
+     "schema": {
+      "type": "string"
+     },
+     "description": "Rundown item id, name or position (1 = first)"
+    }
+   ],
+   "post": {
+    "tags": [
+     "Control surfaces (v1)"
+    ],
+    "summary": "Cue a graphic",
+    "description": "Marks the graphic NEXT takes (kept in memory).",
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/V1Done"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "No such channel, graphic, zone or action"
+     },
+     "409": {
+      "description": "Another operator holds the zone, or nothing next"
+     }
+    }
+   }
+  },
+  "/api/v1/{channel}/continue/{zone}": {
+   "parameters": [
+    {
+     "name": "channel",
+     "in": "path",
+     "required": true,
+     "schema": {
+      "type": "string"
+     },
+     "description": "Channel id or name"
+    },
+    {
+     "name": "zone",
+     "in": "path",
+     "required": true,
+     "schema": {
+      "type": "string"
+     },
+     "description": "Zone id or name"
+    }
+   ],
+   "post": {
+    "tags": [
+     "Control surfaces (v1)"
+    ],
+    "summary": "Continue",
+    "description": "Plays on from the pause the graphic in the zone holds at.",
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/V1Done"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "No such channel, graphic, zone or action"
+     },
+     "409": {
+      "description": "Another operator holds the zone, or nothing next"
+     }
+    }
+   }
+  },
+  "/api/v1/{channel}/out": {
+   "parameters": [
+    {
+     "name": "channel",
+     "in": "path",
+     "required": true,
+     "schema": {
+      "type": "string"
+     },
+     "description": "Channel id or name"
+    }
+   ],
+   "post": {
+    "tags": [
+     "Control surfaces (v1)"
+    ],
+    "summary": "Take out everything",
+    "description": "Every zone on air plays its out animation.",
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/V1Done"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "No such channel, graphic, zone or action"
+     },
+     "409": {
+      "description": "Another operator holds the zone, or nothing next"
+     }
+    }
+   }
+  },
+  "/api/v1/{channel}/out/{zone}": {
+   "parameters": [
+    {
+     "name": "channel",
+     "in": "path",
+     "required": true,
+     "schema": {
+      "type": "string"
+     },
+     "description": "Channel id or name"
+    },
+    {
+     "name": "zone",
+     "in": "path",
+     "required": true,
+     "schema": {
+      "type": "string"
+     },
+     "description": "Zone id or name"
+    }
+   ],
+   "post": {
+    "tags": [
+     "Control surfaces (v1)"
+    ],
+    "summary": "Take out a zone",
+    "description": "",
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/V1Done"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "No such channel, graphic, zone or action"
+     },
+     "409": {
+      "description": "Another operator holds the zone, or nothing next"
+     }
+    }
+   }
+  },
+  "/api/v1/{channel}/clear/{zone}": {
+   "parameters": [
+    {
+     "name": "channel",
+     "in": "path",
+     "required": true,
+     "schema": {
+      "type": "string"
+     },
+     "description": "Channel id or name"
+    },
+    {
+     "name": "zone",
+     "in": "path",
+     "required": true,
+     "schema": {
+      "type": "string"
+     },
+     "description": "Zone id or name"
+    }
+   ],
+   "post": {
+    "tags": [
+     "Control surfaces (v1)"
+    ],
+    "summary": "Clear a zone",
+    "description": "Removes at once, without the out animation (`all` for every zone).",
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/V1Done"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "No such channel, graphic, zone or action"
+     },
+     "409": {
+      "description": "Another operator holds the zone, or nothing next"
+     }
+    }
+   }
+  },
+  "/api/v1/{channel}/update/{zone}": {
+   "parameters": [
+    {
+     "name": "channel",
+     "in": "path",
+     "required": true,
+     "schema": {
+      "type": "string"
+     },
+     "description": "Channel id or name"
+    },
+    {
+     "name": "zone",
+     "in": "path",
+     "required": true,
+     "schema": {
+      "type": "string"
+     },
+     "description": "Zone id or name"
+    }
+   ],
+   "post": {
+    "tags": [
+     "Control surfaces (v1)"
+    ],
+    "summary": "Update values",
+    "description": "New values for the graphic on air (`fade` cross-fades them in).",
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/V1Done"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "No such channel, graphic, zone or action"
+     },
+     "409": {
+      "description": "Another operator holds the zone, or nothing next"
+     }
+    },
+    "requestBody": {
+     "required": false,
+     "description": "Values, at the top or under `data` (the query works too).",
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "properties": {
+         "data": {
+          "$ref": "#/components/schemas/Data"
+         },
+         "fade": {
+          "type": "boolean"
+         },
+         "zone": {
+          "type": "string"
+         }
+        },
+        "additionalProperties": {
+         "type": "string"
+        }
+       }
+      },
+      "text/plain": {
+       "schema": {
+        "type": "string"
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/v1/{channel}/value/{zone}/{key}": {
+   "parameters": [
+    {
+     "name": "channel",
+     "in": "path",
+     "required": true,
+     "schema": {
+      "type": "string"
+     },
+     "description": "Channel id or name"
+    },
+    {
+     "name": "zone",
+     "in": "path",
+     "required": true,
+     "schema": {
+      "type": "string"
+     },
+     "description": "Zone id or name"
+    },
+    {
+     "name": "key",
+     "in": "path",
+     "required": true,
+     "schema": {
+      "type": "string"
+     },
+     "description": "Field key"
+    }
+   ],
+   "post": {
+    "tags": [
+     "Control surfaces (v1)"
+    ],
+    "summary": "Set one value",
+    "description": "The body is the value (text), or `{\"value\": …}`, or `?value=`.",
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/V1Done"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "No such channel, graphic, zone or action"
+     },
+     "409": {
+      "description": "Another operator holds the zone, or nothing next"
+     }
+    },
+    "requestBody": {
+     "required": false,
+     "description": "The value.",
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "properties": {
+         "value": {
+          "type": "string"
+         }
+        }
+       }
+      },
+      "text/plain": {
+       "schema": {
+        "type": "string"
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/v1/{channel}/undo": {
+   "parameters": [
+    {
+     "name": "channel",
+     "in": "path",
+     "required": true,
+     "schema": {
+      "type": "string"
+     },
+     "description": "Channel id or name"
+    }
+   ],
+   "post": {
+    "tags": [
+     "Control surfaces (v1)"
+    ],
+    "summary": "Undo",
+    "description": "Puts back the channel as before its last action.",
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/V1Done"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "No such channel, graphic, zone or action"
+     },
+     "409": {
+      "description": "Another operator holds the zone, or nothing next"
+     }
+    }
+   }
+  },
+  "/api/v1/{channel}/trigger/{name}": {
+   "parameters": [
+    {
+     "name": "channel",
+     "in": "path",
+     "required": true,
+     "schema": {
+      "type": "string"
+     },
+     "description": "Channel id or name"
+    },
+    {
+     "name": "name",
+     "in": "path",
+     "required": true,
+     "schema": {
+      "type": "string"
+     },
+     "description": "Trigger name"
+    }
+   ],
+   "post": {
+    "tags": [
+     "Control surfaces (v1)"
+    ],
+    "summary": "Fire a trigger",
+    "description": "Pauses waiting for this trigger play on.",
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/V1Done"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "No such channel, graphic, zone or action"
+     },
+     "409": {
+      "description": "Another operator holds the zone, or nothing next"
+     }
+    }
+   }
+  },
+  "/api/v1/{channel}/widget/{zone}/{widget}/{action}": {
+   "parameters": [
+    {
+     "name": "channel",
+     "in": "path",
+     "required": true,
+     "schema": {
+      "type": "string"
+     },
+     "description": "Channel id or name"
+    },
+    {
+     "name": "zone",
+     "in": "path",
+     "required": true,
+     "schema": {
+      "type": "string"
+     },
+     "description": "Zone id or name"
+    },
+    {
+     "name": "widget",
+     "in": "path",
+     "required": true,
+     "schema": {
+      "type": "string"
+     },
+     "description": "Layer id or name (`*`: every timed widget)"
+    },
+    {
+     "name": "action",
+     "in": "path",
+     "required": true,
+     "schema": {
+      "type": "string"
+     },
+     "description": "start, pause, toggle, reset, restart, or the widget's action"
+    }
+   ],
+   "post": {
+    "tags": [
+     "Control surfaces (v1)"
+    ],
+    "summary": "Widget action",
+    "description": "`start`, `pause`, `toggle`, `reset`, `restart` a timed widget; any other action is the widget's own (`next`, `add`…) with the body (or `key=value` words) as `args`.",
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/V1Done"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "No such channel, graphic, zone or action"
+     },
+     "409": {
+      "description": "Another operator holds the zone, or nothing next"
+     }
+    },
+    "requestBody": {
+     "required": false,
+     "description": "Arguments of the widget's action.",
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "properties": {
+         "args": {
+          "type": "object"
+         }
+        }
+       }
+      },
+      "text/plain": {
+       "schema": {
+        "type": "string"
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/v1/{channel}/row/{zone}/{row}": {
+   "parameters": [
+    {
+     "name": "channel",
+     "in": "path",
+     "required": true,
+     "schema": {
+      "type": "string"
+     },
+     "description": "Channel id or name"
+    },
+    {
+     "name": "zone",
+     "in": "path",
+     "required": true,
+     "schema": {
+      "type": "string"
+     },
+     "description": "Zone id or name"
+    },
+    {
+     "name": "row",
+     "in": "path",
+     "required": true,
+     "schema": {
+      "type": "string"
+     },
+     "description": "next, prev, first, last or a row number (1 = first)"
+    }
+   ],
+   "post": {
+    "tags": [
+     "Control surfaces (v1)"
+    ],
+    "summary": "Data set row",
+    "description": "Another row of a data set of the graphic on air (`?dataset=`: its key or name; default: the first).",
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/V1Done"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "No such channel, graphic, zone or action"
+     },
+     "409": {
+      "description": "Another operator holds the zone, or nothing next"
+     }
+    }
+   }
+  },
+  "/api/channels/{id}/undo": {
+   "parameters": [
+    {
+     "name": "id",
+     "in": "path",
+     "required": true,
+     "schema": {
+      "type": "string"
+     },
+     "description": "Channel id"
+    }
+   ],
+   "get": {
+    "tags": [
+     "Channels & playout"
+    ],
+    "summary": "Last actions that can be undone",
+    "description": "The last 10 actions of the channel, latest first.",
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "array",
+         "items": {
+          "$ref": "#/components/schemas/UndoStep"
+         }
+        }
+       }
+      }
+     }
+    }
+   },
+   "post": {
+    "tags": [
+     "Channels & playout"
+    ],
+    "summary": "Undo the last action",
+    "description": "**Rights:** admin, designer, operator. Only the zone of the action goes back; refused (409) when another operator holds it.",
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ChannelState"
+        }
+       }
+      }
+     },
+     "409": {
+      "description": "The zone is held by another operator"
+     }
+    }
+   }
+  },
+  "/api/channels/{id}/locks": {
+   "parameters": [
+    {
+     "name": "id",
+     "in": "path",
+     "required": true,
+     "schema": {
+      "type": "string"
+     },
+     "description": "Channel id"
+    }
+   ],
+   "get": {
+    "tags": [
+     "Channels & playout"
+    ],
+    "summary": "Zones held by operators",
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "array",
+         "items": {
+          "$ref": "#/components/schemas/ZoneLock"
+         }
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/channels/{id}/zones/{zone}/lock": {
+   "parameters": [
+    {
+     "name": "id",
+     "in": "path",
+     "required": true,
+     "schema": {
+      "type": "string"
+     },
+     "description": "Channel id"
+    },
+    {
+     "name": "zone",
+     "in": "path",
+     "required": true,
+     "schema": {
+      "type": "string"
+     },
+     "description": "Zone id"
+    }
+   ],
+   "put": {
+    "tags": [
+     "Channels & playout"
+    ],
+    "summary": "Take a zone",
+    "description": "**Rights:** admin, designer, operator. Taken from whoever held it, who is told (`zoneLocks` event). Other people's commands on it are then refused (409). A person taking a graphic on a free zone holds it too; the zones of someone who closes the Operator are freed after 15 s.",
+    "responses": {
+     "204": {
+      "description": "Taken"
+     }
+    }
+   },
+   "delete": {
+    "tags": [
+     "Channels & playout"
+    ],
+    "summary": "Free a zone",
+    "description": "Its holder or an admin.",
+    "responses": {
+     "204": {
+      "description": "Freed"
+     }
+    }
+   }
+  },
+  "/api/channels/{id}/schedule": {
+   "parameters": [
+    {
+     "name": "id",
+     "in": "path",
+     "required": true,
+     "schema": {
+      "type": "string"
+     },
+     "description": "Channel id"
+    }
+   ],
+   "get": {
+    "tags": [
+     "Channels & playout"
+    ],
+    "summary": "Scheduled takes",
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "array",
+         "items": {
+          "$ref": "#/components/schemas/Scheduled"
+         }
+        }
+       }
+      }
+     }
+    }
+   },
+   "post": {
+    "tags": [
+     "Channels & playout"
+    ],
+    "summary": "Schedule a take or an out",
+    "description": "**Rights:** admin, designer, operator.",
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "required": [
+         "action",
+         "when"
+        ],
+        "properties": {
+         "projectId": {
+          "type": "string",
+          "description": "Default: the project on the channel"
+         },
+         "action": {
+          "type": "string",
+          "enum": [
+           "take",
+           "out"
+          ]
+         },
+         "item": {
+          "type": "string",
+          "description": "Rundown item id"
+         },
+         "zone": {
+          "type": "string",
+          "description": "For an out without item"
+         },
+         "when": {
+          "$ref": "#/components/schemas/ScheduleWhen"
+         },
+         "repeat": {
+          "type": "string",
+          "enum": [
+           "once",
+           "daily"
+          ]
+         }
+        }
+       }
+      }
+     }
+    },
+    "responses": {
+     "201": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Scheduled"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/channels/{id}/schedule/{sid}": {
+   "parameters": [
+    {
+     "name": "id",
+     "in": "path",
+     "required": true,
+     "schema": {
+      "type": "string"
+     },
+     "description": "Channel id"
+    },
+    {
+     "name": "sid",
+     "in": "path",
+     "required": true,
+     "schema": {
+      "type": "string"
+     },
+     "description": "Scheduled entry id"
+    }
+   ],
+   "patch": {
+    "tags": [
+     "Channels & playout"
+    ],
+    "summary": "Turn a scheduled entry on or off",
+    "description": "**Rights:** admin, designer, operator.",
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "required": [
+         "enabled"
+        ],
+        "properties": {
+         "enabled": {
+          "type": "boolean"
+         }
+        }
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "OK"
+     }
+    }
+   },
+   "delete": {
+    "tags": [
+     "Channels & playout"
+    ],
+    "summary": "Delete a scheduled entry",
+    "description": "**Rights:** admin, designer, operator.",
+    "responses": {
+     "204": {
+      "description": "Deleted"
+     }
+    }
+   }
+  },
+  "/api/me/shortcuts": {
+   "get": {
+    "tags": [
+     "Users & API keys"
+    ],
+    "summary": "My keyboard shortcuts",
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Shortcuts"
+        }
+       }
+      }
+     }
+    }
+   },
+   "put": {
+    "tags": [
+     "Users & API keys"
+    ],
+    "summary": "Save my keyboard shortcuts",
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/Shortcuts"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Shortcuts"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/me/display": {
+   "get": {
+    "tags": [
+     "Users & API keys"
+    ],
+    "summary": "My display choices",
+    "description": "Panel sizes and what the pages show, by name. **Rights:** any signed-in user.",
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": true
+        }
+       }
+      }
+     }
+    }
+   },
+   "patch": {
+    "tags": [
+     "Users & API keys"
+    ],
+    "summary": "Change my display choices",
+    "description": "Sets the named choices; `null` removes one. 256 KB at most in all.",
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "additionalProperties": true
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": true
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/social/sources": {
+   "get": {
+    "tags": [
+     "Social networks"
+    ],
+    "summary": "List the connections with their status",
+    "description": "Secrets come back as “••••”. `projects`: projects following the connection. **Rights:** any signed-in user.",
+    "responses": {
+     "200": {
+      "description": "Connections",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "array",
+         "items": {
+          "$ref": "#/components/schemas/SocialSource"
+         }
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/social/sources/{id}": {
+   "parameters": [
+    {
+     "name": "id",
+     "in": "path",
+     "required": true,
+     "schema": {
+      "type": "string"
+     }
+    }
+   ],
+   "put": {
+    "tags": [
+     "Social networks"
+    ],
+    "summary": "Create or replace a connection",
+    "description": "A secret sent back as “••••” (or left out) keeps the saved one. A webhook connection (tiktok, whatsapp, sms) gets a `hookToken` when it has none. **Rights:** admin, designer.",
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/SocialSource"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "Saved",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/SocialSource"
+        }
+       }
+      }
+     }
+    }
+   },
+   "delete": {
+    "tags": [
+     "Social networks"
+    ],
+    "summary": "Delete a connection",
+    "description": "**Rights:** admin, designer.",
+    "responses": {
+     "204": {
+      "description": "Done"
+     }
+    }
+   }
+  },
+  "/api/social/sources/{id}/messages": {
+   "parameters": [
+    {
+     "name": "id",
+     "in": "path",
+     "required": true,
+     "schema": {
+      "type": "string"
+     }
+    }
+   ],
+   "get": {
+    "tags": [
+     "Social networks"
+    ],
+    "summary": "Last messages of a connection",
+    "description": "Newest first, at most 500 kept per connection. **Rights:** any signed-in user.",
+    "parameters": [
+     {
+      "name": "limit",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "integer"
+      },
+      "description": "Default 100."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Messages",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "array",
+         "items": {
+          "$ref": "#/components/schemas/SocialMessage"
+         }
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/social/sources/{id}/test": {
+   "parameters": [
+    {
+     "name": "id",
+     "in": "path",
+     "required": true,
+     "schema": {
+      "type": "string"
+     }
+    }
+   ],
+   "post": {
+    "tags": [
+     "Social networks"
+    ],
+    "summary": "Test a connection: read its platform now",
+    "description": "A connection reads its platform only while a project follows it (`projects` > 0), or while a test runs; otherwise it is `idle`. The test runs the connector for 20 s (a connection already running is just read), and answers as soon as it is connected, fails, or brings a message in, or after 8 s. A webhook connection (tiktok, whatsapp, sms) cannot be fetched: its state and the last messages received are given at once. **Rights:** admin, designer.",
+    "responses": {
+     "200": {
+      "description": "The outcome",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "required": [
+          "ok",
+          "state",
+          "messages",
+          "tookMs"
+         ],
+         "properties": {
+          "ok": {
+           "type": "boolean",
+           "description": "Connected, or a message came in (no error)."
+          },
+          "state": {
+           "$ref": "#/components/schemas/SocialSource",
+           "description": "The connection as the list gives it, once the test is over."
+          },
+          "messages": {
+           "type": "array",
+           "items": {
+            "$ref": "#/components/schemas/SocialMessage"
+           },
+           "description": "Its 5 latest messages, newest first."
+          },
+          "tookMs": {
+           "type": "integer"
+          }
+         }
+        }
+       }
+      }
+     },
+     "400": {
+      "description": "The connection is not enabled"
+     },
+     "404": {
+      "description": "No such connection"
+     }
+    }
+   }
+  },
+  "/api/social/hook/{id}": {
+   "parameters": [
+    {
+     "name": "id",
+     "in": "path",
+     "required": true,
+     "schema": {
+      "type": "string"
+     }
+    },
+    {
+     "name": "token",
+     "in": "query",
+     "required": false,
+     "schema": {
+      "type": "string"
+     },
+     "description": "The connection’s `hookToken` (or the `X-Strata-Token` header). A WhatsApp connection with an `appSecret` checks `X-Hub-Signature-256` instead."
+    }
+   ],
+   "get": {
+    "tags": [
+     "Social networks"
+    ],
+    "summary": "WhatsApp webhook verification",
+    "description": "Answers `hub.challenge` when `hub.mode` is `subscribe` and `hub.verify_token` is the connection’s `verifyToken`. No sign-in.",
+    "security": [],
+    "parameters": [
+     {
+      "name": "hub.mode",
+      "in": "query",
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "hub.verify_token",
+      "in": "query",
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "hub.challenge",
+      "in": "query",
+      "schema": {
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "The challenge",
+      "content": {
+       "text/plain": {
+        "schema": {
+         "type": "string"
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "Wrong verify token"
+     }
+    }
+   },
+   "post": {
+    "tags": [
+     "Social networks"
+    ],
+    "summary": "Messages posted by a platform",
+    "description": "No sign-in: the address must be reachable from the internet. **tiktok** (the bridge of tools/tiktok-bridge): JSON `{id, author: {id, name, handle, avatar}, text, amount}`, a list of them, or `{heartbeat: true}`. **whatsapp**: the Cloud API webhook (texts, and pictures downloaded to `/assets/social/` with the `accessToken`). **sms**: Twilio’s form (From, Body, NumMedia, MediaUrl0…), answered with an empty TwiML; with `keyword`, only messages starting with it. A disabled connection takes and drops them.",
+    "security": [],
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object"
+       }
+      },
+      "application/x-www-form-urlencoded": {
+       "schema": {
+        "type": "object"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "Taken"
+     },
+     "403": {
+      "description": "Wrong token or signature"
+     }
+    }
+   }
+  },
+  "/api/projects/{id}/social": {
+   "parameters": [
+    {
+     "name": "id",
+     "in": "path",
+     "required": true,
+     "schema": {
+      "type": "string"
+     },
+     "description": "Project id"
+    }
+   ],
+   "get": {
+    "tags": [
+     "Social networks"
+    ],
+    "summary": "A project's social desk",
+    "description": "Connections followed, rules, display options, hashtags, the incoming messages (the last 1000, in memory), the approved queue and the message on air. Changes come on the WebSocket as `{\"type\": \"social\", \"projectId\", \"change\": {\"kind\": \"incoming\" | \"removed\" | \"queue\" | \"settings\" | \"hashtags\" | \"reload\", …}}`.\n\nTemplates read it as the push data source `social-<project id>`: `{ onAir, next, approved: [Msg], count, hashtags: { <tag>: { tag, count, perMin, series, platforms } } }`, Msg = `{ id, platform, platformName, name, handle, city, text, avatar, photo, amount, at, time }`.\n\n**Rights:** whoever sees the project.",
+    "responses": {
+     "200": {
+      "description": "The desk",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/SocialDesk"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/projects/{id}/social/follow": {
+   "parameters": [
+    {
+     "name": "id",
+     "in": "path",
+     "required": true,
+     "schema": {
+      "type": "string"
+     },
+     "description": "Project id"
+    }
+   ],
+   "put": {
+    "tags": [
+     "Social networks"
+    ],
+    "summary": "Choose the shared connections followed",
+    "description": "Their last messages come in; the incoming ones of connections left go. The data source `social-<project id>` is created the first time.\n\n**Rights:** admin, designer, operator who see the project.",
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "required": [
+         "sources"
+        ],
+        "properties": {
+         "sources": {
+          "type": "array",
+          "items": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     }
+    },
+    "responses": {
+     "204": {
+      "description": "Done"
+     }
+    }
+   }
+  },
+  "/api/projects/{id}/social/rules": {
+   "parameters": [
+    {
+     "name": "id",
+     "in": "path",
+     "required": true,
+     "schema": {
+      "type": "string"
+     },
+     "description": "Project id"
+    }
+   ],
+   "put": {
+    "tags": [
+     "Social networks"
+    ],
+    "summary": "Replace the moderation rules",
+    "description": "The incoming messages are read again with them.\n\n**Rights:** admin, designer, operator who see the project.",
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/SocialRules"
+       }
+      }
+     }
+    },
+    "responses": {
+     "204": {
+      "description": "Done"
+     }
+    }
+   }
+  },
+  "/api/projects/{id}/social/hashtags": {
+   "parameters": [
+    {
+     "name": "id",
+     "in": "path",
+     "required": true,
+     "schema": {
+      "type": "string"
+     },
+     "description": "Project id"
+    }
+   ],
+   "put": {
+    "tags": [
+     "Social networks"
+    ],
+    "summary": "Replace the hashtags counted",
+    "description": "Counts of tags kept are kept.\n\n**Rights:** admin, designer, operator who see the project.",
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "array",
+        "items": {
+         "type": "object",
+         "required": [
+          "tag"
+         ],
+         "properties": {
+          "tag": {
+           "type": "string"
+          },
+          "running": {
+           "type": "boolean"
+          }
+         }
+        }
+       }
+      }
+     }
+    },
+    "responses": {
+     "204": {
+      "description": "Done"
+     }
+    }
+   }
+  },
+  "/api/projects/{id}/social/display": {
+   "parameters": [
+    {
+     "name": "id",
+     "in": "path",
+     "required": true,
+     "schema": {
+      "type": "string"
+     },
+     "description": "Project id"
+    }
+   ],
+   "put": {
+    "tags": [
+     "Social networks"
+    ],
+    "summary": "The pool on air: rotation, order, how messages leave it, name mode",
+    "description": "**Rights:** admin, designer, operator who see the project.",
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/SocialDisplay"
+       }
+      }
+     }
+    },
+    "responses": {
+     "204": {
+      "description": "Done"
+     }
+    }
+   }
+  },
+  "/api/projects/{id}/social/{action}": {
+   "parameters": [
+    {
+     "name": "id",
+     "in": "path",
+     "required": true,
+     "schema": {
+      "type": "string"
+     },
+     "description": "Project id"
+    },
+    {
+     "name": "action",
+     "in": "path",
+     "required": true,
+     "schema": {
+      "type": "string",
+      "enum": [
+       "approve",
+       "reject",
+       "edit",
+       "star",
+       "remove",
+       "reorder",
+       "next",
+       "retire",
+       "restore",
+       "rule",
+       "rotation",
+       "reset"
+      ]
+     }
+    }
+   ],
+   "post": {
+    "tags": [
+     "Social networks"
+    ],
+    "summary": "Moderate, or drive the pool on air",
+    "description": "Idempotent by message id: `approve` (into the pool; the first goes on air by itself), `reject`, `remove` (back with the incoming ones), `star` (`on`), `edit` (`text`, `nameMode`) take `id`; `reorder` takes `ids` (the pool in order). `next` (`from`: only while this one is on air) goes to the next message of the pool; `retire` (`id`) takes a message out of the pool, `restore` (`id`) puts it back; `rule` (`id`, then `airs` / `minutes`, or `common: true`) gives a message its own rule to leave the pool. `rotation` (`on`, `secs`): next by itself. `reset` (`tag`): a hashtag from zero. The desk never touches a channel: the project data source `social-<project id>` (« Modération ») carries the message on air, the next one and the pool, and the Operator takes the graphics reading it.\n\n**Rights:** admin, designer, operator who see the project.",
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "properties": {
+         "id": {
+          "type": "string"
+         },
+         "ids": {
+          "type": "array",
+          "items": {
+           "type": "string"
+          }
+         },
+         "text": {
+          "type": "string"
+         },
+         "nameMode": {
+          "type": "string"
+         },
+         "on": {
+          "type": "boolean"
+         },
+         "secs": {
+          "type": "integer"
+         },
+         "from": {
+          "type": "string"
+         },
+         "tag": {
+          "type": "string"
+         }
+        }
+       }
+      }
+     }
+    },
+    "responses": {
+     "204": {
+      "description": "Done"
+     },
+     "409": {
+      "description": "Another operator holds the zone"
+     }
+    }
+   }
+  }
+ },
+ "components": {
+  "securitySchemes": {
+   "bearer": {
+    "type": "http",
+    "scheme": "bearer",
+    "description": "API key (pcg_…) or session token"
+   },
+   "cookie": {
+    "type": "apiKey",
+    "in": "cookie",
+    "name": "cg_session"
+   }
+  },
+  "schemas": {
+   "Error": {
+    "type": "string",
+    "description": "Plain-text message (HTTP 4xx/5xx)."
+   },
+   "FrameRate": {
+    "type": "object",
+    "required": [
+     "num",
+     "den"
+    ],
+    "properties": {
+     "num": {
+      "type": "integer",
+      "example": 50
+     },
+     "den": {
+      "type": "integer",
+      "example": 1
+     }
+    }
+   },
+   "Data": {
+    "type": "object",
+    "additionalProperties": {
+     "type": "string"
+    },
+    "description": "Template field values by key.",
+    "example": {
+     "name": "Ada Lovelace",
+     "title": "Mathematician"
+    }
+   },
+   "Role": {
+    "type": "string",
+    "enum": [
+     "admin",
+     "designer",
+     "operator",
+     "viewer"
+    ]
+   },
+   "User": {
+    "type": "object",
+    "properties": {
+     "id": {
+      "type": "string"
+     },
+     "username": {
+      "type": "string"
+     },
+     "displayName": {
+      "type": "string"
+     },
+     "role": {
+      "$ref": "#/components/schemas/Role"
+     },
+     "projects": {
+      "type": [
+       "array",
+       "null"
+      ],
+      "items": {
+       "type": "string"
+      },
+      "description": "Project scope; null = all."
+     },
+     "channels": {
+      "type": [
+       "array",
+       "null"
+      ],
+      "items": {
+       "type": "string"
+      },
+      "description": "Channel scope; null = all."
+     },
+     "disabled": {
+      "type": "boolean"
+     },
+     "lang": {
+      "type": "string",
+      "description": "Language of the interface (\"en\", \"fr\"); empty = the browser's."
+     },
+     "theme": {
+      "type": "string",
+      "description": "Colour theme of the interface (\"dark\", \"light\", \"system\"); empty = dark."
+     }
+    }
+   },
+   "UserInput": {
+    "type": "object",
+    "required": [
+     "username",
+     "role"
+    ],
+    "properties": {
+     "username": {
+      "type": "string"
+     },
+     "displayName": {
+      "type": "string"
+     },
+     "role": {
+      "$ref": "#/components/schemas/Role"
+     },
+     "projects": {
+      "type": [
+       "array",
+       "null"
+      ],
+      "items": {
+       "type": "string"
+      }
+     },
+     "channels": {
+      "type": [
+       "array",
+       "null"
+      ],
+      "items": {
+       "type": "string"
+      }
+     },
+     "disabled": {
+      "type": "boolean"
+     },
+     "password": {
+      "type": "string",
+      "description": "Required on creation (8+ characters); empty keeps the current one on edit."
+     }
+    }
+   },
+   "ApiKey": {
+    "type": "object",
+    "properties": {
+     "id": {
+      "type": "string"
+     },
+     "name": {
+      "type": "string"
+     },
+     "userId": {
+      "type": "string"
+     },
+     "prefix": {
+      "type": "string",
+      "example": "pcg_3f9a2c"
+     },
+     "createdAt": {
+      "type": "integer",
+      "description": "Unix ms"
+     },
+     "lastUsed": {
+      "type": [
+       "integer",
+       "null"
+      ]
+     }
+    }
+   },
+   "Zone": {
+    "type": "object",
+    "required": [
+     "id",
+     "name",
+     "layer"
+    ],
+    "properties": {
+     "id": {
+      "type": "string",
+      "example": "lower-third"
+     },
+     "name": {
+      "type": "string",
+      "example": "Lower third"
+     },
+     "layer": {
+      "type": "integer",
+      "description": "Stacking order (higher = in front); also the playout layer.",
+      "example": 10
+     },
+     "color": {
+      "type": "string",
+      "example": "#7c5cff"
+     },
+     "transition": {
+      "type": "string",
+      "enum": [
+       "sequential",
+       "cut",
+       "fade"
+      ],
+      "description": "sequential: the graphic on air goes out before the new one comes in; cut: replaced at once; fade: the new one comes in while the one on air fades out."
+     },
+     "areas": {
+      "type": "object",
+      "description": "Area of the zone by format id (\"main\", \"9x16\"…), in fractions of the frame; a designer guide.",
+      "additionalProperties": {
+       "type": "object",
+       "properties": {
+        "x": {
+         "type": "number"
+        },
+        "y": {
+         "type": "number"
+        },
+        "width": {
+         "type": "number"
+        },
+        "height": {
+         "type": "number"
+        }
+       }
+      }
+     }
+    }
+   },
+   "RundownItem": {
+    "type": "object",
+    "required": [
+     "id",
+     "name",
+     "templateId"
+    ],
+    "properties": {
+     "id": {
+      "type": "string"
+     },
+     "name": {
+      "type": "string"
+     },
+     "templateId": {
+      "type": "string"
+     },
+     "zone": {
+      "type": "string",
+      "description": "Zone id; empty = the template's zone."
+     },
+     "playlist": {
+      "type": "string"
+     },
+     "layer": {
+      "type": "integer",
+      "deprecated": true
+     },
+     "data": {
+      "$ref": "#/components/schemas/Data"
+     }
+    }
+   },
+   "Template": {
+    "type": "object",
+    "description": "A graphic: timeline (frames), markers, data fields and layers. See web/src/engine/types.ts for the full layer model.",
+    "properties": {
+     "id": {
+      "type": "string"
+     },
+     "name": {
+      "type": "string"
+     },
+     "duration": {
+      "type": "number"
+     },
+     "zone": {
+      "type": "string"
+     },
+     "markers": {
+      "type": "array",
+      "items": {
+       "type": "object",
+       "properties": {
+        "id": {
+         "type": "string"
+        },
+        "frame": {
+         "type": "number"
+        },
+        "name": {
+         "type": "string"
+        },
+        "kind": {
+         "type": "string",
+         "enum": [
+          "pause",
+          "out",
+          "label"
+         ]
+        }
+       }
+      }
+     },
+     "fields": {
+      "type": "array",
+      "items": {
+       "type": "object",
+       "properties": {
+        "key": {
+         "type": "string"
+        },
+        "label": {
+         "type": "string"
+        },
+        "kind": {
+         "type": "string",
+         "enum": [
+          "text",
+          "multiline",
+          "number",
+          "color",
+          "image"
+         ]
+        },
+        "default": {
+         "type": "string"
+        },
+        "binding": {
+         "type": "object",
+         "description": "Live value from a data source; replaces what the operator types while the source has a value at the path.",
+         "properties": {
+          "source": {
+           "type": "string"
+          },
+          "path": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     },
+     "layers": {
+      "type": "array",
+      "items": {
+       "type": "object",
+       "additionalProperties": true
+      }
+     },
+     "logic": {
+      "type": "object",
+      "description": "Relations between values (node graph), evaluated every frame after animation and bindings. Node `type`: `layerProp` {layer, prop}, `textSize` {layer, metric: width|height|lines|chars}, `field` {key}, `constant` {value}, `math` {op: add|sub|mul|div|min|max|abs|round|floor|ceil; inputs a, b}, `clamp` {min, max; input in}, `condition` {cmp: gt|ge|lt|le|eq|ne|empty|notEmpty; inputs a, b, then, else}, `target` {layer, prop, mode: set|add|multiply; input in}. Edges connect a node's output to an input `port` of another node.",
+      "properties": {
+       "nodes": {
+        "type": "array",
+        "items": {
+         "type": "object",
+         "required": [
+          "id",
+          "type"
+         ],
+         "properties": {
+          "id": {
+           "type": "string"
+          },
+          "type": {
+           "type": "string",
+           "enum": [
+            "layerProp",
+            "textSize",
+            "field",
+            "constant",
+            "math",
+            "clamp",
+            "condition",
+            "target"
+           ]
+          },
+          "x": {
+           "type": "number"
+          },
+          "y": {
+           "type": "number"
+          }
+         },
+         "additionalProperties": true
+        }
+       },
+       "edges": {
+        "type": "array",
+        "items": {
+         "type": "object",
+         "required": [
+          "from",
+          "to",
+          "port"
+         ],
+         "properties": {
+          "from": {
+           "type": "string"
+          },
+          "to": {
+           "type": "string"
+          },
+          "port": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     }
+    }
+   },
+   "Project": {
+    "type": "object",
+    "properties": {
+     "id": {
+      "type": "string"
+     },
+     "name": {
+      "type": "string"
+     },
+     "description": {
+      "type": "string"
+     },
+     "width": {
+      "type": "integer"
+     },
+     "height": {
+      "type": "integer"
+     },
+     "frameRate": {
+      "$ref": "#/components/schemas/FrameRate"
+     },
+     "templates": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/Template"
+      }
+     },
+     "rundown": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/RundownItem"
+      }
+     },
+     "zones": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/Zone"
+      }
+     },
+     "playlists": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/Playlist"
+      }
+     },
+     "formats": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/Format"
+      }
+     },
+     "language": {
+      "type": "string",
+      "default": "fr",
+      "description": "Language of the texts (\"fr\", \"en\", \"de\", \"es\", \"it\"): hyphenation, French spaces, and the day and month names of the Clock widgets that follow the project (`lang` \"\" on a clock layer)."
+     }
+    }
+   },
+   "ProjectSummary": {
+    "type": "object",
+    "properties": {
+     "id": {
+      "type": "string"
+     },
+     "name": {
+      "type": "string"
+     },
+     "description": {
+      "type": "string"
+     },
+     "width": {
+      "type": "integer"
+     },
+     "height": {
+      "type": "integer"
+     },
+     "frameRate": {
+      "$ref": "#/components/schemas/FrameRate"
+     },
+     "templates": {
+      "type": "integer"
+     },
+     "rundown": {
+      "type": "integer"
+     }
+    }
+   },
+   "ChannelInfo": {
+    "type": "object",
+    "properties": {
+     "id": {
+      "type": "string",
+      "example": "main"
+     },
+     "name": {
+      "type": "string"
+     },
+     "width": {
+      "type": "integer"
+     },
+     "height": {
+      "type": "integer"
+     },
+     "frameRate": {
+      "$ref": "#/components/schemas/FrameRate"
+     },
+     "projectId": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "outputs": {
+      "type": "array",
+      "items": {
+       "type": "string"
+      }
+     },
+     "renditions": {
+      "type": "array",
+      "description": "Other pictures of the channel (9:16…), driven by the same takes; HTML5 at /output/<channel>/<rendition>.",
+      "items": {
+       "type": "object",
+       "properties": {
+        "id": {
+         "type": "string"
+        },
+        "name": {
+         "type": "string"
+        },
+        "width": {
+         "type": "integer"
+        },
+        "height": {
+         "type": "integer"
+        },
+        "slate": {
+         "type": "string"
+        },
+        "slateStyle": {
+         "$ref": "#/components/schemas/SlateStyle"
+        }
+       }
+      }
+     },
+     "slate": {
+      "type": "string",
+      "description": "Still picture shown while no project is loaded (\"\" = none)."
+     },
+     "slateStyle": {
+      "$ref": "#/components/schemas/SlateStyle"
+     }
+    }
+   },
+   "SlateStyle": {
+    "type": "string",
+    "enum": [
+     "aurora",
+     "bento",
+     "gradient",
+     "frame",
+     "lines",
+     "split",
+     "transparent",
+     "custom"
+    ],
+    "description": "What a channel picture shows while no project is loaded: a built-in design (Aurora, Bento, Gradient, Frame, Lines, Split: \"Strata Graphics\", the channel name, size, ratio and frame rate), `transparent` (nothing) or `custom`, its still picture (`slate`). Not set in the settings: `custom` when a still picture is set, else `aurora`."
+   },
+   "PlayoutItem": {
+    "type": "object",
+    "properties": {
+     "templateId": {
+      "type": "string"
+     },
+     "data": {
+      "$ref": "#/components/schemas/Data"
+     },
+     "frame": {
+      "type": "number"
+     },
+     "target": {
+      "type": "number"
+     },
+     "phase": {
+      "type": "string",
+      "enum": [
+       "playing",
+       "holding",
+       "out"
+      ]
+     },
+     "rundownId": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "age": {
+      "type": "number",
+      "description": "Project frames on air since the take."
+     },
+     "next": {
+      "type": [
+       "object",
+       "null"
+      ],
+      "description": "Take waiting for this graphic to go out (sequential zones)."
+     },
+     "clocks": {
+      "type": "object",
+      "description": "Widgets controlled by the operator, by layer id: offset and pausedAt in frames on air.",
+      "additionalProperties": {
+       "type": "object",
+       "properties": {
+        "offset": {
+         "type": "number"
+        },
+        "pausedAt": {
+         "type": "number"
+        }
+       }
+      }
+     }
+    }
+   },
+   "ChannelState": {
+    "type": "object",
+    "properties": {
+     "layers": {
+      "type": "object",
+      "description": "Playout layer (zone stacking order) → graphic on air.",
+      "additionalProperties": {
+       "$ref": "#/components/schemas/PlayoutItem"
+      }
+     }
+    }
+   },
+   "Command": {
+    "type": "object",
+    "required": [
+     "action"
+    ],
+    "description": "Target a zone by id (`zone`) or a raw playout layer (`layer`). A take without either plays in the template's zone; a clear without either clears everything. `trigger` (with `name`) applies to the whole channel.",
+    "properties": {
+     "action": {
+      "type": "string",
+      "enum": [
+       "take",
+       "continue",
+       "takeOut",
+       "update",
+       "widget",
+       "row",
+       "clear",
+       "trigger"
+      ]
+     },
+     "zone": {
+      "type": "string"
+     },
+     "layer": {
+      "type": "integer"
+     },
+     "templateId": {
+      "type": "string",
+      "description": "take"
+     },
+     "data": {
+      "$ref": "#/components/schemas/Data"
+     },
+     "rundownId": {
+      "type": "string",
+      "description": "take: rundown item, for tally"
+     },
+     "target": {
+      "type": "string",
+      "description": "widget: layer id or name of a timed widget (timer, stopwatch, ticker, roll, counter…), or `*` for all of them"
+     },
+     "control": {
+      "type": "string",
+      "enum": [
+       "start",
+       "pause",
+       "toggle",
+       "reset",
+       "restart"
+      ],
+      "description": "widget: start (resume), pause, toggle, reset (to zero, keeps running or paused), restart (to zero and running)"
+     },
+     "name": {
+      "type": "string",
+      "description": "trigger: resumes every graphic holding on a pause that waits for this trigger"
+     },
+     "dataset": {
+      "type": "string",
+      "description": "row: key or name of a data set of the graphic on air"
+     },
+     "row": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "row: the row to show (1 = first); the graphic changes the way its data set says (out › in, crossfade or cut)"
+     },
+     "fade": {
+      "type": "boolean",
+      "description": "update: the old values cross-fade out (½ s) instead of a cut"
+     }
+    },
+    "example": {
+     "action": "take",
+     "zone": "lower-third",
+     "templateId": "lower-third",
+     "data": {
+      "name": "Ada Lovelace"
+     }
+    }
+   },
+   "Release": {
+    "type": "object",
+    "properties": {
+     "version": {
+      "type": "string"
+     },
+     "name": {
+      "type": "string"
+     },
+     "notes": {
+      "type": "string"
+     },
+     "publishedAt": {
+      "type": "string"
+     },
+     "url": {
+      "type": "string"
+     },
+     "assetName": {
+      "type": "string"
+     },
+     "size": {
+      "type": "integer"
+     },
+     "digest": {
+      "type": [
+       "string",
+       "null"
+      ]
+     }
+    }
+   },
+   "UpdateInfo": {
+    "type": "object",
+    "properties": {
+     "current": {
+      "type": "string"
+     },
+     "platform": {
+      "type": "string"
+     },
+     "repo": {
+      "type": "string"
+     },
+     "hasToken": {
+      "type": "boolean"
+     },
+     "autoCheck": {
+      "type": "boolean"
+     },
+     "previous": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "history": {
+      "type": [
+       "object",
+       "null"
+      ]
+     },
+     "supervised": {
+      "type": "boolean"
+     },
+     "status": {
+      "type": "object",
+      "properties": {
+       "phase": {
+        "type": "string",
+        "enum": [
+         "idle",
+         "checking",
+         "downloading",
+         "installing",
+         "restarting",
+         "error"
+        ]
+       },
+       "progress": {
+        "type": "number"
+       },
+       "message": {
+        "type": "string"
+       },
+       "latest": {
+        "$ref": "#/components/schemas/Release"
+       },
+       "lastCheck": {
+        "type": [
+         "integer",
+         "null"
+        ]
+       }
+      }
+     }
+    }
+   },
+   "ServerConfig": {
+    "type": "object",
+    "description": "config.json: name, bind, publicOutputs, timezone and channels (format, outputs, loaded project: `projectId`, null for none, kept as it is on air when settings are saved; `slate` and `slateStyle` (SlateStyle) of the main picture and of each rendition).",
+    "additionalProperties": true
+   },
+   "Playlist": {
+    "type": "object",
+    "required": [
+     "id",
+     "name"
+    ],
+    "properties": {
+     "id": {
+      "type": "string"
+     },
+     "name": {
+      "type": "string"
+     }
+    }
+   },
+   "Format": {
+    "type": "object",
+    "required": [
+     "id",
+     "name",
+     "width",
+     "height"
+    ],
+    "description": "Alternative layout of a project (the main one is the project's width × height, id \"main\"). Layers carry per-format overrides; each output uses the format closest to its aspect ratio.",
+    "properties": {
+     "id": {
+      "type": "string",
+      "example": "vertical"
+     },
+     "name": {
+      "type": "string",
+      "example": "9:16"
+     },
+     "width": {
+      "type": "integer",
+      "example": 1080
+     },
+     "height": {
+      "type": "integer",
+      "example": 1920
+     }
+    }
+   },
+   "DataSource": {
+    "type": "object",
+    "required": [
+     "name",
+     "type"
+    ],
+    "properties": {
+     "id": {
+      "type": "string"
+     },
+     "name": {
+      "type": "string"
+     },
+     "type": {
+      "type": "string",
+      "enum": [
+       "json",
+       "csv",
+       "rss",
+       "xml",
+       "push"
+      ]
+     },
+     "url": {
+      "type": "string",
+      "description": "json, csv, rss, xml. A Google Sheets link is read as CSV (sheet shared with anyone who has the link)."
+     },
+     "headers": {
+      "type": "object",
+      "additionalProperties": {
+       "type": "string"
+      },
+      "description": "json, xml: request headers (API keys…)"
+     },
+     "header": {
+      "type": "boolean",
+      "description": "csv: the first line names the columns (default true)"
+     },
+     "format": {
+      "type": "string",
+      "enum": [
+       "json",
+       "csv",
+       "xml"
+      ],
+      "description": "push: format of the values sent"
+     },
+     "interval": {
+      "type": "integer",
+      "description": "Seconds between fetches (default 30, min 2)"
+     },
+     "enabled": {
+      "type": "boolean"
+     },
+     "updatedAt": {
+      "type": "integer",
+      "readOnly": true
+     },
+     "checkedAt": {
+      "type": "integer",
+      "readOnly": true
+     },
+     "error": {
+      "type": "string",
+      "readOnly": true
+     },
+     "project": {
+      "type": "string",
+      "description": "The project it belongs to (its Connectors page); absent = shared by every project (the Data page of the main menu). Set when created, never changed."
+     },
+     "rules": {
+      "type": "array",
+      "description": "Validation rules, checked after every fetch or push. `field`: `score` is that value when the source's value has it, else that column of every row of its main list (the longest list, up to three levels down); `rows[].score` is that column of every row of the list `rows` (`[].score`: of a value that is a list). Broken rules are only warnings.",
+      "items": {
+       "$ref": "#/components/schemas/DataRule"
+      }
+     },
+     "issues": {
+      "type": "array",
+      "readOnly": true,
+      "description": "The rules the current value breaks (at most 100).",
+      "items": {
+       "$ref": "#/components/schemas/DataIssue"
+      }
+     }
+    }
+   },
+   "DataRule": {
+    "type": "object",
+    "required": [
+     "field",
+     "type"
+    ],
+    "properties": {
+     "field": {
+      "type": "string",
+      "example": "score"
+     },
+     "type": {
+      "type": "string",
+      "enum": [
+       "text",
+       "number",
+       "list",
+       "image",
+       "date",
+       "calc"
+      ]
+     },
+     "required": {
+      "type": "boolean",
+      "description": "An empty or missing value breaks it (else empty values are not checked)."
+     },
+     "minLength": {
+      "type": "integer",
+      "description": "text"
+     },
+     "maxLength": {
+      "type": "integer",
+      "description": "text"
+     },
+     "pattern": {
+      "type": "string",
+      "description": "text: a regular expression the text must contain (`^…$` for the whole text)"
+     },
+     "min": {
+      "type": "number",
+      "description": "number"
+     },
+     "max": {
+      "type": "number",
+      "description": "number"
+     },
+     "decimals": {
+      "type": "integer",
+      "description": "number: most decimals"
+     },
+     "values": {
+      "type": "array",
+      "items": {
+       "type": "string"
+      },
+      "description": "list: the values allowed"
+     },
+     "format": {
+      "type": "string",
+      "description": "date: `DD/MM/YYYY`, `YYYY-MM-DD HH:mm`… or strftime (`%d/%m/%Y`); absent = ISO 8601",
+      "example": "DD/MM/YYYY"
+     },
+     "equals": {
+      "type": "number",
+      "description": "calc: the sum of `field` over the rows expected"
+     },
+     "tolerance": {
+      "type": "number",
+      "description": "calc: give or take (default 0)"
+     }
+    }
+   },
+   "DataIssue": {
+    "type": "object",
+    "properties": {
+     "list": {
+      "type": "string",
+      "description": "The list of the row (dotted path, \"\" = the value itself)."
+     },
+     "row": {
+      "type": [
+       "integer",
+       "null"
+      ],
+      "description": "Row in that list (0 = first); null for a single value or a sum."
+     },
+     "field": {
+      "type": "string"
+     },
+     "value": {
+      "type": "string"
+     },
+     "message": {
+      "type": "string",
+      "enum": [
+       "required",
+       "minLength",
+       "maxLength",
+       "pattern",
+       "number",
+       "min",
+       "max",
+       "decimals",
+       "list",
+       "image",
+       "date",
+       "sum"
+      ]
+     },
+     "params": {
+      "type": "object",
+      "description": "`limit` broken, or `expected`, `tolerance` and `sum` for a sum."
+     }
+    }
+   },
+   "EditLock": {
+    "type": "object",
+    "properties": {
+     "userId": {
+      "type": "string"
+     },
+     "userName": {
+      "type": "string"
+     },
+     "client": {
+      "type": "string"
+     },
+     "since": {
+      "type": "integer",
+      "description": "Unix ms"
+     }
+    }
+   },
+   "MediaFile": {
+    "type": "object",
+    "properties": {
+     "name": {
+      "type": "string"
+     },
+     "src": {
+      "type": "string",
+      "description": "URL used in templates"
+     },
+     "size": {
+      "type": "integer"
+     },
+     "modified": {
+      "type": "integer",
+      "description": "Unix ms"
+     },
+     "kind": {
+      "type": "string",
+      "enum": [
+       "image",
+       "video",
+       "audio",
+       "font",
+       "other"
+      ]
+     }
+    }
+   },
+   "Folders": {
+    "type": "object",
+    "properties": {
+     "folders": {
+      "type": "array",
+      "items": {
+       "type": "string"
+      }
+     },
+     "assign": {
+      "type": "object",
+      "additionalProperties": {
+       "type": "string"
+      },
+      "description": "Project id → folder"
+     }
+    }
+   },
+   "V1Done": {
+    "type": "object",
+    "description": "What was done.",
+    "properties": {
+     "ok": {
+      "type": "boolean"
+     },
+     "channel": {
+      "type": "string",
+      "description": "Channel id"
+     },
+     "done": {
+      "type": "string",
+      "example": "take Marie Curie"
+     }
+    }
+   },
+   "V1ChannelStatus": {
+    "type": "object",
+    "description": "What a control surface shows for a channel.",
+    "properties": {
+     "id": {
+      "type": "string"
+     },
+     "name": {
+      "type": "string"
+     },
+     "project": {
+      "oneOf": [
+       {
+        "type": "object",
+        "properties": {
+         "id": {
+          "type": "string"
+         },
+         "name": {
+          "type": "string"
+         }
+        }
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "next": {
+      "oneOf": [
+       {
+        "type": "object",
+        "properties": {
+         "id": {
+          "type": "string"
+         },
+         "name": {
+          "type": "string"
+         }
+        }
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "description": "The graphic `next` takes (tally `cue`)."
+     },
+     "items": {
+      "type": "array",
+      "items": {
+       "type": "object",
+       "properties": {
+        "id": {
+         "type": "string"
+        },
+        "name": {
+         "type": "string"
+        },
+        "index": {
+         "type": "integer",
+         "description": "Position in the rundown (1 = first)"
+        },
+        "playlist": {
+         "type": "string"
+        },
+        "zone": {
+         "type": "string"
+        },
+        "tally": {
+         "type": "string",
+         "enum": [
+          "off",
+          "cue",
+          "pvw",
+          "pgm"
+         ],
+         "description": "`pgm` on air, `pvw` taken and waiting for its zone to clear, `cue` what `next` takes."
+        },
+        "warnings": {
+         "type": "integer",
+         "description": "Rows (or values) of the data sources of its template that break their rules (a warning only: it can still be taken)."
+        }
+       }
+      }
+     },
+     "zones": {
+      "type": "array",
+      "items": {
+       "type": "object",
+       "properties": {
+        "id": {
+         "type": "string"
+        },
+        "name": {
+         "type": "string"
+        },
+        "layer": {
+         "type": "integer"
+        },
+        "onAir": {
+         "type": "boolean"
+        },
+        "item": {
+         "oneOf": [
+          {
+           "type": "object",
+           "properties": {
+            "id": {
+             "type": "string"
+            },
+            "name": {
+             "type": "string"
+            }
+           }
+          },
+          {
+           "type": "null"
+          }
+         ]
+        },
+        "template": {
+         "oneOf": [
+          {
+           "type": "object",
+           "properties": {
+            "id": {
+             "type": "string"
+            },
+            "name": {
+             "type": "string"
+            }
+           }
+          },
+          {
+           "type": "null"
+          }
+         ]
+        },
+        "phase": {
+         "type": [
+          "string",
+          "null"
+         ],
+         "enum": [
+          "playing",
+          "holding",
+          "out",
+          "outHold",
+          null
+         ]
+        },
+        "paused": {
+         "type": "boolean",
+         "description": "Holding on a pause that waits for Continue or a trigger."
+        },
+        "queued": {
+         "oneOf": [
+          {
+           "type": "object",
+           "properties": {
+            "id": {
+             "type": "string"
+            },
+            "name": {
+             "type": "string"
+            }
+           }
+          },
+          {
+           "type": "null"
+          }
+         ]
+        },
+        "countdown": {
+         "oneOf": [
+          {
+           "type": "object",
+           "properties": {
+            "kind": {
+             "type": "string",
+             "enum": [
+              "resume",
+              "out",
+              "next"
+             ]
+            },
+            "seconds": {
+             "type": "integer",
+             "description": "Seconds left, rounded up"
+            },
+            "total": {
+             "type": "number"
+            }
+           }
+          },
+          {
+           "type": "null"
+          }
+         ]
+        },
+        "lockedBy": {
+         "type": [
+          "string",
+          "null"
+         ],
+         "description": "Operator holding the zone"
+        },
+        "widgets": {
+         "type": "array",
+         "items": {
+          "type": "object",
+          "properties": {
+           "id": {
+            "type": "string"
+           },
+           "name": {
+            "type": "string"
+           },
+           "running": {
+            "type": "boolean"
+           }
+          }
+         }
+        }
+       }
+      }
+     },
+     "locks": {
+      "type": "array",
+      "items": {
+       "type": "object"
+      }
+     },
+     "undo": {
+      "type": "integer",
+      "description": "Actions that can be undone"
+     },
+     "health": {
+      "type": "object",
+      "properties": {
+       "ok": {
+        "type": "boolean"
+       },
+       "fps": {
+        "type": [
+         "number",
+         "null"
+        ]
+       },
+       "outputs": {
+        "type": "integer"
+       },
+       "outputsOk": {
+        "type": "integer"
+       },
+       "errors": {
+        "type": "array",
+        "items": {
+         "type": "string"
+        }
+       }
+      }
+     }
+    }
+   },
+   "V1Status": {
+    "type": "object",
+    "properties": {
+     "type": {
+      "type": "string",
+      "enum": [
+       "status"
+      ]
+     },
+     "serverTime": {
+      "type": "integer"
+     },
+     "surfaces": {
+      "type": "integer",
+      "description": "Control surfaces connected (feedback sockets, TCP, OSC senders of the last minute)"
+     },
+     "control": {
+      "type": "object",
+      "description": "The OSC and TCP listeners: `{osc: {enabled, port}, tcp: {enabled, port}}`."
+     },
+     "channels": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/V1ChannelStatus"
+      }
+     }
+    }
+   },
+   "Actor": {
+    "type": "object",
+    "description": "Who did something on air.",
+    "properties": {
+     "kind": {
+      "type": "string",
+      "enum": [
+       "user",
+       "api",
+       "mos",
+       "auto",
+       "schedule",
+       "data"
+      ]
+     },
+     "id": {
+      "type": "string"
+     },
+     "name": {
+      "type": "string"
+     }
+    }
+   },
+   "UndoStep": {
+    "type": "object",
+    "properties": {
+     "at": {
+      "type": "integer",
+      "description": "Server time, ms"
+     },
+     "actor": {
+      "$ref": "#/components/schemas/Actor"
+     },
+     "action": {
+      "type": "string",
+      "description": "take, out, continue, update, clear, row, widget, trigger"
+     },
+     "label": {
+      "type": "string",
+      "description": "The graphic"
+     },
+     "zone": {
+      "type": "string"
+     }
+    }
+   },
+   "ZoneLock": {
+    "type": "object",
+    "properties": {
+     "zone": {
+      "type": "string"
+     },
+     "userId": {
+      "type": "string"
+     },
+     "userName": {
+      "type": "string"
+     },
+     "since": {
+      "type": "integer"
+     }
+    }
+   },
+   "ScheduleWhen": {
+    "oneOf": [
+     {
+      "type": "object",
+      "required": [
+       "kind",
+       "time"
+      ],
+      "properties": {
+       "kind": {
+        "const": "at"
+       },
+       "time": {
+        "type": "string",
+        "example": "20:00:00",
+        "description": "Time of day in the server's time zone"
+       }
+      }
+     },
+     {
+      "type": "object",
+      "required": [
+       "kind"
+      ],
+      "properties": {
+       "kind": {
+        "const": "in"
+       },
+       "secs": {
+        "type": "number",
+        "description": "Seconds from now (on create)"
+       },
+       "at": {
+        "type": "integer",
+        "description": "Server time, ms"
+       }
+      }
+     },
+     {
+      "type": "object",
+      "required": [
+       "kind",
+       "tc"
+      ],
+      "properties": {
+       "kind": {
+        "const": "timecode"
+       },
+       "tc": {
+        "type": "string",
+        "example": "20:00:00:00",
+        "description": "Time-of-day timecode at the channel's frame rate"
+       }
+      }
+     }
+    ]
+   },
+   "Scheduled": {
+    "type": "object",
+    "properties": {
+     "id": {
+      "type": "string"
+     },
+     "channelId": {
+      "type": "string"
+     },
+     "projectId": {
+      "type": "string"
+     },
+     "action": {
+      "type": "string",
+      "enum": [
+       "take",
+       "out"
+      ]
+     },
+     "item": {
+      "type": "string"
+     },
+     "zone": {
+      "type": "string"
+     },
+     "when": {
+      "$ref": "#/components/schemas/ScheduleWhen"
+     },
+     "repeat": {
+      "type": "string",
+      "enum": [
+       "once",
+       "daily"
+      ]
+     },
+     "createdBy": {
+      "type": "string"
+     },
+     "enabled": {
+      "type": "boolean"
+     },
+     "label": {
+      "type": "string"
+     },
+     "next": {
+      "type": "integer"
+     },
+     "missed": {
+      "type": "boolean"
+     }
+    }
+   },
+   "Shortcuts": {
+    "type": "object",
+    "properties": {
+     "bindings": {
+      "type": [
+       "array",
+       "null"
+      ],
+      "description": "null: the Broadcast profile",
+      "items": {
+       "type": "object",
+       "properties": {
+        "action": {
+         "type": "string",
+         "example": "take:1"
+        },
+        "keys": {
+         "type": "array",
+         "items": {
+          "type": "string",
+          "example": "F1"
+         }
+        }
+       }
+      }
+     }
+    }
+   },
+   "SocialSource": {
+    "type": "object",
+    "required": [
+     "name",
+     "platform"
+    ],
+    "properties": {
+     "id": {
+      "type": "string"
+     },
+     "name": {
+      "type": "string"
+     },
+     "platform": {
+      "type": "string",
+      "enum": [
+       "youtube",
+       "twitch",
+       "facebook",
+       "instagram",
+       "x",
+       "tiktok",
+       "whatsapp",
+       "sms"
+      ]
+     },
+     "enabled": {
+      "type": "boolean",
+      "description": "Default true."
+     },
+     "settings": {
+      "type": "object",
+      "additionalProperties": {
+       "type": "string"
+      },
+      "description": "youtube: apiKey, mode (channelLive | video), channel (@handle or UC…), video (id or link), read (chat,superChats,members,polls). twitch: channel. facebook: accessToken, mode (live | post), page, post. instagram: accessToken, mode (recent | media), igUser, media. x: bearer, query. tiktok: user, hookToken. whatsapp: verifyToken, accessToken, appSecret, phoneNumberId, hookToken. sms: keyword, accountSid, authToken, hookToken. Secrets (apiKey, accessToken, bearer, appSecret, authToken, verifyToken) are never read back."
+     },
+     "connected": {
+      "type": "boolean",
+      "readOnly": true
+     },
+     "perMin": {
+      "type": "integer",
+      "readOnly": true,
+      "description": "Messages in the last minute."
+     },
+     "error": {
+      "type": [
+       "string",
+       "null"
+      ],
+      "readOnly": true
+     },
+     "warning": {
+      "type": [
+       "string",
+       "null"
+      ],
+      "readOnly": true
+     },
+     "lastAt": {
+      "type": [
+       "integer",
+       "null"
+      ],
+      "readOnly": true
+     },
+     "offAir": {
+      "type": "boolean",
+      "readOnly": true,
+      "description": "Connected, but no live is running."
+     },
+     "idle": {
+      "type": "boolean",
+      "readOnly": true,
+      "description": "Enabled, but reading nothing: no project follows it and no test runs."
+     },
+     "expiresAt": {
+      "type": [
+       "integer",
+       "null"
+      ],
+      "readOnly": true,
+      "description": "When the access token expires (ms)."
+     },
+     "hookAt": {
+      "type": [
+       "integer",
+       "null"
+      ],
+      "readOnly": true,
+      "description": "Last call to the webhook (ms)."
+     },
+     "account": {
+      "type": [
+       "string",
+       "null"
+      ],
+      "readOnly": true
+     },
+     "projects": {
+      "type": "integer",
+      "readOnly": true,
+      "description": "Projects following it."
+     }
+    }
+   },
+   "SocialMessage": {
+    "type": "object",
+    "properties": {
+     "id": {
+      "type": "string",
+      "description": "`<connection id>:<platform message id>`"
+     },
+     "sourceId": {
+      "type": "string"
+     },
+     "platform": {
+      "type": "string"
+     },
+     "author": {
+      "type": "object",
+      "properties": {
+       "id": {
+        "type": "string",
+        "description": "Platform account id, or the full phone number."
+       },
+       "name": {
+        "type": "string",
+        "description": "A phone number is masked: “+33 6 •• •• 41 07”."
+       },
+       "handle": {
+        "type": "string"
+       },
+       "avatar": {
+        "type": "string"
+       },
+       "verified": {
+        "type": "boolean"
+       },
+       "city": {
+        "type": "string"
+       }
+      }
+     },
+     "text": {
+      "type": "string"
+     },
+     "photos": {
+      "type": "array",
+      "items": {
+       "type": "string"
+      }
+     },
+     "at": {
+      "type": "integer",
+      "description": "Server time it arrived (ms)."
+     },
+     "amount": {
+      "type": "string",
+      "description": "Super Chat, Bits, gift (“5,00 €”, “100 bits”)."
+     },
+     "url": {
+      "type": "string"
+     }
+    }
+   },
+   "SocialRules": {
+    "type": "object",
+    "description": "Rules of a project (every key optional). Actions: `reject`, `check`, `fix`, `mask`.",
+    "properties": {
+     "toxicity": {
+      "type": "object",
+      "properties": {
+       "enabled": {
+        "type": "boolean"
+       },
+       "high": {
+        "type": "number",
+        "description": "Rejected from this score (0..1)"
+       },
+       "low": {
+        "type": "number",
+        "description": "To check from this score"
+       }
+      }
+     },
+     "banned": {
+      "type": "object",
+      "properties": {
+       "enabled": {
+        "type": "boolean"
+       },
+       "action": {
+        "type": "string"
+       },
+       "words": {
+        "type": "array",
+        "items": {
+         "type": "string"
+        }
+       },
+       "builtin": {
+        "type": "boolean",
+        "description": "With the built-in insults, slurs and threats"
+       }
+      }
+     },
+     "links": {
+      "type": "object",
+      "properties": {
+       "enabled": {
+        "type": "boolean"
+       },
+       "action": {
+        "type": "string"
+       },
+       "allow": {
+        "type": "array",
+        "items": {
+         "type": "string"
+        },
+        "description": "Domains allowed"
+       }
+      }
+     },
+     "caps": {
+      "type": "object",
+      "properties": {
+       "enabled": {
+        "type": "boolean"
+       },
+       "action": {
+        "type": "string"
+       },
+       "percent": {
+        "type": "integer"
+       }
+      }
+     },
+     "length": {
+      "type": "object",
+      "properties": {
+       "enabled": {
+        "type": "boolean"
+       },
+       "action": {
+        "type": "string"
+       },
+       "min": {
+        "type": "integer"
+       },
+       "max": {
+        "type": "integer"
+       }
+      }
+     },
+     "emojis": {
+      "type": "object",
+      "properties": {
+       "enabled": {
+        "type": "boolean"
+       },
+       "action": {
+        "type": "string"
+       },
+       "max": {
+        "type": "integer"
+       }
+      }
+     },
+     "duplicates": {
+      "type": "object",
+      "properties": {
+       "enabled": {
+        "type": "boolean"
+       },
+       "action": {
+        "type": "string"
+       },
+       "minutes": {
+        "type": "integer"
+       }
+      }
+     },
+     "personal": {
+      "type": "object",
+      "properties": {
+       "enabled": {
+        "type": "boolean"
+       },
+       "action": {
+        "type": "string"
+       }
+      }
+     },
+     "trusted": {
+      "type": "object",
+      "properties": {
+       "enabled": {
+        "type": "boolean"
+       },
+       "accounts": {
+        "type": "array",
+        "items": {
+         "type": "string"
+        }
+       }
+      }
+     },
+     "blocked": {
+      "type": "object",
+      "properties": {
+       "enabled": {
+        "type": "boolean"
+       },
+       "accounts": {
+        "type": "array",
+        "items": {
+         "type": "string"
+        }
+       }
+      }
+     }
+    }
+   },
+   "SocialLeave": {
+    "type": "object",
+    "description": "When a message leaves the pool: after `airs` passes, or `minutes` after it was approved (0: never); both 0: by hand.",
+    "properties": {
+     "airs": {
+      "type": "integer"
+     },
+     "minutes": {
+      "type": "integer"
+     }
+    }
+   },
+   "SocialDisplay": {
+    "type": "object",
+    "description": "The pool on air.",
+    "properties": {
+     "rotation": {
+      "type": "boolean",
+      "description": "The next message by itself every `rotationSecs`"
+     },
+     "rotationSecs": {
+      "type": "integer"
+     },
+     "order": {
+      "type": "string",
+      "enum": [
+       "arrival",
+       "starred",
+       "random"
+      ]
+     },
+     "leave": {
+      "$ref": "#/components/schemas/SocialLeave"
+     },
+     "max": {
+      "type": "integer",
+      "description": "Most messages in the pool (0: no limit): the oldest not starred leave"
+     },
+     "nameMode": {
+      "type": "string",
+      "enum": [
+       "initial",
+       "full",
+       "anonymous"
+      ]
+     }
+    }
+   },
+   "SocialCard": {
+    "type": "object",
+    "description": "A message on the desk.",
+    "properties": {
+     "message": {
+      "type": "object"
+     },
+     "airs": {
+      "type": "integer",
+      "description": "Passes on air"
+     },
+     "lastAir": {
+      "type": "integer",
+      "description": "ms"
+     },
+     "approvedAt": {
+      "type": "integer",
+      "description": "ms"
+     },
+     "leave": {
+      "$ref": "#/components/schemas/SocialLeave"
+     },
+     "retiredAt": {
+      "type": "integer",
+      "description": "ms, when it left the pool"
+     },
+     "status": {
+      "type": "string",
+      "enum": [
+       "pending",
+       "check",
+       "rejected",
+       "approved"
+      ]
+     },
+     "toxicity": {
+      "type": "number"
+     },
+     "tags": {
+      "type": "array",
+      "items": {
+       "type": "object",
+       "properties": {
+        "kind": {
+         "type": "string"
+        },
+        "level": {
+         "type": "string"
+        },
+        "value": {
+         "type": "string"
+        }
+       }
+      }
+     },
+     "author": {
+      "type": "string"
+     },
+     "shown": {
+      "type": "string",
+      "description": "Text for moderators (banned words masked)"
+     },
+     "words": {
+      "type": "array",
+      "items": {
+       "type": "string"
+      }
+     },
+     "fixed": {
+      "type": "string",
+      "description": "Text on air after the rules"
+     },
+     "edit": {
+      "type": "string",
+      "description": "Text on air set by a moderator"
+     },
+     "nameMode": {
+      "type": "string"
+     },
+     "starred": {
+      "type": "boolean"
+     },
+     "by": {
+      "type": "string"
+     }
+    }
+   },
+   "SocialHashtag": {
+    "type": "object",
+    "properties": {
+     "tag": {
+      "type": "string"
+     },
+     "count": {
+      "type": "integer"
+     },
+     "perMin": {
+      "type": "integer"
+     },
+     "series": {
+      "type": "array",
+      "items": {
+       "type": "integer"
+      },
+      "description": "Per minute, the last 60, oldest first"
+     },
+     "platforms": {
+      "type": "object",
+      "additionalProperties": {
+       "type": "integer"
+      },
+      "description": "Share per platform, in percent"
+     },
+     "running": {
+      "type": "boolean"
+     },
+     "since": {
+      "type": "integer"
+     },
+     "history": {
+      "type": "array",
+      "items": {
+       "type": "integer"
+      },
+      "description": "Per minute since `since` (6 h at most)"
+     }
+    }
+   },
+   "SocialDesk": {
+    "type": "object",
+    "properties": {
+     "sourceId": {
+      "type": "string",
+      "description": "The data source templates read: `social-<project id>`"
+     },
+     "sources": {
+      "type": "array",
+      "items": {
+       "type": "string"
+      }
+     },
+     "rules": {
+      "$ref": "#/components/schemas/SocialRules"
+     },
+     "display": {
+      "$ref": "#/components/schemas/SocialDisplay"
+     },
+     "hashtags": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/SocialHashtag"
+      }
+     },
+     "incoming": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/SocialCard"
+      }
+     },
+     "approved": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/SocialCard"
+      }
+     },
+     "onAir": {
+      "oneOf": [
+       {
+        "$ref": "#/components/schemas/SocialCard"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "retired": {
+      "type": "array",
+      "description": "Left the pool, oldest first",
+      "items": {
+       "$ref": "#/components/schemas/SocialCard"
+      }
+     },
+     "rotationAt": {
+      "type": [
+       "integer",
+       "null"
+      ]
+     },
+     "toxRejects": {
+      "type": "integer"
+     },
+     "builtinWords": {
+      "type": "integer"
+     }
+    }
+   }
+  }
+ }
+}

@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+     width="960" height="180" viewBox="0 0 480 90">
+  <title>Score bug</title>
+  <defs>
+    <linearGradient id="plate" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#0a1f44"/>
+      <stop offset="1" stop-color="#1e4fa8"/>
+    </linearGradient>
+    <filter id="shadow"><feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#000" flood-opacity="0.5"/></filter>
+    <filter id="blur"><feGaussianBlur stdDeviation="4"/></filter>
+    <clipPath id="clip"><rect x="0" y="0" width="200" height="40"/></clipPath>
+  </defs>
+  <style>
+    /* Teams */
+    .team { font-family: 'Roboto', sans-serif; font-size: 20px; fill: #ffffff; font-weight: bold; }
+    #home-score { fill: #ffd400; }
+    g > rect { fill: red; }
+  </style>
+  <rect id="background" x="0" y="0" width="480" height="90" rx="8" fill="url(#plate)" filter="url(#shadow)"/>
+  <g id="teams" transform="translate(20,10)">
+    <text id="home" class="team" x="0" y="30">PSG</text>
+    <text id="away" class="team" x="0" y="65">OM</text>
+    <text id="home-score" class="team" x="200" y="30" text-anchor="end">2</text>
+    <circle cx="230" cy="25" r="5" fill="#e00"/>
+  </g>
+  <path id="bar" d="M 300 10 L 460 10 L 450 80 L 290 80 Z" fill="#ffffff" fill-opacity="0.2" stroke="#fff" stroke-width="2"/>
+  <path id="ring" d="M 10 10 h 20 v 20 h -20 Z M 15 15 h 10 v 10 h -10 Z" fill-rule="evenodd" fill="#fff"/>
+  <rect id="skewed" x="300" y="40" width="40" height="20" transform="skewX(-15)" fill="#0f0"/>
+  <g id="clipped" clip-path="url(#clip)">
+    <rect x="-10" y="0" width="300" height="20" fill="#333"/>
+  </g>
+  <rect id="blurred" x="400" y="50" width="20" height="20" filter="url(#blur)" fill="#f0f" style="display:none"/>
+  <line x1="0" y1="88" x2="480" y2="88" stroke="#fff" stroke-dasharray="4 2"/>
+  <script>alert(1)</script>
+  <foreignObject width="10" height="10"><div xmlns="http://www.w3.org/1999/xhtml">hi</div></foreignObject>
+  <image id="ext" href="logo.png" x="0" y="0" width="10" height="10"/>
+  <image id="logo" x="440" y="5" width="30" height="30"
+         xlink:href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII="/>
+</svg>

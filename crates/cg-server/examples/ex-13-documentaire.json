@@ -1,0 +1,2898 @@
+{
+ "meta": {
+  "id": "ex-13-documentaire",
+  "name": "Documentaire",
+  "category": "Culture",
+  "tags": [
+   "Documentaire",
+   "Citation",
+   "Archives",
+   "Chapitres",
+   "Carte",
+   "Générique"
+  ],
+  "description": "Un habillage de documentaire tout en retenue : titre du film, cartons de chapitre en chiffres romains, citations, légendes d’archives tapées à la machine (date et lieu), intervenants sans cartouche, carte de situation hors ligne et générique de fin en pages. Serif élégant, filets dorés, fondus lents.", "summary": "Titre, chapitres, citations et légendes d’archives.",
+  "en": {
+   "name": "Documentary",
+   "description": "A restrained documentary package: film title, chapter cards with roman numerals, quotes, typewritten archive captions (date and place), plate-free name straps, an offline location map and paged end credits. Elegant serif, gold hairlines, slow dissolves.", "summary": "Title, chapters, quotes and archive captions."
+  },
+  "cover": "title"
+ },
+ "project": {
+  "id": "ex-13-documentaire",
+  "name": "Documentaire",
+  "description": "Un habillage de documentaire tout en retenue : titre du film, cartons de chapitre en chiffres romains, citations, légendes d’archives tapées à la machine (date et lieu), intervenants sans cartouche, carte de situation hors ligne et générique de fin en pages. Serif élégant, filets dorés, fondus lents.",
+  "width": 1920,
+  "height": 1080,
+  "frameRate": {
+   "num": 50,
+   "den": 1
+  },
+  "templates": [
+   {
+    "id": "title",
+    "name": "Titre du film",
+    "duration": 200.0,
+    "markers": [
+     {
+      "id": "title-air",
+      "frame": 140.0,
+      "name": "On air",
+      "kind": "out"
+     }
+    ],
+    "fields": [
+     {
+      "key": "by",
+      "label": "Surtitre",
+      "kind": "text",
+      "default": "UN FILM DE CLAIRE DUVAL"
+     },
+     {
+      "key": "title",
+      "label": "Titre",
+      "kind": "text",
+      "default": "La Mémoire des pierres"
+     },
+     {
+      "key": "sub",
+      "label": "Sous-titre",
+      "kind": "text",
+      "default": "Carnac, six mille ans de mystère"
+     }
+    ],
+    "layers": [
+     {
+      "id": "title-1",
+      "name": "Titre",
+      "parent": null,
+      "type": "group",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 1920.0,
+       "height": 1080.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "clip": false
+     },
+     {
+      "id": "title-2",
+      "name": "Voile",
+      "parent": "title-1",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 1920.0,
+       "height": 1080.0,
+       "fill": [
+        0.0549,
+        0.0471,
+        0.0392,
+        0.55
+       ]
+      },
+      "tracks": {
+       "opacity": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 40.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 140.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 170.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {}
+     },
+     {
+      "id": "title-3",
+      "name": "Vignette",
+      "parent": "title-1",
+      "type": "ellipse",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": -480.0,
+       "y": -600.0,
+       "width": 2880.0,
+       "height": 2280.0,
+       "fill": [
+        0.0549,
+        0.0471,
+        0.0392,
+        0
+       ]
+      },
+      "tracks": {
+       "opacity": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 40.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 140.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 170.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "fillStyle": {
+       "kind": "radial",
+       "color2": "#0e0c0ad9"
+      }
+     },
+     {
+      "id": "title-4",
+      "name": "Surtitre",
+      "parent": "title-1",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 360.0,
+       "width": 1920.0,
+       "height": 40.0,
+       "fill": [
+        0.9529,
+        0.9294,
+        0.8824,
+        0.8
+       ],
+       "fontSize": 22.0,
+       "letterSpacing": 10.0
+      },
+      "tracks": {
+       "opacity": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 20.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 50.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 140.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 164.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "text": "{{by}}",
+      "fontFamily": "Inter",
+      "fontWeight": 500,
+      "align": "center",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "lang": "fr"
+     },
+     {
+      "id": "title-5",
+      "name": "Titre",
+      "parent": "title-1",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 410.0,
+       "width": 1920.0,
+       "height": 170.0,
+       "fill": [
+        0.9529,
+        0.9294,
+        0.8824,
+        1.0
+       ],
+       "fontSize": 124.0
+      },
+      "tracks": {
+       "opacity": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 30.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 70.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 140.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 170.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ],
+       "letterSpacing": [
+        {
+         "frame": 0.0,
+         "value": 16.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 30.0,
+         "value": 16.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.16,
+          "y1": 1.0,
+          "x2": 0.3,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 140.0,
+         "value": 2.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 140.0,
+         "value": 2.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.7,
+          "y1": 0.0,
+          "x2": 0.84,
+          "y2": 0.0
+         }
+        },
+        {
+         "frame": 170.0,
+         "value": 16.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "text": "{{title}}",
+      "fontFamily": "Playfair Display",
+      "fontWeight": 600,
+      "align": "center",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "shadow": true,
+      "shadowColor": "#000000b0",
+      "shadowBlur": 26.0,
+      "shadowY": 2.0,
+      "lang": "fr"
+     },
+     {
+      "id": "title-6",
+      "name": "Filet",
+      "parent": "title-1",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 900.0,
+       "y": 612.0,
+       "width": 120.0,
+       "height": 1.5,
+       "fill": [
+        0.7843,
+        0.6627,
+        0.4157,
+        1.0
+       ]
+      },
+      "tracks": {
+       "scaleX": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 50.0,
+         "value": 0.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.16,
+          "y1": 1.0,
+          "x2": 0.3,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 90.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 140.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.7,
+          "y1": 0.0,
+          "x2": 0.84,
+          "y2": 0.0
+         }
+        },
+        {
+         "frame": 164.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {}
+     },
+     {
+      "id": "title-7",
+      "name": "Sous-titre",
+      "parent": "title-1",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 640.0,
+       "width": 1920.0,
+       "height": 50.0,
+       "fill": [
+        0.7216,
+        0.6784,
+        0.6118,
+        1.0
+       ],
+       "fontSize": 32.0
+      },
+      "tracks": {
+       "opacity": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 60.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 90.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 140.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 164.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "text": "{{sub}}",
+      "fontFamily": "Playfair Display",
+      "fontWeight": 600,
+      "align": "center",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "italic": true,
+      "shadow": true,
+      "shadowColor": "#000000b0",
+      "shadowBlur": 26.0,
+      "shadowY": 2.0,
+      "lang": "fr"
+     }
+    ],
+    "zone": "full",
+    "revision": 1,
+    "markerModel": 2
+   },
+   {
+    "id": "chapter",
+    "name": "Chapitre",
+    "duration": 170.0,
+    "markers": [
+     {
+      "id": "chapter-air",
+      "frame": 120.0,
+      "name": "On air",
+      "kind": "out"
+     }
+    ],
+    "fields": [
+     {
+      "key": "num",
+      "label": "Numéro (romain)",
+      "kind": "text",
+      "default": "III"
+     },
+     {
+      "key": "title",
+      "label": "Titre",
+      "kind": "text",
+      "default": "Les bâtisseurs d’avant l’écriture"
+     },
+     {
+      "key": "years",
+      "label": "Période",
+      "kind": "text",
+      "default": "– 4500 · – 2500"
+     }
+    ],
+    "layers": [
+     {
+      "id": "chapter-1",
+      "name": "Chapitre",
+      "parent": null,
+      "type": "group",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 1920.0,
+       "height": 1080.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "clip": false
+     },
+     {
+      "id": "chapter-2",
+      "name": "Fond",
+      "parent": "chapter-1",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 1920.0,
+       "height": 1080.0,
+       "fill": [
+        0.0549,
+        0.0471,
+        0.0392,
+        0.86
+       ]
+      },
+      "tracks": {
+       "opacity": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 24.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 120.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 144.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {}
+     },
+     {
+      "id": "chapter-3",
+      "name": "Filet G",
+      "parent": "chapter-1",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 720.0,
+       "y": 397.0,
+       "width": 150.0,
+       "height": 1.5,
+       "fill": [
+        0.7843,
+        0.6627,
+        0.4157,
+        1.0
+       ],
+       "anchorX": 1.0
+      },
+      "tracks": {
+       "scaleX": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 16.0,
+         "value": 0.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.16,
+          "y1": 1.0,
+          "x2": 0.3,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 50.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 120.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.7,
+          "y1": 0.0,
+          "x2": 0.84,
+          "y2": 0.0
+         }
+        },
+        {
+         "frame": 132.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {}
+     },
+     {
+      "id": "chapter-4",
+      "name": "Filet D",
+      "parent": "chapter-1",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 1050.0,
+       "y": 397.0,
+       "width": 150.0,
+       "height": 1.5,
+       "fill": [
+        0.7843,
+        0.6627,
+        0.4157,
+        1.0
+       ],
+       "anchorX": 0.0
+      },
+      "tracks": {
+       "scaleX": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 16.0,
+         "value": 0.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.16,
+          "y1": 1.0,
+          "x2": 0.3,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 50.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 120.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.7,
+          "y1": 0.0,
+          "x2": 0.84,
+          "y2": 0.0
+         }
+        },
+        {
+         "frame": 132.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {}
+     },
+     {
+      "id": "chapter-5",
+      "name": "Numéro",
+      "parent": "chapter-1",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 860.0,
+       "y": 340.0,
+       "width": 200.0,
+       "height": 110.0,
+       "fill": [
+        0.7843,
+        0.6627,
+        0.4157,
+        1.0
+       ],
+       "fontSize": 72.0
+      },
+      "tracks": {
+       "opacity": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 6.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 30.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 120.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 140.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "text": "{{num}}",
+      "fontFamily": "Playfair Display",
+      "fontWeight": 600,
+      "align": "center",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "lang": "fr"
+     },
+     {
+      "id": "chapter-6",
+      "name": "Titre",
+      "parent": "chapter-1",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 260.0,
+       "y": 470.0,
+       "width": 1400.0,
+       "height": 200.0,
+       "fill": [
+        0.9529,
+        0.9294,
+        0.8824,
+        1.0
+       ],
+       "fontSize": 76.0
+      },
+      "tracks": {
+       "opacity": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 20.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 50.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 120.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 140.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ],
+       "y": [
+        {
+         "frame": 0.0,
+         "value": 490.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 20.0,
+         "value": 490.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.16,
+          "y1": 1.0,
+          "x2": 0.3,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 70.0,
+         "value": 470.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 120.0,
+         "value": 470.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.7,
+          "y1": 0.0,
+          "x2": 0.84,
+          "y2": 0.0
+         }
+        },
+        {
+         "frame": 132.0,
+         "value": 490.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "text": "{{title}}",
+      "fontFamily": "Playfair Display",
+      "fontWeight": 600,
+      "align": "center",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "wrap": true,
+      "lineHeight": 1.15,
+      "lang": "fr"
+     },
+     {
+      "id": "chapter-7",
+      "name": "Période",
+      "parent": "chapter-1",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 690.0,
+       "width": 1920.0,
+       "height": 40.0,
+       "fill": [
+        0.7216,
+        0.6784,
+        0.6118,
+        1.0
+       ],
+       "fontSize": 22.0,
+       "letterSpacing": 8.0
+      },
+      "tracks": {
+       "opacity": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 40.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 64.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 120.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 136.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "text": "{{years}}",
+      "fontFamily": "Inter",
+      "fontWeight": 500,
+      "align": "center",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "lang": "fr"
+     }
+    ],
+    "zone": "full",
+    "revision": 1,
+    "markerModel": 2
+   },
+   {
+    "id": "quote",
+    "name": "Citation",
+    "duration": 260.0,
+    "markers": [
+     {
+      "id": "quote-air",
+      "frame": 200.0,
+      "name": "On air",
+      "kind": "out"
+     }
+    ],
+    "fields": [
+     {
+      "key": "quote",
+      "label": "Citation",
+      "kind": "multiline",
+      "default": "Les pierres ne parlent pas, mais elles se souviennent de tout ce qu’on leur a confié."
+     },
+     {
+      "key": "author",
+      "label": "Auteur",
+      "kind": "text",
+      "default": "Prosper Mérimée"
+     },
+     {
+      "key": "source",
+      "label": "Source",
+      "kind": "text",
+      "default": "Notes d’un voyage dans l’Ouest de la France, 1836"
+     }
+    ],
+    "layers": [
+     {
+      "id": "quote-1",
+      "name": "Citation",
+      "parent": null,
+      "type": "group",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 1920.0,
+       "height": 1080.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "clip": false
+     },
+     {
+      "id": "quote-2",
+      "name": "Fond",
+      "parent": "quote-1",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 1920.0,
+       "height": 1080.0,
+       "fill": [
+        0.0549,
+        0.0471,
+        0.0392,
+        0.84
+       ]
+      },
+      "tracks": {
+       "opacity": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 24.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 200.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 224.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {}
+     },
+     {
+      "id": "quote-3",
+      "name": "Guillemet",
+      "parent": "quote-1",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 260.0,
+       "y": 150.0,
+       "width": 200.0,
+       "height": 200.0,
+       "fill": [
+        0.7843,
+        0.6627,
+        0.4157,
+        0.9
+       ],
+       "fontSize": 220.0
+      },
+      "tracks": {
+       "opacity": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 8.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 32.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 200.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 216.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "text": "«",
+      "fontFamily": "Playfair Display",
+      "fontWeight": 600,
+      "align": "left",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "lang": "fr"
+     },
+     {
+      "id": "quote-4",
+      "name": "Citation",
+      "parent": "quote-1",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 380.0,
+       "y": 300.0,
+       "width": 1160.0,
+       "height": 380.0,
+       "fill": [
+        0.9529,
+        0.9294,
+        0.8824,
+        1.0
+       ],
+       "fontSize": 58.0
+      },
+      "tracks": {
+       "opacity": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 16.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 52.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 200.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 220.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ],
+       "y": [
+        {
+         "frame": 0.0,
+         "value": 320.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 16.0,
+         "value": 320.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.16,
+          "y1": 1.0,
+          "x2": 0.3,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 76.0,
+         "value": 300.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 200.0,
+         "value": 300.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.7,
+          "y1": 0.0,
+          "x2": 0.84,
+          "y2": 0.0
+         }
+        },
+        {
+         "frame": 212.0,
+         "value": 320.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "text": "{{quote}}",
+      "fontFamily": "Playfair Display",
+      "fontWeight": 600,
+      "align": "left",
+      "verticalAlign": "top",
+      "uppercase": false,
+      "wrap": true,
+      "lineHeight": 1.3,
+      "lang": "fr"
+     },
+     {
+      "id": "quote-5",
+      "name": "Filet",
+      "parent": "quote-1",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 384.0,
+       "y": 724.0,
+       "width": 80.0,
+       "height": 1.5,
+       "fill": [
+        0.7843,
+        0.6627,
+        0.4157,
+        1.0
+       ],
+       "anchorX": 0.0
+      },
+      "tracks": {
+       "scaleX": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 40.0,
+         "value": 0.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.16,
+          "y1": 1.0,
+          "x2": 0.3,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 70.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 200.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.7,
+          "y1": 0.0,
+          "x2": 0.84,
+          "y2": 0.0
+         }
+        },
+        {
+         "frame": 212.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {}
+     },
+     {
+      "id": "quote-6",
+      "name": "Auteur",
+      "parent": "quote-1",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 384.0,
+       "y": 748.0,
+       "width": 1100.0,
+       "height": 44.0,
+       "fill": [
+        0.7843,
+        0.6627,
+        0.4157,
+        1.0
+       ],
+       "fontSize": 26.0,
+       "letterSpacing": 6.0
+      },
+      "tracks": {
+       "opacity": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 46.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 70.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 200.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 210.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "text": "{{author}}",
+      "fontFamily": "Inter",
+      "fontWeight": 600,
+      "align": "left",
+      "verticalAlign": "middle",
+      "uppercase": true,
+      "lang": "fr"
+     },
+     {
+      "id": "quote-7",
+      "name": "Source",
+      "parent": "quote-1",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 384.0,
+       "y": 794.0,
+       "width": 1100.0,
+       "height": 40.0,
+       "fill": [
+        0.7216,
+        0.6784,
+        0.6118,
+        1.0
+       ],
+       "fontSize": 26.0
+      },
+      "tracks": {
+       "opacity": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 52.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 76.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 200.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 210.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "text": "{{source}}",
+      "fontFamily": "Playfair Display",
+      "fontWeight": 600,
+      "align": "left",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "italic": true,
+      "lang": "fr"
+     }
+    ],
+    "zone": "full",
+    "revision": 1,
+    "markerModel": 2
+   },
+   {
+    "id": "archive",
+    "name": "Légende d’archive",
+    "duration": 200.0,
+    "markers": [
+     {
+      "id": "archive-air",
+      "frame": 150.0,
+      "name": "On air",
+      "kind": "out"
+     }
+    ],
+    "fields": [
+     {
+      "key": "date",
+      "label": "Date",
+      "kind": "text",
+      "default": "14 AOÛT 1953"
+     },
+     {
+      "key": "place",
+      "label": "Lieu",
+      "kind": "text",
+      "default": "Alignements du Ménec, Carnac"
+     },
+     {
+      "key": "credit",
+      "label": "Source",
+      "kind": "text",
+      "default": "INA · Actualités françaises"
+     }
+    ],
+    "layers": [
+     {
+      "id": "archive-1",
+      "name": "Archive",
+      "parent": null,
+      "type": "group",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 96.0,
+       "y": 66.0,
+       "width": 980.0,
+       "height": 130.0,
+       "anchorX": 0.0,
+       "anchorY": 0.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "clip": false
+     },
+     {
+      "id": "archive-2",
+      "name": "Cadre",
+      "parent": "archive-1",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 148.0,
+       "height": 34.0,
+       "fill": [
+        0.0549,
+        0.0471,
+        0.0392,
+        0.35
+       ],
+       "stroke": [
+        0.7843,
+        0.6627,
+        0.4157,
+        1.0
+       ],
+       "strokeWidth": 1.5
+      },
+      "tracks": {
+       "opacity": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 16.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 150.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 166.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {}
+     },
+     {
+      "id": "archive-3",
+      "name": "Archives",
+      "parent": "archive-1",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 148.0,
+       "height": 34.0,
+       "fill": [
+        0.7843,
+        0.6627,
+        0.4157,
+        1.0
+       ],
+       "fontSize": 16.0,
+       "letterSpacing": 5.0
+      },
+      "tracks": {
+       "opacity": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 16.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 150.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 166.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "text": "ARCHIVES",
+      "fontFamily": "Inter",
+      "fontWeight": 600,
+      "align": "center",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "lang": "fr"
+     },
+     {
+      "id": "archive-4",
+      "name": "Date et lieu",
+      "parent": "archive-1",
+      "type": "typewriter",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 46.0,
+       "width": 980.0,
+       "height": 48.0,
+       "fontSize": 32.0,
+       "fill": [
+        0.9529,
+        0.9294,
+        0.8824,
+        1.0
+       ]
+      },
+      "tracks": {
+       "opacity": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 1.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 150.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 166.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "text": "{{date}} — {{place}}",
+      "speed": 26.0,
+      "cursor": true,
+      "fontFamily": "JetBrains Mono",
+      "fontWeight": 500,
+      "align": "left",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "cursorColor": "#c8a96a",
+      "cursorHide": true,
+      "shadow": true
+     },
+     {
+      "id": "archive-5",
+      "name": "Source",
+      "parent": "archive-1",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 98.0,
+       "width": 980.0,
+       "height": 30.0,
+       "fill": [
+        0.7216,
+        0.6784,
+        0.6118,
+        1.0
+       ],
+       "fontSize": 18.0,
+       "letterSpacing": 2.0
+      },
+      "tracks": {
+       "opacity": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 50.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 70.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 150.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 166.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "text": "{{credit}}",
+      "fontFamily": "Inter",
+      "fontWeight": 500,
+      "align": "left",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "shadow": true,
+      "shadowColor": "#000000b0",
+      "shadowBlur": 26.0,
+      "shadowY": 2.0,
+      "lang": "fr"
+     }
+    ],
+    "zone": "caption",
+    "revision": 1,
+    "markerModel": 2
+   },
+   {
+    "id": "lower",
+    "name": "Intervenant",
+    "duration": 170.0,
+    "markers": [
+     {
+      "id": "lower-air",
+      "frame": 110.0,
+      "name": "On air",
+      "kind": "out"
+     }
+    ],
+    "fields": [
+     {
+      "key": "name",
+      "label": "Nom",
+      "kind": "text",
+      "default": "Hélène Le Goff"
+     },
+     {
+      "key": "role",
+      "label": "Fonction",
+      "kind": "text",
+      "default": "Archéologue, Inrap Bretagne"
+     }
+    ],
+    "layers": [
+     {
+      "id": "lower-1",
+      "name": "Intervenant",
+      "parent": null,
+      "type": "group",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 110.0,
+       "y": 820.0,
+       "width": 1000.0,
+       "height": 160.0,
+       "anchorX": 0.0,
+       "anchorY": 0.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "clip": false
+     },
+     {
+      "id": "lower-2",
+      "name": "Filet",
+      "parent": "lower-1",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 2.0,
+       "y": 0.0,
+       "width": 60.0,
+       "height": 1.5,
+       "fill": [
+        0.7843,
+        0.6627,
+        0.4157,
+        1.0
+       ],
+       "anchorX": 0.0
+      },
+      "tracks": {
+       "scaleX": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.16,
+          "y1": 1.0,
+          "x2": 0.3,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 30.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 110.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.7,
+          "y1": 0.0,
+          "x2": 0.84,
+          "y2": 0.0
+         }
+        },
+        {
+         "frame": 130.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {}
+     },
+     {
+      "id": "lower-3",
+      "name": "Nom",
+      "parent": "lower-1",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 14.0,
+       "width": 1000.0,
+       "height": 80.0,
+       "fill": [
+        0.9529,
+        0.9294,
+        0.8824,
+        1.0
+       ],
+       "fontSize": 58.0
+      },
+      "tracks": {
+       "opacity": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 6.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 36.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 110.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 130.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ],
+       "x": [
+        {
+         "frame": 0.0,
+         "value": -24.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 6.0,
+         "value": -24.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.16,
+          "y1": 1.0,
+          "x2": 0.3,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 46.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 110.0,
+         "value": 0.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.7,
+          "y1": 0.0,
+          "x2": 0.84,
+          "y2": 0.0
+         }
+        },
+        {
+         "frame": 122.0,
+         "value": -24.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "text": "{{name}}",
+      "fontFamily": "Playfair Display",
+      "fontWeight": 600,
+      "align": "left",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "shadow": true,
+      "shadowColor": "#000000b0",
+      "shadowBlur": 26.0,
+      "shadowY": 2.0,
+      "lang": "fr"
+     },
+     {
+      "id": "lower-4",
+      "name": "Fonction",
+      "parent": "lower-1",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 2.0,
+       "y": 96.0,
+       "width": 1000.0,
+       "height": 40.0,
+       "fill": [
+        0.9529,
+        0.9294,
+        0.8824,
+        0.82
+       ],
+       "fontSize": 22.0,
+       "letterSpacing": 5.0
+      },
+      "tracks": {
+       "opacity": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 20.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 50.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 110.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 130.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "text": "{{role}}",
+      "fontFamily": "Inter",
+      "fontWeight": 500,
+      "align": "left",
+      "verticalAlign": "middle",
+      "uppercase": true,
+      "shadow": true,
+      "shadowColor": "#000000b0",
+      "shadowBlur": 26.0,
+      "shadowY": 2.0,
+      "lang": "fr"
+     }
+    ],
+    "zone": "lower",
+    "revision": 1,
+    "markerModel": 2
+   },
+   {
+    "id": "map",
+    "name": "Lieu",
+    "duration": 200.0,
+    "markers": [
+     {
+      "id": "map-air",
+      "frame": 150.0,
+      "name": "On air",
+      "kind": "out"
+     }
+    ],
+    "fields": [
+     {
+      "key": "place",
+      "label": "Lieu",
+      "kind": "text",
+      "default": "Carnac"
+     },
+     {
+      "key": "region",
+      "label": "Région",
+      "kind": "text",
+      "default": "Morbihan, Bretagne"
+     },
+     {
+      "key": "coords",
+      "label": "Coordonnées",
+      "kind": "text",
+      "default": "47°35′ N · 3°05′ O"
+     },
+     {
+      "key": "lat",
+      "label": "Latitude",
+      "kind": "number",
+      "default": "47.584"
+     },
+     {
+      "key": "lon",
+      "label": "Longitude",
+      "kind": "number",
+      "default": "-3.078"
+     }
+    ],
+    "layers": [
+     {
+      "id": "map-1",
+      "name": "Lieu",
+      "parent": null,
+      "type": "group",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 1290.0,
+       "y": 80.0,
+       "width": 560.0,
+       "height": 560.0,
+       "anchorX": 0.0,
+       "anchorY": 0.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "clip": false
+     },
+     {
+      "id": "map-2",
+      "name": "Lieu · Carte",
+      "parent": "map-1",
+      "type": "group",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 560.0,
+       "height": 560.0
+      },
+      "tracks": {
+       "opacity": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 30.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 150.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 170.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "clip": false
+     },
+     {
+      "id": "map-3",
+      "name": "Fond",
+      "parent": "map-2",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 560.0,
+       "height": 560.0,
+       "fill": [
+        0.0549,
+        0.0471,
+        0.0392,
+        0.88
+       ]
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "map-4",
+      "name": "Lieu · Carte · Carte",
+      "parent": "map-2",
+      "type": "map",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 20.0,
+       "y": 20.0,
+       "width": 520.0,
+       "height": 400.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "style": "mono",
+      "projection": "mercator",
+      "radius": 0.0,
+      "showRoads": false,
+      "graticule": false,
+      "view": {
+       "lat": 47.3,
+       "lon": -2.4,
+       "zoom": 6.4,
+       "rot": 0.0,
+       "tilt": 0.0
+      },
+      "views": [],
+      "colors": {
+       "water": "#14120f",
+       "land": "#2a2621",
+       "border": "#5d5446",
+       "grid": ""
+      },
+      "layers": {
+       "markers": true,
+       "routes": false,
+       "zones": false,
+       "labels": true
+      },
+      "settingBindings": {
+       "markers.0.name": "place"
+      },
+      "markers": [
+       {
+        "id": "site",
+        "on": true,
+        "name": "Carnac",
+        "lat": "{{lat}}",
+        "lon": "{{lon}}",
+        "icon": "dot",
+        "color": "#c8a96a"
+       }
+      ],
+      "mkSize": 26.0,
+      "routes": [],
+      "labels": {
+       "cities": true,
+       "countries": false,
+       "minImp": 6.0,
+       "size": 18.0,
+       "pad": 8.0
+      },
+      "attribution": {
+       "provider": "own",
+       "pos": "br",
+       "style": "minimal",
+       "show": true
+      }
+     },
+     {
+      "id": "map-5",
+      "name": "Cadre",
+      "parent": "map-2",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 20.0,
+       "y": 20.0,
+       "width": 520.0,
+       "height": 400.0,
+       "fill": [
+        0.0549,
+        0.0471,
+        0.0392,
+        0
+       ],
+       "stroke": [
+        0.7843,
+        0.6627,
+        0.4157,
+        0.6
+       ],
+       "strokeWidth": 1.0
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "map-6",
+      "name": "Lieu · Carte · Lieu",
+      "parent": "map-2",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 24.0,
+       "y": 436.0,
+       "width": 520.0,
+       "height": 60.0,
+       "fill": [
+        0.9529,
+        0.9294,
+        0.8824,
+        1.0
+       ],
+       "fontSize": 44.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "text": "{{place}}",
+      "fontFamily": "Playfair Display",
+      "fontWeight": 600,
+      "align": "left",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "lang": "fr"
+     },
+     {
+      "id": "map-7",
+      "name": "Région",
+      "parent": "map-2",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 26.0,
+       "y": 496.0,
+       "width": 300.0,
+       "height": 30.0,
+       "fill": [
+        0.7216,
+        0.6784,
+        0.6118,
+        1.0
+       ],
+       "fontSize": 18.0,
+       "letterSpacing": 3.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "text": "{{region}}",
+      "fontFamily": "Inter",
+      "fontWeight": 500,
+      "align": "left",
+      "verticalAlign": "middle",
+      "uppercase": true,
+      "lang": "fr"
+     },
+     {
+      "id": "map-8",
+      "name": "Coordonnées",
+      "parent": "map-2",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 300.0,
+       "y": 496.0,
+       "width": 236.0,
+       "height": 30.0,
+       "fill": [
+        0.7843,
+        0.6627,
+        0.4157,
+        1.0
+       ],
+       "fontSize": 18.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "text": "{{coords}}",
+      "fontFamily": "JetBrains Mono",
+      "fontWeight": 500,
+      "align": "right",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "lang": "fr"
+     }
+    ],
+    "zone": "map",
+    "revision": 1,
+    "markerModel": 2
+   },
+   {
+    "id": "credits",
+    "name": "Générique",
+    "duration": 200.0,
+    "markers": [
+     {
+      "id": "credits-air",
+      "frame": 120.0,
+      "name": "On air",
+      "kind": "out"
+     }
+    ],
+    "fields": [
+     {
+      "key": "title",
+      "label": "Titre",
+      "kind": "text",
+      "default": "La Mémoire des pierres"
+     }
+    ],
+    "layers": [
+     {
+      "id": "credits-1",
+      "name": "Générique",
+      "parent": null,
+      "type": "group",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 1920.0,
+       "height": 1080.0
+      },
+      "tracks": {
+       "opacity": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 30.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 120.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 150.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "clip": false
+     },
+     {
+      "id": "credits-2",
+      "name": "Fond",
+      "parent": "credits-1",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 1920.0,
+       "height": 1080.0,
+       "fill": [
+        0.0549,
+        0.0471,
+        0.0392,
+        1.0
+       ]
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "credits-3",
+      "name": "Titre",
+      "parent": "credits-1",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 110.0,
+       "width": 1920.0,
+       "height": 80.0,
+       "fill": [
+        0.9529,
+        0.9294,
+        0.8824,
+        1.0
+       ],
+       "fontSize": 48.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "text": "{{title}}",
+      "fontFamily": "Playfair Display",
+      "fontWeight": 600,
+      "align": "center",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "lang": "fr"
+     },
+     {
+      "id": "credits-4",
+      "name": "Filet",
+      "parent": "credits-1",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 910.0,
+       "y": 206.0,
+       "width": 100.0,
+       "height": 1.5,
+       "fill": [
+        0.7843,
+        0.6627,
+        0.4157,
+        1.0
+       ]
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "credits-5",
+      "name": "Générique",
+      "parent": "credits-1",
+      "type": "credits",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 360.0,
+       "y": 260.0,
+       "width": 1200.0,
+       "height": 700.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "mode": "pages",
+      "cardDur": 5.0,
+      "layout": "two",
+      "align": "center",
+      "font": "Inter",
+      "gutter": 48.0,
+      "sectionGap": 56.0,
+      "lineGap": 14.0,
+      "panel": false,
+      "fade": false,
+      "st": {
+       "section": {
+        "size": 22.0,
+        "color": "#c8a96a",
+        "weight": 600,
+        "upper": true
+       },
+       "role": {
+        "size": 24.0,
+        "color": "#b8ad9c",
+        "weight": 500,
+        "upper": false
+       },
+       "name": {
+        "size": 30.0,
+        "color": "#f3ede1",
+        "weight": 600,
+        "upper": false
+       }
+      },
+      "entries": [
+       {
+        "kind": "section",
+        "a": "Réalisation",
+        "b": ""
+       },
+       {
+        "kind": "line",
+        "a": "Un film de",
+        "b": "Claire Duval"
+       },
+       {
+        "kind": "line",
+        "a": "Directeur de la photographie",
+        "b": "Yann Kerhervé"
+       },
+       {
+        "kind": "line",
+        "a": "Cadreuse",
+        "b": "Sofia Benali"
+       },
+       {
+        "kind": "section",
+        "a": "Son",
+        "b": ""
+       },
+       {
+        "kind": "line",
+        "a": "Prise de son",
+        "b": "Marc Ollivier"
+       },
+       {
+        "kind": "line",
+        "a": "Mixage",
+        "b": "Studio Grande Ourse"
+       },
+       {
+        "kind": "section",
+        "a": "Musique originale",
+        "b": ""
+       },
+       {
+        "kind": "line",
+        "a": "Composée par",
+        "b": "Nils Leclerc"
+       },
+       {
+        "kind": "section",
+        "a": "Archives",
+        "b": ""
+       },
+       {
+        "kind": "line",
+        "a": "INA",
+        "b": "Actualités françaises"
+       },
+       {
+        "kind": "line",
+        "a": "Musée de Carnac",
+        "b": "Fonds Zacharie Le Rouzic"
+       }
+      ]
+     }
+    ],
+    "zone": "full",
+    "revision": 1,
+    "markerModel": 2
+   }
+  ],
+  "rundown": [
+   {
+    "id": "film-00-titre-du-film",
+    "name": "Titre du film",
+    "templateId": "title",
+    "zone": "full",
+    "playlist": "film",
+    "layer": 50,
+    "data": {}
+   },
+   {
+    "id": "film-01-archive---le-ménec--1953",
+    "name": "Archive · Le Ménec, 1953",
+    "templateId": "archive",
+    "zone": "caption",
+    "playlist": "film",
+    "layer": 30,
+    "data": {}
+   },
+   {
+    "id": "film-02-hélène-le-goff",
+    "name": "Hélène Le Goff",
+    "templateId": "lower",
+    "zone": "lower",
+    "playlist": "film",
+    "layer": 10,
+    "data": {}
+   },
+   {
+    "id": "film-03-carte---carnac",
+    "name": "Carte · Carnac",
+    "templateId": "map",
+    "zone": "map",
+    "playlist": "film",
+    "layer": 20,
+    "data": {}
+   },
+   {
+    "id": "film-04-chapitre-iii",
+    "name": "Chapitre III",
+    "templateId": "chapter",
+    "zone": "full",
+    "playlist": "film",
+    "layer": 50,
+    "data": {}
+   },
+   {
+    "id": "film-05-citation---mérimée",
+    "name": "Citation · Mérimée",
+    "templateId": "quote",
+    "zone": "full",
+    "playlist": "film",
+    "layer": 50,
+    "data": {}
+   },
+   {
+    "id": "film-06-jean-luc-moal",
+    "name": "Jean-Luc Moal",
+    "templateId": "lower",
+    "zone": "lower",
+    "playlist": "film",
+    "layer": 10,
+    "data": {
+     "name": "Jean-Luc Moal",
+     "role": "Tailleur de pierre à Plouharnel"
+    }
+   },
+   {
+    "id": "film-07-archive---fouilles-de-1922",
+    "name": "Archive · Fouilles de 1922",
+    "templateId": "archive",
+    "zone": "caption",
+    "playlist": "film",
+    "layer": 30,
+    "data": {
+     "date": "3 JUIN 1922",
+     "place": "Tumulus Saint-Michel, Carnac",
+     "credit": "Musée de Préhistoire de Carnac"
+    }
+   },
+   {
+    "id": "end-08-générique-de-fin",
+    "name": "Générique de fin",
+    "templateId": "credits",
+    "zone": "full",
+    "playlist": "end",
+    "layer": 50,
+    "data": {}
+   }
+  ],
+  "zones": [
+   {
+    "id": "caption",
+    "name": "Légende d’archive",
+    "layer": 30,
+    "color": "#c8a96a",
+    "transition": "sequential",
+    "areas": {
+     "main": {
+      "x": 0.04,
+      "y": 0.05,
+      "width": 0.55,
+      "height": 0.14
+     }
+    }
+   },
+   {
+    "id": "lower",
+    "name": "Intervenant",
+    "layer": 10,
+    "color": "#7c5cff",
+    "transition": "sequential",
+    "areas": {
+     "main": {
+      "x": 0.04,
+      "y": 0.68,
+      "width": 0.62,
+      "height": 0.28
+     }
+    }
+   },
+   {
+    "id": "map",
+    "name": "Carte",
+    "layer": 20,
+    "color": "#22c55e",
+    "transition": "sequential",
+    "areas": {
+     "main": {
+      "x": 0.66,
+      "y": 0.06,
+      "width": 0.31,
+      "height": 0.6
+     }
+    }
+   },
+   {
+    "id": "full",
+    "name": "Plein écran",
+    "layer": 50,
+    "color": "#38bdf8",
+    "transition": "sequential",
+    "areas": {
+     "main": {
+      "x": 0.0,
+      "y": 0.0,
+      "width": 1.0,
+      "height": 1.0
+     }
+    }
+   }
+  ],
+  "playlists": [
+   {
+    "id": "film",
+    "name": "Le film"
+   },
+   {
+    "id": "end",
+    "name": "Générique"
+   }
+  ],
+  "formats": [],
+  "language": "fr",
+  "guides": {
+   "vertical": [],
+   "horizontal": [],
+   "actionSafe": 0.035,
+   "titleSafe": 0.05,
+   "exclusions": []
+  }
+ }
+}

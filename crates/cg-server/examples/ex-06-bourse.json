@@ -1,0 +1,4047 @@
+{
+ "meta": {
+  "id": "ex-06-bourse",
+  "name": "Bourse et marchés",
+  "category": "Économie",
+  "tags": [
+   "Ticker des indices",
+   "Graphique",
+   "Fiche valeur",
+   "Tableau",
+   "Devises"
+  ],
+  "description": "Un habillage d’économie au look terminal : ticker des indices avec flèches de hausse et de baisse, alimenté par une source de données (ou saisi par l’opérateur), graphique de séance (données collées en CSV), fiche valeur dont la couleur suit le signe de la variation, tableau des marchés (négatifs en rouge) et devises en rotation. Noir, vert et rouge de marché, JetBrains Mono et Space Grotesk.", "summary": "Ticker des indices, cours et graphiques des marchés.",
+  "en": {
+   "name": "Stock markets",
+   "description": "A terminal-style business package: index ticker with up / down arrows chosen by the operator, intraday chart (data pasted as CSV), stock quote card whose colour follows the sign of the change, market table (negatives in red) and rotating currencies.", "summary": "Index ticker, prices and market charts."
+  },
+  "cover": "chart"
+ },
+ "project": {
+  "id": "ex-06-bourse",
+  "name": "Bourse et marchés",
+  "description": "Un habillage d’économie au look terminal : ticker des indices avec flèches de hausse et de baisse, alimenté par une source de données (ou saisi par l’opérateur), graphique de séance (données collées en CSV), fiche valeur dont la couleur suit le signe de la variation, tableau des marchés (négatifs en rouge) et devises en rotation. Noir, vert et rouge de marché, JetBrains Mono et Space Grotesk.",
+  "width": 1920,
+  "height": 1080,
+  "frameRate": {
+   "num": 50,
+   "den": 1
+  },
+  "templates": [
+   {
+    "id": "ticker",
+    "name": "Ticker des indices",
+    "duration": 60.0,
+    "markers": [
+     {
+      "id": "ticker-air",
+      "frame": 30.0,
+      "name": "On air",
+      "kind": "out"
+     }
+    ],
+    "fields": [
+     {
+      "key": "q1",
+      "label": "Valeur 1",
+      "kind": "text",
+      "default": "CAC 40   7 512,30   +0,84 %",
+      "binding": {
+       "source": "bourse-indices",
+       "path": "indices[0].ligne"
+      }
+     },
+     {
+      "key": "d1",
+      "label": "Sens 1",
+      "kind": "text",
+      "default": "▲",
+      "options": [
+       [
+        "▲",
+        "Hausse"
+       ],
+       [
+        "▼",
+        "Baisse"
+       ]
+      ],
+      "binding": {
+       "source": "bourse-indices",
+       "path": "indices[0].sens"
+      }
+     },
+     {
+      "key": "q2",
+      "label": "Valeur 2",
+      "kind": "text",
+      "default": "DAX   18 120,55   −0,62 %",
+      "binding": {
+       "source": "bourse-indices",
+       "path": "indices[1].ligne"
+      }
+     },
+     {
+      "key": "d2",
+      "label": "Sens 2",
+      "kind": "text",
+      "default": "▼",
+      "options": [
+       [
+        "▲",
+        "Hausse"
+       ],
+       [
+        "▼",
+        "Baisse"
+       ]
+      ],
+      "binding": {
+       "source": "bourse-indices",
+       "path": "indices[1].sens"
+      }
+     },
+     {
+      "key": "q3",
+      "label": "Valeur 3",
+      "kind": "text",
+      "default": "FTSE 100   8 204,10   +0,31 %",
+      "binding": {
+       "source": "bourse-indices",
+       "path": "indices[2].ligne"
+      }
+     },
+     {
+      "key": "d3",
+      "label": "Sens 3",
+      "kind": "text",
+      "default": "▲",
+      "options": [
+       [
+        "▲",
+        "Hausse"
+       ],
+       [
+        "▼",
+        "Baisse"
+       ]
+      ],
+      "binding": {
+       "source": "bourse-indices",
+       "path": "indices[2].sens"
+      }
+     },
+     {
+      "key": "q4",
+      "label": "Valeur 4",
+      "kind": "text",
+      "default": "EURO STOXX 50   4 982,77   +0,45 %",
+      "binding": {
+       "source": "bourse-indices",
+       "path": "indices[3].ligne"
+      }
+     },
+     {
+      "key": "d4",
+      "label": "Sens 4",
+      "kind": "text",
+      "default": "▲",
+      "options": [
+       [
+        "▲",
+        "Hausse"
+       ],
+       [
+        "▼",
+        "Baisse"
+       ]
+      ],
+      "binding": {
+       "source": "bourse-indices",
+       "path": "indices[3].sens"
+      }
+     },
+     {
+      "key": "q5",
+      "label": "Valeur 5",
+      "kind": "text",
+      "default": "DOW JONES   39 412,08   −0,18 %",
+      "binding": {
+       "source": "bourse-indices",
+       "path": "indices[4].ligne"
+      }
+     },
+     {
+      "key": "d5",
+      "label": "Sens 5",
+      "kind": "text",
+      "default": "▼",
+      "options": [
+       [
+        "▲",
+        "Hausse"
+       ],
+       [
+        "▼",
+        "Baisse"
+       ]
+      ],
+      "binding": {
+       "source": "bourse-indices",
+       "path": "indices[4].sens"
+      }
+     },
+     {
+      "key": "q6",
+      "label": "Valeur 6",
+      "kind": "text",
+      "default": "NASDAQ   16 870,40   +1,12 %",
+      "binding": {
+       "source": "bourse-indices",
+       "path": "indices[5].ligne"
+      }
+     },
+     {
+      "key": "d6",
+      "label": "Sens 6",
+      "kind": "text",
+      "default": "▲",
+      "options": [
+       [
+        "▲",
+        "Hausse"
+       ],
+       [
+        "▼",
+        "Baisse"
+       ]
+      ],
+      "binding": {
+       "source": "bourse-indices",
+       "path": "indices[5].sens"
+      }
+     },
+     {
+      "key": "q7",
+      "label": "Valeur 7",
+      "kind": "text",
+      "default": "NIKKEI   38 640,95   −0,95 %",
+      "binding": {
+       "source": "bourse-indices",
+       "path": "indices[6].ligne"
+      }
+     },
+     {
+      "key": "d7",
+      "label": "Sens 7",
+      "kind": "text",
+      "default": "▼",
+      "options": [
+       [
+        "▲",
+        "Hausse"
+       ],
+       [
+        "▼",
+        "Baisse"
+       ]
+      ],
+      "binding": {
+       "source": "bourse-indices",
+       "path": "indices[6].sens"
+      }
+     },
+     {
+      "key": "q8",
+      "label": "Valeur 8",
+      "kind": "text",
+      "default": "BRENT   82,14 $   +1,40 %",
+      "binding": {
+       "source": "bourse-indices",
+       "path": "indices[7].ligne"
+      }
+     },
+     {
+      "key": "d8",
+      "label": "Sens 8",
+      "kind": "text",
+      "default": "▲",
+      "options": [
+       [
+        "▲",
+        "Hausse"
+       ],
+       [
+        "▼",
+        "Baisse"
+       ]
+      ],
+      "binding": {
+       "source": "bourse-indices",
+       "path": "indices[7].sens"
+      }
+     }
+    ],
+    "layers": [
+     {
+      "id": "ticker-1",
+      "name": "Ticker",
+      "parent": null,
+      "type": "group",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 990.0,
+       "width": 1920.0,
+       "height": 56.0
+      },
+      "tracks": {
+       "y": [
+        {
+         "frame": 0.0,
+         "value": 1080.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.16,
+          "y1": 1.0,
+          "x2": 0.3,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 18.0,
+         "value": 990.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 30.0,
+         "value": 990.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.7,
+          "y1": 0.0,
+          "x2": 0.84,
+          "y2": 0.0
+         }
+        },
+        {
+         "frame": 42.0,
+         "value": 1080.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "clip": false
+     },
+     {
+      "id": "ticker-2",
+      "name": "Barre",
+      "parent": "ticker-1",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 1920.0,
+       "height": 56.0,
+       "fill": [
+        0.0275,
+        0.0353,
+        0.051,
+        0.96
+       ]
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "ticker-3",
+      "name": "Filet",
+      "parent": "ticker-1",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 1920.0,
+       "height": 2.0,
+       "fill": [
+        1.0,
+        0.6902,
+        0.1255,
+        1.0
+       ]
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "ticker-4",
+      "name": "Étiquette",
+      "parent": "ticker-1",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 2.0,
+       "width": 280.0,
+       "height": 54.0,
+       "fill": [
+        0.0627,
+        0.0784,
+        0.1059,
+        1.0
+       ]
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "ticker-5",
+      "name": "MARCHÉS",
+      "parent": "ticker-1",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 96.0,
+       "y": 2.0,
+       "width": 184.0,
+       "height": 54.0,
+       "fill": [
+        1.0,
+        0.6902,
+        0.1255,
+        1.0
+       ],
+       "fontSize": 24.0,
+       "letterSpacing": 2.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "text": "MARCHÉS",
+      "fontFamily": "Space Grotesk",
+      "fontWeight": 700,
+      "align": "left",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "lang": "fr"
+     },
+     {
+      "id": "ticker-6",
+      "name": "Indices",
+      "parent": "ticker-1",
+      "type": "ticker",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 300.0,
+       "y": 2.0,
+       "width": 1620.0,
+       "height": 54.0,
+       "fill": [
+        0.9098,
+        0.9294,
+        0.9529,
+        1.0
+       ],
+       "fontSize": 26.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "text": "",
+      "separator": "   ",
+      "speed": 110.0,
+      "mode": "crawl",
+      "fontFamily": "JetBrains Mono",
+      "fontWeight": 500,
+      "align": "left",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "sepType": "none",
+      "startFull": true,
+      "spacing": 56.0,
+      "fade": true,
+      "fadeW": 50.0,
+      "items": [
+       {
+        "cat": "▲",
+        "text": "{{q1}}",
+        "on": true
+       },
+       {
+        "cat": "▼",
+        "text": "{{q2}}",
+        "on": true
+       },
+       {
+        "cat": "▲",
+        "text": "{{q3}}",
+        "on": true
+       },
+       {
+        "cat": "▲",
+        "text": "{{q4}}",
+        "on": true
+       },
+       {
+        "cat": "▼",
+        "text": "{{q5}}",
+        "on": true
+       },
+       {
+        "cat": "▲",
+        "text": "{{q6}}",
+        "on": true
+       },
+       {
+        "cat": "▼",
+        "text": "{{q7}}",
+        "on": true
+       },
+       {
+        "cat": "▲",
+        "text": "{{q8}}",
+        "on": true
+       }
+      ],
+      "cats": [
+       {
+        "name": "▲",
+        "bg": "#19d47c",
+        "color": "#07090d",
+        "text": ""
+       },
+       {
+        "name": "▼",
+        "bg": "#ff4d5e",
+        "color": "#ffffff",
+        "text": ""
+       }
+      ],
+      "settingBindings": {
+       "items.0.cat": "d1",
+       "items.1.cat": "d2",
+       "items.2.cat": "d3",
+       "items.3.cat": "d4",
+       "items.4.cat": "d5",
+       "items.5.cat": "d6",
+       "items.6.cat": "d7",
+       "items.7.cat": "d8"
+      }
+     }
+    ],
+    "zone": "ticker",
+    "revision": 1,
+    "markerModel": 2
+   },
+   {
+    "id": "chart",
+    "name": "Graphique de séance",
+    "duration": 150.0,
+    "markers": [
+     {
+      "id": "chart-air",
+      "frame": 110.0,
+      "name": "On air",
+      "kind": "out"
+     }
+    ],
+    "fields": [
+     {
+      "key": "index",
+      "label": "Indice",
+      "kind": "text",
+      "default": "CAC 40"
+     },
+     {
+      "key": "value",
+      "label": "Clôture",
+      "kind": "text",
+      "default": "7 512,30"
+     },
+     {
+      "key": "change",
+      "label": "Variation (%)",
+      "kind": "number",
+      "default": "0.84",
+      "min": -20,
+      "max": 20
+     },
+     {
+      "key": "date",
+      "label": "Séance",
+      "kind": "text",
+      "default": "Séance du mardi 22 octobre"
+     },
+     {
+      "key": "high",
+      "label": "Plus haut",
+      "kind": "text",
+      "default": "7 538,12"
+     },
+     {
+      "key": "low",
+      "label": "Plus bas",
+      "kind": "text",
+      "default": "7 441,85"
+     },
+     {
+      "key": "volume",
+      "label": "Volume",
+      "kind": "text",
+      "default": "3,4 Md€"
+     },
+     {
+      "key": "csv",
+      "label": "Données (heure, valeur)",
+      "kind": "multiline",
+      "default": "Heure,CAC 40\n09:00,7449\n09:30,7461\n10:00,7458\n10:30,7476\n11:00,7470\n11:30,7489\n12:00,7495\n12:30,7486\n13:00,7493\n13:30,7502\n14:00,7498\n14:30,7517\n15:00,7509\n15:30,7524\n16:00,7531\n16:30,7519\n17:00,7514\n17:30,7512"
+     }
+    ],
+    "layers": [
+     {
+      "id": "chart-1",
+      "name": "Fond",
+      "parent": null,
+      "type": "group",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 1920.0,
+       "height": 1080.0
+      },
+      "tracks": {
+       "opacity": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 12.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 120.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 132.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "clip": false
+     },
+     {
+      "id": "chart-2",
+      "name": "Noir",
+      "parent": "chart-1",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 1920.0,
+       "height": 1080.0,
+       "fill": [
+        0.0275,
+        0.0353,
+        0.051,
+        1.0
+       ]
+      },
+      "tracks": {},
+      "bindings": {},
+      "fillStyle": {
+       "kind": "radial",
+       "color2": "#030405"
+      }
+     },
+     {
+      "id": "chart-3",
+      "name": "Grille 1",
+      "parent": "chart-1",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 160.0,
+       "y": 0.0,
+       "width": 1.0,
+       "height": 1080.0,
+       "fill": [
+        1.0,
+        1.0,
+        1.0,
+        0.025
+       ]
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "chart-4",
+      "name": "Grille 2",
+      "parent": "chart-1",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 320.0,
+       "y": 0.0,
+       "width": 1.0,
+       "height": 1080.0,
+       "fill": [
+        1.0,
+        1.0,
+        1.0,
+        0.025
+       ]
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "chart-5",
+      "name": "Grille 3",
+      "parent": "chart-1",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 480.0,
+       "y": 0.0,
+       "width": 1.0,
+       "height": 1080.0,
+       "fill": [
+        1.0,
+        1.0,
+        1.0,
+        0.025
+       ]
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "chart-6",
+      "name": "Grille 4",
+      "parent": "chart-1",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 640.0,
+       "y": 0.0,
+       "width": 1.0,
+       "height": 1080.0,
+       "fill": [
+        1.0,
+        1.0,
+        1.0,
+        0.025
+       ]
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "chart-7",
+      "name": "Grille 5",
+      "parent": "chart-1",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 800.0,
+       "y": 0.0,
+       "width": 1.0,
+       "height": 1080.0,
+       "fill": [
+        1.0,
+        1.0,
+        1.0,
+        0.025
+       ]
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "chart-8",
+      "name": "Grille 6",
+      "parent": "chart-1",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 960.0,
+       "y": 0.0,
+       "width": 1.0,
+       "height": 1080.0,
+       "fill": [
+        1.0,
+        1.0,
+        1.0,
+        0.025
+       ]
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "chart-9",
+      "name": "Grille 7",
+      "parent": "chart-1",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 1120.0,
+       "y": 0.0,
+       "width": 1.0,
+       "height": 1080.0,
+       "fill": [
+        1.0,
+        1.0,
+        1.0,
+        0.025
+       ]
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "chart-10",
+      "name": "Grille 8",
+      "parent": "chart-1",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 1280.0,
+       "y": 0.0,
+       "width": 1.0,
+       "height": 1080.0,
+       "fill": [
+        1.0,
+        1.0,
+        1.0,
+        0.025
+       ]
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "chart-11",
+      "name": "Grille 9",
+      "parent": "chart-1",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 1440.0,
+       "y": 0.0,
+       "width": 1.0,
+       "height": 1080.0,
+       "fill": [
+        1.0,
+        1.0,
+        1.0,
+        0.025
+       ]
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "chart-12",
+      "name": "Grille 10",
+      "parent": "chart-1",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 1600.0,
+       "y": 0.0,
+       "width": 1.0,
+       "height": 1080.0,
+       "fill": [
+        1.0,
+        1.0,
+        1.0,
+        0.025
+       ]
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "chart-13",
+      "name": "Grille 11",
+      "parent": "chart-1",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 1760.0,
+       "y": 0.0,
+       "width": 1.0,
+       "height": 1080.0,
+       "fill": [
+        1.0,
+        1.0,
+        1.0,
+        0.025
+       ]
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "chart-14",
+      "name": "Entête",
+      "parent": null,
+      "type": "group",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 120.0,
+       "y": 90.0,
+       "width": 1680.0,
+       "height": 170.0
+      },
+      "tracks": {
+       "opacity": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 6.0,
+         "value": 0.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.16,
+          "y1": 1.0,
+          "x2": 0.3,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 18.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 110.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.7,
+          "y1": 0.0,
+          "x2": 0.84,
+          "y2": 0.0
+         }
+        },
+        {
+         "frame": 118.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ],
+       "y": [
+        {
+         "frame": 0.0,
+         "value": 60.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 6.0,
+         "value": 60.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.16,
+          "y1": 1.0,
+          "x2": 0.3,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 28.0,
+         "value": 90.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 110.0,
+         "value": 90.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.7,
+          "y1": 0.0,
+          "x2": 0.84,
+          "y2": 0.0
+         }
+        },
+        {
+         "frame": 118.0,
+         "value": 60.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "clip": false
+     },
+     {
+      "id": "chart-15",
+      "name": "Ambre",
+      "parent": "chart-14",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 6.0,
+       "width": 6.0,
+       "height": 104.0,
+       "fill": [
+        1.0,
+        0.6902,
+        0.1255,
+        1.0
+       ]
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "chart-16",
+      "name": "Indice",
+      "parent": "chart-14",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 30.0,
+       "y": 0.0,
+       "width": 700.0,
+       "height": 80.0,
+       "fill": [
+        0.9098,
+        0.9294,
+        0.9529,
+        1.0
+       ],
+       "fontSize": 64.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "text": "{{index}}",
+      "fontFamily": "Space Grotesk",
+      "fontWeight": 700,
+      "align": "left",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "lang": "fr"
+     },
+     {
+      "id": "chart-17",
+      "name": "Séance",
+      "parent": "chart-14",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 32.0,
+       "y": 78.0,
+       "width": 700.0,
+       "height": 40.0,
+       "fill": [
+        0.5412,
+        0.5804,
+        0.651,
+        1.0
+       ],
+       "fontSize": 26.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "text": "{{date}}",
+      "fontFamily": "Space Grotesk",
+      "fontWeight": 500,
+      "align": "left",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "lang": "fr"
+     },
+     {
+      "id": "chart-18",
+      "name": "Clôture",
+      "parent": "chart-14",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 760.0,
+       "y": 0.0,
+       "width": 600.0,
+       "height": 110.0,
+       "fill": [
+        0.9098,
+        0.9294,
+        0.9529,
+        1.0
+       ],
+       "fontSize": 92.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "text": "{{value}}",
+      "fontFamily": "JetBrains Mono",
+      "fontWeight": 700,
+      "align": "right",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "lang": "fr"
+     },
+     {
+      "id": "chart-19",
+      "name": "Hausse",
+      "parent": "chart-14",
+      "type": "group",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 1380.0,
+       "y": 22.0,
+       "width": 300.0,
+       "height": 70.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "clip": false
+     },
+     {
+      "id": "chart-20",
+      "name": "Hausse · Fond",
+      "parent": "chart-19",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 300.0,
+       "height": 70.0,
+       "fill": [
+        0.098,
+        0.8314,
+        0.4863,
+        0.16
+       ],
+       "cornerRadius": 6.0
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "chart-21",
+      "name": "Hausse · Variation",
+      "parent": "chart-19",
+      "type": "counter",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 300.0,
+       "height": 70.0,
+       "fill": [
+        0.098,
+        0.8314,
+        0.4863,
+        1.0
+       ],
+       "fontSize": 40.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "from": "0",
+      "to": "{{change}}",
+      "duration": 1.0,
+      "decimals": 2,
+      "prefix": "▲ +",
+      "suffix": " %",
+      "grouping": true,
+      "fontFamily": "JetBrains Mono",
+      "fontWeight": 700,
+      "align": "center",
+      "verticalAlign": "middle",
+      "uppercase": false
+     },
+     {
+      "id": "chart-22",
+      "name": "Baisse",
+      "parent": "chart-14",
+      "type": "group",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 1380.0,
+       "y": 22.0,
+       "width": 300.0,
+       "height": 70.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "clip": false
+     },
+     {
+      "id": "chart-23",
+      "name": "Baisse · Fond",
+      "parent": "chart-22",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 300.0,
+       "height": 70.0,
+       "fill": [
+        1.0,
+        0.302,
+        0.3686,
+        0.16
+       ],
+       "cornerRadius": 6.0
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "chart-24",
+      "name": "Baisse · Variation",
+      "parent": "chart-22",
+      "type": "counter",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 300.0,
+       "height": 70.0,
+       "fill": [
+        1.0,
+        0.302,
+        0.3686,
+        1.0
+       ],
+       "fontSize": 40.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "from": "0",
+      "to": "{{change}}",
+      "duration": 1.0,
+      "decimals": 2,
+      "prefix": "▼ ",
+      "suffix": " %",
+      "grouping": true,
+      "fontFamily": "JetBrains Mono",
+      "fontWeight": 700,
+      "align": "center",
+      "verticalAlign": "middle",
+      "uppercase": false
+     },
+     {
+      "id": "chart-25",
+      "name": "Règle",
+      "parent": null,
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 120.0,
+       "y": 280.0,
+       "width": 1680.0,
+       "height": 1.0,
+       "fill": [
+        0.1451,
+        0.1725,
+        0.2196,
+        1.0
+       ]
+      },
+      "tracks": {
+       "cropRight": [
+        {
+         "frame": 0.0,
+         "value": 1.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 10.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.16,
+          "y1": 1.0,
+          "x2": 0.3,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 34.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 110.0,
+         "value": 0.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.7,
+          "y1": 0.0,
+          "x2": 0.84,
+          "y2": 0.0
+         }
+        },
+        {
+         "frame": 118.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {}
+     },
+     {
+      "id": "chart-26",
+      "name": "Courbe",
+      "parent": null,
+      "type": "chart",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 100.0,
+       "y": 300.0,
+       "width": 1340.0,
+       "height": 660.0,
+       "fill": [
+        0.098,
+        0.8314,
+        0.4863,
+        1.0
+       ]
+      },
+      "tracks": {
+       "opacity": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 10.0,
+         "value": 0.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.16,
+          "y1": 1.0,
+          "x2": 0.3,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 20.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 110.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.7,
+          "y1": 0.0,
+          "x2": 0.84,
+          "y2": 0.0
+         }
+        },
+        {
+         "frame": 118.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "chartType": "lines",
+      "source": "csv",
+      "csv": "{{csv}}",
+      "smooth": true,
+      "areaOpacity": 0.22,
+      "axis": {
+       "auto": true,
+       "ticks": 5,
+       "decimals": 0,
+       "prefix": "",
+       "suffix": "",
+       "grid": true,
+       "vgrid": false,
+       "zero": false,
+       "xTitle": "",
+       "yTitle": ""
+      },
+      "series": [
+       {
+        "color": "#19d47c",
+        "width": 5.0
+       }
+      ],
+      "labels": {
+       "value": false,
+       "pct": false,
+       "name": false
+      },
+      "title": {
+       "text": "",
+       "sub": ""
+      },
+      "legend": "none",
+      "panel": {
+       "on": false,
+       "color": "#07090d",
+       "opacity": 0.0
+      },
+      "font": "Space Grotesk",
+      "textColor": "#8a94a6"
+     },
+     {
+      "id": "chart-27",
+      "name": "Repères",
+      "parent": null,
+      "type": "group",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 1500.0,
+       "y": 330.0,
+       "width": 300.0,
+       "height": 600.0
+      },
+      "tracks": {
+       "opacity": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 20.0,
+         "value": 0.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.16,
+          "y1": 1.0,
+          "x2": 0.3,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 32.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 110.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.7,
+          "y1": 0.0,
+          "x2": 0.84,
+          "y2": 0.0
+         }
+        },
+        {
+         "frame": 118.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ],
+       "x": [
+        {
+         "frame": 0.0,
+         "value": 1540.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 20.0,
+         "value": 1540.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.16,
+          "y1": 1.0,
+          "x2": 0.3,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 42.0,
+         "value": 1500.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 110.0,
+         "value": 1500.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.7,
+          "y1": 0.0,
+          "x2": 0.84,
+          "y2": 0.0
+         }
+        },
+        {
+         "frame": 118.0,
+         "value": 1540.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "clip": false
+     },
+     {
+      "id": "chart-28",
+      "name": "Repères · Séparateur",
+      "parent": "chart-27",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 300.0,
+       "height": 1.0,
+       "fill": [
+        0.1451,
+        0.1725,
+        0.2196,
+        1.0
+       ]
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "chart-29",
+      "name": "PLUS HAUT",
+      "parent": "chart-27",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 20.0,
+       "width": 300.0,
+       "height": 30.0,
+       "fill": [
+        0.5412,
+        0.5804,
+        0.651,
+        1.0
+       ],
+       "fontSize": 20.0,
+       "letterSpacing": 2.5
+      },
+      "tracks": {},
+      "bindings": {},
+      "text": "PLUS HAUT",
+      "fontFamily": "Space Grotesk",
+      "fontWeight": 700,
+      "align": "left",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "lang": "fr"
+     },
+     {
+      "id": "chart-30",
+      "name": "Plus Haut",
+      "parent": "chart-27",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 54.0,
+       "width": 300.0,
+       "height": 60.0,
+       "fill": [
+        0.9098,
+        0.9294,
+        0.9529,
+        1.0
+       ],
+       "fontSize": 46.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "text": "{{high}}",
+      "fontFamily": "JetBrains Mono",
+      "fontWeight": 500,
+      "align": "left",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "lang": "fr"
+     },
+     {
+      "id": "chart-31",
+      "name": "Repères · Séparateur",
+      "parent": "chart-27",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 150.0,
+       "width": 300.0,
+       "height": 1.0,
+       "fill": [
+        0.1451,
+        0.1725,
+        0.2196,
+        1.0
+       ]
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "chart-32",
+      "name": "PLUS BAS",
+      "parent": "chart-27",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 170.0,
+       "width": 300.0,
+       "height": 30.0,
+       "fill": [
+        0.5412,
+        0.5804,
+        0.651,
+        1.0
+       ],
+       "fontSize": 20.0,
+       "letterSpacing": 2.5
+      },
+      "tracks": {},
+      "bindings": {},
+      "text": "PLUS BAS",
+      "fontFamily": "Space Grotesk",
+      "fontWeight": 700,
+      "align": "left",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "lang": "fr"
+     },
+     {
+      "id": "chart-33",
+      "name": "Plus Bas",
+      "parent": "chart-27",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 204.0,
+       "width": 300.0,
+       "height": 60.0,
+       "fill": [
+        0.9098,
+        0.9294,
+        0.9529,
+        1.0
+       ],
+       "fontSize": 46.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "text": "{{low}}",
+      "fontFamily": "JetBrains Mono",
+      "fontWeight": 500,
+      "align": "left",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "lang": "fr"
+     },
+     {
+      "id": "chart-34",
+      "name": "Repères · Séparateur",
+      "parent": "chart-27",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 300.0,
+       "width": 300.0,
+       "height": 1.0,
+       "fill": [
+        0.1451,
+        0.1725,
+        0.2196,
+        1.0
+       ]
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "chart-35",
+      "name": "VOLUME",
+      "parent": "chart-27",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 320.0,
+       "width": 300.0,
+       "height": 30.0,
+       "fill": [
+        0.5412,
+        0.5804,
+        0.651,
+        1.0
+       ],
+       "fontSize": 20.0,
+       "letterSpacing": 2.5
+      },
+      "tracks": {},
+      "bindings": {},
+      "text": "VOLUME",
+      "fontFamily": "Space Grotesk",
+      "fontWeight": 700,
+      "align": "left",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "lang": "fr"
+     },
+     {
+      "id": "chart-36",
+      "name": "Volume",
+      "parent": "chart-27",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 354.0,
+       "width": 300.0,
+       "height": 60.0,
+       "fill": [
+        0.9098,
+        0.9294,
+        0.9529,
+        1.0
+       ],
+       "fontSize": 46.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "text": "{{volume}}",
+      "fontFamily": "JetBrains Mono",
+      "fontWeight": 500,
+      "align": "left",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "lang": "fr"
+     }
+    ],
+    "zone": "full",
+    "revision": 1,
+    "markerModel": 2,
+    "logic": {
+     "nodes": [
+      {
+       "id": "g0f",
+       "type": "field",
+       "key": "change",
+       "x": 40,
+       "y": 60
+      },
+      {
+       "id": "g0z",
+       "type": "constant",
+       "value": 0,
+       "x": 40,
+       "y": 180
+      },
+      {
+       "id": "g01",
+       "type": "constant",
+       "value": 1,
+       "x": 40,
+       "y": 300
+      },
+      {
+       "id": "g00",
+       "type": "constant",
+       "value": 0,
+       "x": 40,
+       "y": 420
+      },
+      {
+       "id": "g0u",
+       "type": "condition",
+       "cmp": "ge",
+       "x": 300,
+       "y": 100
+      },
+      {
+       "id": "g0d",
+       "type": "condition",
+       "cmp": "lt",
+       "x": 300,
+       "y": 300
+      },
+      {
+       "id": "g0u0",
+       "type": "target",
+       "layer": "chart-19",
+       "prop": "opacity",
+       "mode": "multiply",
+       "x": 560,
+       "y": 60
+      },
+      {
+       "id": "g0d0",
+       "type": "target",
+       "layer": "chart-22",
+       "prop": "opacity",
+       "mode": "multiply",
+       "x": 560,
+       "y": 60
+      }
+     ],
+     "edges": [
+      {
+       "from": "g0f",
+       "to": "g0u",
+       "port": "a"
+      },
+      {
+       "from": "g0z",
+       "to": "g0u",
+       "port": "b"
+      },
+      {
+       "from": "g01",
+       "to": "g0u",
+       "port": "then"
+      },
+      {
+       "from": "g00",
+       "to": "g0u",
+       "port": "else"
+      },
+      {
+       "from": "g0f",
+       "to": "g0d",
+       "port": "a"
+      },
+      {
+       "from": "g0z",
+       "to": "g0d",
+       "port": "b"
+      },
+      {
+       "from": "g01",
+       "to": "g0d",
+       "port": "then"
+      },
+      {
+       "from": "g00",
+       "to": "g0d",
+       "port": "else"
+      },
+      {
+       "from": "g0u",
+       "to": "g0u0",
+       "port": "in"
+      },
+      {
+       "from": "g0d",
+       "to": "g0d0",
+       "port": "in"
+      }
+     ]
+    }
+   },
+   {
+    "id": "quote",
+    "name": "Fiche valeur",
+    "duration": 90.0,
+    "markers": [
+     {
+      "id": "quote-air",
+      "frame": 60.0,
+      "name": "On air",
+      "kind": "out"
+     }
+    ],
+    "fields": [
+     {
+      "key": "symbol",
+      "label": "Code",
+      "kind": "text",
+      "default": "AIR"
+     },
+     {
+      "key": "name",
+      "label": "Société",
+      "kind": "text",
+      "default": "Airbus"
+     },
+     {
+      "key": "sector",
+      "label": "Secteur",
+      "kind": "text",
+      "default": "Aéronautique · CAC 40"
+     },
+     {
+      "key": "price",
+      "label": "Cours (€)",
+      "kind": "text",
+      "default": "142,10"
+     },
+     {
+      "key": "change",
+      "label": "Variation (%)",
+      "kind": "number",
+      "default": "2.35",
+      "min": -50,
+      "max": 50
+     },
+     {
+      "key": "low",
+      "label": "Plus bas",
+      "kind": "text",
+      "default": "138,40"
+     },
+     {
+      "key": "high",
+      "label": "Plus haut",
+      "kind": "text",
+      "default": "143,05"
+     },
+     {
+      "key": "pos",
+      "label": "Position dans la séance (%)",
+      "kind": "number",
+      "default": "80",
+      "min": 0,
+      "max": 100
+     }
+    ],
+    "layers": [
+     {
+      "id": "quote-1",
+      "name": "Fiche",
+      "parent": null,
+      "type": "group",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 96.0,
+       "y": 700.0,
+       "width": 1180.0,
+       "height": 270.0
+      },
+      "tracks": {
+       "cropRight": [
+        {
+         "frame": 0.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.16,
+          "y1": 1.0,
+          "x2": 0.3,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 22.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 60.0,
+         "value": 0.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.7,
+          "y1": 0.0,
+          "x2": 0.84,
+          "y2": 0.0
+         }
+        },
+        {
+         "frame": 72.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "clip": true
+     },
+     {
+      "id": "quote-2",
+      "name": "Fiche · Fond",
+      "parent": "quote-1",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 1180.0,
+       "height": 270.0,
+       "fill": [
+        0.0275,
+        0.0353,
+        0.051,
+        0.94
+       ],
+       "cornerRadius": 6.0,
+       "stroke": [
+        0.1451,
+        0.1725,
+        0.2196,
+        1.0
+       ],
+       "strokeWidth": 1.5
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "quote-3",
+      "name": "Code fond",
+      "parent": "quote-1",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 36.0,
+       "y": 36.0,
+       "width": 120.0,
+       "height": 56.0,
+       "fill": [
+        1.0,
+        0.6902,
+        0.1255,
+        1.0
+       ],
+       "cornerRadius": 4.0
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "quote-4",
+      "name": "Code",
+      "parent": "quote-1",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 36.0,
+       "y": 36.0,
+       "width": 120.0,
+       "height": 56.0,
+       "fill": [
+        0.0275,
+        0.0353,
+        0.051,
+        1.0
+       ],
+       "fontSize": 30.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "text": "{{symbol}}",
+      "fontFamily": "JetBrains Mono",
+      "fontWeight": 700,
+      "align": "center",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "lang": "fr"
+     },
+     {
+      "id": "quote-5",
+      "name": "Société",
+      "parent": "quote-1",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 180.0,
+       "y": 26.0,
+       "width": 560.0,
+       "height": 50.0,
+       "fill": [
+        0.9098,
+        0.9294,
+        0.9529,
+        1.0
+       ],
+       "fontSize": 42.0
+      },
+      "tracks": {
+       "opacity": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 10.0,
+         "value": 0.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.16,
+          "y1": 1.0,
+          "x2": 0.3,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 22.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 60.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.7,
+          "y1": 0.0,
+          "x2": 0.84,
+          "y2": 0.0
+         }
+        },
+        {
+         "frame": 66.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "text": "{{name}}",
+      "fontFamily": "Space Grotesk",
+      "fontWeight": 700,
+      "align": "left",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "lang": "fr"
+     },
+     {
+      "id": "quote-6",
+      "name": "Secteur",
+      "parent": "quote-1",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 182.0,
+       "y": 74.0,
+       "width": 560.0,
+       "height": 30.0,
+       "fill": [
+        0.5412,
+        0.5804,
+        0.651,
+        1.0
+       ],
+       "fontSize": 22.0
+      },
+      "tracks": {
+       "opacity": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 14.0,
+         "value": 0.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.16,
+          "y1": 1.0,
+          "x2": 0.3,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 26.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 60.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.7,
+          "y1": 0.0,
+          "x2": 0.84,
+          "y2": 0.0
+         }
+        },
+        {
+         "frame": 66.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "text": "{{sector}}",
+      "fontFamily": "Space Grotesk",
+      "fontWeight": 500,
+      "align": "left",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "lang": "fr"
+     },
+     {
+      "id": "quote-7",
+      "name": "Cours",
+      "parent": "quote-1",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 720.0,
+       "y": 18.0,
+       "width": 420.0,
+       "height": 90.0,
+       "fill": [
+        0.9098,
+        0.9294,
+        0.9529,
+        1.0
+       ],
+       "fontSize": 72.0
+      },
+      "tracks": {
+       "opacity": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 12.0,
+         "value": 0.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.16,
+          "y1": 1.0,
+          "x2": 0.3,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 24.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 60.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.7,
+          "y1": 0.0,
+          "x2": 0.84,
+          "y2": 0.0
+         }
+        },
+        {
+         "frame": 66.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "text": "{{price}} €",
+      "fontFamily": "JetBrains Mono",
+      "fontWeight": 700,
+      "align": "right",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "lang": "fr"
+     },
+     {
+      "id": "quote-8",
+      "name": "Séparateur",
+      "parent": "quote-1",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 36.0,
+       "y": 130.0,
+       "width": 1108.0,
+       "height": 1.0,
+       "fill": [
+        0.1451,
+        0.1725,
+        0.2196,
+        1.0
+       ]
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "quote-9",
+      "name": "Hausse",
+      "parent": "quote-1",
+      "type": "group",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 36.0,
+       "y": 156.0,
+       "width": 300.0,
+       "height": 80.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "clip": false
+     },
+     {
+      "id": "quote-10",
+      "name": "Hausse · Fond",
+      "parent": "quote-9",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 300.0,
+       "height": 80.0,
+       "fill": [
+        0.098,
+        0.8314,
+        0.4863,
+        0.16
+       ],
+       "cornerRadius": 6.0
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "quote-11",
+      "name": "Hausse · Variation",
+      "parent": "quote-9",
+      "type": "counter",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 300.0,
+       "height": 80.0,
+       "fill": [
+        0.098,
+        0.8314,
+        0.4863,
+        1.0
+       ],
+       "fontSize": 40.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "from": "0",
+      "to": "{{change}}",
+      "duration": 0.8,
+      "decimals": 2,
+      "prefix": "▲ +",
+      "suffix": " %",
+      "grouping": true,
+      "fontFamily": "JetBrains Mono",
+      "fontWeight": 700,
+      "align": "center",
+      "verticalAlign": "middle",
+      "uppercase": false
+     },
+     {
+      "id": "quote-12",
+      "name": "Baisse",
+      "parent": "quote-1",
+      "type": "group",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 36.0,
+       "y": 156.0,
+       "width": 300.0,
+       "height": 80.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "clip": false
+     },
+     {
+      "id": "quote-13",
+      "name": "Baisse · Fond",
+      "parent": "quote-12",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 300.0,
+       "height": 80.0,
+       "fill": [
+        1.0,
+        0.302,
+        0.3686,
+        0.16
+       ],
+       "cornerRadius": 6.0
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "quote-14",
+      "name": "Baisse · Variation",
+      "parent": "quote-12",
+      "type": "counter",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 300.0,
+       "height": 80.0,
+       "fill": [
+        1.0,
+        0.302,
+        0.3686,
+        1.0
+       ],
+       "fontSize": 40.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "from": "0",
+      "to": "{{change}}",
+      "duration": 0.8,
+      "decimals": 2,
+      "prefix": "▼ ",
+      "suffix": " %",
+      "grouping": true,
+      "fontFamily": "JetBrains Mono",
+      "fontWeight": 700,
+      "align": "center",
+      "verticalAlign": "middle",
+      "uppercase": false
+     },
+     {
+      "id": "quote-15",
+      "name": "Séance",
+      "parent": "quote-1",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 372.0,
+       "y": 152.0,
+       "width": 300.0,
+       "height": 30.0,
+       "fill": [
+        0.5412,
+        0.5804,
+        0.651,
+        1.0
+       ],
+       "fontSize": 18.0,
+       "letterSpacing": 2.5
+      },
+      "tracks": {},
+      "bindings": {},
+      "text": "SÉANCE",
+      "fontFamily": "Space Grotesk",
+      "fontWeight": 700,
+      "align": "left",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "lang": "fr"
+     },
+     {
+      "id": "quote-16",
+      "name": "Bas",
+      "parent": "quote-1",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 372.0,
+       "y": 196.0,
+       "width": 200.0,
+       "height": 40.0,
+       "fill": [
+        0.9098,
+        0.9294,
+        0.9529,
+        1.0
+       ],
+       "fontSize": 26.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "text": "{{low}}",
+      "fontFamily": "JetBrains Mono",
+      "fontWeight": 500,
+      "align": "left",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "lang": "fr"
+     },
+     {
+      "id": "quote-17",
+      "name": "Haut",
+      "parent": "quote-1",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 944.0,
+       "y": 196.0,
+       "width": 200.0,
+       "height": 40.0,
+       "fill": [
+        0.9098,
+        0.9294,
+        0.9529,
+        1.0
+       ],
+       "fontSize": 26.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "text": "{{high}}",
+      "fontFamily": "JetBrains Mono",
+      "fontWeight": 500,
+      "align": "right",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "lang": "fr"
+     },
+     {
+      "id": "quote-18",
+      "name": "Plage",
+      "parent": "quote-1",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 580.0,
+       "y": 213.0,
+       "width": 350.0,
+       "height": 6.0,
+       "fill": [
+        0.1451,
+        0.1725,
+        0.2196,
+        1.0
+       ],
+       "cornerRadius": 3.0
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "quote-19",
+      "name": "Fiche · Position",
+      "parent": "quote-1",
+      "type": "progress",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 580.0,
+       "y": 213.0,
+       "width": 350.0,
+       "height": 6.0,
+       "fill": [
+        0.098,
+        0.8314,
+        0.4863,
+        1.0
+       ]
+      },
+      "tracks": {},
+      "bindings": {},
+      "value": "{{pos}}",
+      "max": "100",
+      "track": "#00000000",
+      "duration": 0.8,
+      "rounded": true
+     },
+     {
+      "id": "quote-20",
+      "name": "Fiche · Position",
+      "parent": "quote-1",
+      "type": "progress",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 580.0,
+       "y": 213.0,
+       "width": 350.0,
+       "height": 6.0,
+       "fill": [
+        1.0,
+        0.302,
+        0.3686,
+        1.0
+       ]
+      },
+      "tracks": {},
+      "bindings": {},
+      "value": "{{pos}}",
+      "max": "100",
+      "track": "#00000000",
+      "duration": 0.8,
+      "rounded": true
+     }
+    ],
+    "zone": "lower",
+    "revision": 1,
+    "markerModel": 2,
+    "logic": {
+     "nodes": [
+      {
+       "id": "g0f",
+       "type": "field",
+       "key": "change",
+       "x": 40,
+       "y": 60
+      },
+      {
+       "id": "g0z",
+       "type": "constant",
+       "value": 0,
+       "x": 40,
+       "y": 180
+      },
+      {
+       "id": "g01",
+       "type": "constant",
+       "value": 1,
+       "x": 40,
+       "y": 300
+      },
+      {
+       "id": "g00",
+       "type": "constant",
+       "value": 0,
+       "x": 40,
+       "y": 420
+      },
+      {
+       "id": "g0u",
+       "type": "condition",
+       "cmp": "ge",
+       "x": 300,
+       "y": 100
+      },
+      {
+       "id": "g0d",
+       "type": "condition",
+       "cmp": "lt",
+       "x": 300,
+       "y": 300
+      },
+      {
+       "id": "g0u0",
+       "type": "target",
+       "layer": "quote-9",
+       "prop": "opacity",
+       "mode": "multiply",
+       "x": 560,
+       "y": 60
+      },
+      {
+       "id": "g0u1",
+       "type": "target",
+       "layer": "quote-19",
+       "prop": "opacity",
+       "mode": "multiply",
+       "x": 560,
+       "y": 120
+      },
+      {
+       "id": "g0d0",
+       "type": "target",
+       "layer": "quote-12",
+       "prop": "opacity",
+       "mode": "multiply",
+       "x": 560,
+       "y": 60
+      },
+      {
+       "id": "g0d1",
+       "type": "target",
+       "layer": "quote-20",
+       "prop": "opacity",
+       "mode": "multiply",
+       "x": 560,
+       "y": 120
+      }
+     ],
+     "edges": [
+      {
+       "from": "g0f",
+       "to": "g0u",
+       "port": "a"
+      },
+      {
+       "from": "g0z",
+       "to": "g0u",
+       "port": "b"
+      },
+      {
+       "from": "g01",
+       "to": "g0u",
+       "port": "then"
+      },
+      {
+       "from": "g00",
+       "to": "g0u",
+       "port": "else"
+      },
+      {
+       "from": "g0f",
+       "to": "g0d",
+       "port": "a"
+      },
+      {
+       "from": "g0z",
+       "to": "g0d",
+       "port": "b"
+      },
+      {
+       "from": "g01",
+       "to": "g0d",
+       "port": "then"
+      },
+      {
+       "from": "g00",
+       "to": "g0d",
+       "port": "else"
+      },
+      {
+       "from": "g0u",
+       "to": "g0u0",
+       "port": "in"
+      },
+      {
+       "from": "g0u",
+       "to": "g0u1",
+       "port": "in"
+      },
+      {
+       "from": "g0d",
+       "to": "g0d0",
+       "port": "in"
+      },
+      {
+       "from": "g0d",
+       "to": "g0d1",
+       "port": "in"
+      }
+     ]
+    }
+   },
+   {
+    "id": "board",
+    "name": "Tableau des marchés",
+    "duration": 150.0,
+    "markers": [
+     {
+      "id": "board-air",
+      "frame": 110.0,
+      "name": "On air",
+      "kind": "out"
+     }
+    ],
+    "fields": [
+     {
+      "key": "title",
+      "label": "Titre",
+      "kind": "text",
+      "default": "Les marchés à la clôture"
+     },
+     {
+      "key": "v1",
+      "label": "CAC 40 · cours",
+      "kind": "text",
+      "default": "7 512,30"
+     },
+     {
+      "key": "c1",
+      "label": "CAC 40 · variation",
+      "kind": "text",
+      "default": "+0,84 %"
+     },
+     {
+      "key": "s1",
+      "label": "CAC 40 · sens",
+      "kind": "text",
+      "default": "#19d47c",
+      "options": [
+       [
+        "#19d47c",
+        "Hausse"
+       ],
+       [
+        "#ff4d5e",
+        "Baisse"
+       ],
+       [
+        "#e8edf3",
+        "Stable"
+       ]
+      ]
+     },
+     {
+      "key": "v2",
+      "label": "DAX · cours",
+      "kind": "text",
+      "default": "18 120,55"
+     },
+     {
+      "key": "c2",
+      "label": "DAX · variation",
+      "kind": "text",
+      "default": "−0,62 %"
+     },
+     {
+      "key": "s2",
+      "label": "DAX · sens",
+      "kind": "text",
+      "default": "#ff4d5e",
+      "options": [
+       [
+        "#19d47c",
+        "Hausse"
+       ],
+       [
+        "#ff4d5e",
+        "Baisse"
+       ],
+       [
+        "#e8edf3",
+        "Stable"
+       ]
+      ]
+     },
+     {
+      "key": "v3",
+      "label": "FTSE 100 · cours",
+      "kind": "text",
+      "default": "8 204,10"
+     },
+     {
+      "key": "c3",
+      "label": "FTSE 100 · variation",
+      "kind": "text",
+      "default": "+0,31 %"
+     },
+     {
+      "key": "s3",
+      "label": "FTSE 100 · sens",
+      "kind": "text",
+      "default": "#19d47c",
+      "options": [
+       [
+        "#19d47c",
+        "Hausse"
+       ],
+       [
+        "#ff4d5e",
+        "Baisse"
+       ],
+       [
+        "#e8edf3",
+        "Stable"
+       ]
+      ]
+     },
+     {
+      "key": "v4",
+      "label": "EURO STOXX 50 · cours",
+      "kind": "text",
+      "default": "4 982,77"
+     },
+     {
+      "key": "c4",
+      "label": "EURO STOXX 50 · variation",
+      "kind": "text",
+      "default": "+0,45 %"
+     },
+     {
+      "key": "s4",
+      "label": "EURO STOXX 50 · sens",
+      "kind": "text",
+      "default": "#19d47c",
+      "options": [
+       [
+        "#19d47c",
+        "Hausse"
+       ],
+       [
+        "#ff4d5e",
+        "Baisse"
+       ],
+       [
+        "#e8edf3",
+        "Stable"
+       ]
+      ]
+     },
+     {
+      "key": "v5",
+      "label": "DOW JONES · cours",
+      "kind": "text",
+      "default": "39 412,08"
+     },
+     {
+      "key": "c5",
+      "label": "DOW JONES · variation",
+      "kind": "text",
+      "default": "−0,18 %"
+     },
+     {
+      "key": "s5",
+      "label": "DOW JONES · sens",
+      "kind": "text",
+      "default": "#ff4d5e",
+      "options": [
+       [
+        "#19d47c",
+        "Hausse"
+       ],
+       [
+        "#ff4d5e",
+        "Baisse"
+       ],
+       [
+        "#e8edf3",
+        "Stable"
+       ]
+      ]
+     },
+     {
+      "key": "v6",
+      "label": "NASDAQ · cours",
+      "kind": "text",
+      "default": "16 870,40"
+     },
+     {
+      "key": "c6",
+      "label": "NASDAQ · variation",
+      "kind": "text",
+      "default": "+1,12 %"
+     },
+     {
+      "key": "s6",
+      "label": "NASDAQ · sens",
+      "kind": "text",
+      "default": "#19d47c",
+      "options": [
+       [
+        "#19d47c",
+        "Hausse"
+       ],
+       [
+        "#ff4d5e",
+        "Baisse"
+       ],
+       [
+        "#e8edf3",
+        "Stable"
+       ]
+      ]
+     },
+     {
+      "key": "v7",
+      "label": "NIKKEI 225 · cours",
+      "kind": "text",
+      "default": "38 640,95"
+     },
+     {
+      "key": "c7",
+      "label": "NIKKEI 225 · variation",
+      "kind": "text",
+      "default": "−0,95 %"
+     },
+     {
+      "key": "s7",
+      "label": "NIKKEI 225 · sens",
+      "kind": "text",
+      "default": "#ff4d5e",
+      "options": [
+       [
+        "#19d47c",
+        "Hausse"
+       ],
+       [
+        "#ff4d5e",
+        "Baisse"
+       ],
+       [
+        "#e8edf3",
+        "Stable"
+       ]
+      ]
+     },
+     {
+      "key": "v8",
+      "label": "HANG SENG · cours",
+      "kind": "text",
+      "default": "17 902,33"
+     },
+     {
+      "key": "c8",
+      "label": "HANG SENG · variation",
+      "kind": "text",
+      "default": "+0,27 %"
+     },
+     {
+      "key": "s8",
+      "label": "HANG SENG · sens",
+      "kind": "text",
+      "default": "#19d47c",
+      "options": [
+       [
+        "#19d47c",
+        "Hausse"
+       ],
+       [
+        "#ff4d5e",
+        "Baisse"
+       ],
+       [
+        "#e8edf3",
+        "Stable"
+       ]
+      ]
+     }
+    ],
+    "layers": [
+     {
+      "id": "board-1",
+      "name": "Fond",
+      "parent": null,
+      "type": "group",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 1920.0,
+       "height": 1080.0
+      },
+      "tracks": {
+       "opacity": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 12.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 120.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 132.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "clip": false
+     },
+     {
+      "id": "board-2",
+      "name": "Noir",
+      "parent": "board-1",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 1920.0,
+       "height": 1080.0,
+       "fill": [
+        0.0275,
+        0.0353,
+        0.051,
+        1.0
+       ]
+      },
+      "tracks": {},
+      "bindings": {},
+      "fillStyle": {
+       "kind": "radial",
+       "color2": "#030405"
+      }
+     },
+     {
+      "id": "board-3",
+      "name": "Ambre",
+      "parent": null,
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 260.0,
+       "y": 120.0,
+       "width": 6.0,
+       "height": 70.0,
+       "fill": [
+        1.0,
+        0.6902,
+        0.1255,
+        1.0
+       ]
+      },
+      "tracks": {
+       "cropBottom": [
+        {
+         "frame": 0.0,
+         "value": 1.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 4.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.16,
+          "y1": 1.0,
+          "x2": 0.3,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 16.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 110.0,
+         "value": 0.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.7,
+          "y1": 0.0,
+          "x2": 0.84,
+          "y2": 0.0
+         }
+        },
+        {
+         "frame": 118.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {}
+     },
+     {
+      "id": "board-4",
+      "name": "Titre",
+      "parent": null,
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 290.0,
+       "y": 110.0,
+       "width": 1300.0,
+       "height": 90.0,
+       "fill": [
+        0.9098,
+        0.9294,
+        0.9529,
+        1.0
+       ],
+       "fontSize": 60.0
+      },
+      "tracks": {
+       "opacity": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 6.0,
+         "value": 0.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.16,
+          "y1": 1.0,
+          "x2": 0.3,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 20.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 110.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.7,
+          "y1": 0.0,
+          "x2": 0.84,
+          "y2": 0.0
+         }
+        },
+        {
+         "frame": 118.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "text": "{{title}}",
+      "fontFamily": "Space Grotesk",
+      "fontWeight": 700,
+      "align": "left",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "lang": "fr"
+     },
+     {
+      "id": "board-5",
+      "name": "Tableau",
+      "parent": null,
+      "type": "table",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 260.0,
+       "y": 230.0,
+       "width": 1400.0,
+       "height": 760.0
+      },
+      "tracks": {
+       "opacity": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 10.0,
+         "value": 0.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.16,
+          "y1": 1.0,
+          "x2": 0.3,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 24.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 110.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.7,
+          "y1": 0.0,
+          "x2": 0.84,
+          "y2": 0.0
+         }
+        },
+        {
+         "frame": 118.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ],
+       "y": [
+        {
+         "frame": 0.0,
+         "value": 260.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 10.0,
+         "value": 260.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.16,
+          "y1": 1.0,
+          "x2": 0.3,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 34.0,
+         "value": 230.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 110.0,
+         "value": 230.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.7,
+          "y1": 0.0,
+          "x2": 0.84,
+          "y2": 0.0
+         }
+        },
+        {
+         "frame": 118.0,
+         "value": 260.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "grid": [
+       [
+        "Indice",
+        "Place",
+        "Cours",
+        "Var. %",
+        "Sens"
+       ],
+       [
+        "CAC 40",
+        "Paris",
+        "{{v1}}",
+        "{{c1}}",
+        "{{s1}}"
+       ],
+       [
+        "DAX",
+        "Francfort",
+        "{{v2}}",
+        "{{c2}}",
+        "{{s2}}"
+       ],
+       [
+        "FTSE 100",
+        "Londres",
+        "{{v3}}",
+        "{{c3}}",
+        "{{s3}}"
+       ],
+       [
+        "EURO STOXX 50",
+        "Zone euro",
+        "{{v4}}",
+        "{{c4}}",
+        "{{s4}}"
+       ],
+       [
+        "DOW JONES",
+        "New York",
+        "{{v5}}",
+        "{{c5}}",
+        "{{s5}}"
+       ],
+       [
+        "NASDAQ",
+        "New York",
+        "{{v6}}",
+        "{{c6}}",
+        "{{s6}}"
+       ],
+       [
+        "NIKKEI 225",
+        "Tokyo",
+        "{{v7}}",
+        "{{c7}}",
+        "{{s7}}"
+       ],
+       [
+        "HANG SENG",
+        "Hong Kong",
+        "{{v8}}",
+        "{{c8}}",
+        "{{s8}}"
+       ]
+      ],
+      "headerRow": true,
+      "showRank": false,
+      "cols": [
+       {
+        "src": "Indice",
+        "label": "INDICE",
+        "type": "text",
+        "align": "left",
+        "w": 34.0,
+        "on": true
+       },
+       {
+        "src": "Place",
+        "label": "PLACE",
+        "type": "text",
+        "align": "left",
+        "w": 22.0,
+        "on": true
+       },
+       {
+        "src": "Cours",
+        "label": "COURS",
+        "type": "text",
+        "align": "right",
+        "w": 24.0,
+        "on": true
+       },
+       {
+        "src": "Var. %",
+        "label": "VAR.",
+        "type": "text",
+        "align": "right",
+        "w": 20.0,
+        "on": true,
+        "colorFrom": "Sens"
+       }
+      ],
+      "widthMode": "percent",
+      "rowH": 76.0,
+      "perPage": 8,
+      "pad": 24.0,
+      "gap": 4.0,
+      "radius": 4.0,
+      "st": {
+       "header": {
+        "bg": "#00000000",
+        "color": "#8a94a6"
+       },
+       "hcol": {
+        "bg": "#10141b",
+        "color": "#e8edf3"
+       },
+       "odd": {
+        "bg": "#10141b",
+        "color": "#e8edf3"
+       },
+       "even": {
+        "bg": "#0c1016",
+        "color": "#e8edf3"
+       },
+       "hl": {
+        "bg": "#ffb020",
+        "color": "#07090d"
+       },
+       "top3": {
+        "bg": "#10141b",
+        "color": "#e8edf3"
+       },
+       "tableBg": "#00000000"
+      },
+      "cf": {
+       "neg": true,
+       "negColor": "#ff4d5e",
+       "top3": false,
+       "topN": 3,
+       "topBar": false,
+       "hlBar": false,
+       "hlBarColor": "#ffb020"
+      },
+      "txt": {
+       "title": {
+        "family": "Space Grotesk",
+        "weight": 700,
+        "size": 30.0
+       },
+       "header": {
+        "family": "Space Grotesk",
+        "weight": 700,
+        "size": 20.0,
+        "spacing": 2.0
+       },
+       "rows": {
+        "family": "JetBrains Mono",
+        "weight": 500,
+        "size": 32.0
+       }
+      },
+      "title": {
+       "on": false,
+       "text": ""
+      }
+     }
+    ],
+    "zone": "full",
+    "revision": 1,
+    "markerModel": 2
+   },
+   {
+    "id": "fx",
+    "name": "Devises",
+    "duration": 60.0,
+    "markers": [
+     {
+      "id": "fx-air",
+      "frame": 30.0,
+      "name": "On air",
+      "kind": "out"
+     }
+    ],
+    "fields": [
+     {
+      "key": "items",
+      "label": "Devises",
+      "kind": "multiline",
+      "default": "EUR/USD   1,0842   ▲\nEUR/GBP   0,8517   ▼\nEUR/CHF   0,9621   ▲\nEUR/JPY   162,38   ▲\nBITCOIN   61 240 $   ▼"
+     }
+    ],
+    "layers": [
+     {
+      "id": "fx-1",
+      "name": "Devises",
+      "parent": null,
+      "type": "group",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 1404.0,
+       "y": 64.0,
+       "width": 420.0,
+       "height": 110.0
+      },
+      "tracks": {
+       "opacity": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.16,
+          "y1": 1.0,
+          "x2": 0.3,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 10.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 30.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.7,
+          "y1": 0.0,
+          "x2": 0.84,
+          "y2": 0.0
+         }
+        },
+        {
+         "frame": 38.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ],
+       "x": [
+        {
+         "frame": 0.0,
+         "value": 1450.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.16,
+          "y1": 1.0,
+          "x2": 0.3,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 20.0,
+         "value": 1404.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 30.0,
+         "value": 1404.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.7,
+          "y1": 0.0,
+          "x2": 0.84,
+          "y2": 0.0
+         }
+        },
+        {
+         "frame": 38.0,
+         "value": 1450.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "clip": false
+     },
+     {
+      "id": "fx-2",
+      "name": "Fond",
+      "parent": "fx-1",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 420.0,
+       "height": 110.0,
+       "fill": [
+        0.0275,
+        0.0353,
+        0.051,
+        0.94
+       ],
+       "cornerRadius": 6.0,
+       "stroke": [
+        0.1451,
+        0.1725,
+        0.2196,
+        1.0
+       ],
+       "strokeWidth": 1.5
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "fx-3",
+      "name": "DEVISES",
+      "parent": "fx-1",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 24.0,
+       "y": 10.0,
+       "width": 300.0,
+       "height": 30.0,
+       "fill": [
+        1.0,
+        0.6902,
+        0.1255,
+        1.0
+       ],
+       "fontSize": 18.0,
+       "letterSpacing": 3.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "text": "DEVISES",
+      "fontFamily": "Space Grotesk",
+      "fontWeight": 700,
+      "align": "left",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "lang": "fr"
+     },
+     {
+      "id": "fx-4",
+      "name": "Cours",
+      "parent": "fx-1",
+      "type": "ticker",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 24.0,
+       "y": 42.0,
+       "width": 372.0,
+       "height": 56.0,
+       "fill": [
+        0.9098,
+        0.9294,
+        0.9529,
+        1.0
+       ],
+       "fontSize": 32.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "text": "{{items}}",
+      "separator": "   ",
+      "speed": 110.0,
+      "mode": "flip",
+      "fontFamily": "JetBrains Mono",
+      "fontWeight": 700,
+      "align": "left",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "sepType": "none",
+      "startFull": true,
+      "itemDur": 3.0,
+      "transDur": 0.5,
+      "trans": "flip"
+     }
+    ],
+    "zone": "corner",
+    "revision": 1,
+    "markerModel": 2
+   }
+  ],
+  "rundown": [
+   {
+    "id": "bourse-00-indices",
+    "name": "Indices",
+    "templateId": "ticker",
+    "zone": "ticker",
+    "playlist": "bourse",
+    "layer": 40,
+    "data": {}
+   },
+   {
+    "id": "bourse-01-cac-40---séance",
+    "name": "CAC 40 · séance",
+    "templateId": "chart",
+    "zone": "full",
+    "playlist": "bourse",
+    "layer": 50,
+    "data": {}
+   },
+   {
+    "id": "bourse-02-airbus",
+    "name": "Airbus",
+    "templateId": "quote",
+    "zone": "lower",
+    "playlist": "bourse",
+    "layer": 20,
+    "data": {}
+   },
+   {
+    "id": "bourse-03-kering",
+    "name": "Kering",
+    "templateId": "quote",
+    "zone": "lower",
+    "playlist": "bourse",
+    "layer": 20,
+    "data": {
+     "symbol": "KER",
+     "name": "Kering",
+     "sector": "Luxe · CAC 40",
+     "price": "231,60",
+     "change": "-3.12",
+     "low": "229,10",
+     "high": "240,85",
+     "pos": "15"
+    }
+   },
+   {
+    "id": "bourse-04-clôture-des-marchés",
+    "name": "Clôture des marchés",
+    "templateId": "board",
+    "zone": "full",
+    "playlist": "bourse",
+    "layer": 50,
+    "data": {}
+   },
+   {
+    "id": "bourse-05-devises",
+    "name": "Devises",
+    "templateId": "fx",
+    "zone": "corner",
+    "playlist": "bourse",
+    "layer": 30,
+    "data": {}
+   }
+  ],
+  "zones": [
+   {
+    "id": "ticker",
+    "name": "Ticker",
+    "layer": 40,
+    "color": "#f5a524",
+    "transition": "sequential",
+    "areas": {
+     "main": {
+      "x": 0.0,
+      "y": 0.905,
+      "width": 1.0,
+      "height": 0.07
+     }
+    }
+   },
+   {
+    "id": "lower",
+    "name": "Bas d’écran",
+    "layer": 20,
+    "color": "#7c5cff",
+    "transition": "sequential",
+    "areas": {
+     "main": {
+      "x": 0.04,
+      "y": 0.62,
+      "width": 0.66,
+      "height": 0.29
+     }
+    }
+   },
+   {
+    "id": "corner",
+    "name": "Coin",
+    "layer": 30,
+    "color": "#22c55e",
+    "transition": "sequential",
+    "areas": {
+     "main": {
+      "x": 0.72,
+      "y": 0.05,
+      "width": 0.24,
+      "height": 0.16
+     }
+    }
+   },
+   {
+    "id": "full",
+    "name": "Plein écran",
+    "layer": 50,
+    "color": "#94a3b8",
+    "transition": "sequential",
+    "areas": {
+     "main": {
+      "x": 0.0,
+      "y": 0.0,
+      "width": 1.0,
+      "height": 1.0
+     }
+    }
+   }
+  ],
+  "playlists": [
+   {
+    "id": "bourse",
+    "name": "Point bourse"
+   }
+  ],
+  "formats": [],
+  "language": "fr"
+ },
+ "sources": [
+  {
+   "id": "bourse-indices",
+   "name": "Bourse · indices",
+   "type": "push",
+   "format": "json",
+   "value": {
+    "indices": [
+     {
+      "ligne": "CAC 40   7 512,30   +0,84 %",
+      "sens": "▲"
+     },
+     {
+      "ligne": "DAX   18 120,55   −0,62 %",
+      "sens": "▼"
+     },
+     {
+      "ligne": "FTSE 100   8 204,10   +0,31 %",
+      "sens": "▲"
+     },
+     {
+      "ligne": "EURO STOXX 50   4 982,77   +0,45 %",
+      "sens": "▲"
+     },
+     {
+      "ligne": "DOW JONES   39 412,08   −0,18 %",
+      "sens": "▼"
+     },
+     {
+      "ligne": "NASDAQ   16 870,40   +1,12 %",
+      "sens": "▲"
+     },
+     {
+      "ligne": "NIKKEI   38 640,95   −0,95 %",
+      "sens": "▼"
+     },
+     {
+      "ligne": "BRENT   82,14 $   +1,40 %",
+      "sens": "▲"
+     }
+    ]
+   }
+  }
+ ]
+}

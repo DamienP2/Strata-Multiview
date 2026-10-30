@@ -1,0 +1,21 @@
+// Takes and outs programmed in advance, and the timecode of the top bar.
+export const schedule: Record<string, string> = {
+  'Scheduled takes': 'Prises programmées',
+  'Time of day, in frames of the channel': 'Heure du jour, en images du canal',
+  'Nothing scheduled.': 'Rien de programmé.',
+  '{action} at TC {tc}': '{action} au TC {tc}',
+  '{action} at {time}': '{action} à {time}',
+  'every day': 'chaque jour',
+  'missed': 'manquée',
+  'waiting for its project': 'attend son projet',
+  'off': 'désactivée',
+  'Turn off': 'Désactiver',
+  'Turn on': 'Activer',
+  'Schedule a take': 'Programmer une prise',
+  'Schedule · {name}': 'Programmer · {name}',
+  'At the time': 'À l’heure',
+  'In…': 'Dans…',
+  'Timecode': 'Timecode',
+  'Every day': 'Chaque jour',
+  'Schedule': 'Programmer',
+};

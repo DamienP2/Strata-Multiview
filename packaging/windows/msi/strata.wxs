@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Strata Graphics — Windows Installer package (WiX Toolset v5).
+  Build: wix build strata.wxs -arch x64 -ext WixToolset.Util.wixext -ext WixToolset.Firewall.wixext
+         -d Version=0.1.0 -d BinDir=<dir with strata-server.exe> -d DocsDir=<repo root> -o Strata.msi
+  Silent install with a custom port: msiexec /i Strata.msi /qn PORT=80
+  (LISTEN_ADDR restricts the interface, e.g. LISTEN_ADDR=10.10.0.21)
+-->
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"
+     xmlns:util="http://wixtoolset.org/schemas/v4/wxs/util"
+     xmlns:fire="http://wixtoolset.org/schemas/v4/wxs/firewall">
+  <Package Name="Strata Graphics"
+           Manufacturer="Strata Graphics"
+           Version="$(var.Version)"
+           UpgradeCode="c38ad561-9f05-45ea-ab99-17ee287adb85"
+           Scope="perMachine"
+           Codepage="1252"
+           Compressed="yes">
+    <SummaryInformation Description="Strata Graphics broadcast graphics server" />
+    <MajorUpgrade DowngradeErrorMessage="Une version plus récente de [ProductName] est déjà installée." />
+    <MediaTemplate EmbedCab="yes" />
+
+    <!-- Listening address of the service; override with msiexec PORT=... LISTEN_ADDR=... -->
+    <Property Id="LISTEN_ADDR" Value="0.0.0.0" Secure="yes" />
+    <Property Id="PORT" Value="8080" Secure="yes" />
+    <Property Id="ARPNOMODIFY" Value="1" />
+    <!-- Icon in "Installed apps" / Add-Remove Programs. -->
+    <Icon Id="StrataGraphics.ico" SourceFile="$(var.DocsDir)\assets\icons\strata.ico" />
+    <Property Id="ARPPRODUCTICON" Value="StrataGraphics.ico" />
+
+    <StandardDirectory Id="ProgramFiles64Folder">
+      <Directory Id="INSTALLFOLDER" Name="Strata Graphics">
+        <Directory Id="BinFolder" Name="bin" />
+      </Directory>
+    </StandardDirectory>
+    <StandardDirectory Id="ProgramMenuFolder">
+      <Directory Id="MenuFolder" Name="Strata Graphics" />
+    </StandardDirectory>
+
+    <ComponentGroup Id="Product" Directory="INSTALLFOLDER">
+      <Component Id="Server">
+        <File Id="ServerExe" Source="$(var.BinDir)\strata-server.exe" KeyPath="yes">
+          <fire:FirewallException Id="FirewallServer" Name="Strata Graphics Server" Scope="any" Profile="all" />
+        </File>
+        <ServiceInstall Id="ServiceInstall"
+                        Name="strata-graphics"
+                        DisplayName="Strata Graphics Server"
+                        Description="Broadcast character generator: HTML5, SDI and SMPTE ST 2110 graphics playout"
+                        Type="ownProcess"
+                        Start="auto"
+                        ErrorControl="normal"
+                        Vital="yes"
+                        Arguments="run --service --default-bind [LISTEN_ADDR]:[PORT] --data-dir &quot;[CommonAppDataFolder]Strata Graphics&quot;">
+          <util:ServiceConfig FirstFailureActionType="restart"
+                              SecondFailureActionType="restart"
+                              ThirdFailureActionType="restart"
+                              RestartServiceDelayInSeconds="2"
+                              ResetPeriodInDays="1" />
+        </ServiceInstall>
+        <ServiceControl Id="ServiceControl" Name="strata-graphics" Start="install" Stop="both" Remove="uninstall" Wait="yes" />
+        <Environment Id="PathEntry" Name="PATH" Value="[INSTALLFOLDER]" Part="last" Action="set" System="yes" Permanent="no" />
+      </Component>
+      <!-- Notification-area app, started at every logon. -->
+      <Component Id="TrayApp">
+        <File Id="TrayExe" Source="$(var.BinDir)\strata-tray.exe" KeyPath="yes" />
+        <RegistryValue Root="HKLM" Key="Software\Microsoft\Windows\CurrentVersion\Run" Name="Strata Graphics" Type="string" Value="&quot;[#TrayExe]&quot; --background" />
+      </Component>
+      <!-- One unversioned file per component (auto-generated GUIDs). -->
+      <Component Id="DocInstall">
+        <File Id="InstallMd" Source="$(var.DocsDir)\docs\INSTALL.md" KeyPath="yes" />
+      </Component>
+      <Component Id="DocOutputs">
+        <File Id="OutputsExample" Source="$(var.DocsDir)\docs\outputs.example.json" KeyPath="yes" />
+      </Component>
+      <Component Id="DocFontLicense">
+        <File Id="FontLicense" Source="$(var.DocsDir)\assets\fonts\OFL.txt" KeyPath="yes" />
+      </Component>
+      <?ifdef NdiDir ?>
+      <!-- NDI runtime (packaging/ndi/fetch-runtime.sh), loaded from next to the server. -->
+      <Component Id="NdiRuntime">
+        <File Id="NdiDll" Source="$(var.NdiDir)\Processing.NDI.Lib.x64.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="NdiNotice">
+        <File Id="NdiNoticeTxt" Source="$(var.NdiDir)\NDI-NOTICE.txt" KeyPath="yes" />
+      </Component>
+      <?endif ?>
+      <?ifdef FfmpegDir ?>
+      <!-- ffmpeg (packaging/ffmpeg/fetch.sh): streams in and out, video conversion. -->
+      <Component Id="Ffmpeg" Directory="BinFolder">
+        <File Id="FfmpegExe" Source="$(var.FfmpegDir)\ffmpeg.exe" KeyPath="yes" />
+      </Component>
+      <Component Id="FfmpegNotice" Directory="BinFolder">
+        <File Id="FfmpegNoticeTxt" Source="$(var.FfmpegDir)\FFMPEG-NOTICE.txt" KeyPath="yes" />
+      </Component>
+      <?endif ?>
+      <Component Id="StartMenu" Directory="MenuFolder">
+        <Shortcut Id="TrayShortcut" Name="Strata Graphics" Description="Strata Graphics server status, settings and shortcuts" Target="[#TrayExe]" WorkingDirectory="INSTALLFOLDER" />
+        <Shortcut Id="UninstallShortcut" Name="Uninstall Strata Graphics" Description="Remove Strata Graphics (your data is kept)" Target="[System64Folder]msiexec.exe" Arguments="/x [ProductCode]" Icon="StrataGraphics.ico" />
+        <util:InternetShortcut Id="DesignerShortcut" Name="Strata Graphics Designer" Target="http://localhost:[PORT]/designer" Type="url" />
+        <util:InternetShortcut Id="OperatorShortcut" Name="Strata Graphics Operator" Target="http://localhost:[PORT]/operator" Type="url" />
+        <RemoveFolder Id="RemoveMenuFolder" On="uninstall" />
+        <RegistryValue Root="HKLM" Key="Software\Strata Graphics" Name="StartMenu" Type="integer" Value="1" KeyPath="yes" />
+      </Component>
+    </ComponentGroup>
+
+    <!-- Upgrades / uninstall: close the tray app so its exe can be replaced. -->
+    <util:CloseApplication Id="CloseTray" Target="strata-tray.exe" CloseMessage="yes" TerminateProcess="0" RebootPrompt="no" />
+    <!-- The tray app of an install from before the rename. -->
+    <util:CloseApplication Id="CloseFormerTray" Target="pulse-cg-tray.exe" CloseMessage="yes" TerminateProcess="0" RebootPrompt="no" />
+
+    <!-- Start the tray app for the installing user right away. -->
+    <CustomAction Id="LaunchTray" FileRef="TrayExe" ExeCommand="--background" Return="asyncNoWait" Impersonate="yes" Execute="immediate" />
+    <InstallExecuteSequence>
+      <Custom Action="LaunchTray" After="InstallFinalize" Condition="NOT (REMOVE~=&quot;ALL&quot;)" />
+    </InstallExecuteSequence>
+
+    <Feature Id="Main" Title="Strata Graphics">
+      <ComponentGroupRef Id="Product" />
+    </Feature>
+  </Package>
+</Wix>

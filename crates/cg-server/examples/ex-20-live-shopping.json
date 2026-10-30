@@ -1,0 +1,3134 @@
+{
+ "meta": {
+  "id": "ex-20-live-shopping",
+  "name": "Live shopping",
+  "category": "Commerce",
+  "tags": [
+   "Live shopping",
+   "Produit",
+   "Compte à rebours",
+   "Stock",
+   "QR code",
+   "9:16"
+  ],
+  "description": "Une vente en direct pour les réseaux et le web, pensée d’abord en 9:16 : fiche produit avec prix barré et remise, offre flash avec compte à rebours, stock restant qui baisse, QR code pour acheter, animatrice et nombre de spectateurs, achats récents qui défilent et code promo. Prix et stock peuvent venir du catalogue.", "summary": "Fiche produit, offre flash et stock pour une vente en direct.",
+  "en": {
+   "name": "Live shopping",
+   "description": "A live sale for social and the web, designed 9:16 first: product card with struck price and discount, flash offer with a countdown, remaining stock going down, a QR code to buy, the host with the viewer count, recent purchases scrolling and a promo code. Prices and stock may come from the catalogue.", "summary": "Product card, flash offer and stock for live selling."
+  },
+  "cover": "product"
+ },
+ "project": {
+  "id": "ex-20-live-shopping",
+  "name": "Live shopping",
+  "description": "Une vente en direct pour les réseaux et le web, pensée d’abord en 9:16 : fiche produit avec prix barré et remise, offre flash avec compte à rebours, stock restant qui baisse, QR code pour acheter, animatrice et nombre de spectateurs, achats récents qui défilent et code promo. Prix et stock peuvent venir du catalogue.",
+  "width": 1920,
+  "height": 1080,
+  "frameRate": {
+   "num": 50,
+   "den": 1
+  },
+  "templates": [
+   {
+    "id": "host",
+    "name": "Animatrice",
+    "duration": 100.0,
+    "markers": [
+     {
+      "id": "host-air",
+      "frame": 50.0,
+      "name": "On air",
+      "kind": "out"
+     }
+    ],
+    "fields": [
+     {
+      "key": "name",
+      "label": "Nom",
+      "kind": "text",
+      "default": "Sarah Benali"
+     },
+     {
+      "key": "handle",
+      "label": "Compte",
+      "kind": "text",
+      "default": "@sarah.drop"
+     },
+     {
+      "key": "viewers",
+      "label": "Spectateurs",
+      "kind": "number",
+      "default": "12840",
+      "binding": {
+       "source": "droplive-stats",
+       "path": "live.viewers"
+      }
+     }
+    ],
+    "layers": [
+     {
+      "id": "host-1",
+      "name": "Animatrice",
+      "parent": null,
+      "type": "group",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 60.0,
+       "y": 50.0,
+       "width": 900.0,
+       "height": 120.0,
+       "anchorX": 0.0,
+       "anchorY": 0.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "clip": false,
+      "overrides": {
+       "vertical": {
+        "props": {
+         "x": 44.0,
+         "y": 60.0,
+         "scaleX": 1.08,
+         "scaleY": 1.08,
+         "width": 972.0000000000001,
+         "height": 129.60000000000002
+        }
+       }
+      }
+     },
+     {
+      "id": "host-2",
+      "name": "Pilule",
+      "parent": "host-1",
+      "type": "group",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 900.0,
+       "height": 120.0
+      },
+      "tracks": {
+       "x": [
+        {
+         "frame": 0.0,
+         "value": -120.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.16,
+          "y1": 1.0,
+          "x2": 0.3,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 18.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 50.0,
+         "value": 0.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.7,
+          "y1": 0.0,
+          "x2": 0.84,
+          "y2": 0.0
+         }
+        },
+        {
+         "frame": 62.0,
+         "value": -120.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ],
+       "opacity": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 10.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 50.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 60.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "clip": false
+     },
+     {
+      "id": "host-3",
+      "name": "Verre",
+      "parent": "host-2",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 640.0,
+       "height": 120.0,
+       "fill": [
+        0.0902,
+        0.0824,
+        0.1176,
+        0.88
+       ],
+       "cornerRadius": 60.0,
+       "stroke": [
+        1.0,
+        1.0,
+        1.0,
+        0.1
+       ],
+       "strokeWidth": 1.5
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "host-4",
+      "name": "Anneau",
+      "parent": "host-2",
+      "type": "ellipse",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 12.0,
+       "y": 12.0,
+       "width": 96.0,
+       "height": 96.0,
+       "fill": [
+        1.0,
+        0.1804,
+        0.4941,
+        1.0
+       ]
+      },
+      "tracks": {},
+      "bindings": {},
+      "fillStyle": {
+       "kind": "linear",
+       "color2": "#ffd84d",
+       "angle": 135.0
+      }
+     },
+     {
+      "id": "host-5",
+      "name": "Avatar",
+      "parent": "host-2",
+      "type": "ellipse",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 18.0,
+       "y": 18.0,
+       "width": 84.0,
+       "height": 84.0,
+       "fill": [
+        0.0902,
+        0.0824,
+        0.1176,
+        1.0
+       ]
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "host-6",
+      "name": "Initiales",
+      "parent": "host-2",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 18.0,
+       "y": 18.0,
+       "width": 84.0,
+       "height": 84.0,
+       "fill": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+       ],
+       "fontSize": 32.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "text": "SB",
+      "fontFamily": "Inter",
+      "fontWeight": 800,
+      "align": "center",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "lang": "fr"
+     },
+     {
+      "id": "host-7",
+      "name": "Nom",
+      "parent": "host-2",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 126.0,
+       "y": 18.0,
+       "width": 340.0,
+       "height": 46.0,
+       "fill": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+       ],
+       "fontSize": 32.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "text": "{{name}}",
+      "fontFamily": "Inter",
+      "fontWeight": 800,
+      "align": "left",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "lang": "fr"
+     },
+     {
+      "id": "host-8",
+      "name": "Compte",
+      "parent": "host-2",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 126.0,
+       "y": 62.0,
+       "width": 340.0,
+       "height": 36.0,
+       "fill": [
+        0.702,
+        0.6784,
+        0.7608,
+        1.0
+       ],
+       "fontSize": 22.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "text": "{{handle}}",
+      "fontFamily": "Inter",
+      "fontWeight": 500,
+      "align": "left",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "lang": "fr"
+     },
+     {
+      "id": "host-9",
+      "name": "Pilule · Live",
+      "parent": "host-2",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 470.0,
+       "y": 34.0,
+       "width": 150.0,
+       "height": 52.0,
+       "fill": [
+        1.0,
+        0.1804,
+        0.4941,
+        1.0
+       ],
+       "cornerRadius": 26.0
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "host-10",
+      "name": "Point",
+      "parent": "host-2",
+      "type": "ellipse",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 490.0,
+       "y": 54.0,
+       "width": 12.0,
+       "height": 12.0,
+       "fill": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+       ]
+      },
+      "tracks": {
+       "opacity": [
+        {
+         "frame": 10.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 30.0,
+         "value": 0.3,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 50.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 70.0,
+         "value": 0.3,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 90.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        }
+       ]
+      },
+      "bindings": {}
+     },
+     {
+      "id": "host-11",
+      "name": "Pilule · Live",
+      "parent": "host-2",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 508.0,
+       "y": 34.0,
+       "width": 104.0,
+       "height": 52.0,
+       "fill": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+       ],
+       "fontSize": 16.0,
+       "letterSpacing": 1.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "text": "EN DIRECT",
+      "fontFamily": "Inter",
+      "fontWeight": 800,
+      "align": "center",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "lang": "fr"
+     },
+     {
+      "id": "host-12",
+      "name": "Vues",
+      "parent": "host-2",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 656.0,
+       "y": 34.0,
+       "width": 220.0,
+       "height": 52.0,
+       "fill": [
+        0.0902,
+        0.0824,
+        0.1176,
+        0.88
+       ],
+       "cornerRadius": 26.0,
+       "stroke": [
+        1.0,
+        1.0,
+        1.0,
+        0.1
+       ],
+       "strokeWidth": 1.5
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "host-13",
+      "name": "Spectateurs",
+      "parent": "host-2",
+      "type": "counter",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 656.0,
+       "y": 34.0,
+       "width": 220.0,
+       "height": 52.0,
+       "fill": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+       ],
+       "fontSize": 24.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "from": "0",
+      "to": "{{viewers}}",
+      "duration": 1.4,
+      "decimals": 1,
+      "prefix": "",
+      "suffix": " en ligne",
+      "grouping": true,
+      "fontFamily": "Inter",
+      "fontWeight": 800,
+      "align": "center",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "affixColor": "#b3adc2",
+      "affixWeight": 500,
+      "compact": true
+     }
+    ],
+    "zone": "host",
+    "revision": 1,
+    "markerModel": 2
+   },
+   {
+    "id": "product",
+    "name": "Fiche produit",
+    "duration": 130.0,
+    "markers": [
+     {
+      "id": "product-air",
+      "frame": 70.0,
+      "name": "On air",
+      "kind": "out"
+     }
+    ],
+    "fields": [
+     {
+      "key": "brand",
+      "label": "Marque",
+      "kind": "text",
+      "default": "MAISON LUNE"
+     },
+     {
+      "key": "name",
+      "label": "Produit",
+      "kind": "text",
+      "default": "Trench oversize en coton bio",
+      "binding": {
+       "source": "droplive-catalogue",
+       "path": "products[sku={sku}].name"
+      }
+     },
+     {
+      "key": "variant",
+      "label": "Variante",
+      "kind": "text",
+      "default": "Beige sable · du XS au XL"
+     },
+     {
+      "key": "was",
+      "label": "Prix barré",
+      "kind": "text",
+      "default": "189 €",
+      "binding": {
+       "source": "droplive-catalogue",
+       "path": "products[sku={sku}].was"
+      }
+     },
+     {
+      "key": "price",
+      "label": "Prix",
+      "kind": "text",
+      "default": "129",
+      "binding": {
+       "source": "droplive-catalogue",
+       "path": "products[sku={sku}].price"
+      }
+     },
+     {
+      "key": "cents",
+      "label": "Centimes",
+      "kind": "text",
+      "default": ",90 €"
+     },
+     {
+      "key": "off",
+      "label": "Remise",
+      "kind": "text",
+      "default": "-32 %"
+     },
+     {
+      "key": "photo",
+      "label": "Photo du produit",
+      "kind": "image",
+      "default": ""
+     },
+     {
+      "key": "showPhoto",
+      "label": "Afficher la photo",
+      "kind": "boolean",
+      "default": "false"
+     },
+     {
+      "key": "sku",
+      "label": "Référence (catalogue)",
+      "kind": "text",
+      "default": "ML-TR-042"
+     }
+    ],
+    "layers": [
+     {
+      "id": "product-1",
+      "name": "Produit",
+      "parent": null,
+      "type": "group",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 1160.0,
+       "y": 70.0,
+       "width": 690.0,
+       "height": 760.0,
+       "anchorX": 0.0,
+       "anchorY": 0.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "clip": false,
+      "overrides": {
+       "vertical": {
+        "props": {
+         "x": 195.0,
+         "y": 590.0,
+         "scaleX": 1.0,
+         "scaleY": 1.0,
+         "width": 690.0,
+         "height": 760.0
+        }
+       }
+      }
+     },
+     {
+      "id": "product-2",
+      "name": "Carte",
+      "parent": "product-1",
+      "type": "group",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 690.0,
+       "height": 760.0
+      },
+      "tracks": {
+       "x": [
+        {
+         "frame": 0.0,
+         "value": 140.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.16,
+          "y1": 1.0,
+          "x2": 0.3,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 20.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 70.0,
+         "value": 0.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.7,
+          "y1": 0.0,
+          "x2": 0.84,
+          "y2": 0.0
+         }
+        },
+        {
+         "frame": 82.0,
+         "value": 140.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ],
+       "opacity": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 10.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 70.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 80.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "clip": false,
+      "overrides": {
+       "vertical": {
+        "tracks": {
+         "y": [
+          {
+           "frame": 0.0,
+           "value": 140.0,
+           "easing": {
+            "type": "bezier",
+            "x1": 0.16,
+            "y1": 1.0,
+            "x2": 0.3,
+            "y2": 1.0
+           }
+          },
+          {
+           "frame": 20.0,
+           "value": 0.0,
+           "easing": {
+            "type": "linear"
+           }
+          },
+          {
+           "frame": 70.0,
+           "value": 0.0,
+           "easing": {
+            "type": "bezier",
+            "x1": 0.7,
+            "y1": 0.0,
+            "x2": 0.84,
+            "y2": 0.0
+           }
+          },
+          {
+           "frame": 82.0,
+           "value": 140.0,
+           "easing": {
+            "type": "linear"
+           }
+          }
+         ],
+         "opacity": [
+          {
+           "frame": 0.0,
+           "value": 0.0,
+           "easing": {
+            "type": "linear"
+           }
+          },
+          {
+           "frame": 10.0,
+           "value": 1.0,
+           "easing": {
+            "type": "linear"
+           }
+          },
+          {
+           "frame": 70.0,
+           "value": 1.0,
+           "easing": {
+            "type": "linear"
+           }
+          },
+          {
+           "frame": 80.0,
+           "value": 0.0,
+           "easing": {
+            "type": "linear"
+           }
+          }
+         ]
+        }
+       }
+      }
+     },
+     {
+      "id": "product-3",
+      "name": "Verre",
+      "parent": "product-2",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 690.0,
+       "height": 760.0,
+       "fill": [
+        0.0902,
+        0.0824,
+        0.1176,
+        0.92
+       ],
+       "cornerRadius": 28.0,
+       "stroke": [
+        1.0,
+        1.0,
+        1.0,
+        0.1
+       ],
+       "strokeWidth": 1.5,
+       "shadowColor": [
+        0.0,
+        0.0,
+        0.0,
+        0.5
+       ],
+       "shadowX": 0.0,
+       "shadowY": 16.0,
+       "shadowBlur": 44.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "dropShadow": true
+     },
+     {
+      "id": "product-4",
+      "name": "Visuel",
+      "parent": "product-2",
+      "type": "group",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 24.0,
+       "y": 24.0,
+       "width": 642.0,
+       "height": 360.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "clip": true
+     },
+     {
+      "id": "product-5",
+      "name": "Dégradé",
+      "parent": "product-4",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 642.0,
+       "height": 360.0,
+       "fill": [
+        0.1647,
+        0.1216,
+        0.2275,
+        1.0
+       ],
+       "cornerRadius": 20.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "fillStyle": {
+       "kind": "linear",
+       "color2": "#5b1d43",
+       "angle": 135.0
+      }
+     },
+     {
+      "id": "product-6",
+      "name": "Lueur",
+      "parent": "product-4",
+      "type": "ellipse",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 280.0,
+       "y": -120.0,
+       "width": 520.0,
+       "height": 520.0,
+       "fill": [
+        1.0,
+        0.1804,
+        0.4941,
+        0.45
+       ]
+      },
+      "tracks": {},
+      "bindings": {},
+      "fillStyle": {
+       "kind": "radial",
+       "color2": "#ff2e7e00"
+      }
+     },
+     {
+      "id": "product-7",
+      "name": "Monogramme",
+      "parent": "product-4",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 642.0,
+       "height": 360.0,
+       "fill": [
+        1.0,
+        1.0,
+        1.0,
+        0.16
+       ],
+       "fontSize": 64.0,
+       "letterSpacing": 12.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "text": "{{brand}}",
+      "fontFamily": "Bebas Neue",
+      "fontWeight": 400,
+      "align": "center",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "lang": "fr"
+     },
+     {
+      "id": "product-8",
+      "name": "Photo",
+      "parent": "product-4",
+      "type": "image",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 642.0,
+       "height": 360.0
+      },
+      "tracks": {},
+      "bindings": {
+       "opacity": "showPhoto"
+      },
+      "src": "{{photo}}",
+      "fit": "cover",
+      "mask": "rounded",
+      "radius": 20.0
+     },
+     {
+      "id": "product-9",
+      "name": "Visuel · Remise",
+      "parent": "product-4",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 482.0,
+       "y": 20.0,
+       "width": 140.0,
+       "height": 64.0,
+       "fill": [
+        1.0,
+        0.8471,
+        0.302,
+        1.0
+       ],
+       "cornerRadius": 32.0
+      },
+      "tracks": {
+       "scaleX": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 14.0,
+         "value": 0.0,
+         "easing": {
+          "type": "back"
+         }
+        },
+        {
+         "frame": 30.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 70.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.7,
+          "y1": 0.0,
+          "x2": 0.84,
+          "y2": 0.0
+         }
+        },
+        {
+         "frame": 80.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ],
+       "scaleY": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 14.0,
+         "value": 0.0,
+         "easing": {
+          "type": "back"
+         }
+        },
+        {
+         "frame": 30.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 70.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.7,
+          "y1": 0.0,
+          "x2": 0.84,
+          "y2": 0.0
+         }
+        },
+        {
+         "frame": 80.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {}
+     },
+     {
+      "id": "product-10",
+      "name": "Visuel · Remise",
+      "parent": "product-4",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 482.0,
+       "y": 20.0,
+       "width": 140.0,
+       "height": 64.0,
+       "fill": [
+        0.0471,
+        0.0431,
+        0.0627,
+        1.0
+       ],
+       "fontSize": 28.0
+      },
+      "tracks": {
+       "scaleX": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 14.0,
+         "value": 0.0,
+         "easing": {
+          "type": "back"
+         }
+        },
+        {
+         "frame": 30.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 70.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.7,
+          "y1": 0.0,
+          "x2": 0.84,
+          "y2": 0.0
+         }
+        },
+        {
+         "frame": 80.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ],
+       "scaleY": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 14.0,
+         "value": 0.0,
+         "easing": {
+          "type": "back"
+         }
+        },
+        {
+         "frame": 30.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 70.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.7,
+          "y1": 0.0,
+          "x2": 0.84,
+          "y2": 0.0
+         }
+        },
+        {
+         "frame": 80.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "text": "{{off}}",
+      "fontFamily": "Inter",
+      "fontWeight": 800,
+      "align": "center",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "lang": "fr"
+     },
+     {
+      "id": "product-11",
+      "name": "Marque",
+      "parent": "product-2",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 34.0,
+       "y": 404.0,
+       "width": 620.0,
+       "height": 32.0,
+       "fill": [
+        1.0,
+        0.1804,
+        0.4941,
+        1.0
+       ],
+       "fontSize": 18.0,
+       "letterSpacing": 4.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "text": "{{brand}}",
+      "fontFamily": "Inter",
+      "fontWeight": 800,
+      "align": "left",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "lang": "fr"
+     },
+     {
+      "id": "product-12",
+      "name": "Carte · Produit",
+      "parent": "product-2",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 32.0,
+       "y": 436.0,
+       "width": 626.0,
+       "height": 110.0,
+       "fill": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+       ],
+       "fontSize": 42.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "text": "{{name}}",
+      "fontFamily": "Inter",
+      "fontWeight": 800,
+      "align": "left",
+      "verticalAlign": "top",
+      "uppercase": false,
+      "wrap": true,
+      "lineHeight": 1.12,
+      "maxLines": 2,
+      "lang": "fr"
+     },
+     {
+      "id": "product-13",
+      "name": "Variante",
+      "parent": "product-2",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 34.0,
+       "y": 548.0,
+       "width": 620.0,
+       "height": 34.0,
+       "fill": [
+        0.702,
+        0.6784,
+        0.7608,
+        1.0
+       ],
+       "fontSize": 22.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "text": "{{variant}}",
+      "fontFamily": "Inter",
+      "fontWeight": 500,
+      "align": "left",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "lang": "fr"
+     },
+     {
+      "id": "product-14",
+      "name": "Filet",
+      "parent": "product-2",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 34.0,
+       "y": 598.0,
+       "width": 622.0,
+       "height": 1.5,
+       "fill": [
+        1.0,
+        1.0,
+        1.0,
+        0.1
+       ]
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "product-15",
+      "name": "Prix barré",
+      "parent": "product-2",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 34.0,
+       "y": 624.0,
+       "width": 200.0,
+       "height": 50.0,
+       "fill": [
+        0.702,
+        0.6784,
+        0.7608,
+        1.0
+       ],
+       "fontSize": 30.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "text": "{{was}}",
+      "fontFamily": "Inter",
+      "fontWeight": 600,
+      "align": "left",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "decoration": "lineThrough",
+      "lang": "fr"
+     },
+     {
+      "id": "product-16",
+      "name": "Carte · Prix",
+      "parent": "product-2",
+      "type": "group",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 200.0,
+       "y": 604.0,
+       "width": 460.0,
+       "height": 130.0
+      },
+      "tracks": {
+       "scaleX": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 10.0,
+         "value": 0.0,
+         "easing": {
+          "type": "back"
+         }
+        },
+        {
+         "frame": 28.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 70.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.7,
+          "y1": 0.0,
+          "x2": 0.84,
+          "y2": 0.0
+         }
+        },
+        {
+         "frame": 80.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ],
+       "scaleY": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 10.0,
+         "value": 0.0,
+         "easing": {
+          "type": "back"
+         }
+        },
+        {
+         "frame": 28.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 70.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.7,
+          "y1": 0.0,
+          "x2": 0.84,
+          "y2": 0.0
+         }
+        },
+        {
+         "frame": 80.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "clip": false
+     },
+     {
+      "id": "product-17",
+      "name": "Carte · Prix · Prix",
+      "parent": "product-16",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 456.0,
+       "height": 130.0,
+       "fill": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+       ],
+       "fontSize": 128.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "text": "{{price}}<c=#ffd84d>{{cents}}</c>",
+      "fontFamily": "Bebas Neue",
+      "fontWeight": 400,
+      "align": "right",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "lang": "fr"
+     }
+    ],
+    "zone": "product",
+    "revision": 1,
+    "markerModel": 2
+   },
+   {
+    "id": "offer",
+    "name": "Offre flash",
+    "duration": 110.0,
+    "markers": [
+     {
+      "id": "offer-air",
+      "frame": 50.0,
+      "name": "On air",
+      "kind": "out"
+     }
+    ],
+    "fields": [
+     {
+      "key": "label",
+      "label": "Texte",
+      "kind": "text",
+      "default": "OFFRE FLASH"
+     },
+     {
+      "key": "mins",
+      "label": "Durée (min)",
+      "kind": "number",
+      "default": "10"
+     },
+     {
+      "key": "left",
+      "label": "Stock restant",
+      "kind": "number",
+      "default": "37",
+      "binding": {
+       "source": "droplive-catalogue",
+       "path": "products[sku=ML-TR-042].stock"
+      }
+     },
+     {
+      "key": "stock",
+      "label": "Stock de départ",
+      "kind": "number",
+      "default": "200"
+     }
+    ],
+    "layers": [
+     {
+      "id": "offer-1",
+      "name": "Offre",
+      "parent": null,
+      "type": "group",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 1160.0,
+       "y": 860.0,
+       "width": 690.0,
+       "height": 170.0,
+       "anchorX": 0.0,
+       "anchorY": 0.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "clip": false,
+      "overrides": {
+       "vertical": {
+        "props": {
+         "x": 64.0,
+         "y": 1405.0,
+         "scaleX": 1.38,
+         "scaleY": 1.38,
+         "width": 952.1999999999999,
+         "height": 234.6
+        }
+       }
+      }
+     },
+     {
+      "id": "offer-2",
+      "name": "Carte",
+      "parent": "offer-1",
+      "type": "group",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 690.0,
+       "height": 170.0
+      },
+      "tracks": {
+       "y": [
+        {
+         "frame": 0.0,
+         "value": 80.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.16,
+          "y1": 1.0,
+          "x2": 0.3,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 18.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 50.0,
+         "value": 0.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.7,
+          "y1": 0.0,
+          "x2": 0.84,
+          "y2": 0.0
+         }
+        },
+        {
+         "frame": 62.0,
+         "value": 80.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ],
+       "opacity": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 10.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 50.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 60.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "clip": false
+     },
+     {
+      "id": "offer-3",
+      "name": "Fond",
+      "parent": "offer-2",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 690.0,
+       "height": 170.0,
+       "fill": [
+        1.0,
+        0.1804,
+        0.4941,
+        1.0
+       ],
+       "cornerRadius": 28.0,
+       "shadowColor": [
+        1.0,
+        0.1804,
+        0.4941,
+        0.45
+       ],
+       "shadowX": 0.0,
+       "shadowY": 14.0,
+       "shadowBlur": 40.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "fillStyle": {
+       "kind": "linear",
+       "color2": "#c2185b",
+       "angle": 90.0
+      },
+      "dropShadow": true
+     },
+     {
+      "id": "offer-4",
+      "name": "Libellé",
+      "parent": "offer-2",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 30.0,
+       "y": 18.0,
+       "width": 330.0,
+       "height": 40.0,
+       "fill": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+       ],
+       "fontSize": 26.0,
+       "letterSpacing": 3.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "text": "{{label}}",
+      "fontFamily": "Inter",
+      "fontWeight": 800,
+      "align": "left",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "lang": "fr"
+     },
+     {
+      "id": "offer-5",
+      "name": "Fin dans",
+      "parent": "offer-2",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 30.0,
+       "y": 56.0,
+       "width": 330.0,
+       "height": 30.0,
+       "fill": [
+        1.0,
+        1.0,
+        1.0,
+        0.8
+       ],
+       "fontSize": 16.0,
+       "letterSpacing": 2.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "text": "SE TERMINE DANS",
+      "fontFamily": "Inter",
+      "fontWeight": 700,
+      "align": "left",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "lang": "fr"
+     },
+     {
+      "id": "offer-6",
+      "name": "Décompte",
+      "parent": "offer-2",
+      "type": "clock",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 430.0,
+       "y": 6.0,
+       "width": 240.0,
+       "height": 100.0,
+       "fill": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+       ],
+       "fontSize": 84.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "mode": "timer",
+      "format": "mm:ss",
+      "timezone": "Europe/Paris",
+      "target": "",
+      "timerMode": "countdown",
+      "lang": "fr-FR",
+      "fontFamily": "Bebas Neue",
+      "fontWeight": 400,
+      "align": "right",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "cdDuration": 600000,
+      "startMode": "auto",
+      "tabular": true,
+      "zeroTrigger": "fin-offre",
+      "steps": [
+       {
+        "on": true,
+        "at": 60,
+        "color": "#ffd84d",
+        "bg": "",
+        "blink": true
+       }
+      ]
+     },
+     {
+      "id": "offer-7",
+      "name": "Carte · Stock",
+      "parent": "offer-2",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 30.0,
+       "y": 104.0,
+       "width": 420.0,
+       "height": 40.0,
+       "fill": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+       ],
+       "fontSize": 24.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "text": "Plus que <c=#ffd84d>{{left}}</c> pièces",
+      "fontFamily": "Inter",
+      "fontWeight": 700,
+      "align": "left",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "lang": "fr"
+     },
+     {
+      "id": "offer-8",
+      "name": "Carte · Stock",
+      "parent": "offer-2",
+      "type": "progress",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 30.0,
+       "y": 146.0,
+       "width": 630.0,
+       "height": 10.0,
+       "fill": [
+        1.0,
+        0.8471,
+        0.302,
+        1.0
+       ]
+      },
+      "tracks": {},
+      "bindings": {},
+      "value": "{{left}}",
+      "max": "{{stock}}",
+      "track": "#00000040",
+      "duration": 1.4,
+      "rounded": true,
+      "steps": [
+       {
+        "on": true,
+        "below": 20.0,
+        "color": "#ffffff"
+       }
+      ]
+     }
+    ],
+    "zone": "offer",
+    "revision": 1,
+    "markerModel": 2
+   },
+   {
+    "id": "qr",
+    "name": "QR code d’achat",
+    "duration": 100.0,
+    "markers": [
+     {
+      "id": "qr-air",
+      "frame": 50.0,
+      "name": "On air",
+      "kind": "out"
+     }
+    ],
+    "fields": [
+     {
+      "key": "url",
+      "label": "Lien d’achat",
+      "kind": "text",
+      "default": "https://droplive.shop/p/ML-TR-042?utm=live"
+     },
+     {
+      "key": "short",
+      "label": "Lien court",
+      "kind": "text",
+      "default": "droplive.shop/trench"
+     }
+    ],
+    "layers": [
+     {
+      "id": "qr-1",
+      "name": "QR",
+      "parent": null,
+      "type": "group",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 60.0,
+       "y": 440.0,
+       "width": 360.0,
+       "height": 440.0,
+       "anchorX": 0.0,
+       "anchorY": 0.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "clip": false,
+      "overrides": {
+       "vertical": {
+        "props": {
+         "x": 44.0,
+         "y": 232.0,
+         "scaleX": 0.74,
+         "scaleY": 0.74,
+         "width": 266.4,
+         "height": 325.6
+        }
+       }
+      }
+     },
+     {
+      "id": "qr-2",
+      "name": "Carte",
+      "parent": "qr-1",
+      "type": "group",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 360.0,
+       "height": 440.0
+      },
+      "tracks": {
+       "scaleX": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "back"
+         }
+        },
+        {
+         "frame": 18.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 50.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.7,
+          "y1": 0.0,
+          "x2": 0.84,
+          "y2": 0.0
+         }
+        },
+        {
+         "frame": 60.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ],
+       "scaleY": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "back"
+         }
+        },
+        {
+         "frame": 18.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 50.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.7,
+          "y1": 0.0,
+          "x2": 0.84,
+          "y2": 0.0
+         }
+        },
+        {
+         "frame": 60.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "clip": false
+     },
+     {
+      "id": "qr-3",
+      "name": "Verre",
+      "parent": "qr-2",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 360.0,
+       "height": 440.0,
+       "fill": [
+        0.0902,
+        0.0824,
+        0.1176,
+        0.92
+       ],
+       "cornerRadius": 28.0,
+       "stroke": [
+        1.0,
+        1.0,
+        1.0,
+        0.1
+       ],
+       "strokeWidth": 1.5,
+       "shadowColor": [
+        0.0,
+        0.0,
+        0.0,
+        0.5
+       ],
+       "shadowX": 0.0,
+       "shadowY": 16.0,
+       "shadowBlur": 44.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "dropShadow": true
+     },
+     {
+      "id": "qr-4",
+      "name": "Titre",
+      "parent": "qr-2",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 30.0,
+       "y": 22.0,
+       "width": 300.0,
+       "height": 70.0,
+       "fill": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+       ],
+       "fontSize": 24.0,
+       "letterSpacing": 1.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "text": "SCANNEZ\nPOUR ACHETER",
+      "fontFamily": "Inter",
+      "fontWeight": 800,
+      "align": "left",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "lineHeight": 1.15,
+      "lang": "fr"
+     },
+     {
+      "id": "qr-5",
+      "name": "Blanc",
+      "parent": "qr-2",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 30.0,
+       "y": 104.0,
+       "width": 300.0,
+       "height": 260.0,
+       "fill": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+       ],
+       "cornerRadius": 18.0
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "qr-6",
+      "name": "Carte · QR",
+      "parent": "qr-2",
+      "type": "qrCode",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 60.0,
+       "y": 114.0,
+       "width": 240.0,
+       "height": 240.0,
+       "fill": [
+        0.0471,
+        0.0431,
+        0.0627,
+        1.0
+       ]
+      },
+      "tracks": {},
+      "bindings": {},
+      "data": "{{url}}",
+      "background": "#ffffff",
+      "modStyle": "dots",
+      "finderStyle": "rounded",
+      "quiet": 1,
+      "ecl": "Q"
+     },
+     {
+      "id": "qr-7",
+      "name": "Lien",
+      "parent": "qr-2",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 20.0,
+       "y": 378.0,
+       "width": 320.0,
+       "height": 40.0,
+       "fill": [
+        1.0,
+        0.1804,
+        0.4941,
+        1.0
+       ],
+       "fontSize": 20.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "text": "{{short}}",
+      "fontFamily": "Inter",
+      "fontWeight": 700,
+      "align": "center",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "lang": "fr"
+     }
+    ],
+    "zone": "qr",
+    "revision": 1,
+    "markerModel": 2
+   },
+   {
+    "id": "buyers",
+    "name": "Achats récents",
+    "duration": 100.0,
+    "markers": [
+     {
+      "id": "buyers-air",
+      "frame": 50.0,
+      "name": "On air",
+      "kind": "out"
+     }
+    ],
+    "fields": [
+     {
+      "key": "feed",
+      "label": "Achats",
+      "kind": "multiline",
+      "default": "Julie (Lyon) vient de commander le trench\nKarim (Lille) en a pris 2\nEmma (Nantes) vient de commander le trench\nLéo (Bordeaux) l’a ajouté à son panier",
+      "binding": {
+       "source": "droplive-stats",
+       "path": "orders[*].text"
+      }
+     }
+    ],
+    "layers": [
+     {
+      "id": "buyers-1",
+      "name": "Achats",
+      "parent": null,
+      "type": "group",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 60.0,
+       "y": 920.0,
+       "width": 1000.0,
+       "height": 100.0,
+       "anchorX": 0.0,
+       "anchorY": 0.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "clip": false,
+      "overrides": {
+       "vertical": {
+        "props": {
+         "x": 40.0,
+         "y": 1665.0,
+         "scaleX": 1.0,
+         "scaleY": 1.0,
+         "width": 1000.0,
+         "height": 100.0
+        }
+       }
+      }
+     },
+     {
+      "id": "buyers-2",
+      "name": "Pilule",
+      "parent": "buyers-1",
+      "type": "group",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 1000.0,
+       "height": 100.0
+      },
+      "tracks": {
+       "y": [
+        {
+         "frame": 0.0,
+         "value": 60.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.16,
+          "y1": 1.0,
+          "x2": 0.3,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 16.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 50.0,
+         "value": 0.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.7,
+          "y1": 0.0,
+          "x2": 0.84,
+          "y2": 0.0
+         }
+        },
+        {
+         "frame": 62.0,
+         "value": 60.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ],
+       "opacity": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 10.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 50.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 60.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "clip": false
+     },
+     {
+      "id": "buyers-3",
+      "name": "Verre",
+      "parent": "buyers-2",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 1000.0,
+       "height": 100.0,
+       "fill": [
+        0.0902,
+        0.0824,
+        0.1176,
+        0.88
+       ],
+       "cornerRadius": 50.0,
+       "stroke": [
+        1.0,
+        1.0,
+        1.0,
+        0.1
+       ],
+       "strokeWidth": 1.5
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "buyers-4",
+      "name": "Sac",
+      "parent": "buyers-2",
+      "type": "ellipse",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 16.0,
+       "y": 16.0,
+       "width": 68.0,
+       "height": 68.0,
+       "fill": [
+        1.0,
+        0.8471,
+        0.302,
+        1.0
+       ]
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "buyers-5",
+      "name": "Sac anse",
+      "parent": "buyers-2",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 38.0,
+       "y": 30.0,
+       "width": 24.0,
+       "height": 16.0,
+       "fill": [
+        0.0471,
+        0.0431,
+        0.0627,
+        0
+       ],
+       "cornerRadius": 8.0,
+       "stroke": [
+        0.0471,
+        0.0431,
+        0.0627,
+        1.0
+       ],
+       "strokeWidth": 3.0
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "buyers-6",
+      "name": "Sac corps",
+      "parent": "buyers-2",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 33.0,
+       "y": 40.0,
+       "width": 34.0,
+       "height": 28.0,
+       "fill": [
+        0.0471,
+        0.0431,
+        0.0627,
+        1.0
+       ],
+       "cornerRadius": 4.0
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "buyers-7",
+      "name": "Pilule · Achats",
+      "parent": "buyers-2",
+      "type": "ticker",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 104.0,
+       "y": 0.0,
+       "width": 870.0,
+       "height": 100.0,
+       "fill": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+       ],
+       "fontSize": 28.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "text": "{{feed}}",
+      "separator": "   ",
+      "speed": 110.0,
+      "mode": "roll",
+      "fontFamily": "Inter",
+      "fontWeight": 700,
+      "align": "left",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "sepType": "symbol",
+      "startFull": true,
+      "itemDur": 3.0,
+      "transDur": 0.45
+     }
+    ],
+    "zone": "buyers",
+    "revision": 1,
+    "markerModel": 2
+   },
+   {
+    "id": "promo",
+    "name": "Code promo",
+    "duration": 110.0,
+    "markers": [
+     {
+      "id": "promo-air",
+      "frame": 60.0,
+      "name": "On air",
+      "kind": "out"
+     }
+    ],
+    "fields": [
+     {
+      "key": "code",
+      "label": "Code",
+      "kind": "text",
+      "default": "LIVE20"
+     },
+     {
+      "key": "text",
+      "label": "Texte",
+      "kind": "text",
+      "default": "-20 % sur tout le live avec le code"
+     },
+     {
+      "key": "until",
+      "label": "Validité",
+      "kind": "text",
+      "default": "valable jusqu’à 22 h"
+     }
+    ],
+    "layers": [
+     {
+      "id": "promo-1",
+      "name": "Code",
+      "parent": null,
+      "type": "group",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 1160.0,
+       "y": 860.0,
+       "width": 690.0,
+       "height": 170.0,
+       "anchorX": 0.0,
+       "anchorY": 0.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "clip": false,
+      "overrides": {
+       "vertical": {
+        "props": {
+         "x": 64.0,
+         "y": 1405.0,
+         "scaleX": 1.38,
+         "scaleY": 1.38,
+         "width": 952.1999999999999,
+         "height": 234.6
+        }
+       }
+      }
+     },
+     {
+      "id": "promo-2",
+      "name": "Carte",
+      "parent": "promo-1",
+      "type": "group",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 690.0,
+       "height": 170.0
+      },
+      "tracks": {
+       "y": [
+        {
+         "frame": 0.0,
+         "value": 80.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.16,
+          "y1": 1.0,
+          "x2": 0.3,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 18.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 60.0,
+         "value": 0.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.7,
+          "y1": 0.0,
+          "x2": 0.84,
+          "y2": 0.0
+         }
+        },
+        {
+         "frame": 72.0,
+         "value": 80.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ],
+       "opacity": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 10.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 60.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 70.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "clip": false
+     },
+     {
+      "id": "promo-3",
+      "name": "Fond",
+      "parent": "promo-2",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 690.0,
+       "height": 170.0,
+       "fill": [
+        1.0,
+        0.8471,
+        0.302,
+        1.0
+       ],
+       "cornerRadius": 28.0,
+       "shadowColor": [
+        1.0,
+        0.8471,
+        0.302,
+        0.35
+       ],
+       "shadowX": 0.0,
+       "shadowY": 14.0,
+       "shadowBlur": 40.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "dropShadow": true
+     },
+     {
+      "id": "promo-4",
+      "name": "Texte",
+      "parent": "promo-2",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 30.0,
+       "y": 20.0,
+       "width": 630.0,
+       "height": 40.0,
+       "fill": [
+        0.0471,
+        0.0431,
+        0.0627,
+        1.0
+       ],
+       "fontSize": 26.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "text": "{{text}}",
+      "fontFamily": "Inter",
+      "fontWeight": 800,
+      "align": "left",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "lang": "fr"
+     },
+     {
+      "id": "promo-5",
+      "name": "Ticket",
+      "parent": "promo-2",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 30.0,
+       "y": 70.0,
+       "width": 380.0,
+       "height": 80.0,
+       "fill": [
+        0.0471,
+        0.0431,
+        0.0627,
+        0.06
+       ],
+       "cornerRadius": 16.0,
+       "stroke": [
+        0.0471,
+        0.0431,
+        0.0627,
+        1.0
+       ],
+       "strokeWidth": 3.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "strokeStyle": {
+       "dash": "dashed",
+       "position": "center"
+      }
+     },
+     {
+      "id": "promo-6",
+      "name": "Carte · Code",
+      "parent": "promo-2",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 30.0,
+       "y": 70.0,
+       "width": 380.0,
+       "height": 80.0,
+       "fill": [
+        0.0471,
+        0.0431,
+        0.0627,
+        1.0
+       ],
+       "fontSize": 64.0,
+       "letterSpacing": 8.0
+      },
+      "tracks": {
+       "scaleX": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 12.0,
+         "value": 0.0,
+         "easing": {
+          "type": "back"
+         }
+        },
+        {
+         "frame": 28.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 60.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.7,
+          "y1": 0.0,
+          "x2": 0.84,
+          "y2": 0.0
+         }
+        },
+        {
+         "frame": 70.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ],
+       "scaleY": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 12.0,
+         "value": 0.0,
+         "easing": {
+          "type": "back"
+         }
+        },
+        {
+         "frame": 28.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 60.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.7,
+          "y1": 0.0,
+          "x2": 0.84,
+          "y2": 0.0
+         }
+        },
+        {
+         "frame": 70.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "text": "{{code}}",
+      "fontFamily": "Bebas Neue",
+      "fontWeight": 400,
+      "align": "center",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "lang": "fr"
+     },
+     {
+      "id": "promo-7",
+      "name": "Validité",
+      "parent": "promo-2",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 430.0,
+       "y": 70.0,
+       "width": 230.0,
+       "height": 80.0,
+       "fill": [
+        0.0471,
+        0.0431,
+        0.0627,
+        0.75
+       ],
+       "fontSize": 20.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "text": "{{until}}",
+      "fontFamily": "Inter",
+      "fontWeight": 600,
+      "align": "left",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "wrap": true,
+      "lineHeight": 1.2,
+      "lang": "fr"
+     }
+    ],
+    "zone": "offer",
+    "revision": 1,
+    "markerModel": 2
+   }
+  ],
+  "rundown": [
+   {
+    "id": "live-00-animatrice",
+    "name": "Animatrice",
+    "templateId": "host",
+    "zone": "host",
+    "playlist": "live",
+    "layer": 10,
+    "data": {}
+   },
+   {
+    "id": "live-01-trench-maison-lune",
+    "name": "Trench Maison Lune",
+    "templateId": "product",
+    "zone": "product",
+    "playlist": "live",
+    "layer": 20,
+    "data": {}
+   },
+   {
+    "id": "live-02-qr-code-d-achat",
+    "name": "QR code d’achat",
+    "templateId": "qr",
+    "zone": "qr",
+    "playlist": "live",
+    "layer": 25,
+    "data": {}
+   },
+   {
+    "id": "live-03-offre-flash-10-min",
+    "name": "Offre flash 10 min",
+    "templateId": "offer",
+    "zone": "offer",
+    "playlist": "live",
+    "layer": 30,
+    "data": {}
+   },
+   {
+    "id": "live-04-achats-récents",
+    "name": "Achats récents",
+    "templateId": "buyers",
+    "zone": "buyers",
+    "playlist": "live",
+    "layer": 15,
+    "data": {}
+   },
+   {
+    "id": "live-05-code-live20",
+    "name": "Code LIVE20",
+    "templateId": "promo",
+    "zone": "offer",
+    "playlist": "live",
+    "layer": 30,
+    "data": {}
+   },
+   {
+    "id": "live-06-sneakers-pas-de-côté",
+    "name": "Sneakers Pas de Côté",
+    "templateId": "product",
+    "zone": "product",
+    "playlist": "live",
+    "layer": 20,
+    "data": {
+     "brand": "PAS DE CÔTÉ",
+     "name": "Sneakers en cuir recyclé",
+     "variant": "Blanc cassé · du 36 au 46",
+     "was": "139 €",
+     "price": "89",
+     "cents": ",00 €",
+     "off": "-36 %",
+     "sku": "PDC-SN-310"
+    }
+   }
+  ],
+  "zones": [
+   {
+    "id": "product",
+    "name": "Produit",
+    "layer": 20,
+    "color": "#ff2e7e",
+    "transition": "sequential",
+    "areas": {
+     "main": {
+      "x": 0.6,
+      "y": 0.06,
+      "width": 0.37,
+      "height": 0.72
+     },
+     "vertical": {
+      "x": 0.04,
+      "y": 0.3,
+      "width": 0.92,
+      "height": 0.415
+     }
+    }
+   },
+   {
+    "id": "offer",
+    "name": "Offre",
+    "layer": 30,
+    "color": "#ffd84d",
+    "transition": "sequential",
+    "areas": {
+     "main": {
+      "x": 0.6,
+      "y": 0.79,
+      "width": 0.37,
+      "height": 0.18
+     },
+     "vertical": {
+      "x": 0.03,
+      "y": 0.72,
+      "width": 0.94,
+      "height": 0.135
+     }
+    }
+   },
+   {
+    "id": "host",
+    "name": "Animatrice",
+    "layer": 10,
+    "color": "#7c5cff",
+    "transition": "sequential",
+    "areas": {
+     "main": {
+      "x": 0.03,
+      "y": 0.04,
+      "width": 0.5,
+      "height": 0.13
+     },
+     "vertical": {
+      "x": 0.04,
+      "y": 0.03,
+      "width": 0.92,
+      "height": 0.09
+     }
+    }
+   },
+   {
+    "id": "buyers",
+    "name": "Achats",
+    "layer": 15,
+    "color": "#22c55e",
+    "transition": "sequential",
+    "areas": {
+     "main": {
+      "x": 0.03,
+      "y": 0.84,
+      "width": 0.55,
+      "height": 0.12
+     },
+     "vertical": {
+      "x": 0.03,
+      "y": 0.86,
+      "width": 0.94,
+      "height": 0.07
+     }
+    }
+   },
+   {
+    "id": "qr",
+    "name": "QR code",
+    "layer": 25,
+    "color": "#38bdf8",
+    "transition": "sequential",
+    "areas": {
+     "main": {
+      "x": 0.03,
+      "y": 0.4,
+      "width": 0.2,
+      "height": 0.42
+     },
+     "vertical": {
+      "x": 0.03,
+      "y": 0.115,
+      "width": 0.5,
+      "height": 0.18
+     }
+    }
+   }
+  ],
+  "playlists": [
+   {
+    "id": "live",
+    "name": "Drop Live · jeudi 20 h"
+   }
+  ],
+  "formats": [
+   {
+    "id": "vertical",
+    "name": "9:16",
+    "width": 1080,
+    "height": 1920
+   }
+  ],
+  "language": "fr",
+  "guides": {
+   "vertical": [],
+   "horizontal": [],
+   "actionSafe": 0.035,
+   "titleSafe": 0.05,
+   "exclusions": [
+    {
+     "id": "ui",
+     "name": "Boutons de la plateforme (9:16)",
+     "x": 0.84,
+     "y": 0.5,
+     "width": 0.14,
+     "height": 0.35
+    }
+   ]
+  }
+ },
+ "sources": [
+  {
+   "id": "droplive-stats",
+   "name": "Drop Live · audience et commandes",
+   "type": "push",
+   "format": "json",
+   "value": {
+    "live": {
+     "viewers": 12840
+    },
+    "orders": [
+     {
+      "text": "Julie (Lyon) vient de commander le trench"
+     },
+     {
+      "text": "Karim (Lille) en a pris 2"
+     },
+     {
+      "text": "Emma (Nantes) vient de commander le trench"
+     },
+     {
+      "text": "Léo (Bordeaux) l’a ajouté à son panier"
+     }
+    ]
+   }
+  },
+  {
+   "id": "droplive-catalogue",
+   "name": "Drop Live · catalogue",
+   "type": "push",
+   "format": "json",
+   "value": {
+    "products": [
+     {
+      "sku": "ML-TR-042",
+      "name": "Trench oversize en coton bio",
+      "price": "129",
+      "was": "189 €",
+      "stock": 37
+     },
+     {
+      "sku": "PDC-SN-310",
+      "name": "Sneakers en cuir recyclé",
+      "price": "89",
+      "was": "139 €",
+      "stock": 112
+     }
+    ]
+   }
+  }
+ ]
+}

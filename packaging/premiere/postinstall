@@ -1,0 +1,8 @@
+#!/bin/sh
+# Copies the staged panel into the CEP folder of the user installing it.
+STAGE="/Library/Application Support/Strata/Premiere"
+U=$(stat -f%Su /dev/console)
+if [ -z "$U" ] || [ "$U" = root ]; then U=${USER:-}; fi
+[ -n "$U" ] && [ "$U" != root ] || { echo "no user to install the panel for"; exit 0; }
+sudo -u "$U" -H /bin/sh "$STAGE/install-mac.sh"
+exit 0

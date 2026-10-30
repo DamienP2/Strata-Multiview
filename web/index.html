@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" href="/favicon.ico" sizes="any" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <title>Strata Graphics</title>
+    <script>
+      // The user's colour theme before the first paint (src/theme.ts keeps it up to date).
+      try {
+        var t = localStorage.getItem('strata.theme');
+        if (!/^\/(output|embed)(\/|$)/.test(location.pathname) && (t === 'light' || (t === 'system' && matchMedia('(prefers-color-scheme: light)').matches)))
+          document.documentElement.dataset.theme = 'light';
+      } catch (e) {}
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

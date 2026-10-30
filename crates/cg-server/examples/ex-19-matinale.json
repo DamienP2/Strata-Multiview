@@ -1,0 +1,7157 @@
+{
+ "meta": {
+  "id": "ex-19-matinale",
+  "name": "Matinale",
+  "category": "Magazine",
+  "tags": [
+   "Matinale",
+   "Météo",
+   "Trafic",
+   "Réseaux sociaux",
+   "Horoscope",
+   "Agenda"
+  ],
+  "description": "L’habillage lumineux d’une matinale : bandeau permanent avec l’heure, la météo des villes et l’info trafic qui défile, sujets à la une, mur des messages des téléspectateurs, carte météo des régions, horoscope du jour et programme de l’émission. Trafic, météo et messages peuvent venir de sources de données.", "summary": "Bandeau heure, météo et trafic, sujets du jour et messages.",
+  "en": {
+   "name": "Morning show",
+   "description": "A bright morning show package: a permanent strip with the time, city weather and scrolling traffic news, topic banners, a viewers’ message wall, a regional weather map, the daily horoscope and the show’s running order. Traffic, weather and messages may come from data sources.", "summary": "Time, weather and traffic strap, top stories and messages."
+  },
+  "cover": "strip"
+ },
+ "project": {
+  "id": "ex-19-matinale",
+  "name": "Matinale",
+  "description": "L’habillage lumineux d’une matinale : bandeau permanent avec l’heure, la météo des villes et l’info trafic qui défile, sujets à la une, mur des messages des téléspectateurs, carte météo des régions, horoscope du jour et programme de l’émission. Trafic, météo et messages peuvent venir de sources de données.",
+  "width": 1920,
+  "height": 1080,
+  "frameRate": {
+   "num": 50,
+   "den": 1
+  },
+  "templates": [
+   {
+    "id": "strip",
+    "name": "Bandeau horaire",
+    "duration": 80.0,
+    "markers": [
+     {
+      "id": "strip-air",
+      "frame": 40.0,
+      "name": "On air",
+      "kind": "out"
+     }
+    ],
+    "fields": [
+     {
+      "key": "cities",
+      "label": "Météo des villes",
+      "kind": "multiline",
+      "default": "PARIS  14°\nLYON  16°\nMARSEILLE  19°\nLILLE  11°\nBORDEAUX  17°"
+     },
+     {
+      "key": "traffic",
+      "label": "Trafic",
+      "kind": "multiline",
+      "default": "A86 : bouchon de 6 km à Nanterre\nPériphérique intérieur : ralentissements porte de Bagnolet\nRER B : trafic interrompu entre Gare du Nord et Aéroport CDG\nA7 : circulation fluide vers Lyon",
+      "binding": {
+       "source": "matinale-trafic",
+       "path": "items[*].title"
+      }
+     }
+    ],
+    "layers": [
+     {
+      "id": "strip-1",
+      "name": "Bandeau",
+      "parent": null,
+      "type": "group",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 48.0,
+       "y": 966.0,
+       "width": 1824.0,
+       "height": 82.0,
+       "anchorX": 0.0,
+       "anchorY": 0.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "clip": false
+     },
+     {
+      "id": "strip-2",
+      "name": "Barre",
+      "parent": "strip-1",
+      "type": "group",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 1824.0,
+       "height": 82.0
+      },
+      "tracks": {
+       "y": [
+        {
+         "frame": 0.0,
+         "value": 110.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.16,
+          "y1": 1.0,
+          "x2": 0.3,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 18.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 40.0,
+         "value": 0.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.7,
+          "y1": 0.0,
+          "x2": 0.84,
+          "y2": 0.0
+         }
+        },
+        {
+         "frame": 52.0,
+         "value": 110.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ],
+       "opacity": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 8.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 40.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 50.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "clip": false
+     },
+     {
+      "id": "strip-3",
+      "name": "Blanc",
+      "parent": "strip-2",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 1824.0,
+       "height": 82.0,
+       "fill": [
+        1.0,
+        1.0,
+        1.0,
+        0.97
+       ],
+       "cornerRadius": 22.0,
+       "shadowColor": [
+        0.1137,
+        0.1059,
+        0.1804,
+        0.25
+       ],
+       "shadowX": 0.0,
+       "shadowY": 12.0,
+       "shadowBlur": 36.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "dropShadow": true
+     },
+     {
+      "id": "strip-4",
+      "name": "Heure",
+      "parent": "strip-2",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 210.0,
+       "height": 82.0,
+       "fill": [
+        1.0,
+        0.4196,
+        0.2902,
+        1.0
+       ]
+      },
+      "tracks": {},
+      "bindings": {},
+      "perCorner": true,
+      "corners": [
+       22.0,
+       0.0,
+       0.0,
+       22.0
+      ]
+     },
+     {
+      "id": "strip-5",
+      "name": "Horloge",
+      "parent": "strip-2",
+      "type": "clock",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 210.0,
+       "height": 82.0,
+       "fill": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+       ],
+       "fontSize": 44.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "mode": "time",
+      "format": "HH:mm",
+      "timezone": "Europe/Paris",
+      "target": "",
+      "timerMode": "clock",
+      "lang": "fr-FR",
+      "fontFamily": "Montserrat",
+      "fontWeight": 800,
+      "align": "center",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "sepBlink": true
+     },
+     {
+      "id": "strip-6",
+      "name": "Soleil",
+      "parent": "strip-2",
+      "type": "group",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 232.0,
+       "y": 17.0,
+       "width": 48.0,
+       "height": 48.0
+      },
+      "tracks": {
+       "rotation": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 400.0,
+         "value": 90.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "clip": false
+     },
+     {
+      "id": "strip-7",
+      "name": "Rayons",
+      "parent": "strip-6",
+      "type": "polygon",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 48.0,
+       "height": 48.0,
+       "fill": [
+        1.0,
+        0.7569,
+        0.2706,
+        1.0
+       ]
+      },
+      "tracks": {},
+      "bindings": {},
+      "mode": "regular",
+      "sides": 8.0,
+      "star": true,
+      "inner": 62.0
+     },
+     {
+      "id": "strip-8",
+      "name": "Disque",
+      "parent": "strip-6",
+      "type": "ellipse",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 11.52,
+       "y": 11.52,
+       "width": 24.96,
+       "height": 24.96,
+       "fill": [
+        1.0,
+        0.7569,
+        0.2706,
+        1.0
+       ],
+       "stroke": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+       ],
+       "strokeWidth": 3.0
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "strip-9",
+      "name": "Villes",
+      "parent": "strip-2",
+      "type": "ticker",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 292.0,
+       "y": 0.0,
+       "width": 230.0,
+       "height": 82.0,
+       "fill": [
+        0.1137,
+        0.1059,
+        0.1804,
+        1.0
+       ],
+       "fontSize": 30.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "text": "{{cities}}",
+      "separator": "   ",
+      "speed": 110.0,
+      "mode": "flip",
+      "fontFamily": "Montserrat",
+      "fontWeight": 800,
+      "align": "left",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "sepType": "symbol",
+      "startFull": true,
+      "itemDur": 3.5,
+      "transDur": 0.5,
+      "trans": "slide"
+     },
+     {
+      "id": "strip-10",
+      "name": "Séparation",
+      "parent": "strip-2",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 532.0,
+       "y": 20.0,
+       "width": 2.0,
+       "height": 42.0,
+       "fill": [
+        0.1137,
+        0.1059,
+        0.1804,
+        0.12
+       ]
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "strip-11",
+      "name": "Barre · Trafic",
+      "parent": "strip-2",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 556.0,
+       "y": 19.0,
+       "width": 132.0,
+       "height": 44.0,
+       "fill": [
+        0.2275,
+        0.6275,
+        1.0,
+        1.0
+       ],
+       "cornerRadius": 22.0
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "strip-12",
+      "name": "Barre · Trafic",
+      "parent": "strip-2",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 556.0,
+       "y": 19.0,
+       "width": 132.0,
+       "height": 44.0,
+       "fill": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+       ],
+       "fontSize": 18.0,
+       "letterSpacing": 2.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "text": "TRAFIC",
+      "fontFamily": "Montserrat",
+      "fontWeight": 800,
+      "align": "center",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "lang": "fr"
+     },
+     {
+      "id": "strip-13",
+      "name": "Infos trafic",
+      "parent": "strip-2",
+      "type": "ticker",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 710.0,
+       "y": 0.0,
+       "width": 1090.0,
+       "height": 82.0,
+       "fill": [
+        0.1137,
+        0.1059,
+        0.1804,
+        1.0
+       ],
+       "fontSize": 28.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "text": "{{traffic}}",
+      "separator": "   ",
+      "speed": 120.0,
+      "mode": "crawl",
+      "fontFamily": "Inter",
+      "fontWeight": 600,
+      "align": "left",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "sepType": "symbol",
+      "startFull": true,
+      "sepSymbol": "●",
+      "sepColor": "#ff6b4a",
+      "spacing": 26.0,
+      "fade": true,
+      "fadeW": 60.0
+     }
+    ],
+    "zone": "strip",
+    "revision": 1,
+    "markerModel": 2
+   },
+   {
+    "id": "topic",
+    "name": "Sujet",
+    "duration": 110.0,
+    "markers": [
+     {
+      "id": "topic-air",
+      "frame": 60.0,
+      "name": "On air",
+      "kind": "out"
+     }
+    ],
+    "fields": [
+     {
+      "key": "tag",
+      "label": "Étiquette",
+      "kind": "text",
+      "default": "À LA UNE"
+     },
+     {
+      "key": "title",
+      "label": "Titre",
+      "kind": "text",
+      "default": "Canicule : les écoles adaptent leurs horaires dès lundi"
+     },
+     {
+      "key": "sub",
+      "label": "Précision",
+      "kind": "text",
+      "default": "Ouverture à 7 h 30 dans 14 départements · avec notre envoyée spéciale à Lyon"
+     }
+    ],
+    "layers": [
+     {
+      "id": "topic-1",
+      "name": "Sujet",
+      "parent": null,
+      "type": "group",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 96.0,
+       "y": 720.0,
+       "width": 1400.0,
+       "height": 220.0,
+       "anchorX": 0.0,
+       "anchorY": 0.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "clip": false
+     },
+     {
+      "id": "topic-2",
+      "name": "Carte",
+      "parent": "topic-1",
+      "type": "group",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 40.0,
+       "width": 1400.0,
+       "height": 170.0
+      },
+      "tracks": {
+       "y": [
+        {
+         "frame": 0.0,
+         "value": 90.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.16,
+          "y1": 1.0,
+          "x2": 0.3,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 20.0,
+         "value": 40.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 60.0,
+         "value": 40.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.7,
+          "y1": 0.0,
+          "x2": 0.84,
+          "y2": 0.0
+         }
+        },
+        {
+         "frame": 72.0,
+         "value": 90.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ],
+       "opacity": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 10.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 60.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 70.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "clip": false
+     },
+     {
+      "id": "topic-3",
+      "name": "Blanc",
+      "parent": "topic-2",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 1400.0,
+       "height": 170.0,
+       "fill": [
+        1.0,
+        1.0,
+        1.0,
+        0.97
+       ],
+       "cornerRadius": 26.0,
+       "shadowColor": [
+        0.1137,
+        0.1059,
+        0.1804,
+        0.25
+       ],
+       "shadowX": 0.0,
+       "shadowY": 12.0,
+       "shadowBlur": 36.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "dropShadow": true
+     },
+     {
+      "id": "topic-4",
+      "name": "Accent",
+      "parent": "topic-2",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 12.0,
+       "height": 170.0,
+       "fill": [
+        1.0,
+        0.7569,
+        0.2706,
+        1.0
+       ]
+      },
+      "tracks": {},
+      "bindings": {},
+      "perCorner": true,
+      "corners": [
+       26.0,
+       0.0,
+       0.0,
+       26.0
+      ]
+     },
+     {
+      "id": "topic-5",
+      "name": "Titre",
+      "parent": "topic-2",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 46.0,
+       "y": 28.0,
+       "width": 1320.0,
+       "height": 70.0,
+       "fill": [
+        0.1137,
+        0.1059,
+        0.1804,
+        1.0
+       ],
+       "fontSize": 46.0
+      },
+      "tracks": {
+       "opacity": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 6.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 16.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 60.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 70.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ],
+       "x": [
+        {
+         "frame": 0.0,
+         "value": 90.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 6.0,
+         "value": 90.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.16,
+          "y1": 1.0,
+          "x2": 0.3,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 24.0,
+         "value": 46.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 60.0,
+         "value": 46.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.7,
+          "y1": 0.0,
+          "x2": 0.84,
+          "y2": 0.0
+         }
+        },
+        {
+         "frame": 72.0,
+         "value": 90.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "text": "{{title}}",
+      "fontFamily": "Montserrat",
+      "fontWeight": 800,
+      "align": "left",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "lang": "fr"
+     },
+     {
+      "id": "topic-6",
+      "name": "Précision",
+      "parent": "topic-2",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 48.0,
+       "y": 100.0,
+       "width": 1320.0,
+       "height": 44.0,
+       "fill": [
+        0.4196,
+        0.4078,
+        0.502,
+        1.0
+       ],
+       "fontSize": 26.0
+      },
+      "tracks": {
+       "opacity": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 10.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 20.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 60.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 70.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "text": "{{sub}}",
+      "fontFamily": "Inter",
+      "fontWeight": 500,
+      "align": "left",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "lang": "fr"
+     },
+     {
+      "id": "topic-7",
+      "name": "Sujet · Étiquette",
+      "parent": "topic-1",
+      "type": "group",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 34.0,
+       "y": 18.0,
+       "width": 240.0,
+       "height": 48.0
+      },
+      "tracks": {
+       "scaleX": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 8.0,
+         "value": 0.0,
+         "easing": {
+          "type": "back"
+         }
+        },
+        {
+         "frame": 24.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 60.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.7,
+          "y1": 0.0,
+          "x2": 0.84,
+          "y2": 0.0
+         }
+        },
+        {
+         "frame": 70.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ],
+       "scaleY": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 8.0,
+         "value": 0.0,
+         "easing": {
+          "type": "back"
+         }
+        },
+        {
+         "frame": 24.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 60.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.7,
+          "y1": 0.0,
+          "x2": 0.84,
+          "y2": 0.0
+         }
+        },
+        {
+         "frame": 70.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "clip": false
+     },
+     {
+      "id": "topic-8",
+      "name": "Corail",
+      "parent": "topic-7",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 240.0,
+       "height": 48.0,
+       "fill": [
+        1.0,
+        0.4196,
+        0.2902,
+        1.0
+       ],
+       "cornerRadius": 24.0,
+       "shadowColor": [
+        1.0,
+        0.4196,
+        0.2902,
+        0.4
+       ],
+       "shadowX": 0.0,
+       "shadowY": 6.0,
+       "shadowBlur": 16.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "dropShadow": true
+     },
+     {
+      "id": "topic-9",
+      "name": "Sujet · Étiquette · Étiquette",
+      "parent": "topic-7",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 240.0,
+       "height": 48.0,
+       "fill": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+       ],
+       "fontSize": 20.0,
+       "letterSpacing": 2.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "text": "{{tag}}",
+      "fontFamily": "Montserrat",
+      "fontWeight": 800,
+      "align": "center",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "lang": "fr"
+     }
+    ],
+    "zone": "lower",
+    "revision": 1,
+    "markerModel": 2
+   },
+   {
+    "id": "social",
+    "name": "Mur des messages",
+    "duration": 170.0,
+    "markers": [
+     {
+      "id": "social-air",
+      "frame": 110.0,
+      "name": "On air",
+      "kind": "out"
+     }
+    ],
+    "fields": [
+     {
+      "key": "title",
+      "label": "Titre",
+      "kind": "text",
+      "default": "VOS MESSAGES"
+     },
+     {
+      "key": "hashtag",
+      "label": "Mot-dièse",
+      "kind": "text",
+      "default": "#Le69"
+     },
+     {
+      "key": "n1",
+      "label": "Nom 1",
+      "kind": "text",
+      "default": "Margaux",
+      "binding": {
+       "source": "matinale-messages",
+       "path": "posts[0].name"
+      }
+     },
+     {
+      "key": "h1",
+      "label": "Compte 1",
+      "kind": "text",
+      "default": "@margaux_b",
+      "binding": {
+       "source": "matinale-messages",
+       "path": "posts[0].handle"
+      }
+     },
+     {
+      "key": "t1",
+      "label": "Message 1",
+      "kind": "multiline",
+      "default": "Déjà 3 cafés et toujours pas réveillée… merci pour la bonne humeur de l’équipe ce matin !",
+      "binding": {
+       "source": "matinale-messages",
+       "path": "posts[0].text"
+      }
+     },
+     {
+      "key": "l1",
+      "label": "J’aime 1",
+      "kind": "number",
+      "default": "248",
+      "binding": {
+       "source": "matinale-messages",
+       "path": "posts[0].likes"
+      }
+     },
+     {
+      "key": "n2",
+      "label": "Nom 2",
+      "kind": "text",
+      "default": "Rachid",
+      "binding": {
+       "source": "matinale-messages",
+       "path": "posts[1].name"
+      }
+     },
+     {
+      "key": "h2",
+      "label": "Compte 2",
+      "kind": "text",
+      "default": "@rachid.k",
+      "binding": {
+       "source": "matinale-messages",
+       "path": "posts[1].handle"
+      }
+     },
+     {
+      "key": "t2",
+      "label": "Message 2",
+      "kind": "multiline",
+      "default": "Sur l’A86 depuis 40 minutes, heureusement que vous êtes là pour passer le temps 😅",
+      "binding": {
+       "source": "matinale-messages",
+       "path": "posts[1].text"
+      }
+     },
+     {
+      "key": "l2",
+      "label": "J’aime 2",
+      "kind": "number",
+      "default": "131",
+      "binding": {
+       "source": "matinale-messages",
+       "path": "posts[1].likes"
+      }
+     },
+     {
+      "key": "n3",
+      "label": "Nom 3",
+      "kind": "text",
+      "default": "Lucie",
+      "binding": {
+       "source": "matinale-messages",
+       "path": "posts[2].name"
+      }
+     },
+     {
+      "key": "h3",
+      "label": "Compte 3",
+      "kind": "text",
+      "default": "@lulu_dij",
+      "binding": {
+       "source": "matinale-messages",
+       "path": "posts[2].handle"
+      }
+     },
+     {
+      "key": "t3",
+      "label": "Message 3",
+      "kind": "multiline",
+      "default": "Bonjour de Dijon ! Il fait déjà 22° à 7 h, on prépare les glaces pour cet après-midi.",
+      "binding": {
+       "source": "matinale-messages",
+       "path": "posts[2].text"
+      }
+     },
+     {
+      "key": "l3",
+      "label": "J’aime 3",
+      "kind": "number",
+      "default": "97",
+      "binding": {
+       "source": "matinale-messages",
+       "path": "posts[2].likes"
+      }
+     }
+    ],
+    "layers": [
+     {
+      "id": "social-1",
+      "name": "Messages",
+      "parent": null,
+      "type": "group",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 1920.0,
+       "height": 1080.0
+      },
+      "tracks": {
+       "opacity": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 12.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 120.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 132.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "clip": false
+     },
+     {
+      "id": "social-2",
+      "name": "Fond",
+      "parent": "social-1",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 1920.0,
+       "height": 1080.0,
+       "fill": [
+        1.0,
+        0.9647,
+        0.9255,
+        1.0
+       ]
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "social-3",
+      "name": "Soleil",
+      "parent": "social-1",
+      "type": "ellipse",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 1100.0,
+       "y": -500.0,
+       "width": 1300.0,
+       "height": 1200.0,
+       "fill": [
+        1.0,
+        0.7569,
+        0.2706,
+        0.45
+       ]
+      },
+      "tracks": {
+       "y": [
+        {
+         "frame": 0.0,
+         "value": -560.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 150.0,
+         "value": -460.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "fillStyle": {
+       "kind": "radial",
+       "color2": "#fff6ec00"
+      }
+     },
+     {
+      "id": "social-4",
+      "name": "Corail",
+      "parent": "social-1",
+      "type": "ellipse",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": -400.0,
+       "y": 500.0,
+       "width": 1300.0,
+       "height": 1000.0,
+       "fill": [
+        1.0,
+        0.4196,
+        0.2902,
+        0.25
+       ]
+      },
+      "tracks": {},
+      "bindings": {},
+      "fillStyle": {
+       "kind": "radial",
+       "color2": "#fff6ec00"
+      }
+     },
+     {
+      "id": "social-5",
+      "name": "Ciel",
+      "parent": "social-1",
+      "type": "ellipse",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 600.0,
+       "y": 700.0,
+       "width": 1200.0,
+       "height": 900.0,
+       "fill": [
+        0.2275,
+        0.6275,
+        1.0,
+        0.16
+       ]
+      },
+      "tracks": {},
+      "bindings": {},
+      "fillStyle": {
+       "kind": "radial",
+       "color2": "#fff6ec00"
+      }
+     },
+     {
+      "id": "social-6",
+      "name": "Titre",
+      "parent": "social-1",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 120.0,
+       "y": 110.0,
+       "width": 1000.0,
+       "height": 90.0,
+       "fill": [
+        0.1137,
+        0.1059,
+        0.1804,
+        1.0
+       ],
+       "fontSize": 72.0
+      },
+      "tracks": {
+       "opacity": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 4.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 14.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 110.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 120.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "text": "{{title}}",
+      "fontFamily": "Montserrat",
+      "fontWeight": 800,
+      "align": "left",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "lang": "fr"
+     },
+     {
+      "id": "social-7",
+      "name": "Mot-dièse",
+      "parent": "social-1",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 900.0,
+       "y": 110.0,
+       "width": 900.0,
+       "height": 90.0,
+       "fill": [
+        1.0,
+        0.4196,
+        0.2902,
+        1.0
+       ],
+       "fontSize": 52.0
+      },
+      "tracks": {
+       "scaleX": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 10.0,
+         "value": 0.0,
+         "easing": {
+          "type": "back"
+         }
+        },
+        {
+         "frame": 26.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 110.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.7,
+          "y1": 0.0,
+          "x2": 0.84,
+          "y2": 0.0
+         }
+        },
+        {
+         "frame": 120.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ],
+       "scaleY": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 10.0,
+         "value": 0.0,
+         "easing": {
+          "type": "back"
+         }
+        },
+        {
+         "frame": 26.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 110.0,
+         "value": 1.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.7,
+          "y1": 0.0,
+          "x2": 0.84,
+          "y2": 0.0
+         }
+        },
+        {
+         "frame": 120.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "text": "{{hashtag}}",
+      "fontFamily": "Montserrat",
+      "fontWeight": 800,
+      "align": "right",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "lang": "fr"
+     },
+     {
+      "id": "social-8",
+      "name": "Message 1",
+      "parent": "social-1",
+      "type": "group",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 120.0,
+       "y": 260.0,
+       "width": 540.0,
+       "height": 620.0
+      },
+      "tracks": {
+       "opacity": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 13.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 23.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 116.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 126.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ],
+       "y": [
+        {
+         "frame": 0.0,
+         "value": 340.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 13.0,
+         "value": 340.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.16,
+          "y1": 1.0,
+          "x2": 0.3,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 33.0,
+         "value": 260.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 116.0,
+         "value": 260.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.7,
+          "y1": 0.0,
+          "x2": 0.84,
+          "y2": 0.0
+         }
+        },
+        {
+         "frame": 128.0,
+         "value": 340.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "clip": false
+     },
+     {
+      "id": "social-9",
+      "name": "Message 1 · Carte",
+      "parent": "social-8",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 540.0,
+       "height": 620.0,
+       "fill": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+       ],
+       "cornerRadius": 28.0,
+       "shadowColor": [
+        0.1137,
+        0.1059,
+        0.1804,
+        0.25
+       ],
+       "shadowX": 0.0,
+       "shadowY": 12.0,
+       "shadowBlur": 36.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "dropShadow": true
+     },
+     {
+      "id": "social-10",
+      "name": "Message 1 · Avatar",
+      "parent": "social-8",
+      "type": "ellipse",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 40.0,
+       "y": 40.0,
+       "width": 84.0,
+       "height": 84.0,
+       "fill": [
+        1.0,
+        0.4196,
+        0.2902,
+        1.0
+       ]
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "social-11",
+      "name": "Message 1 · Initiale",
+      "parent": "social-8",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 40.0,
+       "y": 40.0,
+       "width": 84.0,
+       "height": 84.0,
+       "fill": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+       ],
+       "fontSize": 40.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "text": "M",
+      "fontFamily": "Montserrat",
+      "fontWeight": 800,
+      "align": "center",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "maxChars": 1,
+      "overflow": "clip",
+      "lang": "fr"
+     },
+     {
+      "id": "social-12",
+      "name": "Message 1 · Nom",
+      "parent": "social-8",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 144.0,
+       "y": 44.0,
+       "width": 360.0,
+       "height": 44.0,
+       "fill": [
+        0.1137,
+        0.1059,
+        0.1804,
+        1.0
+       ],
+       "fontSize": 32.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "text": "{{n1}}",
+      "fontFamily": "Montserrat",
+      "fontWeight": 800,
+      "align": "left",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "lang": "fr"
+     },
+     {
+      "id": "social-13",
+      "name": "Message 1 · Compte",
+      "parent": "social-8",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 144.0,
+       "y": 88.0,
+       "width": 360.0,
+       "height": 32.0,
+       "fill": [
+        0.4196,
+        0.4078,
+        0.502,
+        1.0
+       ],
+       "fontSize": 22.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "text": "{{h1}}",
+      "fontFamily": "Inter",
+      "fontWeight": 500,
+      "align": "left",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "lang": "fr"
+     },
+     {
+      "id": "social-14",
+      "name": "Message 1 · Message",
+      "parent": "social-8",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 40.0,
+       "y": 160.0,
+       "width": 460.0,
+       "height": 360.0,
+       "fill": [
+        0.1137,
+        0.1059,
+        0.1804,
+        1.0
+       ],
+       "fontSize": 36.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "text": "{{t1}}",
+      "fontFamily": "Inter",
+      "fontWeight": 500,
+      "align": "left",
+      "verticalAlign": "top",
+      "uppercase": false,
+      "wrap": true,
+      "lineHeight": 1.35,
+      "lang": "fr"
+     },
+     {
+      "id": "social-15",
+      "name": "Message 1 · Filet",
+      "parent": "social-8",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 40.0,
+       "y": 540.0,
+       "width": 460.0,
+       "height": 1.5,
+       "fill": [
+        0.1137,
+        0.1059,
+        0.1804,
+        0.08
+       ]
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "social-16",
+      "name": "Message 1 · Cœur",
+      "parent": "social-8",
+      "type": "ellipse",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 40.0,
+       "y": 562.0,
+       "width": 26.0,
+       "height": 26.0,
+       "fill": [
+        1.0,
+        0.4196,
+        0.2902,
+        1.0
+       ]
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "social-17",
+      "name": "Message 1 · J’aime",
+      "parent": "social-8",
+      "type": "counter",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 80.0,
+       "y": 556.0,
+       "width": 300.0,
+       "height": 40.0,
+       "fill": [
+        0.4196,
+        0.4078,
+        0.502,
+        1.0
+       ],
+       "fontSize": 24.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "from": "0",
+      "to": "{{l1}}",
+      "duration": 1.2,
+      "decimals": 0,
+      "prefix": "",
+      "suffix": " j’aime",
+      "grouping": true,
+      "fontFamily": "Inter",
+      "fontWeight": 600,
+      "align": "left",
+      "verticalAlign": "middle",
+      "uppercase": false
+     },
+     {
+      "id": "social-18",
+      "name": "Message 2",
+      "parent": "social-1",
+      "type": "group",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 692.0,
+       "y": 260.0,
+       "width": 540.0,
+       "height": 620.0
+      },
+      "tracks": {
+       "opacity": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 18.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 28.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 113.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 123.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ],
+       "y": [
+        {
+         "frame": 0.0,
+         "value": 340.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 18.0,
+         "value": 340.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.16,
+          "y1": 1.0,
+          "x2": 0.3,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 38.0,
+         "value": 260.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 113.0,
+         "value": 260.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.7,
+          "y1": 0.0,
+          "x2": 0.84,
+          "y2": 0.0
+         }
+        },
+        {
+         "frame": 125.0,
+         "value": 340.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "clip": false
+     },
+     {
+      "id": "social-19",
+      "name": "Message 2 · Carte",
+      "parent": "social-18",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 540.0,
+       "height": 620.0,
+       "fill": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+       ],
+       "cornerRadius": 28.0,
+       "shadowColor": [
+        0.1137,
+        0.1059,
+        0.1804,
+        0.25
+       ],
+       "shadowX": 0.0,
+       "shadowY": 12.0,
+       "shadowBlur": 36.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "dropShadow": true
+     },
+     {
+      "id": "social-20",
+      "name": "Message 2 · Avatar",
+      "parent": "social-18",
+      "type": "ellipse",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 40.0,
+       "y": 40.0,
+       "width": 84.0,
+       "height": 84.0,
+       "fill": [
+        0.2275,
+        0.6275,
+        1.0,
+        1.0
+       ]
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "social-21",
+      "name": "Message 2 · Initiale",
+      "parent": "social-18",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 40.0,
+       "y": 40.0,
+       "width": 84.0,
+       "height": 84.0,
+       "fill": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+       ],
+       "fontSize": 40.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "text": "R",
+      "fontFamily": "Montserrat",
+      "fontWeight": 800,
+      "align": "center",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "maxChars": 1,
+      "overflow": "clip",
+      "lang": "fr"
+     },
+     {
+      "id": "social-22",
+      "name": "Message 2 · Nom",
+      "parent": "social-18",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 144.0,
+       "y": 44.0,
+       "width": 360.0,
+       "height": 44.0,
+       "fill": [
+        0.1137,
+        0.1059,
+        0.1804,
+        1.0
+       ],
+       "fontSize": 32.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "text": "{{n2}}",
+      "fontFamily": "Montserrat",
+      "fontWeight": 800,
+      "align": "left",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "lang": "fr"
+     },
+     {
+      "id": "social-23",
+      "name": "Message 2 · Compte",
+      "parent": "social-18",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 144.0,
+       "y": 88.0,
+       "width": 360.0,
+       "height": 32.0,
+       "fill": [
+        0.4196,
+        0.4078,
+        0.502,
+        1.0
+       ],
+       "fontSize": 22.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "text": "{{h2}}",
+      "fontFamily": "Inter",
+      "fontWeight": 500,
+      "align": "left",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "lang": "fr"
+     },
+     {
+      "id": "social-24",
+      "name": "Message 2 · Message",
+      "parent": "social-18",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 40.0,
+       "y": 160.0,
+       "width": 460.0,
+       "height": 360.0,
+       "fill": [
+        0.1137,
+        0.1059,
+        0.1804,
+        1.0
+       ],
+       "fontSize": 36.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "text": "{{t2}}",
+      "fontFamily": "Inter",
+      "fontWeight": 500,
+      "align": "left",
+      "verticalAlign": "top",
+      "uppercase": false,
+      "wrap": true,
+      "lineHeight": 1.35,
+      "lang": "fr"
+     },
+     {
+      "id": "social-25",
+      "name": "Message 2 · Filet",
+      "parent": "social-18",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 40.0,
+       "y": 540.0,
+       "width": 460.0,
+       "height": 1.5,
+       "fill": [
+        0.1137,
+        0.1059,
+        0.1804,
+        0.08
+       ]
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "social-26",
+      "name": "Message 2 · Cœur",
+      "parent": "social-18",
+      "type": "ellipse",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 40.0,
+       "y": 562.0,
+       "width": 26.0,
+       "height": 26.0,
+       "fill": [
+        1.0,
+        0.4196,
+        0.2902,
+        1.0
+       ]
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "social-27",
+      "name": "Message 2 · J’aime",
+      "parent": "social-18",
+      "type": "counter",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 80.0,
+       "y": 556.0,
+       "width": 300.0,
+       "height": 40.0,
+       "fill": [
+        0.4196,
+        0.4078,
+        0.502,
+        1.0
+       ],
+       "fontSize": 24.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "from": "0",
+      "to": "{{l2}}",
+      "duration": 1.2,
+      "decimals": 0,
+      "prefix": "",
+      "suffix": " j’aime",
+      "grouping": true,
+      "fontFamily": "Inter",
+      "fontWeight": 600,
+      "align": "left",
+      "verticalAlign": "middle",
+      "uppercase": false
+     },
+     {
+      "id": "social-28",
+      "name": "Message 3",
+      "parent": "social-1",
+      "type": "group",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 1264.0,
+       "y": 260.0,
+       "width": 540.0,
+       "height": 620.0
+      },
+      "tracks": {
+       "opacity": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 23.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 33.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 110.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 120.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ],
+       "y": [
+        {
+         "frame": 0.0,
+         "value": 340.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 23.0,
+         "value": 340.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.16,
+          "y1": 1.0,
+          "x2": 0.3,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 43.0,
+         "value": 260.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 110.0,
+         "value": 260.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.7,
+          "y1": 0.0,
+          "x2": 0.84,
+          "y2": 0.0
+         }
+        },
+        {
+         "frame": 122.0,
+         "value": 340.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "clip": false
+     },
+     {
+      "id": "social-29",
+      "name": "Message 3 · Carte",
+      "parent": "social-28",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 540.0,
+       "height": 620.0,
+       "fill": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+       ],
+       "cornerRadius": 28.0,
+       "shadowColor": [
+        0.1137,
+        0.1059,
+        0.1804,
+        0.25
+       ],
+       "shadowX": 0.0,
+       "shadowY": 12.0,
+       "shadowBlur": 36.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "dropShadow": true
+     },
+     {
+      "id": "social-30",
+      "name": "Message 3 · Avatar",
+      "parent": "social-28",
+      "type": "ellipse",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 40.0,
+       "y": 40.0,
+       "width": 84.0,
+       "height": 84.0,
+       "fill": [
+        1.0,
+        0.7569,
+        0.2706,
+        1.0
+       ]
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "social-31",
+      "name": "Message 3 · Initiale",
+      "parent": "social-28",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 40.0,
+       "y": 40.0,
+       "width": 84.0,
+       "height": 84.0,
+       "fill": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+       ],
+       "fontSize": 40.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "text": "L",
+      "fontFamily": "Montserrat",
+      "fontWeight": 800,
+      "align": "center",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "maxChars": 1,
+      "overflow": "clip",
+      "lang": "fr"
+     },
+     {
+      "id": "social-32",
+      "name": "Message 3 · Nom",
+      "parent": "social-28",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 144.0,
+       "y": 44.0,
+       "width": 360.0,
+       "height": 44.0,
+       "fill": [
+        0.1137,
+        0.1059,
+        0.1804,
+        1.0
+       ],
+       "fontSize": 32.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "text": "{{n3}}",
+      "fontFamily": "Montserrat",
+      "fontWeight": 800,
+      "align": "left",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "lang": "fr"
+     },
+     {
+      "id": "social-33",
+      "name": "Message 3 · Compte",
+      "parent": "social-28",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 144.0,
+       "y": 88.0,
+       "width": 360.0,
+       "height": 32.0,
+       "fill": [
+        0.4196,
+        0.4078,
+        0.502,
+        1.0
+       ],
+       "fontSize": 22.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "text": "{{h3}}",
+      "fontFamily": "Inter",
+      "fontWeight": 500,
+      "align": "left",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "lang": "fr"
+     },
+     {
+      "id": "social-34",
+      "name": "Message 3 · Message",
+      "parent": "social-28",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 40.0,
+       "y": 160.0,
+       "width": 460.0,
+       "height": 360.0,
+       "fill": [
+        0.1137,
+        0.1059,
+        0.1804,
+        1.0
+       ],
+       "fontSize": 36.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "text": "{{t3}}",
+      "fontFamily": "Inter",
+      "fontWeight": 500,
+      "align": "left",
+      "verticalAlign": "top",
+      "uppercase": false,
+      "wrap": true,
+      "lineHeight": 1.35,
+      "lang": "fr"
+     },
+     {
+      "id": "social-35",
+      "name": "Message 3 · Filet",
+      "parent": "social-28",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 40.0,
+       "y": 540.0,
+       "width": 460.0,
+       "height": 1.5,
+       "fill": [
+        0.1137,
+        0.1059,
+        0.1804,
+        0.08
+       ]
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "social-36",
+      "name": "Message 3 · Cœur",
+      "parent": "social-28",
+      "type": "ellipse",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 40.0,
+       "y": 562.0,
+       "width": 26.0,
+       "height": 26.0,
+       "fill": [
+        1.0,
+        0.4196,
+        0.2902,
+        1.0
+       ]
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "social-37",
+      "name": "Message 3 · J’aime",
+      "parent": "social-28",
+      "type": "counter",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 80.0,
+       "y": 556.0,
+       "width": 300.0,
+       "height": 40.0,
+       "fill": [
+        0.4196,
+        0.4078,
+        0.502,
+        1.0
+       ],
+       "fontSize": 24.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "from": "0",
+      "to": "{{l3}}",
+      "duration": 1.2,
+      "decimals": 0,
+      "prefix": "",
+      "suffix": " j’aime",
+      "grouping": true,
+      "fontFamily": "Inter",
+      "fontWeight": 600,
+      "align": "left",
+      "verticalAlign": "middle",
+      "uppercase": false
+     }
+    ],
+    "zone": "full",
+    "revision": 1,
+    "markerModel": 2
+   },
+   {
+    "id": "weather",
+    "name": "Météo des régions",
+    "duration": 170.0,
+    "markers": [
+     {
+      "id": "weather-air",
+      "frame": 110.0,
+      "name": "On air",
+      "kind": "out"
+     }
+    ],
+    "fields": [
+     {
+      "key": "title",
+      "label": "Titre",
+      "kind": "text",
+      "default": "MÉTÉO · CE MATIN"
+     },
+     {
+      "key": "date",
+      "label": "Date",
+      "kind": "text",
+      "default": "Jeudi 22 octobre"
+     },
+     {
+      "key": "text",
+      "label": "Prévision",
+      "kind": "multiline",
+      "default": "Grand soleil au sud, quelques nuages sur la Manche. Jusqu’à 24° l’après-midi à Marseille."
+     }
+    ],
+    "layers": [
+     {
+      "id": "weather-1",
+      "name": "Météo",
+      "parent": null,
+      "type": "group",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 1920.0,
+       "height": 1080.0
+      },
+      "tracks": {
+       "opacity": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 12.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 118.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 130.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "clip": false
+     },
+     {
+      "id": "weather-2",
+      "name": "Fond",
+      "parent": "weather-1",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 1920.0,
+       "height": 1080.0,
+       "fill": [
+        1.0,
+        0.9647,
+        0.9255,
+        1.0
+       ]
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "weather-3",
+      "name": "Météo · Soleil",
+      "parent": "weather-1",
+      "type": "ellipse",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 1100.0,
+       "y": -500.0,
+       "width": 1300.0,
+       "height": 1200.0,
+       "fill": [
+        1.0,
+        0.7569,
+        0.2706,
+        0.45
+       ]
+      },
+      "tracks": {
+       "y": [
+        {
+         "frame": 0.0,
+         "value": -560.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 150.0,
+         "value": -460.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "fillStyle": {
+       "kind": "radial",
+       "color2": "#fff6ec00"
+      }
+     },
+     {
+      "id": "weather-4",
+      "name": "Corail",
+      "parent": "weather-1",
+      "type": "ellipse",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": -400.0,
+       "y": 500.0,
+       "width": 1300.0,
+       "height": 1000.0,
+       "fill": [
+        1.0,
+        0.4196,
+        0.2902,
+        0.25
+       ]
+      },
+      "tracks": {},
+      "bindings": {},
+      "fillStyle": {
+       "kind": "radial",
+       "color2": "#fff6ec00"
+      }
+     },
+     {
+      "id": "weather-5",
+      "name": "Ciel",
+      "parent": "weather-1",
+      "type": "ellipse",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 600.0,
+       "y": 700.0,
+       "width": 1200.0,
+       "height": 900.0,
+       "fill": [
+        0.2275,
+        0.6275,
+        1.0,
+        0.16
+       ]
+      },
+      "tracks": {},
+      "bindings": {},
+      "fillStyle": {
+       "kind": "radial",
+       "color2": "#fff6ec00"
+      }
+     },
+     {
+      "id": "weather-6",
+      "name": "Météo · Soleil",
+      "parent": "weather-1",
+      "type": "group",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 120.0,
+       "y": 130.0,
+       "width": 90.0,
+       "height": 90.0
+      },
+      "tracks": {
+       "rotation": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 400.0,
+         "value": 90.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "clip": false
+     },
+     {
+      "id": "weather-7",
+      "name": "Rayons",
+      "parent": "weather-6",
+      "type": "polygon",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 90.0,
+       "height": 90.0,
+       "fill": [
+        1.0,
+        0.7569,
+        0.2706,
+        1.0
+       ]
+      },
+      "tracks": {},
+      "bindings": {},
+      "mode": "regular",
+      "sides": 8.0,
+      "star": true,
+      "inner": 62.0
+     },
+     {
+      "id": "weather-8",
+      "name": "Disque",
+      "parent": "weather-6",
+      "type": "ellipse",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 21.599999999999998,
+       "y": 21.599999999999998,
+       "width": 46.800000000000004,
+       "height": 46.800000000000004,
+       "fill": [
+        1.0,
+        0.7569,
+        0.2706,
+        1.0
+       ],
+       "stroke": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+       ],
+       "strokeWidth": 3.0
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "weather-9",
+      "name": "Titre",
+      "parent": "weather-1",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 240.0,
+       "y": 120.0,
+       "width": 560.0,
+       "height": 70.0,
+       "fill": [
+        0.1137,
+        0.1059,
+        0.1804,
+        1.0
+       ],
+       "fontSize": 52.0
+      },
+      "tracks": {
+       "opacity": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 4.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 14.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 110.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 120.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "text": "{{title}}",
+      "fontFamily": "Montserrat",
+      "fontWeight": 800,
+      "align": "left",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "lang": "fr"
+     },
+     {
+      "id": "weather-10",
+      "name": "Date",
+      "parent": "weather-1",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 242.0,
+       "y": 186.0,
+       "width": 560.0,
+       "height": 40.0,
+       "fill": [
+        1.0,
+        0.4196,
+        0.2902,
+        1.0
+       ],
+       "fontSize": 28.0
+      },
+      "tracks": {
+       "opacity": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 8.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 18.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 110.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 120.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "text": "{{date}}",
+      "fontFamily": "Montserrat",
+      "fontWeight": 600,
+      "align": "left",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "lang": "fr"
+     },
+     {
+      "id": "weather-11",
+      "name": "Prévision",
+      "parent": "weather-1",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 120.0,
+       "y": 300.0,
+       "width": 640.0,
+       "height": 300.0,
+       "fill": [
+        0.1137,
+        0.1059,
+        0.1804,
+        1.0
+       ],
+       "fontSize": 36.0
+      },
+      "tracks": {
+       "opacity": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 12.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 22.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 110.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 120.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ],
+       "y": [
+        {
+         "frame": 0.0,
+         "value": 340.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 12.0,
+         "value": 340.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.16,
+          "y1": 1.0,
+          "x2": 0.3,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 30.0,
+         "value": 300.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 110.0,
+         "value": 300.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.7,
+          "y1": 0.0,
+          "x2": 0.84,
+          "y2": 0.0
+         }
+        },
+        {
+         "frame": 122.0,
+         "value": 340.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "text": "{{text}}",
+      "fontFamily": "Inter",
+      "fontWeight": 500,
+      "align": "left",
+      "verticalAlign": "top",
+      "uppercase": false,
+      "wrap": true,
+      "lineHeight": 1.35,
+      "lang": "fr"
+     },
+     {
+      "id": "weather-12",
+      "name": "Météo · Carte",
+      "parent": "weather-1",
+      "type": "group",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 860.0,
+       "y": 80.0,
+       "width": 960.0,
+       "height": 900.0
+      },
+      "tracks": {
+       "opacity": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 6.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 20.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 110.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 120.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ],
+       "x": [
+        {
+         "frame": 0.0,
+         "value": 940.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 6.0,
+         "value": 940.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.16,
+          "y1": 1.0,
+          "x2": 0.3,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 28.0,
+         "value": 860.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 110.0,
+         "value": 860.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.7,
+          "y1": 0.0,
+          "x2": 0.84,
+          "y2": 0.0
+         }
+        },
+        {
+         "frame": 122.0,
+         "value": 940.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "clip": false
+     },
+     {
+      "id": "weather-13",
+      "name": "Météo · Carte · Carte",
+      "parent": "weather-12",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 960.0,
+       "height": 900.0,
+       "fill": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+       ],
+       "cornerRadius": 32.0,
+       "shadowColor": [
+        0.1137,
+        0.1059,
+        0.1804,
+        0.25
+       ],
+       "shadowX": 0.0,
+       "shadowY": 12.0,
+       "shadowBlur": 36.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "dropShadow": true
+     },
+     {
+      "id": "weather-14",
+      "name": "France",
+      "parent": "weather-12",
+      "type": "map",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 20.0,
+       "y": 20.0,
+       "width": 920.0,
+       "height": 860.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "style": "vector",
+      "projection": "mercator",
+      "radius": 22.0,
+      "showRoads": false,
+      "view": {
+       "lat": 46.5,
+       "lon": 2.6,
+       "zoom": 5.95,
+       "rot": 0.0,
+       "tilt": 0.0
+      },
+      "views": [],
+      "colors": {
+       "water": "#dcecff",
+       "land": "#f3eee6",
+       "border": "#ffffff",
+       "grid": ""
+      },
+      "layers": {
+       "markers": false,
+       "routes": false,
+       "zones": true,
+       "labels": false
+      },
+      "markers": [],
+      "routes": [],
+      "zones": {
+       "level": "regions",
+       "mode": "scale",
+       "rows": [
+        [
+         "Région",
+         "Température"
+        ],
+        [
+         "Hauts-de-France",
+         "11"
+        ],
+        [
+         "Normandie",
+         "12"
+        ],
+        [
+         "Île-de-France",
+         "14"
+        ],
+        [
+         "Grand Est",
+         "10"
+        ],
+        [
+         "Bretagne",
+         "13"
+        ],
+        [
+         "Pays de la Loire",
+         "14"
+        ],
+        [
+         "Centre-Val de Loire",
+         "13"
+        ],
+        [
+         "Bourgogne-Franche-Comté",
+         "12"
+        ],
+        [
+         "Nouvelle-Aquitaine",
+         "17"
+        ],
+        [
+         "Auvergne-Rhône-Alpes",
+         "15"
+        ],
+        [
+         "Occitanie",
+         "18"
+        ],
+        [
+         "Provence-Alpes-Côte d'Azur",
+         "19"
+        ],
+        [
+         "Corse",
+         "20"
+        ]
+       ],
+       "scale": [
+        {
+         "v": 8,
+         "color": "#7cc4ff"
+        },
+        {
+         "v": 12,
+         "color": "#b9e3a1"
+        },
+        {
+         "v": 16,
+         "color": "#ffd166"
+        },
+        {
+         "v": 20,
+         "color": "#ff8c5a"
+        },
+        {
+         "v": 26,
+         "color": "#e8453c"
+        }
+       ],
+       "unit": "°",
+       "title": "Températures à 8 h",
+       "opacity": 0.92,
+       "legend": true,
+       "legendPos": "bl",
+       "categories": []
+      },
+      "labels": {
+       "cities": false,
+       "countries": false,
+       "minImp": 9.0,
+       "size": 18.0,
+       "pad": 8.0
+      },
+      "attribution": {
+       "provider": "own",
+       "pos": "br",
+       "style": "light",
+       "show": true
+      }
+     }
+    ],
+    "zone": "full",
+    "revision": 1,
+    "markerModel": 2
+   },
+   {
+    "id": "horoscope",
+    "name": "Horoscope",
+    "duration": 180.0,
+    "markers": [
+     {
+      "id": "horoscope-air",
+      "frame": 120.0,
+      "name": "On air",
+      "kind": "out"
+     }
+    ],
+    "fields": [
+     {
+      "key": "title",
+      "label": "Titre",
+      "kind": "text",
+      "default": "HOROSCOPE DU JOUR"
+     },
+     {
+      "key": "t1",
+      "label": "Bélier",
+      "kind": "text",
+      "default": "Une rencontre change vos plans."
+     },
+     {
+      "key": "m1",
+      "label": "Bélier · humeur (1-5)",
+      "kind": "number",
+      "default": "4",
+      "min": 0,
+      "max": 5
+     },
+     {
+      "key": "t2",
+      "label": "Taureau",
+      "kind": "text",
+      "default": "Patience, la réponse arrive."
+     },
+     {
+      "key": "m2",
+      "label": "Taureau · humeur (1-5)",
+      "kind": "number",
+      "default": "3",
+      "min": 0,
+      "max": 5
+     },
+     {
+      "key": "t3",
+      "label": "Gémeaux",
+      "kind": "text",
+      "default": "Journée idéale pour négocier."
+     },
+     {
+      "key": "m3",
+      "label": "Gémeaux · humeur (1-5)",
+      "kind": "number",
+      "default": "5",
+      "min": 0,
+      "max": 5
+     },
+     {
+      "key": "t4",
+      "label": "Cancer",
+      "kind": "text",
+      "default": "Prenez du temps pour vous."
+     },
+     {
+      "key": "m4",
+      "label": "Cancer · humeur (1-5)",
+      "kind": "number",
+      "default": "2",
+      "min": 0,
+      "max": 5
+     },
+     {
+      "key": "t5",
+      "label": "Lion",
+      "kind": "text",
+      "default": "Votre énergie fait mouche."
+     },
+     {
+      "key": "m5",
+      "label": "Lion · humeur (1-5)",
+      "kind": "number",
+      "default": "5",
+      "min": 0,
+      "max": 5
+     },
+     {
+      "key": "t6",
+      "label": "Vierge",
+      "kind": "text",
+      "default": "Rangez avant de vous lancer."
+     },
+     {
+      "key": "m6",
+      "label": "Vierge · humeur (1-5)",
+      "kind": "number",
+      "default": "3",
+      "min": 0,
+      "max": 5
+     },
+     {
+      "key": "t7",
+      "label": "Balance",
+      "kind": "text",
+      "default": "Un choix se précise."
+     },
+     {
+      "key": "m7",
+      "label": "Balance · humeur (1-5)",
+      "kind": "number",
+      "default": "4",
+      "min": 0,
+      "max": 5
+     },
+     {
+      "key": "t8",
+      "label": "Scorpion",
+      "kind": "text",
+      "default": "Fiez-vous à votre instinct."
+     },
+     {
+      "key": "m8",
+      "label": "Scorpion · humeur (1-5)",
+      "kind": "number",
+      "default": "4",
+      "min": 0,
+      "max": 5
+     },
+     {
+      "key": "t9",
+      "label": "Sagittaire",
+      "kind": "text",
+      "default": "Un voyage se dessine."
+     },
+     {
+      "key": "m9",
+      "label": "Sagittaire · humeur (1-5)",
+      "kind": "number",
+      "default": "5",
+      "min": 0,
+      "max": 5
+     },
+     {
+      "key": "t10",
+      "label": "Capricorne",
+      "kind": "text",
+      "default": "Les efforts paient enfin."
+     },
+     {
+      "key": "m10",
+      "label": "Capricorne · humeur (1-5)",
+      "kind": "number",
+      "default": "4",
+      "min": 0,
+      "max": 5
+     },
+     {
+      "key": "t11",
+      "label": "Verseau",
+      "kind": "text",
+      "default": "Osez l’imprévu."
+     },
+     {
+      "key": "m11",
+      "label": "Verseau · humeur (1-5)",
+      "kind": "number",
+      "default": "3",
+      "min": 0,
+      "max": 5
+     },
+     {
+      "key": "t12",
+      "label": "Poissons",
+      "kind": "text",
+      "default": "Douceur et créativité."
+     },
+     {
+      "key": "m12",
+      "label": "Poissons · humeur (1-5)",
+      "kind": "number",
+      "default": "4",
+      "min": 0,
+      "max": 5
+     }
+    ],
+    "layers": [
+     {
+      "id": "horoscope-1",
+      "name": "Horoscope",
+      "parent": null,
+      "type": "group",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 1920.0,
+       "height": 1080.0
+      },
+      "tracks": {
+       "opacity": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 12.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 128.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 140.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "clip": false
+     },
+     {
+      "id": "horoscope-2",
+      "name": "Fond",
+      "parent": "horoscope-1",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 1920.0,
+       "height": 1080.0,
+       "fill": [
+        1.0,
+        0.9647,
+        0.9255,
+        1.0
+       ]
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "horoscope-3",
+      "name": "Soleil",
+      "parent": "horoscope-1",
+      "type": "ellipse",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 1100.0,
+       "y": -500.0,
+       "width": 1300.0,
+       "height": 1200.0,
+       "fill": [
+        1.0,
+        0.7569,
+        0.2706,
+        0.45
+       ]
+      },
+      "tracks": {
+       "y": [
+        {
+         "frame": 0.0,
+         "value": -560.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.65,
+          "y1": 0.0,
+          "x2": 0.35,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 160.0,
+         "value": -460.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "fillStyle": {
+       "kind": "radial",
+       "color2": "#fff6ec00"
+      }
+     },
+     {
+      "id": "horoscope-4",
+      "name": "Corail",
+      "parent": "horoscope-1",
+      "type": "ellipse",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": -400.0,
+       "y": 500.0,
+       "width": 1300.0,
+       "height": 1000.0,
+       "fill": [
+        1.0,
+        0.4196,
+        0.2902,
+        0.25
+       ]
+      },
+      "tracks": {},
+      "bindings": {},
+      "fillStyle": {
+       "kind": "radial",
+       "color2": "#fff6ec00"
+      }
+     },
+     {
+      "id": "horoscope-5",
+      "name": "Ciel",
+      "parent": "horoscope-1",
+      "type": "ellipse",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 600.0,
+       "y": 700.0,
+       "width": 1200.0,
+       "height": 900.0,
+       "fill": [
+        0.2275,
+        0.6275,
+        1.0,
+        0.16
+       ]
+      },
+      "tracks": {},
+      "bindings": {},
+      "fillStyle": {
+       "kind": "radial",
+       "color2": "#fff6ec00"
+      }
+     },
+     {
+      "id": "horoscope-6",
+      "name": "Titre",
+      "parent": "horoscope-1",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 80.0,
+       "width": 1920.0,
+       "height": 90.0,
+       "fill": [
+        0.1137,
+        0.1059,
+        0.1804,
+        1.0
+       ],
+       "fontSize": 64.0
+      },
+      "tracks": {
+       "opacity": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 4.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 14.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 120.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 130.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "text": "{{title}}",
+      "fontFamily": "Montserrat",
+      "fontWeight": 800,
+      "align": "center",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "lang": "fr"
+     },
+     {
+      "id": "horoscope-7",
+      "name": "Bélier",
+      "parent": "horoscope-1",
+      "type": "group",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 120.0,
+       "y": 210.0,
+       "width": 404.0,
+       "height": 238.0
+      },
+      "tracks": {
+       "opacity": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 8.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 18.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 131.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 139.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ],
+       "y": [
+        {
+         "frame": 0.0,
+         "value": 260.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 8.0,
+         "value": 260.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.16,
+          "y1": 1.0,
+          "x2": 0.3,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 26.0,
+         "value": 210.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 131.0,
+         "value": 210.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.7,
+          "y1": 0.0,
+          "x2": 0.84,
+          "y2": 0.0
+         }
+        },
+        {
+         "frame": 141.0,
+         "value": 260.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "clip": false
+     },
+     {
+      "id": "horoscope-8",
+      "name": "Bélier · Carte",
+      "parent": "horoscope-7",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 404.0,
+       "height": 238.0,
+       "fill": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+       ],
+       "cornerRadius": 24.0,
+       "shadowColor": [
+        0.1137,
+        0.1059,
+        0.1804,
+        0.25
+       ],
+       "shadowX": 0.0,
+       "shadowY": 12.0,
+       "shadowBlur": 36.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "dropShadow": true
+     },
+     {
+      "id": "horoscope-9",
+      "name": "Bélier · Signe",
+      "parent": "horoscope-7",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 30.0,
+       "y": 22.0,
+       "width": 344.0,
+       "height": 44.0,
+       "fill": [
+        0.1137,
+        0.1059,
+        0.1804,
+        1.0
+       ],
+       "fontSize": 28.0,
+       "letterSpacing": 1.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "text": "BÉLIER",
+      "fontFamily": "Montserrat",
+      "fontWeight": 800,
+      "align": "left",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "lang": "fr"
+     },
+     {
+      "id": "horoscope-10",
+      "name": "Bélier · Texte",
+      "parent": "horoscope-7",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 30.0,
+       "y": 74.0,
+       "width": 344.0,
+       "height": 100.0,
+       "fill": [
+        0.4196,
+        0.4078,
+        0.502,
+        1.0
+       ],
+       "fontSize": 25.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "text": "{{t1}}",
+      "fontFamily": "Inter",
+      "fontWeight": 500,
+      "align": "left",
+      "verticalAlign": "top",
+      "uppercase": false,
+      "wrap": true,
+      "lineHeight": 1.3,
+      "lang": "fr"
+     },
+     {
+      "id": "horoscope-11",
+      "name": "Bélier · Humeur",
+      "parent": "horoscope-7",
+      "type": "progress",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 30.0,
+       "y": 190.0,
+       "width": 180.0,
+       "height": 14.0,
+       "fill": [
+        1.0,
+        0.4196,
+        0.2902,
+        1.0
+       ]
+      },
+      "tracks": {},
+      "bindings": {},
+      "value": "{{m1}}",
+      "max": "5",
+      "track": "#1d1b2e14",
+      "duration": 1.2,
+      "shape": "segments",
+      "segments": 5,
+      "segGap": 8.0,
+      "rounded": true
+     },
+     {
+      "id": "horoscope-12",
+      "name": "Taureau",
+      "parent": "horoscope-1",
+      "type": "group",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 548.0,
+       "y": 210.0,
+       "width": 404.0,
+       "height": 238.0
+      },
+      "tracks": {
+       "opacity": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 10.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 20.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 130.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 138.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ],
+       "y": [
+        {
+         "frame": 0.0,
+         "value": 260.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 10.0,
+         "value": 260.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.16,
+          "y1": 1.0,
+          "x2": 0.3,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 28.0,
+         "value": 210.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 130.0,
+         "value": 210.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.7,
+          "y1": 0.0,
+          "x2": 0.84,
+          "y2": 0.0
+         }
+        },
+        {
+         "frame": 140.0,
+         "value": 260.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "clip": false
+     },
+     {
+      "id": "horoscope-13",
+      "name": "Taureau · Carte",
+      "parent": "horoscope-12",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 404.0,
+       "height": 238.0,
+       "fill": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+       ],
+       "cornerRadius": 24.0,
+       "shadowColor": [
+        0.1137,
+        0.1059,
+        0.1804,
+        0.25
+       ],
+       "shadowX": 0.0,
+       "shadowY": 12.0,
+       "shadowBlur": 36.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "dropShadow": true
+     },
+     {
+      "id": "horoscope-14",
+      "name": "Taureau · Signe",
+      "parent": "horoscope-12",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 30.0,
+       "y": 22.0,
+       "width": 344.0,
+       "height": 44.0,
+       "fill": [
+        0.1137,
+        0.1059,
+        0.1804,
+        1.0
+       ],
+       "fontSize": 28.0,
+       "letterSpacing": 1.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "text": "TAUREAU",
+      "fontFamily": "Montserrat",
+      "fontWeight": 800,
+      "align": "left",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "lang": "fr"
+     },
+     {
+      "id": "horoscope-15",
+      "name": "Taureau · Texte",
+      "parent": "horoscope-12",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 30.0,
+       "y": 74.0,
+       "width": 344.0,
+       "height": 100.0,
+       "fill": [
+        0.4196,
+        0.4078,
+        0.502,
+        1.0
+       ],
+       "fontSize": 25.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "text": "{{t2}}",
+      "fontFamily": "Inter",
+      "fontWeight": 500,
+      "align": "left",
+      "verticalAlign": "top",
+      "uppercase": false,
+      "wrap": true,
+      "lineHeight": 1.3,
+      "lang": "fr"
+     },
+     {
+      "id": "horoscope-16",
+      "name": "Taureau · Humeur",
+      "parent": "horoscope-12",
+      "type": "progress",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 30.0,
+       "y": 190.0,
+       "width": 180.0,
+       "height": 14.0,
+       "fill": [
+        1.0,
+        0.4196,
+        0.2902,
+        1.0
+       ]
+      },
+      "tracks": {},
+      "bindings": {},
+      "value": "{{m2}}",
+      "max": "5",
+      "track": "#1d1b2e14",
+      "duration": 1.2,
+      "shape": "segments",
+      "segments": 5,
+      "segGap": 8.0,
+      "rounded": true
+     },
+     {
+      "id": "horoscope-17",
+      "name": "Gémeaux",
+      "parent": "horoscope-1",
+      "type": "group",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 976.0,
+       "y": 210.0,
+       "width": 404.0,
+       "height": 238.0
+      },
+      "tracks": {
+       "opacity": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 12.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 22.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 129.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 137.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ],
+       "y": [
+        {
+         "frame": 0.0,
+         "value": 260.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 12.0,
+         "value": 260.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.16,
+          "y1": 1.0,
+          "x2": 0.3,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 30.0,
+         "value": 210.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 129.0,
+         "value": 210.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.7,
+          "y1": 0.0,
+          "x2": 0.84,
+          "y2": 0.0
+         }
+        },
+        {
+         "frame": 139.0,
+         "value": 260.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "clip": false
+     },
+     {
+      "id": "horoscope-18",
+      "name": "Gémeaux · Carte",
+      "parent": "horoscope-17",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 404.0,
+       "height": 238.0,
+       "fill": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+       ],
+       "cornerRadius": 24.0,
+       "shadowColor": [
+        0.1137,
+        0.1059,
+        0.1804,
+        0.25
+       ],
+       "shadowX": 0.0,
+       "shadowY": 12.0,
+       "shadowBlur": 36.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "dropShadow": true
+     },
+     {
+      "id": "horoscope-19",
+      "name": "Gémeaux · Signe",
+      "parent": "horoscope-17",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 30.0,
+       "y": 22.0,
+       "width": 344.0,
+       "height": 44.0,
+       "fill": [
+        0.1137,
+        0.1059,
+        0.1804,
+        1.0
+       ],
+       "fontSize": 28.0,
+       "letterSpacing": 1.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "text": "GÉMEAUX",
+      "fontFamily": "Montserrat",
+      "fontWeight": 800,
+      "align": "left",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "lang": "fr"
+     },
+     {
+      "id": "horoscope-20",
+      "name": "Gémeaux · Texte",
+      "parent": "horoscope-17",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 30.0,
+       "y": 74.0,
+       "width": 344.0,
+       "height": 100.0,
+       "fill": [
+        0.4196,
+        0.4078,
+        0.502,
+        1.0
+       ],
+       "fontSize": 25.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "text": "{{t3}}",
+      "fontFamily": "Inter",
+      "fontWeight": 500,
+      "align": "left",
+      "verticalAlign": "top",
+      "uppercase": false,
+      "wrap": true,
+      "lineHeight": 1.3,
+      "lang": "fr"
+     },
+     {
+      "id": "horoscope-21",
+      "name": "Gémeaux · Humeur",
+      "parent": "horoscope-17",
+      "type": "progress",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 30.0,
+       "y": 190.0,
+       "width": 180.0,
+       "height": 14.0,
+       "fill": [
+        1.0,
+        0.4196,
+        0.2902,
+        1.0
+       ]
+      },
+      "tracks": {},
+      "bindings": {},
+      "value": "{{m3}}",
+      "max": "5",
+      "track": "#1d1b2e14",
+      "duration": 1.2,
+      "shape": "segments",
+      "segments": 5,
+      "segGap": 8.0,
+      "rounded": true
+     },
+     {
+      "id": "horoscope-22",
+      "name": "Cancer",
+      "parent": "horoscope-1",
+      "type": "group",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 1404.0,
+       "y": 210.0,
+       "width": 404.0,
+       "height": 238.0
+      },
+      "tracks": {
+       "opacity": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 14.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 24.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 128.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 136.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ],
+       "y": [
+        {
+         "frame": 0.0,
+         "value": 260.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 14.0,
+         "value": 260.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.16,
+          "y1": 1.0,
+          "x2": 0.3,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 32.0,
+         "value": 210.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 128.0,
+         "value": 210.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.7,
+          "y1": 0.0,
+          "x2": 0.84,
+          "y2": 0.0
+         }
+        },
+        {
+         "frame": 138.0,
+         "value": 260.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "clip": false
+     },
+     {
+      "id": "horoscope-23",
+      "name": "Cancer · Carte",
+      "parent": "horoscope-22",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 404.0,
+       "height": 238.0,
+       "fill": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+       ],
+       "cornerRadius": 24.0,
+       "shadowColor": [
+        0.1137,
+        0.1059,
+        0.1804,
+        0.25
+       ],
+       "shadowX": 0.0,
+       "shadowY": 12.0,
+       "shadowBlur": 36.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "dropShadow": true
+     },
+     {
+      "id": "horoscope-24",
+      "name": "Cancer · Signe",
+      "parent": "horoscope-22",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 30.0,
+       "y": 22.0,
+       "width": 344.0,
+       "height": 44.0,
+       "fill": [
+        0.1137,
+        0.1059,
+        0.1804,
+        1.0
+       ],
+       "fontSize": 28.0,
+       "letterSpacing": 1.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "text": "CANCER",
+      "fontFamily": "Montserrat",
+      "fontWeight": 800,
+      "align": "left",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "lang": "fr"
+     },
+     {
+      "id": "horoscope-25",
+      "name": "Cancer · Texte",
+      "parent": "horoscope-22",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 30.0,
+       "y": 74.0,
+       "width": 344.0,
+       "height": 100.0,
+       "fill": [
+        0.4196,
+        0.4078,
+        0.502,
+        1.0
+       ],
+       "fontSize": 25.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "text": "{{t4}}",
+      "fontFamily": "Inter",
+      "fontWeight": 500,
+      "align": "left",
+      "verticalAlign": "top",
+      "uppercase": false,
+      "wrap": true,
+      "lineHeight": 1.3,
+      "lang": "fr"
+     },
+     {
+      "id": "horoscope-26",
+      "name": "Cancer · Humeur",
+      "parent": "horoscope-22",
+      "type": "progress",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 30.0,
+       "y": 190.0,
+       "width": 180.0,
+       "height": 14.0,
+       "fill": [
+        1.0,
+        0.4196,
+        0.2902,
+        1.0
+       ]
+      },
+      "tracks": {},
+      "bindings": {},
+      "value": "{{m4}}",
+      "max": "5",
+      "track": "#1d1b2e14",
+      "duration": 1.2,
+      "shape": "segments",
+      "segments": 5,
+      "segGap": 8.0,
+      "rounded": true
+     },
+     {
+      "id": "horoscope-27",
+      "name": "Lion",
+      "parent": "horoscope-1",
+      "type": "group",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 120.0,
+       "y": 472.0,
+       "width": 404.0,
+       "height": 238.0
+      },
+      "tracks": {
+       "opacity": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 16.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 26.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 127.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 135.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ],
+       "y": [
+        {
+         "frame": 0.0,
+         "value": 522.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 16.0,
+         "value": 522.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.16,
+          "y1": 1.0,
+          "x2": 0.3,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 34.0,
+         "value": 472.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 127.0,
+         "value": 472.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.7,
+          "y1": 0.0,
+          "x2": 0.84,
+          "y2": 0.0
+         }
+        },
+        {
+         "frame": 137.0,
+         "value": 522.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "clip": false
+     },
+     {
+      "id": "horoscope-28",
+      "name": "Lion · Carte",
+      "parent": "horoscope-27",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 404.0,
+       "height": 238.0,
+       "fill": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+       ],
+       "cornerRadius": 24.0,
+       "shadowColor": [
+        0.1137,
+        0.1059,
+        0.1804,
+        0.25
+       ],
+       "shadowX": 0.0,
+       "shadowY": 12.0,
+       "shadowBlur": 36.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "dropShadow": true
+     },
+     {
+      "id": "horoscope-29",
+      "name": "Lion · Signe",
+      "parent": "horoscope-27",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 30.0,
+       "y": 22.0,
+       "width": 344.0,
+       "height": 44.0,
+       "fill": [
+        0.1137,
+        0.1059,
+        0.1804,
+        1.0
+       ],
+       "fontSize": 28.0,
+       "letterSpacing": 1.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "text": "LION",
+      "fontFamily": "Montserrat",
+      "fontWeight": 800,
+      "align": "left",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "lang": "fr"
+     },
+     {
+      "id": "horoscope-30",
+      "name": "Lion · Texte",
+      "parent": "horoscope-27",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 30.0,
+       "y": 74.0,
+       "width": 344.0,
+       "height": 100.0,
+       "fill": [
+        0.4196,
+        0.4078,
+        0.502,
+        1.0
+       ],
+       "fontSize": 25.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "text": "{{t5}}",
+      "fontFamily": "Inter",
+      "fontWeight": 500,
+      "align": "left",
+      "verticalAlign": "top",
+      "uppercase": false,
+      "wrap": true,
+      "lineHeight": 1.3,
+      "lang": "fr"
+     },
+     {
+      "id": "horoscope-31",
+      "name": "Lion · Humeur",
+      "parent": "horoscope-27",
+      "type": "progress",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 30.0,
+       "y": 190.0,
+       "width": 180.0,
+       "height": 14.0,
+       "fill": [
+        1.0,
+        0.4196,
+        0.2902,
+        1.0
+       ]
+      },
+      "tracks": {},
+      "bindings": {},
+      "value": "{{m5}}",
+      "max": "5",
+      "track": "#1d1b2e14",
+      "duration": 1.2,
+      "shape": "segments",
+      "segments": 5,
+      "segGap": 8.0,
+      "rounded": true
+     },
+     {
+      "id": "horoscope-32",
+      "name": "Vierge",
+      "parent": "horoscope-1",
+      "type": "group",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 548.0,
+       "y": 472.0,
+       "width": 404.0,
+       "height": 238.0
+      },
+      "tracks": {
+       "opacity": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 18.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 28.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 126.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 134.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ],
+       "y": [
+        {
+         "frame": 0.0,
+         "value": 522.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 18.0,
+         "value": 522.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.16,
+          "y1": 1.0,
+          "x2": 0.3,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 36.0,
+         "value": 472.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 126.0,
+         "value": 472.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.7,
+          "y1": 0.0,
+          "x2": 0.84,
+          "y2": 0.0
+         }
+        },
+        {
+         "frame": 136.0,
+         "value": 522.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "clip": false
+     },
+     {
+      "id": "horoscope-33",
+      "name": "Vierge · Carte",
+      "parent": "horoscope-32",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 404.0,
+       "height": 238.0,
+       "fill": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+       ],
+       "cornerRadius": 24.0,
+       "shadowColor": [
+        0.1137,
+        0.1059,
+        0.1804,
+        0.25
+       ],
+       "shadowX": 0.0,
+       "shadowY": 12.0,
+       "shadowBlur": 36.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "dropShadow": true
+     },
+     {
+      "id": "horoscope-34",
+      "name": "Vierge · Signe",
+      "parent": "horoscope-32",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 30.0,
+       "y": 22.0,
+       "width": 344.0,
+       "height": 44.0,
+       "fill": [
+        0.1137,
+        0.1059,
+        0.1804,
+        1.0
+       ],
+       "fontSize": 28.0,
+       "letterSpacing": 1.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "text": "VIERGE",
+      "fontFamily": "Montserrat",
+      "fontWeight": 800,
+      "align": "left",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "lang": "fr"
+     },
+     {
+      "id": "horoscope-35",
+      "name": "Vierge · Texte",
+      "parent": "horoscope-32",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 30.0,
+       "y": 74.0,
+       "width": 344.0,
+       "height": 100.0,
+       "fill": [
+        0.4196,
+        0.4078,
+        0.502,
+        1.0
+       ],
+       "fontSize": 25.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "text": "{{t6}}",
+      "fontFamily": "Inter",
+      "fontWeight": 500,
+      "align": "left",
+      "verticalAlign": "top",
+      "uppercase": false,
+      "wrap": true,
+      "lineHeight": 1.3,
+      "lang": "fr"
+     },
+     {
+      "id": "horoscope-36",
+      "name": "Vierge · Humeur",
+      "parent": "horoscope-32",
+      "type": "progress",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 30.0,
+       "y": 190.0,
+       "width": 180.0,
+       "height": 14.0,
+       "fill": [
+        1.0,
+        0.4196,
+        0.2902,
+        1.0
+       ]
+      },
+      "tracks": {},
+      "bindings": {},
+      "value": "{{m6}}",
+      "max": "5",
+      "track": "#1d1b2e14",
+      "duration": 1.2,
+      "shape": "segments",
+      "segments": 5,
+      "segGap": 8.0,
+      "rounded": true
+     },
+     {
+      "id": "horoscope-37",
+      "name": "Balance",
+      "parent": "horoscope-1",
+      "type": "group",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 976.0,
+       "y": 472.0,
+       "width": 404.0,
+       "height": 238.0
+      },
+      "tracks": {
+       "opacity": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 20.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 30.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 125.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 133.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ],
+       "y": [
+        {
+         "frame": 0.0,
+         "value": 522.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 20.0,
+         "value": 522.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.16,
+          "y1": 1.0,
+          "x2": 0.3,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 38.0,
+         "value": 472.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 125.0,
+         "value": 472.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.7,
+          "y1": 0.0,
+          "x2": 0.84,
+          "y2": 0.0
+         }
+        },
+        {
+         "frame": 135.0,
+         "value": 522.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "clip": false
+     },
+     {
+      "id": "horoscope-38",
+      "name": "Balance · Carte",
+      "parent": "horoscope-37",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 404.0,
+       "height": 238.0,
+       "fill": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+       ],
+       "cornerRadius": 24.0,
+       "shadowColor": [
+        0.1137,
+        0.1059,
+        0.1804,
+        0.25
+       ],
+       "shadowX": 0.0,
+       "shadowY": 12.0,
+       "shadowBlur": 36.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "dropShadow": true
+     },
+     {
+      "id": "horoscope-39",
+      "name": "Balance · Signe",
+      "parent": "horoscope-37",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 30.0,
+       "y": 22.0,
+       "width": 344.0,
+       "height": 44.0,
+       "fill": [
+        0.1137,
+        0.1059,
+        0.1804,
+        1.0
+       ],
+       "fontSize": 28.0,
+       "letterSpacing": 1.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "text": "BALANCE",
+      "fontFamily": "Montserrat",
+      "fontWeight": 800,
+      "align": "left",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "lang": "fr"
+     },
+     {
+      "id": "horoscope-40",
+      "name": "Balance · Texte",
+      "parent": "horoscope-37",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 30.0,
+       "y": 74.0,
+       "width": 344.0,
+       "height": 100.0,
+       "fill": [
+        0.4196,
+        0.4078,
+        0.502,
+        1.0
+       ],
+       "fontSize": 25.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "text": "{{t7}}",
+      "fontFamily": "Inter",
+      "fontWeight": 500,
+      "align": "left",
+      "verticalAlign": "top",
+      "uppercase": false,
+      "wrap": true,
+      "lineHeight": 1.3,
+      "lang": "fr"
+     },
+     {
+      "id": "horoscope-41",
+      "name": "Balance · Humeur",
+      "parent": "horoscope-37",
+      "type": "progress",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 30.0,
+       "y": 190.0,
+       "width": 180.0,
+       "height": 14.0,
+       "fill": [
+        1.0,
+        0.4196,
+        0.2902,
+        1.0
+       ]
+      },
+      "tracks": {},
+      "bindings": {},
+      "value": "{{m7}}",
+      "max": "5",
+      "track": "#1d1b2e14",
+      "duration": 1.2,
+      "shape": "segments",
+      "segments": 5,
+      "segGap": 8.0,
+      "rounded": true
+     },
+     {
+      "id": "horoscope-42",
+      "name": "Scorpion",
+      "parent": "horoscope-1",
+      "type": "group",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 1404.0,
+       "y": 472.0,
+       "width": 404.0,
+       "height": 238.0
+      },
+      "tracks": {
+       "opacity": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 22.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 32.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 124.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 132.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ],
+       "y": [
+        {
+         "frame": 0.0,
+         "value": 522.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 22.0,
+         "value": 522.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.16,
+          "y1": 1.0,
+          "x2": 0.3,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 40.0,
+         "value": 472.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 124.0,
+         "value": 472.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.7,
+          "y1": 0.0,
+          "x2": 0.84,
+          "y2": 0.0
+         }
+        },
+        {
+         "frame": 134.0,
+         "value": 522.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "clip": false
+     },
+     {
+      "id": "horoscope-43",
+      "name": "Scorpion · Carte",
+      "parent": "horoscope-42",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 404.0,
+       "height": 238.0,
+       "fill": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+       ],
+       "cornerRadius": 24.0,
+       "shadowColor": [
+        0.1137,
+        0.1059,
+        0.1804,
+        0.25
+       ],
+       "shadowX": 0.0,
+       "shadowY": 12.0,
+       "shadowBlur": 36.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "dropShadow": true
+     },
+     {
+      "id": "horoscope-44",
+      "name": "Scorpion · Signe",
+      "parent": "horoscope-42",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 30.0,
+       "y": 22.0,
+       "width": 344.0,
+       "height": 44.0,
+       "fill": [
+        0.1137,
+        0.1059,
+        0.1804,
+        1.0
+       ],
+       "fontSize": 28.0,
+       "letterSpacing": 1.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "text": "SCORPION",
+      "fontFamily": "Montserrat",
+      "fontWeight": 800,
+      "align": "left",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "lang": "fr"
+     },
+     {
+      "id": "horoscope-45",
+      "name": "Scorpion · Texte",
+      "parent": "horoscope-42",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 30.0,
+       "y": 74.0,
+       "width": 344.0,
+       "height": 100.0,
+       "fill": [
+        0.4196,
+        0.4078,
+        0.502,
+        1.0
+       ],
+       "fontSize": 25.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "text": "{{t8}}",
+      "fontFamily": "Inter",
+      "fontWeight": 500,
+      "align": "left",
+      "verticalAlign": "top",
+      "uppercase": false,
+      "wrap": true,
+      "lineHeight": 1.3,
+      "lang": "fr"
+     },
+     {
+      "id": "horoscope-46",
+      "name": "Scorpion · Humeur",
+      "parent": "horoscope-42",
+      "type": "progress",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 30.0,
+       "y": 190.0,
+       "width": 180.0,
+       "height": 14.0,
+       "fill": [
+        1.0,
+        0.4196,
+        0.2902,
+        1.0
+       ]
+      },
+      "tracks": {},
+      "bindings": {},
+      "value": "{{m8}}",
+      "max": "5",
+      "track": "#1d1b2e14",
+      "duration": 1.2,
+      "shape": "segments",
+      "segments": 5,
+      "segGap": 8.0,
+      "rounded": true
+     },
+     {
+      "id": "horoscope-47",
+      "name": "Sagittaire",
+      "parent": "horoscope-1",
+      "type": "group",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 120.0,
+       "y": 734.0,
+       "width": 404.0,
+       "height": 238.0
+      },
+      "tracks": {
+       "opacity": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 24.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 34.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 123.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 131.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ],
+       "y": [
+        {
+         "frame": 0.0,
+         "value": 784.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 24.0,
+         "value": 784.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.16,
+          "y1": 1.0,
+          "x2": 0.3,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 42.0,
+         "value": 734.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 123.0,
+         "value": 734.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.7,
+          "y1": 0.0,
+          "x2": 0.84,
+          "y2": 0.0
+         }
+        },
+        {
+         "frame": 133.0,
+         "value": 784.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "clip": false
+     },
+     {
+      "id": "horoscope-48",
+      "name": "Sagittaire · Carte",
+      "parent": "horoscope-47",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 404.0,
+       "height": 238.0,
+       "fill": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+       ],
+       "cornerRadius": 24.0,
+       "shadowColor": [
+        0.1137,
+        0.1059,
+        0.1804,
+        0.25
+       ],
+       "shadowX": 0.0,
+       "shadowY": 12.0,
+       "shadowBlur": 36.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "dropShadow": true
+     },
+     {
+      "id": "horoscope-49",
+      "name": "Sagittaire · Signe",
+      "parent": "horoscope-47",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 30.0,
+       "y": 22.0,
+       "width": 344.0,
+       "height": 44.0,
+       "fill": [
+        0.1137,
+        0.1059,
+        0.1804,
+        1.0
+       ],
+       "fontSize": 28.0,
+       "letterSpacing": 1.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "text": "SAGITTAIRE",
+      "fontFamily": "Montserrat",
+      "fontWeight": 800,
+      "align": "left",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "lang": "fr"
+     },
+     {
+      "id": "horoscope-50",
+      "name": "Sagittaire · Texte",
+      "parent": "horoscope-47",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 30.0,
+       "y": 74.0,
+       "width": 344.0,
+       "height": 100.0,
+       "fill": [
+        0.4196,
+        0.4078,
+        0.502,
+        1.0
+       ],
+       "fontSize": 25.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "text": "{{t9}}",
+      "fontFamily": "Inter",
+      "fontWeight": 500,
+      "align": "left",
+      "verticalAlign": "top",
+      "uppercase": false,
+      "wrap": true,
+      "lineHeight": 1.3,
+      "lang": "fr"
+     },
+     {
+      "id": "horoscope-51",
+      "name": "Sagittaire · Humeur",
+      "parent": "horoscope-47",
+      "type": "progress",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 30.0,
+       "y": 190.0,
+       "width": 180.0,
+       "height": 14.0,
+       "fill": [
+        1.0,
+        0.4196,
+        0.2902,
+        1.0
+       ]
+      },
+      "tracks": {},
+      "bindings": {},
+      "value": "{{m9}}",
+      "max": "5",
+      "track": "#1d1b2e14",
+      "duration": 1.2,
+      "shape": "segments",
+      "segments": 5,
+      "segGap": 8.0,
+      "rounded": true
+     },
+     {
+      "id": "horoscope-52",
+      "name": "Capricorne",
+      "parent": "horoscope-1",
+      "type": "group",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 548.0,
+       "y": 734.0,
+       "width": 404.0,
+       "height": 238.0
+      },
+      "tracks": {
+       "opacity": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 26.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 36.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 122.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 130.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ],
+       "y": [
+        {
+         "frame": 0.0,
+         "value": 784.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 26.0,
+         "value": 784.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.16,
+          "y1": 1.0,
+          "x2": 0.3,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 44.0,
+         "value": 734.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 122.0,
+         "value": 734.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.7,
+          "y1": 0.0,
+          "x2": 0.84,
+          "y2": 0.0
+         }
+        },
+        {
+         "frame": 132.0,
+         "value": 784.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "clip": false
+     },
+     {
+      "id": "horoscope-53",
+      "name": "Capricorne · Carte",
+      "parent": "horoscope-52",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 404.0,
+       "height": 238.0,
+       "fill": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+       ],
+       "cornerRadius": 24.0,
+       "shadowColor": [
+        0.1137,
+        0.1059,
+        0.1804,
+        0.25
+       ],
+       "shadowX": 0.0,
+       "shadowY": 12.0,
+       "shadowBlur": 36.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "dropShadow": true
+     },
+     {
+      "id": "horoscope-54",
+      "name": "Capricorne · Signe",
+      "parent": "horoscope-52",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 30.0,
+       "y": 22.0,
+       "width": 344.0,
+       "height": 44.0,
+       "fill": [
+        0.1137,
+        0.1059,
+        0.1804,
+        1.0
+       ],
+       "fontSize": 28.0,
+       "letterSpacing": 1.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "text": "CAPRICORNE",
+      "fontFamily": "Montserrat",
+      "fontWeight": 800,
+      "align": "left",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "lang": "fr"
+     },
+     {
+      "id": "horoscope-55",
+      "name": "Capricorne · Texte",
+      "parent": "horoscope-52",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 30.0,
+       "y": 74.0,
+       "width": 344.0,
+       "height": 100.0,
+       "fill": [
+        0.4196,
+        0.4078,
+        0.502,
+        1.0
+       ],
+       "fontSize": 25.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "text": "{{t10}}",
+      "fontFamily": "Inter",
+      "fontWeight": 500,
+      "align": "left",
+      "verticalAlign": "top",
+      "uppercase": false,
+      "wrap": true,
+      "lineHeight": 1.3,
+      "lang": "fr"
+     },
+     {
+      "id": "horoscope-56",
+      "name": "Capricorne · Humeur",
+      "parent": "horoscope-52",
+      "type": "progress",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 30.0,
+       "y": 190.0,
+       "width": 180.0,
+       "height": 14.0,
+       "fill": [
+        1.0,
+        0.4196,
+        0.2902,
+        1.0
+       ]
+      },
+      "tracks": {},
+      "bindings": {},
+      "value": "{{m10}}",
+      "max": "5",
+      "track": "#1d1b2e14",
+      "duration": 1.2,
+      "shape": "segments",
+      "segments": 5,
+      "segGap": 8.0,
+      "rounded": true
+     },
+     {
+      "id": "horoscope-57",
+      "name": "Verseau",
+      "parent": "horoscope-1",
+      "type": "group",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 976.0,
+       "y": 734.0,
+       "width": 404.0,
+       "height": 238.0
+      },
+      "tracks": {
+       "opacity": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 28.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 38.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 121.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 129.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ],
+       "y": [
+        {
+         "frame": 0.0,
+         "value": 784.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 28.0,
+         "value": 784.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.16,
+          "y1": 1.0,
+          "x2": 0.3,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 46.0,
+         "value": 734.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 121.0,
+         "value": 734.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.7,
+          "y1": 0.0,
+          "x2": 0.84,
+          "y2": 0.0
+         }
+        },
+        {
+         "frame": 131.0,
+         "value": 784.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "clip": false
+     },
+     {
+      "id": "horoscope-58",
+      "name": "Verseau · Carte",
+      "parent": "horoscope-57",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 404.0,
+       "height": 238.0,
+       "fill": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+       ],
+       "cornerRadius": 24.0,
+       "shadowColor": [
+        0.1137,
+        0.1059,
+        0.1804,
+        0.25
+       ],
+       "shadowX": 0.0,
+       "shadowY": 12.0,
+       "shadowBlur": 36.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "dropShadow": true
+     },
+     {
+      "id": "horoscope-59",
+      "name": "Verseau · Signe",
+      "parent": "horoscope-57",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 30.0,
+       "y": 22.0,
+       "width": 344.0,
+       "height": 44.0,
+       "fill": [
+        0.1137,
+        0.1059,
+        0.1804,
+        1.0
+       ],
+       "fontSize": 28.0,
+       "letterSpacing": 1.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "text": "VERSEAU",
+      "fontFamily": "Montserrat",
+      "fontWeight": 800,
+      "align": "left",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "lang": "fr"
+     },
+     {
+      "id": "horoscope-60",
+      "name": "Verseau · Texte",
+      "parent": "horoscope-57",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 30.0,
+       "y": 74.0,
+       "width": 344.0,
+       "height": 100.0,
+       "fill": [
+        0.4196,
+        0.4078,
+        0.502,
+        1.0
+       ],
+       "fontSize": 25.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "text": "{{t11}}",
+      "fontFamily": "Inter",
+      "fontWeight": 500,
+      "align": "left",
+      "verticalAlign": "top",
+      "uppercase": false,
+      "wrap": true,
+      "lineHeight": 1.3,
+      "lang": "fr"
+     },
+     {
+      "id": "horoscope-61",
+      "name": "Verseau · Humeur",
+      "parent": "horoscope-57",
+      "type": "progress",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 30.0,
+       "y": 190.0,
+       "width": 180.0,
+       "height": 14.0,
+       "fill": [
+        1.0,
+        0.4196,
+        0.2902,
+        1.0
+       ]
+      },
+      "tracks": {},
+      "bindings": {},
+      "value": "{{m11}}",
+      "max": "5",
+      "track": "#1d1b2e14",
+      "duration": 1.2,
+      "shape": "segments",
+      "segments": 5,
+      "segGap": 8.0,
+      "rounded": true
+     },
+     {
+      "id": "horoscope-62",
+      "name": "Poissons",
+      "parent": "horoscope-1",
+      "type": "group",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 1404.0,
+       "y": 734.0,
+       "width": 404.0,
+       "height": 238.0
+      },
+      "tracks": {
+       "opacity": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 30.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 40.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 120.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 128.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ],
+       "y": [
+        {
+         "frame": 0.0,
+         "value": 784.0,
+         "easing": {
+          "type": "hold"
+         }
+        },
+        {
+         "frame": 30.0,
+         "value": 784.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.16,
+          "y1": 1.0,
+          "x2": 0.3,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 48.0,
+         "value": 734.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 120.0,
+         "value": 734.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.7,
+          "y1": 0.0,
+          "x2": 0.84,
+          "y2": 0.0
+         }
+        },
+        {
+         "frame": 130.0,
+         "value": 784.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "clip": false
+     },
+     {
+      "id": "horoscope-63",
+      "name": "Poissons · Carte",
+      "parent": "horoscope-62",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 404.0,
+       "height": 238.0,
+       "fill": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+       ],
+       "cornerRadius": 24.0,
+       "shadowColor": [
+        0.1137,
+        0.1059,
+        0.1804,
+        0.25
+       ],
+       "shadowX": 0.0,
+       "shadowY": 12.0,
+       "shadowBlur": 36.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "dropShadow": true
+     },
+     {
+      "id": "horoscope-64",
+      "name": "Poissons · Signe",
+      "parent": "horoscope-62",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 30.0,
+       "y": 22.0,
+       "width": 344.0,
+       "height": 44.0,
+       "fill": [
+        0.1137,
+        0.1059,
+        0.1804,
+        1.0
+       ],
+       "fontSize": 28.0,
+       "letterSpacing": 1.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "text": "POISSONS",
+      "fontFamily": "Montserrat",
+      "fontWeight": 800,
+      "align": "left",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "lang": "fr"
+     },
+     {
+      "id": "horoscope-65",
+      "name": "Poissons · Texte",
+      "parent": "horoscope-62",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 30.0,
+       "y": 74.0,
+       "width": 344.0,
+       "height": 100.0,
+       "fill": [
+        0.4196,
+        0.4078,
+        0.502,
+        1.0
+       ],
+       "fontSize": 25.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "text": "{{t12}}",
+      "fontFamily": "Inter",
+      "fontWeight": 500,
+      "align": "left",
+      "verticalAlign": "top",
+      "uppercase": false,
+      "wrap": true,
+      "lineHeight": 1.3,
+      "lang": "fr"
+     },
+     {
+      "id": "horoscope-66",
+      "name": "Poissons · Humeur",
+      "parent": "horoscope-62",
+      "type": "progress",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 30.0,
+       "y": 190.0,
+       "width": 180.0,
+       "height": 14.0,
+       "fill": [
+        1.0,
+        0.4196,
+        0.2902,
+        1.0
+       ]
+      },
+      "tracks": {},
+      "bindings": {},
+      "value": "{{m12}}",
+      "max": "5",
+      "track": "#1d1b2e14",
+      "duration": 1.2,
+      "shape": "segments",
+      "segments": 5,
+      "segGap": 8.0,
+      "rounded": true
+     }
+    ],
+    "zone": "full",
+    "revision": 1,
+    "markerModel": 2
+   },
+   {
+    "id": "agenda",
+    "name": "Au programme",
+    "duration": 150.0,
+    "markers": [
+     {
+      "id": "agenda-air",
+      "frame": 90.0,
+      "name": "On air",
+      "kind": "out"
+     }
+    ],
+    "fields": [
+     {
+      "key": "title",
+      "label": "Titre",
+      "kind": "text",
+      "default": "AU PROGRAMME"
+     },
+     {
+      "key": "rows",
+      "label": "Programme",
+      "kind": "table",
+      "default": "[[\"Heure\", \"Rubrique\"], [\"7:45\", \"Le journal\"], [\"8:00\", \"La météo des plages\"], [\"8:10\", \"L’invité : Thomas Pesquet\"], [\"8:30\", \"Le marché de Clara\"], [\"8:45\", \"Les jeux de Max\"], [\"8:55\", \"Le replay du week-end\"]]"
+     },
+     {
+      "key": "now",
+      "label": "En cours (heure)",
+      "kind": "text",
+      "default": "8:10"
+     }
+    ],
+    "layers": [
+     {
+      "id": "agenda-1",
+      "name": "Programme",
+      "parent": null,
+      "type": "group",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 1290.0,
+       "y": 90.0,
+       "width": 560.0,
+       "height": 820.0,
+       "anchorX": 0.0,
+       "anchorY": 0.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "clip": false
+     },
+     {
+      "id": "agenda-2",
+      "name": "Programme · Carte",
+      "parent": "agenda-1",
+      "type": "group",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 560.0,
+       "height": 820.0
+      },
+      "tracks": {
+       "opacity": [
+        {
+         "frame": 0.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 10.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 90.0,
+         "value": 1.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 100.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ],
+       "x": [
+        {
+         "frame": 0.0,
+         "value": 80.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.16,
+          "y1": 1.0,
+          "x2": 0.3,
+          "y2": 1.0
+         }
+        },
+        {
+         "frame": 20.0,
+         "value": 0.0,
+         "easing": {
+          "type": "linear"
+         }
+        },
+        {
+         "frame": 90.0,
+         "value": 0.0,
+         "easing": {
+          "type": "bezier",
+          "x1": 0.7,
+          "y1": 0.0,
+          "x2": 0.84,
+          "y2": 0.0
+         }
+        },
+        {
+         "frame": 102.0,
+         "value": 80.0,
+         "easing": {
+          "type": "linear"
+         }
+        }
+       ]
+      },
+      "bindings": {},
+      "clip": false
+     },
+     {
+      "id": "agenda-3",
+      "name": "Programme · Carte · Carte",
+      "parent": "agenda-2",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 560.0,
+       "height": 820.0,
+       "fill": [
+        1.0,
+        1.0,
+        1.0,
+        0.97
+       ],
+       "cornerRadius": 30.0,
+       "shadowColor": [
+        0.1137,
+        0.1059,
+        0.1804,
+        0.25
+       ],
+       "shadowX": 0.0,
+       "shadowY": 12.0,
+       "shadowBlur": 36.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "dropShadow": true
+     },
+     {
+      "id": "agenda-4",
+      "name": "Haut",
+      "parent": "agenda-2",
+      "type": "rect",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 560.0,
+       "height": 120.0,
+       "fill": [
+        1.0,
+        0.4196,
+        0.2902,
+        1.0
+       ]
+      },
+      "tracks": {},
+      "bindings": {},
+      "perCorner": true,
+      "corners": [
+       30.0,
+       30.0,
+       0.0,
+       0.0
+      ]
+     },
+     {
+      "id": "agenda-5",
+      "name": "Titre",
+      "parent": "agenda-2",
+      "type": "text",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 40.0,
+       "y": 0.0,
+       "width": 480.0,
+       "height": 120.0,
+       "fill": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+       ],
+       "fontSize": 36.0,
+       "letterSpacing": 2.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "text": "{{title}}",
+      "fontFamily": "Montserrat",
+      "fontWeight": 800,
+      "align": "left",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "lang": "fr"
+     },
+     {
+      "id": "agenda-6",
+      "name": "Programme · Carte · Programme",
+      "parent": "agenda-2",
+      "type": "table",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 24.0,
+       "y": 150.0,
+       "width": 512.0,
+       "height": 640.0,
+       "fontSize": 28.0
+      },
+      "tracks": {},
+      "bindings": {},
+      "link": "{{rows}}",
+      "headerRow": false,
+      "rowH": 96.0,
+      "pad": 18.0,
+      "gap": 8.0,
+      "perPage": 6,
+      "indicator": false,
+      "widthMode": "percent",
+      "radius": 16.0,
+      "settingBindings": {
+       "hlKey": "now"
+      },
+      "cols": [
+       {
+        "src": "Heure",
+        "label": "",
+        "pct": 24.0,
+        "txt": {
+         "family": "Montserrat",
+         "weight": 800
+        }
+       },
+       {
+        "src": "Rubrique",
+        "label": "",
+        "pct": 76.0,
+        "txt": {
+         "lines": "multi",
+         "max": 2,
+         "size": 26.0
+        }
+       }
+      ],
+      "st": {
+       "header": {
+        "bg": "#00000000",
+        "color": "#6b6880"
+       },
+       "hcol": {
+        "bg": "#fff6ec",
+        "color": "#1d1b2e"
+       },
+       "odd": {
+        "bg": "#fff6ec",
+        "color": "#1d1b2e"
+       },
+       "even": {
+        "bg": "#fff6ec",
+        "color": "#1d1b2e"
+       },
+       "hl": {
+        "bg": "#ffc145",
+        "color": "#1d1b2e"
+       },
+       "top3": {
+        "bg": "#fff6ec",
+        "color": "#1d1b2e"
+       },
+       "tableBg": "#00000000"
+      },
+      "borders": {
+       "outer": {
+        "on": false,
+        "width": 0.0,
+        "color": "#00000000"
+       },
+       "innerH": {
+        "on": false,
+        "width": 1.0,
+        "color": "#00000000"
+       },
+       "innerV": {
+        "on": false,
+        "width": 1.0,
+        "color": "#00000000"
+       }
+      },
+      "cf": {
+       "neg": false,
+       "top3": false,
+       "topBar": false,
+       "hlBar": true,
+       "hlBarColor": "#ff6b4a"
+      },
+      "txt": {
+       "title": {},
+       "header": {},
+       "rows": {
+        "family": "Inter",
+        "weight": 600,
+        "size": 26.0
+       }
+      },
+      "cascade": {
+       "on": true,
+       "style": "slide",
+       "offset": 60.0,
+       "dur": 400.0
+      }
+     }
+    ],
+    "zone": "side",
+    "revision": 1,
+    "markerModel": 2
+   }
+  ],
+  "rundown": [
+   {
+    "id": "morning-00-bandeau-horaire",
+    "name": "Bandeau horaire",
+    "templateId": "strip",
+    "zone": "strip",
+    "playlist": "morning",
+    "layer": 40,
+    "data": {}
+   },
+   {
+    "id": "morning-01-à-la-une---canicule",
+    "name": "À la une · canicule",
+    "templateId": "topic",
+    "zone": "lower",
+    "playlist": "morning",
+    "layer": 10,
+    "data": {}
+   },
+   {
+    "id": "morning-02-au-programme",
+    "name": "Au programme",
+    "templateId": "agenda",
+    "zone": "side",
+    "playlist": "morning",
+    "layer": 20,
+    "data": {}
+   },
+   {
+    "id": "morning-03-météo-des-régions",
+    "name": "Météo des régions",
+    "templateId": "weather",
+    "zone": "full",
+    "playlist": "morning",
+    "layer": 50,
+    "data": {}
+   },
+   {
+    "id": "morning-04-vos-messages",
+    "name": "Vos messages",
+    "templateId": "social",
+    "zone": "full",
+    "playlist": "morning",
+    "layer": 50,
+    "data": {}
+   },
+   {
+    "id": "morning-05-sujet---pesquet-en-plateau",
+    "name": "Sujet · Pesquet en plateau",
+    "templateId": "topic",
+    "zone": "lower",
+    "playlist": "morning",
+    "layer": 10,
+    "data": {
+     "tag": "L’INVITÉ",
+     "title": "Thomas Pesquet : « La Lune, c’est pour 2028 »",
+     "sub": "L’astronaute est notre invité à 8 h 10"
+    }
+   },
+   {
+    "id": "morning-06-horoscope",
+    "name": "Horoscope",
+    "templateId": "horoscope",
+    "zone": "full",
+    "playlist": "morning",
+    "layer": 50,
+    "data": {}
+   }
+  ],
+  "zones": [
+   {
+    "id": "strip",
+    "name": "Bandeau",
+    "layer": 40,
+    "color": "#ff6b4a",
+    "transition": "sequential",
+    "areas": {
+     "main": {
+      "x": 0.0,
+      "y": 0.88,
+      "width": 1.0,
+      "height": 0.12
+     }
+    }
+   },
+   {
+    "id": "lower",
+    "name": "Sujet",
+    "layer": 10,
+    "color": "#7c5cff",
+    "transition": "sequential",
+    "areas": {
+     "main": {
+      "x": 0.04,
+      "y": 0.62,
+      "width": 0.8,
+      "height": 0.26
+     }
+    }
+   },
+   {
+    "id": "side",
+    "name": "Programme",
+    "layer": 20,
+    "color": "#22c55e",
+    "transition": "sequential",
+    "areas": {
+     "main": {
+      "x": 0.66,
+      "y": 0.06,
+      "width": 0.31,
+      "height": 0.8
+     }
+    }
+   },
+   {
+    "id": "full",
+    "name": "Plein écran",
+    "layer": 50,
+    "color": "#38bdf8",
+    "transition": "sequential",
+    "areas": {
+     "main": {
+      "x": 0.0,
+      "y": 0.0,
+      "width": 1.0,
+      "height": 1.0
+     }
+    }
+   }
+  ],
+  "playlists": [
+   {
+    "id": "morning",
+    "name": "Le 6-9 · ce matin"
+   }
+  ],
+  "formats": [],
+  "language": "fr",
+  "guides": {
+   "vertical": [],
+   "horizontal": [],
+   "actionSafe": 0.035,
+   "titleSafe": 0.05,
+   "exclusions": []
+  }
+ },
+ "sources": [
+  {
+   "id": "matinale-trafic",
+   "name": "Matinale · info trafic",
+   "type": "push",
+   "format": "json",
+   "value": {
+    "items": [
+     {
+      "title": "A86 : bouchon de 6 km à Nanterre"
+     },
+     {
+      "title": "Périphérique intérieur : ralentissements porte de Bagnolet"
+     },
+     {
+      "title": "RER B : trafic interrompu entre Gare du Nord et Aéroport CDG"
+     },
+     {
+      "title": "A7 : circulation fluide vers Lyon"
+     }
+    ]
+   }
+  },
+  {
+   "id": "matinale-messages",
+   "name": "Matinale · messages des téléspectateurs",
+   "type": "push",
+   "format": "json",
+   "value": {
+    "posts": [
+     {
+      "name": "Margaux",
+      "handle": "@margaux_b",
+      "text": "Déjà 3 cafés et toujours pas réveillée… merci pour la bonne humeur de l’équipe ce matin !",
+      "likes": 248
+     },
+     {
+      "name": "Rachid",
+      "handle": "@rachid.k",
+      "text": "Sur l’A86 depuis 40 minutes, heureusement que vous êtes là pour passer le temps 😅",
+      "likes": 131
+     },
+     {
+      "name": "Lucie",
+      "handle": "@lulu_dij",
+      "text": "Bonjour de Dijon ! Il fait déjà 22° à 7 h, on prépare les glaces pour cet après-midi.",
+      "likes": 97
+     }
+    ]
+   }
+  }
+ ]
+}
