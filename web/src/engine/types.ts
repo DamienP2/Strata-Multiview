@@ -502,6 +502,8 @@ export interface ProjectSummary {
   frameRate: FrameRate;
   templates: number;
   rundown: number;
+  /** The Source tiles of the multiview. */
+  tiles: number;
   /** Template shown on the card. */
   cover?: string;
   /** Last saved (ms since 1970). */

@@ -12,10 +12,10 @@ use axum::http::{header, HeaderMap, StatusCode};
 use axum::response::{IntoResponse, Response};
 use axum::routing::{get, post, put};
 use axum::{Json, Router};
-use strata_mv_core::{Command, FrameRate, Project, RundownItem, Template};
-use strata_mv_render::slate::{Slate, SlateStyle};
 use futures_util::{SinkExt, StreamExt};
 use serde::{Deserialize, Serialize};
+use strata_mv_core::{Command, FrameRate, Project, RundownItem, Template};
+use strata_mv_render::slate::{Slate, SlateStyle};
 
 use crate::auth::{self, CurrentUser, MaybeUser, PublicUser, Role, User, UserInput};
 use crate::config::ServerConfig;
@@ -571,7 +571,9 @@ async fn create_project(
     let mut p = match &n.from {
         Some(src) => {
             let mut p = (*visible_project(&s, &me, src).await?).clone();
-            p.rundown.iter_mut().for_each(|r| r.id = strata_mv_core::new_id());
+            p.rundown
+                .iter_mut()
+                .for_each(|r| r.id = strata_mv_core::new_id());
             p
         }
         None => Project {
@@ -609,11 +611,11 @@ async fn create_project(
     }
     check_format(p.width, p.height, p.frame_rate)?;
     if n.from.is_none() {
-        // A new project starts with one multiview to design, already
-        // published: a channel can show it right away.
+        // A project is one multiview: its page, already published, so a
+        // channel can show it right away.
         let zone = p.zones.first().map(|z| z.id.clone()).unwrap_or_default();
         let blank = strata_mv_core::Template::blank_secs(
-            "Multiview 1",
+            &p.name,
             &zone,
             p.frame_rate.as_f64(),
             p.template_secs.unwrap_or(1.0),
@@ -621,8 +623,6 @@ async fn create_project(
         let id = blank.id.clone();
         p.drafts.push(blank);
         p.publish(&id);
-        // It goes at a publish if it is still empty (the designer made others).
-        p.starter = Some(id);
     }
     if let Some(src) = &n.from {
         // The copy gets its own media, and its templates point to them.
@@ -1082,7 +1082,9 @@ async fn put_rundown(
     let mut p = (*visible_project(&s, &me, &id).await?).clone();
     p.rundown = match r {
         RundownPut::Full(r) => r,
-        RundownPut::Change { base, rundown } => strata_mv_core::merge_rundown(&p.rundown, &base, &rundown),
+        RundownPut::Change { base, rundown } => {
+            strata_mv_core::merge_rundown(&p.rundown, &base, &rundown)
+        }
     };
     s.save_project(p).await.map_err(internal)?;
     Ok(StatusCode::NO_CONTENT)
@@ -1300,9 +1302,15 @@ async fn template_thumbnail(
         data.extend(extra);
     }
     // Data sets show their row (the first, or the one asked).
-    strata_mv_core::datapath::bind_datasets(&template, &mut data, &strata_mv_core::datapath::Store::default());
+    strata_mv_core::datapath::bind_datasets(
+        &template,
+        &mut data,
+        &strata_mv_core::datapath::Store::default(),
+    );
     let width = q.w.unwrap_or(u32::MAX).clamp(16, 7680);
-    let format = q.format.unwrap_or_else(|| strata_mv_core::MAIN_FORMAT.to_string());
+    let format = q
+        .format
+        .unwrap_or_else(|| strata_mv_core::MAIN_FORMAT.to_string());
     // Made already (another list, another user): the same PNG.
     let key = crate::thumbs::Key::default()
         .template(&p, &template)

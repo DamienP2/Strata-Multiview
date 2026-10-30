@@ -15,7 +15,7 @@ Les paquets sont produits par la CI (`.github/workflows/release.yml`) à chaque 
 Double-cliquez sur **`StrataMV-<version>-windows-x64.msi`**. Le MSI :
 - copie le binaire dans `C:\Program Files\Strata Multiview` et l'ajoute au `PATH` ;
 - crée le service `strata-multiview` (démarrage automatique, redémarrage en cas d'échec) et le démarre ;
-- ajoute la règle de pare-feu et les raccourcis *Strata Multiview* (projets) et *Strata Multiview Outputs* (flux vidéo) dans le menu Démarrer ;
+- ajoute la règle de pare-feu et les raccourcis *Strata Multiview* (multiviews) et *Strata Multiview Outputs* (flux vidéo) dans le menu Démarrer ;
 - se met à jour en installant simplement une version plus récente (données conservées) ; se désinstalle depuis *Paramètres → Applications*, le raccourci *Uninstall Strata* du menu Démarrer ou le menu de l'icône Strata.
 
 Déploiement silencieux (GPO, Intune, SCCM) :

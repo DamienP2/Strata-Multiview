@@ -30,8 +30,10 @@ use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
 use axum::routing::get;
 use axum::{Json, Router};
-use strata_mv_core::{ChannelState, Command, Data, Phase, Project, RundownItem, WidgetControl, Zone};
 use serde::Deserialize;
+use strata_mv_core::{
+    ChannelState, Command, Data, Phase, Project, RundownItem, WidgetControl, Zone,
+};
 use tokio::sync::broadcast;
 
 use crate::antenna::{Actor, ActorKind};

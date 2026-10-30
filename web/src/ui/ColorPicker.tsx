@@ -178,7 +178,7 @@ export function ColorPicker({ value, anchor, onChange, onClose }: { value: Color
   const alp = useDrag((x) => emit(hsv, Math.round(x * 100) / 100));
 
   const shared = palettes.map((p) => ({ value: p.id, label: p.name || t('Palette') }));
-  const sources = [...(project ? [{ value: 'project', label: t('Project') }] : []), ...shared, { value: 'recent', label: t('Recent colours') }];
+  const sources = [...(project ? [{ value: 'project', label: t('Multiview') }] : []), ...shared, { value: 'recent', label: t('Recent colours') }];
   const list: NamedColor[] =
     source === 'project'
       ? (project?.colors ?? [])

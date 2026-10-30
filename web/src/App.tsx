@@ -1,4 +1,4 @@
-import { ArrowRightToLine, Braces, Cable, CircuitBoard, FolderOpen, Gauge, HeartPulse, Library as LibraryIcon, MonitorPlay, PenTool, Radio, Server, Settings as SettingsIcon, TriangleAlert, Users as UsersIcon } from 'lucide-react';
+import { ArrowRightToLine, Braces, Cable, CircuitBoard, FolderOpen, Gauge, HeartPulse, Library as LibraryIcon, MonitorPlay, Radio, Server, Settings as SettingsIcon, TriangleAlert, Users as UsersIcon } from 'lucide-react';
 import { needsLook, useHealth, useHealthStore } from './perf/health';
 import { Brand } from './ui/Brand';
 import { DialogHost } from './ui/dialogs';
@@ -8,7 +8,7 @@ import { Output } from './output/Output';
 import { t, tc, useLang } from './i18n';
 import { Login } from './pages/Login';
 import { Projects } from './pages/Projects';
-import { navigate, parseRoute, projectPath, type ProjectPage, type Route } from './router';
+import { navigate, parseRoute, type Route } from './router';
 import { can, useApp } from './store';
 import { StatusPill } from './ui/StatusPill';
 import { UserMenu } from './ui/UserMenu';
@@ -88,7 +88,7 @@ function Studio({ route }: { route: Exclude<Route, { page: 'output' }> }) {
       {/* Not over a project's own bars. */}
       {can.admin(user) && route.page !== 'project' && <CrashBanner />}
       <DialogHost />
-      <Toasts quiet={route.page === 'project' && route.sub === 'designer'} />
+      <Toasts quiet={route.page === 'project'} />
     </div>
   );
 }
@@ -133,7 +133,7 @@ function Home({ route }: { route: Extract<Route, { page: 'projects' | 'media' | 
       <nav className="topbar">
         <Brand />
         <div className="tabs home-tabs ux1-home-tabs">
-          {tab('projects', '/projects', <FolderOpen size={14} />, t('Projects'))}
+          {tab('projects', '/projects', <FolderOpen size={14} />, t('Multiviews'))}
           {tab('media', '/media', <LibraryIcon size={14} />, t('Library'))}
           <NavGroup icon={<Radio size={14} />} label={tc('menu', 'Broadcast')} entries={broadcast} current={route.page} />
           <NavGroup icon={<Server size={14} />} label={t('System')} entries={system} current={route.page} dot={admin && needsLook(health)} />
@@ -160,14 +160,14 @@ function Home({ route }: { route: Extract<Route, { page: 'projects' | 'media' | 
   );
 }
 
-/** The pages of one project: designer and media. */
+/** One multiview, edited in the Designer. */
 function ProjectShell({ route }: { route: Extract<Route, { page: 'project' }> }) {
   // Not `live`: the shell is not drawn again on each frame of the channels.
   const { auth, connected, projects, project, openProject } = useApp(
     useShallow((s) => ({ auth: s.auth, connected: s.connected, projects: s.projects, project: s.project, openProject: s.openProject })),
   );
   const user = auth!.user!;
-  const { projectId, sub } = route;
+  const { projectId } = route;
   const summary = projects.find((p) => p.id === projectId);
   const known = !!summary || !connected || !projects.length;
 
@@ -179,27 +179,14 @@ function ProjectShell({ route }: { route: Extract<Route, { page: 'project' }> })
     document.title = summary ? `${summary.name} · Strata Multiview` : 'Strata Multiview';
   }, [summary?.name]);
 
-  // Pages a role cannot see.
-  const allowed = (s: ProjectPage) => (s === 'media' ? can.operate(user) : can.design(user));
-  useEffect(() => {
-    if (!allowed(sub)) navigate(projectPath(projectId, can.design(user) ? 'designer' : 'media'), true);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sub, projectId, user]);
-
-  const tab = (s: ProjectPage, icon: React.ReactNode, label: string) =>
-    allowed(s) && (
-      <button className={sub === s ? 'on' : ''} title={label} onClick={() => navigate(projectPath(projectId, s))}>
-        {icon} <span className="tab-label">{label}</span>
-      </button>
-    );
   const ready = project && project.id === projectId;
   const projectName = summary?.name ?? project?.name ?? '…';
 
   let page: React.ReactNode;
-  if (!known) page = <div className="loading">{t('This project does not exist or you cannot access it.')}</div>;
-  else if (!ready) page = <div className="loading">{t('Opening the project…')}</div>;
-  else if (sub === 'designer') page = <Designer key={project.id} />;
-  else page = <MediaLibrary key={projectId} projectId={projectId} />;
+  if (!known) page = <div className="loading">{t('This multiview does not exist or you cannot access it.')}</div>;
+  else if (!can.design(user)) page = <div className="loading">{t('Your role cannot edit the multiviews.')}</div>;
+  else if (!ready) page = <div className="loading">{t('Opening the multiview…')}</div>;
+  else page = <Designer key={project.id} />;
 
   return (
     <>
@@ -207,13 +194,9 @@ function ProjectShell({ route }: { route: Extract<Route, { page: 'project' }> })
         <Brand />
         <span className="topbar-sep" aria-hidden />
         <span className="project-title" title={summary?.description ? `${projectName}\n${summary.description}` : projectName}>
-          <small>{t('Project')}</small>
+          <small>{t('Multiview')}</small>
           <span>{projectName}</span>
         </span>
-        <div className="tabs project-tabs">
-          {tab('designer', <PenTool size={14} />, t('Designer'))}
-          {tab('media', <LibraryIcon size={14} />, t('Library'))}
-        </div>
         <div className="spacer" />
         {/* Filled by the page (the Designer's undo, redo and history). */}
         <div id="topbar-slot" className="topbar-slot" />

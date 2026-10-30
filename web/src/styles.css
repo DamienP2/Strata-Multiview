@@ -572,7 +572,7 @@ code {
 /* ---------- designer ---------- */
 .designer {
   display: grid;
-  grid-template-columns: var(--left-w, 250px) minmax(0, 1fr) var(--right-w, 340px);
+  grid-template-columns: minmax(0, 1fr) var(--right-w, 340px);
   grid-template-rows: minmax(0, 1fr);
   height: 100%;
 }
@@ -5814,10 +5814,6 @@ a.btn {
   place-items: center;
   background: rgba(8, 9, 14, 0.62);
 }
-.designer.locked > .panel.left {
-  position: relative;
-  z-index: 61;
-}
 .lock-card {
   width: min(440px, calc(100% - 32px));
   display: flex;
@@ -10196,11 +10192,11 @@ body.cv-moving * {
   min-width: 220px;
 }
 
-/* ---- Properties: one grid for every row (label · fields · exposed), fields 6 digits wide ---- */
+/* ---- Properties: one grid for every row (label · fields · its button), fields 6 digits wide ---- */
 .pp-row,
 .wk-row {
   display: grid;
-  grid-template-columns: 84px minmax(0, 1fr) 24px;
+  grid-template-columns: 84px minmax(0, 1fr) auto;
   align-items: center;
   gap: 6px;
   min-height: 30px;
@@ -21200,30 +21196,55 @@ textarea.tx-grow {
   margin: 0 0 12px;
 }
 
-/* The layers of the open multiview, under the multiviews (designer/LayerList.tsx). */
-.designer > .panel.left > .template-list {
-  flex: 0 1 auto;
-  max-height: 38%;
+/* The insert tools of the Designer's toolbar (designer/Insert.tsx). */
+.mv-insert {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
 }
-.mv-layers {
+.mv-insert .tl-insert {
+  margin: 0;
+  padding: 0 4px;
+  border-right: 0;
+  align-self: center;
+}
+.mv-insert .opx-add {
+  width: 28px;
+  height: 28px;
+}
+
+/* Nothing selected: the multiview and its tiles (designer/Inspector.tsx). */
+.mv-insp-name {
   flex: 1;
-  min-height: 0;
+  min-width: 0;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.mv-insp-line {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+.mv-insp-tiles {
   display: flex;
   flex-direction: column;
-  border-top: 1px solid var(--line);
+  gap: 2px;
 }
-.mv-insert.tl-insert {
-  margin: 0;
-  padding: 4px 8px;
-  border-right: 0;
-  border-bottom: 1px solid var(--line);
+.mv-insp-tile {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 6px 8px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-2);
+  text-align: left;
 }
-.mv-layer-rows {
-  flex: 1;
-  min-height: 0;
-  overflow: auto;
-}
-.mv-layers-empty {
-  padding: 10px 12px;
-  font-size: var(--fs-11);
+.mv-insp-tile:hover {
+  background: var(--panel-3);
+  color: var(--text);
 }

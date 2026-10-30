@@ -74,7 +74,12 @@ pub fn category(target: &str) -> &'static str {
     let has = |s: &str| target.contains(s);
     if has("datasources") || has("datarules") || has("datapath") || has("social") {
         "data"
-    } else if has("strata_mv_output") || has("engine") || has("decklink") || has("::rt") || has("ndi") {
+    } else if has("strata_mv_output")
+        || has("engine")
+        || has("decklink")
+        || has("::rt")
+        || has("ndi")
+    {
         "outputs"
     } else if has("inputs") {
         "inputs"

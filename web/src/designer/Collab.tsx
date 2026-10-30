@@ -186,17 +186,6 @@ async function confirmPublish(project: Project, ids: string[]): Promise<boolean>
   });
 }
 
-/** Publish state of one template, in its properties (it is published with the top bar's Publish). */
-export function TemplatePublish({ project, id }: { project: Project; id: string }) {
-  const { published, draft } = publishState(project, id);
-  if (published && !draft) return null;
-  return (
-    <div className="publish publish-line">
-      <span className="publish-draft">{published ? t('Changes not on the outputs') : t('New · not on the outputs')}</span>
-    </div>
-  );
-}
-
 /**
  * The Designer's part of the top bar: one state (saving, changes not in the
  * Operator, all published) and one Publish, of every template with changes.

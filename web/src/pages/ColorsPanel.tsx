@@ -112,9 +112,9 @@ export function ColorsPanel({ projectId, canEdit }: { projectId?: string; canEdi
   };
   return (
     <div className="lc-panel">
-      {projectId && project && <PaletteView title={t('Project')} sub={t('this project only')} colors={project.colors ?? []} canEdit={canEdit} onColors={(c) => void saveProject(projectId, c)} />}
+      {projectId && project && <PaletteView title={t('Multiview')} sub={t('this multiview only')} colors={project.colors ?? []} canEdit={canEdit} onColors={(c) => void saveProject(projectId, c)} />}
       {palettes.map((p) => (
-        <PaletteView key={p.id} title={p.name} sub={t('shared · every project')} colors={p.colors} canEdit={canEdit} onName={(name) => setPalette(p.id, (x) => ({ ...x, name }))} onColors={(colors) => setPalette(p.id, (x) => ({ ...x, colors }))} onRemove={() => void removePalette(p)} />
+        <PaletteView key={p.id} title={p.name} sub={t('shared · every multiview')} colors={p.colors} canEdit={canEdit} onName={(name) => setPalette(p.id, (x) => ({ ...x, name }))} onColors={(colors) => setPalette(p.id, (x) => ({ ...x, colors }))} onRemove={() => void removePalette(p)} />
       ))}
       {loaded && !palettes.length && !projectId && <p className="muted">{t('No palette yet.')}</p>}
     </div>

@@ -1,10 +1,12 @@
-import { FormatButtons } from '../designer/ProjectPanel';
-import { ArrowLeft, Check, CheckSquare, ChevronRight, Clock, Copy, Download, Folder, FolderInput, FolderOpen, FolderPlus, Library as LibraryIcon, Inbox, Layers, LayoutGrid, MonitorPlay, MoreHorizontal, PenTool, Pencil, Plus, Radio, Search, Trash2, Upload, X } from 'lucide-react';
+import { FormatButtons } from '../designer/MultiviewSettings';
+import { ArrowLeft, Check, CheckSquare, ChevronRight, Clock, Copy, Download, Folder, FolderInput, FolderOpen, FolderPlus, Inbox, LayoutGrid, MonitorPlay, MoreHorizontal, PenTool, Pencil, Plus, Radio, Search, Trash2, Upload, X } from 'lucide-react';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import type { FrameRate, ProjectSummary } from '../engine/types';
+import type { FrameRate, Project, ProjectSummary } from '../engine/types';
+import { applyLayout, LayoutPicker, PRESETS } from '../designer/Layouts';
+import { useInputs } from '../engine/liveInputs';
 import { api, can, useApp } from '../store';
 import { useShallow } from 'zustand/react/shallow';
-import { navigate, projectPath, type ProjectPage } from '../router';
+import { navigate, projectPath } from '../router';
 import { confirmDialog, promptDialog } from '../ui/dialogs';
 import { locale, t, tn } from '../i18n';
 import { NavItem, NavSection } from './SidePage';
@@ -20,6 +22,10 @@ function NewProject({ from, folder, onClose }: { from?: ProjectSummary; folder?:
   const [description, setDescription] = useState(from?.description ?? '');
   const [size, setSize] = useState({ width: 1920, height: 1080 });
   const [rate, setRate] = useState<FrameRate>({ num: 50, den: 1 });
+  const [layout, setLayout] = useState('2x2');
+  const [gap, setGap] = useState(4);
+  const [margin, setMargin] = useState(0);
+  const inputs = useInputs();
   const [busy, setBusy] = useState(false);
   const create = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,12 +44,22 @@ function NewProject({ from, folder, onClose }: { from?: ProjectSummary; folder?:
               frameRate: rate,
             },
       );
+      // Its tiles placed on the layout chosen, with the inputs in order, published at once.
+      const preset = PRESETS.find((x) => x.id === layout);
+      if (!from && preset) {
+        const full = await api<Project>('GET', `/api/projects/${encodeURIComponent(p.id)}`);
+        const page = full.templates[0];
+        if (page) {
+          applyLayout(page, preset, size, gap, margin, inputs);
+          await api('PUT', `/api/projects/${encodeURIComponent(p.id)}/templates/${encodeURIComponent(page.id)}?publish=true`, page);
+        }
+      }
       onClose();
       if (folder) {
         const f = useApp.getState().folders;
         await useApp.getState().saveFolders({ ...f, assign: { ...f.assign, [p.id]: folder } });
       }
-      // A new project opens in its own tab (a copy stays in the list).
+      // A new multiview opens in its own tab (a copy stays in the list).
       if (!from) openInTab(projectPath(p.id));
     } catch (err) {
       toast((err as Error).message, 'error');
@@ -53,16 +69,16 @@ function NewProject({ from, folder, onClose }: { from?: ProjectSummary; folder?:
   };
   return (
     <div className="modal-back" onPointerDown={onClose}>
-      <form className="modal" onSubmit={create} onPointerDown={(e) => e.stopPropagation()}>
+      <form className={`modal ${from ? '' : 'new-mv'}`} onSubmit={create} onPointerDown={(e) => e.stopPropagation()}>
         <header>
-          <h2>{from ? t('Duplicate “{name}”', { name: from.name }) : t('New project')}</h2>
+          <h2>{from ? t('Duplicate “{name}”', { name: from.name }) : t('New multiview')}</h2>
           <button type="button" className="icon-btn ghost" onClick={onClose}>
             <X size={16} />
           </button>
         </header>
         <label className="set-field">
           <span className="set-label">{t('Name')}</span>
-          <input autoFocus value={name} placeholder={t('Evening news, Match day…')} onChange={(e) => setName(e.target.value)} />
+          <input autoFocus value={name} placeholder={t('Control room A, Studio 2…')} onChange={(e) => setName(e.target.value)} />
         </label>
         <label className="set-field">
           <span className="set-label">{t('Description')}</span>
@@ -70,9 +86,14 @@ function NewProject({ from, folder, onClose }: { from?: ProjectSummary; folder?:
         </label>
         {!from && (
           <div className="set-field">
-            <span className="set-label">{t('Design format')}</span>
+            <span className="set-label">{t('Resolution')}</span>
             <FormatButtons width={size.width} height={size.height} rate={rate} onSize={(width, height) => setSize({ width, height })} onRate={setRate} />
-            <span className="set-hint">{t('Channels in another format scale the graphics to fit.')}</span>
+          </div>
+        )}
+        {!from && (
+          <div className="set-field">
+            <span className="set-label">{t('Layout')}</span>
+            <LayoutPicker value={layout} onChange={setLayout} gap={gap} margin={margin} onGap={setGap} onMargin={setMargin} none />
           </div>
         )}
         <footer>
@@ -89,7 +110,7 @@ function NewProject({ from, folder, onClose }: { from?: ProjectSummary; folder?:
 }
 
 type View = { kind: 'all' } | { kind: 'unfiled' } | { kind: 'folder'; name: string };
-type Sort = 'recent' | 'name' | 'templates';
+type Sort = 'recent' | 'name' | 'tiles';
 
 /** "Modified 5 min ago", "Modified yesterday"… */
 function modifiedAgo(ms: number): string {
@@ -190,7 +211,7 @@ export function Projects() {
   const q = query.trim().toLowerCase();
   const shown = projects
     .filter((p) => inView(p) && (!q || p.name.toLowerCase().includes(q) || p.description.toLowerCase().includes(q)))
-    .sort((a, b) => (sort === 'templates' ? b.templates - a.templates : sort === 'recent' ? (b.modifiedAt ?? 0) - (a.modifiedAt ?? 0) : 0) || a.name.localeCompare(b.name));
+    .sort((a, b) => (sort === 'tiles' ? b.tiles - a.tiles : sort === 'recent' ? (b.modifiedAt ?? 0) - (a.modifiedAt ?? 0) : 0) || a.name.localeCompare(b.name));
   const count = (f: string | null) => projects.filter((p) => folderOf(p.id) === f).length;
   const picked = projects.filter((p) => selected.has(p.id));
   const selecting = picking || selected.size > 0;
@@ -317,10 +338,9 @@ export function Projects() {
     if (!list.length) return;
     const used = channels.filter((c) => list.some((p) => p.id === c.projectId)).map((c) => c.name);
     const warn = used.length ? ` ${t('Loaded on {channels}: they will be unloaded.', { channels: used.join(', ') })}` : '';
-    const templates = list.reduce((n, p) => n + p.templates, 0);
     if (
       !(await confirmDialog({
-        title: list.length === 1 ? t('Delete the project “{name}”?', { name: list[0].name }) : tn(list.length, 'Delete {n} project?', 'Delete {n} projects?'),
+        title: list.length === 1 ? t('Delete the multiview “{name}”?', { name: list[0].name }) : tn(list.length, 'Delete {n} multiview?', 'Delete {n} multiviews?'),
         message: (
           <>
             {list.length > 1 && (
@@ -331,9 +351,7 @@ export function Projects() {
                 {list.length > 8 && <span className="muted">{t('and {n} more', { n: list.length - 8 })}</span>}
               </span>
             )}
-            {list.length === 1
-              ? tn(templates, 'Its template and its media are deleted.', 'Its {n} templates and its media are deleted.')
-              : tn(templates, 'Their template and their media are deleted.', 'Their {n} templates and their media are deleted.')}{' '}
+            {list.length === 1 ? t('Its media are deleted too.') : t('Their media are deleted too.')}{' '}
             {t('This cannot be undone.')}
             {warn}
           </>
@@ -373,7 +391,7 @@ export function Projects() {
     },
   });
 
-  const title = view.kind === 'all' ? t('All projects') : view.kind === 'unfiled' ? t('Not in a folder') : view.name;
+  const title = view.kind === 'all' ? t('All multiviews') : view.kind === 'unfiled' ? t('Not in a folder') : view.name;
   const navItem = (key: string, v: View, icon: React.ReactNode, label: string, n: number, target?: string | null, actions?: React.ReactNode) => {
     const on = view.kind === v.kind && (v.kind !== 'folder' || (view.kind === 'folder' && view.name === v.name));
     return (
@@ -395,7 +413,7 @@ export function Projects() {
     <div className="projects-page">
       <aside className="lib-nav">
         <NavSection>{t('Library')}</NavSection>
-        {navItem('all', { kind: 'all' }, <LayoutGrid size={15} />, t('All projects'), projects.length)}
+        {navItem('all', { kind: 'all' }, <LayoutGrid size={15} />, t('All multiviews'), projects.length)}
         {navItem('unfiled', { kind: 'unfiled' }, <Inbox size={15} />, t('Not in a folder'), count(null), null)}
         <NavSection
           actions={
@@ -428,7 +446,7 @@ export function Projects() {
             ),
           ),
         )}
-        {!folders.folders.length && <p className="lib-nav-hint">{design ? t('Create folders to sort your shows, then drag projects onto them.') : t('No folder.')}</p>}
+        {!folders.folders.length && <p className="lib-nav-hint">{design ? t('Create folders to sort your multiviews, then drag them onto the folders.') : t('No folder.')}</p>}
       </aside>
 
       <main className="library">
@@ -436,12 +454,12 @@ export function Projects() {
           <div className="settings-head">
             <div>
               <h1>{title}</h1>
-              <p className="muted">{tn(shown.length, '{n} project', '{n} projects')}</p>
+              <p className="muted">{tn(shown.length, '{n} multiview', '{n} multiviews')}</p>
             </div>
             <div className="spacer" />
             {design && (
               <>
-                <button className="btn" title={t('A project exported from Strata Multiview (.json)')} onClick={() => importRef.current?.click()}>
+                <button className="btn" title={t('A multiview exported from Strata Multiview (.json)')} onClick={() => importRef.current?.click()}>
                   <Upload size={14} /> {t('Import')}
                 </button>
                 <input
@@ -456,7 +474,7 @@ export function Projects() {
                   }}
                 />
                 <button className="btn primary" onClick={() => setDialog({})}>
-                  <Plus size={14} /> {t('New project')}
+                  <Plus size={14} /> {t('New multiview')}
                 </button>
               </>
             )}
@@ -473,7 +491,7 @@ export function Projects() {
                   <CheckSquare size={13} /> {t('Select all ({n})', { n: shown.length })}
                 </button>
               )}
-              {selected.size === 0 && <span className="ux3-pick-hint">{t('Click the projects to select')}</span>}
+              {selected.size === 0 && <span className="ux3-pick-hint">{t('Click the multiviews to select')}</span>}
               <div className="spacer" />
               <div className="menu-wrap">
                 <button className="btn small" disabled={busy || !selected.size} onClick={() => setMenu(menu === '@bulk' ? null : '@bulk')}>
@@ -509,11 +527,11 @@ export function Projects() {
             <div className="media-toolbar">
               <label className="search">
                 <Search size={14} />
-                <input value={query} placeholder={t('Search projects')} onChange={(e) => setQuery(e.target.value)} />
+                <input value={query} placeholder={t('Search multiviews')} onChange={(e) => setQuery(e.target.value)} />
               </label>
               <div className="spacer" />
               {design && shown.length > 0 && (
-                <button className="btn small ghost" title={t('Pick projects to delete or move them together (Ctrl+A: all)')} onClick={() => setPicking(true)}>
+                <button className="btn small ghost" title={t('Pick multiviews to delete or move them together (Ctrl+A: all)')} onClick={() => setPicking(true)}>
                   <CheckSquare size={13} /> {t('Select')}
                 </button>
               )}
@@ -526,8 +544,8 @@ export function Projects() {
                   <button role="radio" aria-checked={sort === 'name'} className={sort === 'name' ? 'on' : ''} onClick={() => setSort('name')}>
                     {t('Name')}
                   </button>
-                  <button role="radio" aria-checked={sort === 'templates'} className={sort === 'templates' ? 'on' : ''} onClick={() => setSort('templates')}>
-                    {t('Templates')}
+                  <button role="radio" aria-checked={sort === 'tiles'} className={sort === 'tiles' ? 'on' : ''} onClick={() => setSort('tiles')}>
+                    {t('Tiles')}
                   </button>
                 </span>
               </span>
@@ -539,20 +557,6 @@ export function Projects() {
               const on = channels.filter((c) => c.projectId === p.id);
               const folder = folderOf(p.id);
               const isOn = selected.has(p.id);
-              const link = (sub: ProjectPage, icon: React.ReactNode, label: string, show = true) =>
-                show && (
-                  <a className="project-link" href={projectPath(p.id, sub)} target="_blank" rel="noopener">
-                    {icon}
-                    <span>{label}</span>
-                  </a>
-                );
-              /** A page of the project, in the "…" menu. */
-              const page = (sub: ProjectPage, icon: React.ReactNode, label: string, show = true) =>
-                show && (
-                  <a href={projectPath(p.id, sub)} target="_blank" rel="noopener" onClick={() => setMenu(null)}>
-                    {icon} {label}
-                  </a>
-                );
               const ratio = p.width / p.height;
               return (
                 <div
@@ -567,7 +571,7 @@ export function Projects() {
                 >
                   <a
                     className="project-cover"
-                    href={projectPath(p.id, design ? 'designer' : 'media')}
+                    href={projectPath(p.id)}
                     target="_blank"
                     rel="noopener"
                     draggable={false}
@@ -582,7 +586,7 @@ export function Projects() {
                     {p.cover ? (
                       <Thumb src={`/api/projects/${encodeURIComponent(p.id)}/templates/${encodeURIComponent(p.cover)}/thumbnail.png?w=640`} style={{ aspectRatio: String(ratio) }} />
                     ) : (
-                      <span className="project-cover-empty">{t('No template yet')}</span>
+                      <span className="project-cover-empty">{t('Empty')}</span>
                     )}
                     <span className="project-badge">
                       <span className="ratio" style={ratio >= 1 ? { width: 14, height: 14 / ratio } : { width: 14 * ratio, height: 14 }} />
@@ -601,7 +605,7 @@ export function Projects() {
                   {design && (
                     <button
                       className={`project-check ${isOn ? 'on' : ''}`}
-                      title={isOn ? t('Unselect') : t('Select (Shift: all the projects between)')}
+                      title={isOn ? t('Unselect') : t('Select (Shift: all the multiviews between)')}
                       aria-pressed={isOn}
                       onClick={(e) => toggle(p.id, e.shiftKey)}
                     >
@@ -633,8 +637,6 @@ export function Projects() {
                             </CardMenu>
                           ) : (
                             <CardMenu page={0}>
-                              {page('media', <LibraryIcon size={13} />, t('Library'), can.operate(user))}
-                              <div className="menu-sep" />
                               <a href={`/api/projects/${encodeURIComponent(p.id)}/export`} onClick={() => setMenu(null)}>
                                 <Download size={13} /> {t('Export')}
                               </a>
@@ -660,7 +662,7 @@ export function Projects() {
                     <p className="project-desc">{p.description || <span className="muted">{t('No description')}</span>}</p>
                     <div className="project-meta">
                       <span>
-                        <Layers size={12} /> {tn(p.templates, '{n} template', '{n} templates')}
+                        <MonitorPlay size={12} /> {tn(p.tiles, '{n} tile', '{n} tiles')}
                       </span>
                       {p.modifiedAt !== undefined && (
                         <span title={new Date(p.modifiedAt).toLocaleString(locale())}>
@@ -674,17 +676,19 @@ export function Projects() {
                       )}
                     </div>
                   </div>
-                  <div className="project-links ux3-two">
-                    {link('designer', <PenTool size={15} />, t('Designer'), design)}
-                    {link('media', <LibraryIcon size={15} />, t('Library'), can.operate(user))}
-                  </div>
+                  {design && (
+                    <a className="project-links project-link" href={projectPath(p.id)} target="_blank" rel="noopener">
+                      <PenTool size={15} />
+                      <span>{t('Edit')}</span>
+                    </a>
+                  )}
                 </div>
               );
             })}
             {shown.length === 0 && (
               <div className="empty big">
                 <Radio size={22} />
-                <p>{q ? t('No project matches.') : t('No project here.')}</p>
+                <p>{q ? t('No multiview matches.') : t('No multiview here.')}</p>
               </div>
             )}
           </div>

@@ -151,7 +151,7 @@ function ChannelCard({ c }: { c: ChannelMetrics }) {
         <Tv size={16} />
         <div className="perf-ch-title">
           <h2>{c.name}</h2>
-          <span className="muted">{project ? t('plays “{name}”', { name: project }) : t('no project loaded')}</span>
+          <span className="muted">{project ? t('shows “{name}”', { name: project }) : t('no multiview loaded')}</span>
         </div>
         <div className="spacer" />
         <span className="perf-chip">{fps(c.rate)} fps</span>

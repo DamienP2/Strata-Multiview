@@ -104,7 +104,7 @@ function UserDialog({ initial, onClose, onSaved }: { initial: Draft; onClose: ()
         </div>
         {scoped && (
           <div className="set-grid two">
-            <Scope label={t('Projects')} all={projects} value={d.projects} onChange={(v) => setD({ ...d, projects: v })} />
+            <Scope label={t('Multiviews')} all={projects} value={d.projects} onChange={(v) => setD({ ...d, projects: v })} />
             <Scope label={t('Channels')} all={channels} value={d.channels} onChange={(v) => setD({ ...d, channels: v })} />
           </div>
         )}
@@ -220,7 +220,7 @@ export function Users() {
                 </span>
               )}
               {u.role === 'admin' ? (
-                <p className="user-all muted">{t('Every project and channel, users and server settings.')}</p>
+                <p className="user-all muted">{t('Every multiview and channel, users and server settings.')}</p>
               ) : (
                 <div className="user-scopes">
                   <Scopes icon={<FolderOpen size={13} />} ids={u.projects} all={projects} />

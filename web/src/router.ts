@@ -1,6 +1,4 @@
 /** Minimal history router. */
-export type ProjectPage = 'designer' | 'media';
-
 export type Route =
   | { page: 'projects' }
   | { page: 'users' }
@@ -13,25 +11,15 @@ export type Route =
   | { page: 'health' }
   | { page: 'settings' }
   | { page: 'api' }
-  | {
-      page: 'project';
-      projectId: string;
-      sub: ProjectPage;
-    }
+  | { page: 'project'; projectId: string }
   | { page: 'output'; channelId: string | null; rendition: string | null };
-
-const SUBS: ProjectPage[] = ['designer', 'media'];
 
 export function parseRoute(path = location.pathname): Route {
   const [first, second, third] = path.split('/').filter(Boolean).map(decodeURIComponent);
   switch (first) {
     case 'project':
       if (!second) return { page: 'projects' };
-      return {
-        page: 'project',
-        projectId: second,
-        sub: SUBS.includes(third as ProjectPage) ? (third as ProjectPage) : 'designer',
-      };
+      return { page: 'project', projectId: second };
     case 'settings':
       return { page: 'settings' };
     case 'users':
@@ -63,9 +51,9 @@ export function parseRoute(path = location.pathname): Route {
   }
 }
 
-/** URL of a project page. */
-export function projectPath(projectId: string, sub: ProjectPage = 'designer') {
-  return `/project/${encodeURIComponent(projectId)}/${sub}`;
+/** URL of a multiview's editor. */
+export function projectPath(projectId: string) {
+  return `/project/${encodeURIComponent(projectId)}`;
 }
 
 /** Browser tab of a project: opening it again focuses the same tab. */

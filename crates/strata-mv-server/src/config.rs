@@ -4,13 +4,13 @@ use std::collections::HashSet;
 use std::net::SocketAddr;
 use std::path::Path;
 
+use serde::{Deserialize, Serialize};
 use strata_mv_core::FrameRate;
 use strata_mv_output::ndi::NdiConfig;
 use strata_mv_output::sdi::SdiConfig;
 use strata_mv_output::st2110::St2110Config;
 use strata_mv_output::stream::StreamConfig;
 use strata_mv_render::slate::{Slate, SlateStyle};
-use serde::{Deserialize, Serialize};
 
 use crate::hardware::{FlowDirection, HardwareConfig};
 

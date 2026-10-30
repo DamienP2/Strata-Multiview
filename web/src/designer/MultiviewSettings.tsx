@@ -1,21 +1,19 @@
 import { HYPHEN_LANGS } from '../engine/textFit';
 import { Dropdown } from '../ui/Dropdown';
-import { History, MoreHorizontal, Pencil, Plus, RotateCcw, X } from 'lucide-react';
+import { History, MoreHorizontal, Plus, RotateCcw, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import type { Project } from '../engine/types';
 import { api, useApp } from '../store';
 import { confirmDialog, promptDialog } from '../ui/dialogs';
-import { NumberField, Segmented } from '../ui/fields';
+import { NumberField } from '../ui/fields';
 import { useDesigner } from './designerStore';
 import { draftOf, publishState } from '../engine/drafts';
 import { locale, t, tc, tn } from '../i18n';
 
 /*
- * Left panel, above the templates: the project — its name, which opens its
- * settings (name, description, main format, texts' language) in a dialog
- * (its autosave state and Publish are in the top bar, TopPublish). The history of versions
- * (kept at each publish, or by hand) with restore is in the top bar
- * (ProjectHistory).
+ * The multiview's settings (name, description, picture, texts' language) in a
+ * dialog, opened from the inspector; the history of its versions (kept at
+ * each publish, or by hand) with restore, in the top bar (ProjectHistory).
  */
 
 interface Version {
@@ -115,26 +113,8 @@ const when = (ms: number) => {
       });
 };
 
-export function ProjectPanel({ project, readOnly }: { project: Project; readOnly: boolean }) {
-  const [open, setOpen] = useState(false);
-  return (
-    <section className="project-panel">
-      <header>
-        <span>{t('Project')}</span>
-      </header>
-      <div className="pjp-body">
-        <button className="pjp-name" onClick={() => setOpen(true)} title={t('Project settings')}>
-          <span>{project.name}</span>
-          <Pencil size={12} />
-        </button>
-      </div>
-      {open && <ProjectDialog project={project} readOnly={readOnly} onClose={() => setOpen(false)} />}
-    </section>
-  );
-}
-
-/** The project's name, description, main format (resolution and frame rate) and texts' language. */
-function ProjectDialog({ project, readOnly, onClose }: { project: Project; readOnly: boolean; onClose: () => void }) {
+/** The multiview's name, description, picture (resolution and frame rate) and texts' language. */
+export function MultiviewSettings({ project, readOnly, onClose }: { project: Project; readOnly: boolean; onClose: () => void }) {
   const toast = useApp((s) => s.toast);
   const url = `/api/projects/${encodeURIComponent(project.id)}`;
   const [name, setName] = useState(project.name);
@@ -142,7 +122,6 @@ function ProjectDialog({ project, readOnly, onClose }: { project: Project; readO
   const [size, setSize] = useState({ width: project.width, height: project.height });
   const [rate, setRate] = useState(project.frameRate);
   const [language, setLanguage] = useState(project.language ?? 'fr');
-  const [secs, setSecs] = useState(project.templateSecs ?? 1);
   const [busy, setBusy] = useState(false);
   const resized = size.width !== project.width || size.height !== project.height;
   const save = async (e: React.FormEvent) => {
@@ -150,8 +129,8 @@ function ProjectDialog({ project, readOnly, onClose }: { project: Project; readO
     if (readOnly || !name.trim()) return;
     if (resized) {
       const ok = await confirmDialog({
-        title: t('Change the main format to {size}?', { size: `${size.width}×${size.height}` }),
-        message: t('The templates keep their positions in pixels: check them afterwards. A version of the project is kept first.'),
+        title: t('Change the resolution to {size}?', { size: `${size.width}×${size.height}` }),
+        message: t('The tiles keep their positions in pixels: apply a layout again afterwards. A version of the multiview is kept first.'),
         confirm: t('Change'),
       });
       if (!ok) return;
@@ -160,7 +139,7 @@ function ProjectDialog({ project, readOnly, onClose }: { project: Project; readO
     try {
       // Kept in English (like the server's notes): shown translated by noteText.
       if (resized) await api('POST', `${url}/versions`, { note: `Before the change to ${size.width}×${size.height}` }).catch(() => {});
-      await api('PUT', url, { name: name.trim(), description, width: size.width, height: size.height, frameRate: rate, language, templateSecs: secs });
+      await api('PUT', url, { name: name.trim(), description, width: size.width, height: size.height, frameRate: rate, language });
       onClose();
     } catch (err) {
       toast((err as Error).message, 'error');
@@ -172,7 +151,7 @@ function ProjectDialog({ project, readOnly, onClose }: { project: Project; readO
     <div className="modal-back" onPointerDown={onClose}>
       <form className="modal pjp-dialog" onSubmit={save} onPointerDown={(e) => e.stopPropagation()}>
         <header>
-          <h2>{t('Project')}</h2>
+          <h2>{t('Multiview settings')}</h2>
           <button type="button" className="icon-btn ghost" onClick={onClose}>
             <X size={16} />
           </button>
@@ -183,18 +162,11 @@ function ProjectDialog({ project, readOnly, onClose }: { project: Project; readO
         </label>
         <label className="set-field">
           <span className="set-label">{t('Description')}</span>
-          <textarea rows={2} value={description} disabled={readOnly} placeholder={t('What this project is for')} onChange={(e) => setDescription(e.target.value)} />
+          <textarea rows={2} value={description} disabled={readOnly} placeholder={t('What this multiview is for')} onChange={(e) => setDescription(e.target.value)} />
         </label>
         <div className="set-field">
-          <span className="set-label">{t('Main resolution')}</span>
+          <span className="set-label">{t('Resolution')}</span>
           <FormatButtons width={size.width} height={size.height} rate={rate} disabled={readOnly} onSize={(width, height) => setSize({ width, height })} onRate={setRate} />
-        </div>
-        <div className="set-field">
-          <span className="set-label">{t('Length of the templates')}</span>
-          <div className="pjp-secs">
-            <Segmented value={String(secs)} options={[1, 2, 3, 5, 10].map((n) => ({ value: String(n), label: `${n} s` }))} onChange={(v) => setSecs(+v)} />
-            <NumberField value={secs} min={0.1} max={600} step={0.5} precision={1} suffix=" s" onChange={setSecs} />
-          </div>
         </div>
         <div className="set-field">
           <span className="set-label">{t('Language of the texts')}</span>
@@ -286,7 +258,7 @@ export function ProjectHistory({ project, readOnly }: { project: Project; readOn
           <header>
             <strong>{t('History')}</strong>
             {!readOnly && (
-              <button className="pjp-keep" title={t('Keep a version of the project now, with a note')} onClick={keep}>
+              <button className="pjp-keep" title={t('Keep a version of the multiview now, with a note')} onClick={keep}>
                 <Plus size={12} /> {t('Keep a version')}
               </button>
             )}

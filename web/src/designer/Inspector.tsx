@@ -3,15 +3,12 @@ import { useShallow } from 'zustand/react/shallow';
 import { Dropdown } from '../ui/Dropdown';
 import { FontPick } from '../ui/FontPick';
 import { AssetPicker } from './AssetPicker';
-import { fieldUsed } from '../engine/settings';
-import { Check, Database, Radio, RotateCcw, AlignCenter, AlignLeft, AlignRight, ChevronDown, Link as LinkIcon, Link2, LayoutTemplate, Settings2, Unlink } from 'lucide-react';
-import { createContext, Fragment, useContext, useEffect, useMemo, useRef } from 'react';
+import { Database, RotateCcw, AlignCenter, AlignLeft, AlignRight, ChevronDown, Link as LinkIcon, LayoutTemplate, MonitorPlay, Settings2, Unlink } from 'lucide-react';
+import { createContext, Fragment, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { col, holdFrame, interpolateText, num, parseHex, propValue, resolveLayer, toHex } from '../engine/evaluate';
-import { applyLogic, measureLayer } from '../engine/logic';
 import { MAIN_FORMAT, TEXT_LIKE, type TextOverflow, type FontStyle, type Layer, type LayerType, type Prop, type Template, type Value } from '../engine/types';
 import { useApp } from '../store';
 import { ColorField, NumberField, Segmented, TextInput } from '../ui/fields';
-import { useZoneEdit } from './ZoneEditor';
 import { loadFonts, useFonts } from '../engine/fonts';
 import { isOverridden, resetOverride } from '../engine/formats';
 import { findLayer, isAnimated, LABELS, setProp, useDesigner } from './designerStore';
@@ -19,7 +16,7 @@ import { isTimed } from '../engine/widgets';
 import { WidgetRunButtons } from './WidgetRun';
 import { AreaInspector, useGuidesView } from './Guides';
 import { fitLayer, layerText } from '../engine/Scene';
-import { TemplatePublish } from './Collab';
+import { MultiviewSettings } from './MultiviewSettings';
 import { layerIcon } from './LayersPanel';
 import { widgetOf } from '../widgets';
 import { Bound, CentreModeContext, FirstSection, Row as KitRow, Section as SpecSection, setPath, Toggle, Warnings, wiredKeys } from '../widgets/kit';
@@ -175,61 +172,7 @@ const TRANSFORM_ROWS: RowSpec[] = [
   },
 ];
 
-/** Lit when a Logic relation drives one of the row's properties. */
-function LogicBadge({ layer, props }: { layer: Layer; props: Prop[] }) {
-  const driven = useDesigner((s) => s.template?.logic?.nodes.some((n) => n.type === 'target' && n.layer === layer.id && props.includes(n.prop as Prop)));
-  if (!driven) return null;
-  return (
-    <span className="logic-badge" title={t('Driven by a Logic relation (Logic button in the toolbar)')}>
-      <Link2 size={11} />
-    </span>
-  );
-}
-
-/** (•) at the end of a row: exposes the property to the Operator (a variable he sets), or stops. */
-export function ExposeButton({ layer, props }: { layer: Layer; props: Prop[] }) {
-  const { update, template } = useDesigner(useShallow((s) => ({ update: s.update, template: s.template })));
-  if (!template) return <span className="pp-op-space" />;
-  const bound = props.map((p) => layer.bindings[p]).filter((k): k is string => !!k);
-  const on = bound.length > 0;
-  const fields = template.fields.filter((f) => bound.includes(f.key));
-  const expose = () =>
-    update((tpl) => {
-      const l = findLayer(tpl, layer.id)!;
-      for (const prop of props) {
-        const isColor = prop === 'fill' || prop === 'stroke';
-        const name = PROP_LABELS[prop] ?? prop;
-        // The key from the English name (an identifier), the label in the interface's language.
-        const key = fieldKey(`${l.name} ${name}`, new Set(tpl.fields.map((f) => f.key)));
-        // Default: what is seen on air.
-        const v = propValue(l, prop, holdFrame(tpl));
-        tpl.fields.push({ key, label: `${l.name} · ${t(name)}`, kind: isColor ? 'color' : 'number', default: isColor ? toHex(col(v), col(v)[3] < 1) : String(+num(v).toFixed(3)) });
-        l.bindings[prop] = key;
-      }
-    });
-  const unbind = () =>
-    update((t) => {
-      const l = findLayer(t, layer.id)!;
-      for (const prop of props) {
-        const key = l.bindings[prop];
-        delete l.bindings[prop];
-        // A field made for this binding and used nowhere else goes too.
-        if (key && !fieldUsed(t, key)) t.fields = t.fields.filter((f) => f.key !== key);
-      }
-    });
-  const fromSource = fields.some((f) => f.binding?.source);
-  return (
-    <button
-      className={`pp-op ${on ? 'on' : ''}`}
-      title={on ? (fromSource ? t('Exposed as fields ({fields}) · fed by a data source · click to stop', { fields: fields.map((f) => f.label).join(', ') || bound.join(', ') }) : t('Exposed as fields ({fields}) · click to stop', { fields: fields.map((f) => f.label).join(', ') || bound.join(', ') })) : t('Expose as a field')}
-      onClick={() => (on ? unbind() : expose())}
-    >
-      <Radio size={13} />
-    </button>
-  );
-}
-
-/** Values of the selected layer set by data (a bound variable or a relation of the Data canvas), at the playhead. */
+/** Values of the selected layer set by a bound variable, at the playhead. */
 const DrivenContext = createContext<Map<string, Value>>(new Map());
 
 function useDrivenValues(layer: Layer): Map<string, Value> {
@@ -238,13 +181,11 @@ function useDrivenValues(layer: Layer): Map<string, Value> {
   return useMemo(() => {
     const out = new Map<string, Value>();
     if (!template) return out;
-    const targets = template.logic?.nodes.filter((n): n is typeof n & { type: 'target' } => n.type === 'target' && n.layer === layer.id && !!template.logic?.edges.some((e) => e.to === n.id)) ?? [];
-    const driven = new Set<Prop>([...(Object.entries(layer.bindings) as [Prop, string][]).filter(([, k]) => k).map(([p]) => p), ...targets.map((t) => t.prop)]);
+    const driven = new Set<Prop>((Object.entries(layer.bindings) as [Prop, string][]).filter(([, k]) => k).map(([p]) => p));
     if (!driven.size) return out;
     const data = { ...previewData, ...bound };
     const hold = holdFrame(template);
     const resolved = new Map(template.layers.map((l) => [l.id, resolveLayer(l, frame, data, hold)]));
-    applyLogic(template.logic, resolved, data, measureLayer(template.layers, data, interpolateText));
     const r = resolved.get(layer.id);
     if (r) for (const p of driven) out.set(p, r[p]);
     return out;
@@ -285,7 +226,6 @@ export function GroupRow({ layer, spec }: { layer: Layer; spec: RowSpec }) {
     <div className={`pp-row ${spec.props.some((p) => isAnimated(layer, p)) ? 'animated' : ''}`}>
       <span className="pp-label">
         {t(spec.label)}
-        <LogicBadge layer={layer} props={spec.props} />
       </span>
       <div className="pp-fields">
         {spec.props.map((p, i) => (
@@ -308,7 +248,6 @@ export function GroupRow({ layer, spec }: { layer: Layer; spec: RowSpec }) {
           </button>
         )}
       </div>
-      <ExposeButton layer={layer} props={spec.props} />
     </div>
   );
 }
@@ -321,7 +260,6 @@ export function ColorGroupRow({ layer, prop, label }: { layer: Layer; prop: 'fil
     <div className={`pp-row ${isAnimated(layer, prop) ? 'animated' : ''}`}>
       <span className="pp-label">
         {t(label)}
-        <LogicBadge layer={layer} props={[prop]} />
       </span>
       <div className="pp-fields">
         <span className="pp-field color">
@@ -336,7 +274,6 @@ export function ColorGroupRow({ layer, prop, label }: { layer: Layer; prop: 'fil
         </span>
         <OverrideMark layer={layer} prop={prop} />
       </div>
-      <ExposeButton layer={layer} props={[prop]} />
     </div>
   );
 }
@@ -1018,45 +955,43 @@ function TextFitControls({ layer, edit }: { layer: Layer & { type: 'text' }; edi
   );
 }
 
-function TemplateInspector({ template }: { template: Template }) {
-  const { update } = useDesigner(useShallow((s) => ({ update: s.update })));
+/** Nothing selected: the multiview itself, its picture and what is on it. */
+function MultiviewInspector({ template }: { template: Template }) {
   const project = useApp((s) => s.project);
-  const zones = project?.zones ?? [];
-  const sorted = [...zones].sort((a, b) => b.layer - a.layer);
+  const select = useDesigner((s) => s.select);
+  const [settings, setSettings] = useState(false);
+  if (!project) return null;
+  const tiles = template.layers.filter((l) => l.type === 'source');
+  const rate = +(project.frameRate.num / project.frameRate.den).toFixed(2);
   return (
     <>
       <div className="pp-head">
         <span className="pp-type">
           <LayoutTemplate size={14} />
         </span>
-        <TextInput value={template.name} commitOnBlur onChange={(v) => update((t) => void (t.name = v))} />
+        <span className="mv-insp-name">{project.name}</span>
+        <button className="icon-btn ghost" title={t('Multiview settings')} onClick={() => setSettings(true)}>
+          <Settings2 size={14} />
+        </button>
       </div>
-      {project && (
-        <div className="tpl-publish-row">
-          <TemplatePublish project={project} id={template.id} />
-        </div>
-      )}
-      <div className="tpl-props">
-        <div className="tpl-field">
-          <span className="tpl-label">
-            {t('Zone')}
-            <button className="icon-btn ghost tpl-zones-edit" title={t('Edit the zones')} onClick={() => project && useZoneEdit.getState().start(project, template.zone)}>
-              <Settings2 size={13} />
+      <Section title={t('Picture')}>
+        <p className="mv-insp-line">
+          {project.width}×{project.height} · {rate} {t('fps')}
+        </p>
+        {project.description && <p className="muted small">{project.description}</p>}
+      </Section>
+      <Section title={tn(tiles.length, '{n} tile', '{n} tiles')}>
+        <div className="mv-insp-tiles">
+          {tiles.map((l) => (
+            <button key={l.id} className="mv-insp-tile" onClick={() => select([l.id])}>
+              <MonitorPlay size={13} />
+              <span>{l.name}</span>
             </button>
-          </span>
-          <div className="tpl-zones" role="radiogroup">
-            {sorted.map((z) => (
-              <button key={z.id} role="radio" aria-checked={template.zone === z.id} className={template.zone === z.id ? 'on' : ''} style={{ ['--z' as string]: z.color }} onClick={() => update((t) => void (t.zone = z.id))}>
-                <span className="zone-dot" />
-                <span className="tpl-zone-name">{z.name}</span>
-                <span className="tpl-zone-layer">L{z.layer}</span>
-                {template.zone === z.id && <Check size={13} />}
-              </button>
-            ))}
-            {!zones.length && <span className="muted small">{t('No zone yet')}</span>}
-          </div>
+          ))}
+          {!tiles.length && <p className="muted small">{t('No tile yet: Layout places them on a grid, Source adds one.')}</p>}
         </div>
-      </div>
+      </Section>
+      {settings && <MultiviewSettings project={project} readOnly={false} onClose={() => setSettings(false)} />}
     </>
   );
 }
@@ -1071,14 +1006,7 @@ export function Inspector() {
         <AreaInspector project={project} />
       </div>
     );
-  if (!template)
-    return (
-      <div className="inspector">
-        <Section title={t('All templates')}>
-          <p className="muted small">{tn(project?.templates.length ?? 0, '{n} template', '{n} templates')}</p>
-        </Section>
-      </div>
-    );
+  if (!template) return <div className="inspector" />;
   const layer = selected.length === 1 ? findLayer(template, selected[0]) : undefined;
   return (
     <div className="inspector">
@@ -1089,7 +1017,7 @@ export function Inspector() {
           <p className="hint">{t('{n} layers selected. Drag on the stage to move them together.', { n: selected.length })}</p>
         </Section>
       ) : (
-        <TemplateInspector template={template} />
+        <MultiviewInspector template={template} />
       )}
     </div>
   );

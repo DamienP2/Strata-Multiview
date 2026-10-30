@@ -1,9 +1,9 @@
 //! The status control surfaces show: the tally of every graphic, what each
 //! zone has on air, countdowns, widgets, zone locks and health.
 
+use serde::Serialize;
 use strata_mv_core::model::{MarkerKind, Resume};
 use strata_mv_core::{ChannelState, Phase, PlayoutItem, Project, Template};
-use serde::Serialize;
 
 use super::{cue_of, next_target, Cue};
 use crate::auth::User;

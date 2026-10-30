@@ -8,8 +8,8 @@
 use std::collections::{BTreeMap, VecDeque};
 use std::sync::Mutex;
 
-use strata_mv_core::{ChannelState, Command, Project};
 use serde::{Deserialize, Serialize};
+use strata_mv_core::{ChannelState, Command, Project};
 
 /// How many actions of a channel can be undone.
 pub const UNDO_STEPS: usize = 10;

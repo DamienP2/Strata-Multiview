@@ -196,7 +196,12 @@ impl InputConfig {
         }
         // The source's own size and rate.
         a.extend(["-i".into(), url]);
-        a.extend(["-map", "0:v:0", "-pix_fmt", "rgba", "-f", "rawvideo", "pipe:1"].map(String::from));
+        a.extend(
+            [
+                "-map", "0:v:0", "-pix_fmt", "rgba", "-f", "rawvideo", "pipe:1",
+            ]
+            .map(String::from),
+        );
         if audio {
             a.extend(["-map", "0:a:0", "-af", METER_FILTER, "-f", "null", "-"].map(String::from));
         }
@@ -835,12 +840,12 @@ pub async fn mjpeg(
                     // The newest picture: a preview is not delayed by the smoothing.
                     let pic = hub.latest(&id).map(|(_, p)| p);
                     let jpeg = match pic {
-                        Some(p) => {
-                            tokio::task::spawn_blocking(move || strata_mv_render::jpeg(&p, width, 78))
-                                .await
-                                .ok()
-                                .flatten()
-                        }
+                        Some(p) => tokio::task::spawn_blocking(move || {
+                            strata_mv_render::jpeg(&p, width, 78)
+                        })
+                        .await
+                        .ok()
+                        .flatten(),
                         None => None,
                     };
                     let Some(jpeg) = jpeg else {
@@ -1215,22 +1220,23 @@ fn run_sdi(l: &Live) {
     let mut failures = 0usize;
     while !l.stopped() {
         let (w, h, rate, interlaced) = SDI_FORMATS[attempt % SDI_FORMATS.len()];
-        let mut card = match strata_mv_output::sdi::DeckLinkInput::open(c.device, w, h, rate, interlaced) {
-            Ok(card) => card,
-            Err(e) => {
-                // A format the card does not take: the next one; none at all: wait.
-                attempt += 1;
-                failures += 1;
-                if failures >= SDI_FORMATS.len() {
-                    failures = 0;
-                    l.say(e);
-                    if !l.pause(Duration::from_secs(5)) {
-                        return;
+        let mut card =
+            match strata_mv_output::sdi::DeckLinkInput::open(c.device, w, h, rate, interlaced) {
+                Ok(card) => card,
+                Err(e) => {
+                    // A format the card does not take: the next one; none at all: wait.
+                    attempt += 1;
+                    failures += 1;
+                    if failures >= SDI_FORMATS.len() {
+                        failures = 0;
+                        l.say(e);
+                        if !l.pause(Duration::from_secs(5)) {
+                            return;
+                        }
                     }
+                    continue;
                 }
-                continue;
-            }
-        };
+            };
         failures = 0;
         l.say(format!("Waiting for a signal ({})…", card.mode().name));
         let opened = Instant::now();
@@ -1493,10 +1499,22 @@ mod tests {
         let mut m = MeterLog::default();
         assert!(m.line("Input #0, mpegts, from 'udp://…':").is_none());
         let p = "[Parsed_ametadata_2 @ 0x55d0c]";
-        assert_eq!(m.line(&format!("{p} frame:0    pts:0       pts_time:0")), Some(None));
-        assert_eq!(m.line(&format!("{p} lavfi.astats.1.Peak_level=-6.020600")), Some(None));
-        assert_eq!(m.line(&format!("{p} lavfi.astats.1.RMS_level=-9.031400")), Some(None));
-        assert_eq!(m.line(&format!("{p} lavfi.astats.2.Peak_level=-inf")), Some(None));
+        assert_eq!(
+            m.line(&format!("{p} frame:0    pts:0       pts_time:0")),
+            Some(None)
+        );
+        assert_eq!(
+            m.line(&format!("{p} lavfi.astats.1.Peak_level=-6.020600")),
+            Some(None)
+        );
+        assert_eq!(
+            m.line(&format!("{p} lavfi.astats.1.RMS_level=-9.031400")),
+            Some(None)
+        );
+        assert_eq!(
+            m.line(&format!("{p} lavfi.astats.2.Peak_level=-inf")),
+            Some(None)
+        );
         let Some(Some(l)) = m.line(&format!("{p} frame:1    pts:1920    pts_time:0.04")) else {
             panic!("a frame read whole")
         };

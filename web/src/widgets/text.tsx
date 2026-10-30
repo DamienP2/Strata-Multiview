@@ -690,7 +690,7 @@ function Inspector({ layer, template, edit }: { layer: TextLayer; data: Data; te
                 ['hyphen', t('Hyphenation')],
               ]}
             />
-            {k.breakMode === 'hyphen' && <Select label={t('Language')} path="lang" value={k.lang} options={[['', t('Project language')], ...HYPHEN_LANGS.map(([v, l]) => [v, t(l)] as [string, string])]} />}
+            {k.breakMode === 'hyphen' && <Select label={t('Language')} path="lang" value={k.lang} options={[['', t('Multiview language')], ...HYPHEN_LANGS.map(([v, l]) => [v, t(l)] as [string, string])]} />}
           </>
         )}
         <Seg expose="overflow" exposeValue={mode} label={t('Too long')} value={mode} onChange={(v) => edit((l) => void (l.overflow = v === 'fit' ? undefined : v))} options={OVERFLOWS.map(([v, l, tip]) => [v, t(l), t(tip)] as [TextOverflow, string, string])} />

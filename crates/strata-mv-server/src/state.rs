@@ -4,10 +4,10 @@ use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 use std::time::SystemTime;
 
+use serde::{Deserialize, Serialize};
 use strata_mv_core::{ChannelState, Command, Project, ReadMode};
 use strata_mv_render::slate::SlateStyle;
 use strata_mv_render::Renderer;
-use serde::{Deserialize, Serialize};
 use tokio::sync::{broadcast, watch, Notify, RwLock};
 
 use crate::auth::Auth;
@@ -846,7 +846,14 @@ impl AppState {
             }
             *st = before;
             if let Some(p) = &project {
-                bind_state(p, &mut st, &strata_mv_core::datapath::Store::default(), None, None, false);
+                bind_state(
+                    p,
+                    &mut st,
+                    &strata_mv_core::datapath::Store::default(),
+                    None,
+                    None,
+                    false,
+                );
             }
             st.clone()
         };
@@ -934,28 +941,29 @@ pub fn bind_state(
 ) -> bool {
     let mut changed = false;
     for item in st.layers.values_mut() {
-        let mut one = |template_id: &str, rundown_id: Option<&str>, data: &mut strata_mv_core::Data| {
-            let Some(t) = project.template(template_id) else {
-                return;
+        let mut one =
+            |template_id: &str, rundown_id: Option<&str>, data: &mut strata_mv_core::Data| {
+                let Some(t) = project.template(template_id) else {
+                    return;
+                };
+                // Data sets always follow their source, on the row shown.
+                if only.is_none_or(|src| t.datasets.iter().any(|d| d.source == src)) {
+                    changed |= strata_mv_core::datapath::bind_datasets(t, data, store);
+                }
+                let mode = rundown_id
+                    .and_then(|id| project.rundown.iter().find(|r| r.id == id))
+                    .map(|r| r.read)
+                    .unwrap_or_default();
+                match mode {
+                    ReadMode::Live => {}
+                    ReadMode::Take if taken.is_some() && taken == rundown_id => {}
+                    _ => return,
+                }
+                if only.is_some_and(|src| !strata_mv_core::datapath::sources(t).any(|s| s == src)) {
+                    return;
+                }
+                changed |= strata_mv_core::datapath::bind(t, data, store);
             };
-            // Data sets always follow their source, on the row shown.
-            if only.is_none_or(|src| t.datasets.iter().any(|d| d.source == src)) {
-                changed |= strata_mv_core::datapath::bind_datasets(t, data, store);
-            }
-            let mode = rundown_id
-                .and_then(|id| project.rundown.iter().find(|r| r.id == id))
-                .map(|r| r.read)
-                .unwrap_or_default();
-            match mode {
-                ReadMode::Live => {}
-                ReadMode::Take if taken.is_some() && taken == rundown_id => {}
-                _ => return,
-            }
-            if only.is_some_and(|src| !strata_mv_core::datapath::sources(t).any(|s| s == src)) {
-                return;
-            }
-            changed |= strata_mv_core::datapath::bind(t, data, store);
-        };
         let old = item.data.clone();
         one(
             &item.template_id,

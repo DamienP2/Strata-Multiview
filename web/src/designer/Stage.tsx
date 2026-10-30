@@ -4,20 +4,14 @@ import { settingDefaults } from '../engine/settings';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { LiveTime, type Ticking } from '../engine/LiveTime';
 import { Scene, Viewport } from '../engine/Scene';
-import { defaultData, holdFrame, num, propValue } from '../engine/evaluate';
-import { designTemplates } from '../engine/drafts';
-import { inFormat } from '../engine/formats';
-import { areaClip, zoneArea } from '../engine/zones';
-import type { Layer, Project, Template } from '../engine/types';
+import { num, propValue } from '../engine/evaluate';
+import type { Layer, Project } from '../engine/types';
 import { findLayer, runAge, setProp, useDesigner } from './designerStore';
-import { ZoneOverlay } from './ZoneOverlay';
-import { useZoneEdit, ZonesEditOverlay } from './ZoneEditor';
 import { ClipboardMenu, type ClipMenuAt } from './ClipboardMenu';
 import { widgetOf } from '../widgets';
 import { snapTargets, StageGuides, stageViewStyle, useGuidesView, useProjectGuides } from './Guides';
-import { t, tn } from '../i18n';
+import { t } from '../i18n';
 import { useLiveFrame } from '../engine/liveInputs';
-import { useGhosts } from './ghosts';
 
 interface Box {
   id: string;
@@ -90,9 +84,9 @@ export function StageZoom() {
 }
 
 /** The canvas, at the size of the format being edited. */
-export function Stage({ project: _project, size, showZones, background, bgInput }: { project: Project; size: { width: number; height: number }; showZones: boolean; background: string; /** The live input shown behind (« video » background). */ bgInput: string }) {
+export function Stage({ project: _project, size, background, bgInput }: { project: Project; size: { width: number; height: number }; background: string; /** The live input shown behind (« video » background). */ bgInput: string }) {
   const project = { ..._project, width: size.width, height: size.height };
-  const { template, frame, previewData, selected, format } = useDesigner(useShallow((s) => ({ template: s.template, frame: s.frame, previewData: s.previewData, selected: s.selected, format: s.format })));
+  const { template, frame, previewData, selected } = useDesigner(useShallow((s) => ({ template: s.template, frame: s.frame, previewData: s.previewData, selected: s.selected })));
   const data = useMemo(() => ({ ...previewData, ...settingDefaults(template) }), [previewData, template]);
   const wrapRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<HTMLDivElement>(null);
@@ -122,13 +116,6 @@ export function Stage({ project: _project, size, showZones, background, bgInput 
   // Snapping targets, read by the drag handler.
   const [guides] = useProjectGuides(_project);
   const view = useGuidesView();
-  const zonesEdit = useZoneEdit((s) => s.on);
-  // The other templates shown faint under this one.
-  const ghostPick = useGhosts();
-  const zoneById = new Map(_project.zones.map((z) => [z.id, z]));
-  const ghostTemplates = template && ghostPick.on ? designTemplates(_project).filter((tpl) => tpl.id !== template.id && (ghostPick.ids === null || ghostPick.ids.includes(tpl.id))) : [];
-  const ghostOn = ghostTemplates.length > 0;
-  const ghostOpacity = ghostPick.opacity;
   const snapRef = useRef({ on: view.snap, targets: snapTargets(guides, project.width, project.height, view.safe) });
   snapRef.current = { on: view.snap, targets: snapTargets(guides, project.width, project.height, view.safe) };
 
@@ -142,7 +129,7 @@ export function Stage({ project: _project, size, showZones, background, bgInput 
     });
     ro.observe(el);
     return () => ro.disconnect();
-    // The overview and a template have their own stage element.
+    // The stage element comes with the multiview's page.
   }, [project.width, project.height, !!template]);
 
   // Ctrl / ⌘ + wheel (a pinch on a trackpad): zoom around the pointer.
@@ -180,7 +167,7 @@ export function Stage({ project: _project, size, showZones, background, bgInput 
       held = on;
       el.classList.toggle('hand', on);
     };
-    const down = (e: KeyboardEvent) => e.key === ' ' && !typing(e) && !document.querySelector('.logic-editor, .modal-back') && set(true);
+    const down = (e: KeyboardEvent) => e.key === ' ' && !typing(e) && !document.querySelector('.modal-back') && set(true);
     const up = (e: KeyboardEvent) => e.key === ' ' && set(false);
     const blur = () => set(false);
     const grab = (e: PointerEvent) => {
@@ -513,7 +500,7 @@ export function Stage({ project: _project, size, showZones, background, bgInput 
 
   // Program, fill or key, for the whole stage (canvas toolbar).
   const shown = stageViewStyle(view.stageView, background);
-  if (!template) return <Overview project={_project} size={project} format={format} scale={scale} background={shown.background} bgInput={bgInput} filter={shown.filter} showZones={showZones} wrapRef={wrapRef} ticking={running ? 'all' : false} fps={fps} />;
+  if (!template) return <div className="stage-wrap" ref={wrapRef} />;
 
   return (
     // Around the picture too: a layer dragged out of it is still picked there (or nothing: deselects).
@@ -537,25 +524,9 @@ export function Stage({ project: _project, size, showZones, background, bgInput 
             <Viewport width={project.width} height={project.height} scale={scale} style={{ overflow: 'visible' }}>
               {/* Widgets run on the playhead: scrub to see a ticker or a counter move. */}
               <LiveTime ageSecs={frame / fps} since={holdSince} ticking={ticking} layerAge={layerAge} clocked={clocked} widgetState={stateOf} fps={fps} lang={_project.language || 'fr'}>
-                {/* The other templates picked (Display › Other templates), faint, under it: to arrange it against them. */}
-                {!zonesEdit && ghostOn && (
-                  <div className="stage-ghosts" style={{ position: 'absolute', inset: 0, opacity: ghostOpacity, pointerEvents: 'none', filter: shown.filter }} aria-hidden>
-                    {ghostTemplates.map((tpl) => {
-                      const z = zoneById.get(tpl.zone);
-                      return (
-                        <div key={tpl.id} style={{ position: 'absolute', inset: 0, ...areaClip(z && zoneArea(z, format, project.height > project.width)) }}>
-                          <OverviewScene template={tpl} format={format} ticking={false} fps={fps} lang={_project.language || 'fr'} />
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-                {/* While the zones are edited: the zones alone, no graphic. */}
-                {!zonesEdit && (
-                  <div style={{ position: 'absolute', inset: 0, filter: shown.filter }}>
-                    <Scene template={template} frame={frame} data={data} interactive />
-                  </div>
-                )}
+                <div style={{ position: 'absolute', inset: 0, filter: shown.filter }}>
+                  <Scene template={template} frame={frame} data={data} interactive />
+                </div>
               </LiveTime>
             </Viewport>
             {/* What is outside the picture still shows, greyed (it is cut on air). */}
@@ -566,14 +537,13 @@ export function Stage({ project: _project, size, showZones, background, bgInput 
               <i style={{ left: W, top: Math.max(0, vis.y0), width: Math.max(0, vis.x1 - W), height: Math.max(0, Math.min(H, vis.y1) - Math.max(0, vis.y0)) }} />
             </div>
             <StageGuides project={_project} width={project.width} height={project.height} scale={scale} frameRef={sceneRef} />
-            {zonesEdit ? <ZonesEditOverlay format={format} width={project.width} height={project.height} scale={scale} /> : showZones && <ZoneOverlay zones={_project.zones ?? []} only={template.zone} format={format} width={project.width} height={project.height} scale={scale} current={template.zone} />}
-            {view.frames && !zonesEdit && ghosts.map((b) => (
+            {view.frames && ghosts.map((b) => (
               <div key={`g${b.id}`} className="ghost-box" style={{ left: b.left, top: b.top, width: b.width, height: b.height }} />
             ))}
             {smart.map((g) => (
               <div key={`${g.axis}${g.v}`} className={`smart-guide ${g.axis}`} style={g.axis === 'x' ? { left: g.v * scale, top: g.from * scale, height: (g.to - g.from) * scale } : { top: g.v * scale, left: g.from * scale, width: (g.to - g.from) * scale }} />
             ))}
-            {!zonesEdit && boxes.map((b) => (
+            {boxes.map((b) => (
               <div key={b.id} className="sel-box" style={{ left: b.left, top: b.top, width: b.width, height: b.height }}>
                 {selected.length === 1 && HANDLES.map((h) => <div key={h} className={`handle h-${h}`} onPointerDown={(e) => beginDrag(e, h, [b.id])} />)}
                 {selected.length === 1 && <WidgetOverlay layerId={b.id} box={b} frame={frame} />}
@@ -608,93 +578,6 @@ function WidgetOverlay({ layerId, box, frame }: { layerId: string; box: Box; fra
     <div className="wk-overlay">
       <Ov layer={layer as never} w={w} h={h} scale={w > 0 ? box.width / w : 1} edit={edit} />
     </div>
-  );
-}
-
-/**
- * No template open: every template of the project at its on-air point,
- * each cut to its zone, over the zones. Clicking a graphic opens its
- * template; Esc in a template comes back here.
- */
-function Overview({
-  project,
-  size,
-  format,
-  scale,
-  background,
-  bgInput,
-  filter,
-  showZones,
-  wrapRef,
-  ticking,
-  fps,
-}: {
-  project: Project;
-  size: { width: number; height: number };
-  format: string;
-  scale: number;
-  background: string;
-  bgInput: string;
-  filter?: string;
-  showZones: boolean;
-  wrapRef: React.RefObject<HTMLDivElement | null>;
-  ticking: Ticking;
-  fps: number;
-}) {
-  const load = useDesigner((s) => s.load);
-  const zonesEdit = useZoneEdit((s) => s.on);
-  const sceneRef = useRef<HTMLDivElement>(null);
-  const portrait = size.height > size.width;
-  const zones = new Map(project.zones.map((z) => [z.id, z]));
-  const templates = [...designTemplates(project)].sort((a, b) => (zones.get(a.zone)?.layer ?? 0) - (zones.get(b.zone)?.layer ?? 0));
-  return (
-    <div className="stage-wrap" ref={wrapRef}>
-      <div className={`stage-frame bg-${background}`}>
-        {background === 'video' && <StageVideo input={bgInput} />}
-        <div
-          ref={sceneRef}
-          className="overview"
-          style={{ position: 'relative' }}
-          onPointerDown={(e) => {
-            const id = (e.target as HTMLElement).closest<HTMLElement>('[data-template-id]')?.dataset.templateId;
-            const t = id && templates.find((x) => x.id === id);
-            if (t) load(t);
-          }}
-        >
-          <Viewport width={size.width} height={size.height} scale={scale} style={{ filter }}>
-            {(zonesEdit ? [] : templates).map((tpl) => {
-              const z = zones.get(tpl.zone);
-              return (
-                <div key={tpl.id} className="overview-tpl" data-template-id={tpl.id} title={t('{name} — click to open', { name: tpl.name })} style={{ position: 'absolute', inset: 0, ...areaClip(z && zoneArea(z, format, portrait)) }}>
-                  <OverviewScene template={tpl} format={format} ticking={ticking} fps={fps} lang={project.language || 'fr'} />
-                </div>
-              );
-            })}
-          </Viewport>
-          <StageGuides project={project} width={size.width} height={size.height} scale={scale} frameRef={sceneRef} />
-          {zonesEdit ? <ZonesEditOverlay format={format} width={size.width} height={size.height} scale={scale} /> : showZones && <ZoneOverlay zones={project.zones ?? []} format={format} width={size.width} height={size.height} scale={scale} current="" />}
-        </div>
-      </div>
-      <div className="stage-info">
-        {tn(templates.length, '{n} template', '{n} templates')} · {size.width}×{size.height} · {Math.round(scale * 100)}%
-      </div>
-    </div>
-  );
-}
-
-/**
- * One template of the overview, drawn as the open template draws it: its
- * default values, bound fields and data sets read like on air, its settings.
- */
-function OverviewScene({ template, format, ticking, fps, lang }: { template: Template; format: string; ticking: Ticking; fps: number; lang?: string }) {
-  const defaults = useMemo(() => defaultData(template), [template]);
-  const data = useMemo(() => ({ ...defaults, ...settingDefaults(template) }), [defaults, template]);
-  const shown = useMemo(() => inFormat(template, format), [template, format]);
-  const hold = holdFrame(template);
-  return (
-    <LiveTime ageSecs={hold / fps} ticking={ticking} fps={fps} lang={lang}>
-      <Scene template={shown} frame={hold} data={data} interactive />
-    </LiveTime>
   );
 }
 

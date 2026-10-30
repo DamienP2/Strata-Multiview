@@ -7,8 +7,8 @@
 use std::collections::HashSet;
 use std::net::{Ipv4Addr, SocketAddrV4};
 
-use strata_mv_output::st2110::St2110Encoding;
 use serde::{Deserialize, Serialize};
+use strata_mv_output::st2110::St2110Encoding;
 
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -1033,10 +1033,11 @@ mod tests {
         let mut hw = HardwareConfig::default();
         hw.st2110.flows.push(flow());
         hw.sync.tai_offset = 37;
-        let mut o: strata_mv_output::st2110::St2110Config = serde_json::from_value(serde_json::json!({
-            "name": "CG", "fill": "0.0.0.0:0", "hardware": "flow-1"
-        }))
-        .unwrap();
+        let mut o: strata_mv_output::st2110::St2110Config =
+            serde_json::from_value(serde_json::json!({
+                "name": "CG", "fill": "0.0.0.0:0", "hardware": "flow-1"
+            }))
+            .unwrap();
         hw.apply_st2110(&mut o);
         let blue = o.blue.unwrap();
         assert_eq!(blue.fill, "239.2.0.1:5004".parse().unwrap());

@@ -11,7 +11,6 @@ import { createContext, useContext, useEffect, useRef, useState, type ReactNode 
 import { ChevronDown, Database, Ellipsis, Radio, WandSparkles, type LucideIcon } from 'lucide-react';
 import { useDesigner } from '../designer/designerStore';
 import { useShallow } from 'zustand/react/shallow';
-import { fieldUsed, formatSetting, newFieldKey, settingKind } from '../engine/settings';
 import { interpolateText, parseHex, toHex, type Resolved } from '../engine/evaluate';
 import type { Data, FieldKind, Layer, LayerType, PlayoutItem, Prop, Template, Value } from '../engine/types';
 import type { TimeCtx } from '../engine/widgets';
@@ -252,9 +251,8 @@ export const useCentreMode = () => useContext(CentreModeContext);
 /** The Operator's filter of a centre's settings: a row with `expose` paths shows only when every path is exposed. */
 export const ExposedFilter = createContext<((paths: readonly string[]) => boolean) | null>(null);
 
-/** A labelled row of the inspector; `expose` adds its expose-to-Operator button. In the Operator
- *  (ExposedFilter) a row with `expose` paths shows only when they are exposed, without the button. */
-export function Row({ label, children, title, lead, tail, expose, exposeValue, exposeOptions, exposeRange, stack }: { label?: ReactNode; children: ReactNode; title?: string; lead?: ReactNode; tail?: ReactNode; expose?: Expose; exposeValue?: unknown; exposeOptions?: [string, string][]; /** A slider's bounds, kept in the exposed field (the Operator's slider). */ exposeRange?: [number, number]; /** The control under its label (a wide choice), in a control centre. */ stack?: boolean }) {
+/** A labelled row of the inspector. Under an ExposedFilter, a row with `expose` paths shows only when they are exposed. */
+export function Row({ label, children, title, lead, tail, expose, stack }: { label?: ReactNode; children: ReactNode; title?: string; lead?: ReactNode; tail?: ReactNode; expose?: Expose; exposeValue?: unknown; exposeOptions?: [string, string][]; /** A slider's bounds, kept in the exposed field (the Operator's slider). */ exposeRange?: [number, number]; /** The control under its label (a wide choice), in a control centre. */ stack?: boolean }) {
   const filter = useContext(ExposedFilter);
   const paths = expose ? (typeof expose === 'string' ? [expose] : expose) : undefined;
   if (filter) {
@@ -271,50 +269,8 @@ export function Row({ label, children, title, lead, tail, expose, exposeValue, e
       {lead}
       {label !== undefined && <span className="prop-label">{label}</span>}
       <div className="wk-ctl">{children}</div>
-      {tail ?? (paths ? <ExposeSetting paths={paths} label={typeof label === 'string' ? label : undefined} value={exposeValue} options={exposeOptions} range={exposeRange} /> : <span className="wk-gut" />)}
+      {tail}
     </div>
-  );
-}
-
-/** The radio button exposing settings of the layer to the Operator: one click exposes, one click stops. */
-export function ExposeSetting({ paths, label, value, options, range }: { paths: readonly string[]; label?: string; value?: unknown; options?: [string, string][]; range?: [number, number] }) {
-  const { obj } = useContext(BindContext);
-  const { template, update } = useDesigner(useShallow((s) => ({ template: s.template, update: s.update })));
-  const layer = obj as Layer | undefined;
-  if (!template || !layer?.id || !template.layers.some((l) => l.id === layer.id)) return <span className="wk-gut" />;
-  const sb = layer.settingBindings ?? {};
-  const fields = paths.map((p) => template.fields.find((f) => f.key === sb[p]));
-  const on = fields.every(Boolean);
-  const toggle = () =>
-    update((t) => {
-      const l = t.layers.find((x) => x.id === layer.id)!;
-      l.settingBindings ??= {};
-      if (on) {
-        for (const p of paths) {
-          const key = l.settingBindings[p];
-          delete l.settingBindings[p];
-          if (key && !fieldUsed(t, key)) t.fields = t.fields.filter((f) => f.key !== key);
-        }
-        if (!Object.keys(l.settingBindings).length) delete l.settingBindings;
-        return;
-      }
-      for (const p of paths) {
-        if (l.settingBindings[p] && t.fields.some((f) => f.key === l.settingBindings![p])) continue;
-        // The value the Designer shows (its default when the layer does not set it).
-        let cur = getPath(l, p);
-        if (cur === undefined) cur = paths.length === 1 ? value : (value as Record<string, unknown> | undefined)?.[p];
-        const last = p.split('.').pop()!;
-        const name = paths.length > 1 || !label ? last.replace(/([a-z])([A-Z])/g, '$1 $2').replace(/^./, (x) => x.toUpperCase()) : label;
-        const key = newFieldKey(t, `${l.name} ${name}`);
-        t.fields.push({ key, label: `${l.name} · ${name}`, kind: settingKind(cur, p), default: formatSetting(cur), ...(options?.length && paths.length === 1 ? { options } : {}), ...(range && paths.length === 1 ? { min: range[0], max: range[1] } : {}) });
-        l.settingBindings[p] = key;
-      }
-    });
-  const names = fields.filter(Boolean).map((f) => f!.label);
-  return (
-    <button className={`pp-op ${on ? 'on' : ''}`} title={on ? t('Exposed as fields ({fields}) · click to stop', { fields: names.join(', ') }) : t('Expose as a field')} onClick={toggle}>
-      <Radio size={13} />
-    </button>
   );
 }
 

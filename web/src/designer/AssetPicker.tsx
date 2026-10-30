@@ -136,7 +136,7 @@ export function AssetLibrary({ title, value, onClose, onChoose, kind = 'image' }
           <div className="lib-tabs">
             {projectId && (
               <button className={tab === 'project' ? 'on' : ''} onClick={() => setTab('project')}>
-                {t('Project')}
+                {t('Multiview')}
                 <b>{lists.project.length}</b>
               </button>
             )}
@@ -260,7 +260,7 @@ export function AssetLibrary({ title, value, onClose, onChoose, kind = 'image' }
                 ? q
                   ? t('No video matches.')
                   : tab === 'project'
-                    ? t('No videos in this project yet: upload or drop some here.')
+                    ? t('No videos in this multiview yet: upload or drop some here.')
                     : t('No shared videos yet.')
                 : kind === 'lottie'
                   ? q
@@ -269,11 +269,11 @@ export function AssetLibrary({ title, value, onClose, onChoose, kind = 'image' }
                   : q
                     ? t('No picture matches.')
                     : tab === 'project'
-                      ? t('No pictures in this project yet: upload or drop some here.')
+                      ? t('No pictures in this multiview yet: upload or drop some here.')
                       : t('No shared pictures yet.')}
             </div>
           )}
-          <div className="lib-drop">{kind !== 'image' ? (projectId ? t('Drop files here: they go to the project') : t('Drop files here: they go to the shared library')) : projectId ? t('Drop pictures here: they go to the project') : t('Drop pictures here: they go to the shared library')}</div>
+          <div className="lib-drop">{kind !== 'image' ? (projectId ? t('Drop files here: they go to the multiview') : t('Drop files here: they go to the shared library')) : projectId ? t('Drop pictures here: they go to the project') : t('Drop pictures here: they go to the shared library')}</div>
         </div>
         )}
         {tab !== 'library' && (

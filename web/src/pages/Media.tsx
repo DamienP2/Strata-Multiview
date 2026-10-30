@@ -41,7 +41,7 @@ function FontsPanel({ canEdit }: { canEdit: boolean }) {
   const families = useFonts((s) => s.families);
   const toast = useApp((s) => s.toast);
   const groups: [string, string, typeof families][] = [
-    [t('Uploaded'), t('Added here, for every project'), families.filter((f) => f.source === 'uploaded')],
+    [t('Uploaded'), t('Added here, for every multiview'), families.filter((f) => f.source === 'uploaded')],
     [t('Built in'), t('Shipped with Strata'), families.filter((f) => f.source === 'bundled')],
     [t('Server'), t('Installed on the machine'), families.filter((f) => f.source === 'system')],
   ];
@@ -250,7 +250,7 @@ export function MediaLibrary({ projectId }: { projectId?: string }) {
     >
       <PageHead
         title={colors ? t('Colours') : fonts ? t('Fonts') : kind === 'all' ? (projectId ? t('Media of the project') : t('Shared media')) : t(label)}
-        sub={colors ? undefined : fonts ? t('Fonts are shared by every project. Built-in ones work offline and look the same on every output.') : tn(shown.length, '{n} file', '{n} files')}
+        sub={colors ? undefined : fonts ? t('Fonts are shared by every multiview. Built-in ones work offline and look the same on every output.') : tn(shown.length, '{n} file', '{n} files')}
       >
         {colors && canDelete && (
           <button className="btn primary" onClick={addPalette}>

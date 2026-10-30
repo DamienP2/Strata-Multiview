@@ -135,7 +135,8 @@ mod tests {
         let p = strata_mv_core::sample::demo_project();
         let a = &p.templates[0];
         let mut b = a.clone();
-        let k = |t: &strata_mv_core::Template, w: u32| Key::default().template(&p, t).part(&w).finish();
+        let k =
+            |t: &strata_mv_core::Template, w: u32| Key::default().template(&p, t).part(&w).finish();
         assert_eq!(k(a, 480), k(a, 480));
         assert_ne!(k(a, 480), k(a, 640));
         b.name.push('x');

@@ -315,7 +315,7 @@ export const useApp = create<AppStore>((set, get) => {
               const full = { ...get().full, [project.id]: project };
               const { id, name, description, width, height, frameRate, rundown } = project;
               const design = designTemplates(project);
-              const summary: ProjectSummary = { id, name, description: description ?? '', width, height, frameRate, templates: design.length, rundown: rundown.length, cover: design[0]?.id, modifiedAt: Date.now() };
+              const summary: ProjectSummary = { id, name, description: description ?? '', width, height, frameRate, templates: design.length, rundown: rundown.length, tiles: design[0]?.layers.filter((l) => l.type === 'source').length ?? 0, cover: design[0]?.id, modifiedAt: Date.now() };
               const projects = get().projects.some((p) => p.id === id) ? get().projects.map((p) => (p.id === id ? summary : p)) : [...get().projects, summary];
               set({ full, projects: outputChannel ? get().projects : projects, ...select(get().projectId, full) });
               break;

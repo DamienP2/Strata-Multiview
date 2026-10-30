@@ -40,29 +40,29 @@ Strata Multiview reprend le design, le Designer et le moteur de rendu de Strata 
 - Les **entrées en direct** sont décodées en continu ; leur audio est mesuré canal par canal.
 - Le **tally** et les **UMD** viennent des mélangeurs et des contrôleurs de tally, aiguillés vers les entrées.
 - Le **Designer** compose les multiviews : une **disposition** (2 × 2, 3 × 3, 1 + 5…) de **tuiles Source**, et autant d'horloges, de logos et de textes que voulu.
-- Une **chaîne** montre un multiview publié de son projet et l'envoie vers ses destinations.
+- Une **chaîne** montre un multiview publié et l'envoie vers ses destinations.
 
 ### 1.2 Les pages
 
 | Menu | Page | Rôle |
 | --- | --- | --- |
-| **Projets** | accueil | les projets (un par régie ou par mur d'écrans), leurs dossiers, l'import et l'export |
-| **Bibliothèque** | médias partagés | images, vidéos, sons et polices communs à tous les projets (logos, fonds) |
-| **Diffusion** | Flux vidéo · Entrées vidéo · Tally et UMD | chaînes, formats et destinations ; entrées en direct ; sources de tally et aiguillage |
+| **Multiviews** | accueil | les multiviews (un par régie ou par mur d'écrans), leurs dossiers, l'import et l'export |
+| **Bibliothèque** | médias partagés | images, vidéos, sons et polices communs à tous les multiviews (logos, fonds) |
+| **Diffusion** | Flux vidéo · Entrées vidéo · Tally et UMD | chaînes et destinations ; entrées en direct ; sources de tally et aiguillage |
 | **Système** | Matériel · Performances · Santé · Utilisateurs · API · Paramètres | cartes SDI, ST 2110, synchro ; supervision ; comptes et droits ; clés d'API ; réglages du serveur |
 
-Un projet s'ouvre dans son propre onglet, avec deux pages : **Designer** et **Bibliothèque** (ses médias).
+Un multiview s'ouvre directement dans le **Designer**, dans son propre onglet.
 
 ### 1.3 Les rôles
 
 | Rôle | Peut |
 | --- | --- |
 | **Admin** | tout : utilisateurs, chaînes, entrées, tally, réglages du serveur |
-| **Designer** | créer et modifier les projets et les multiviews, charger un projet sur une chaîne |
-| **Operator** | charger un projet et choisir le multiview d'une chaîne ; régler le tally par l'API |
-| **Viewer** | consulter les projets et les sorties |
+| **Designer** | créer et modifier les multiviews, en mettre un à l'antenne d'une chaîne |
+| **Operator** | choisir le multiview à l'antenne d'une chaîne ; régler le tally par l'API |
+| **Viewer** | consulter les multiviews et les sorties |
 
-L'interface est en **français ou en anglais**, au choix de chaque utilisateur. Les textes que le multiview écrit lui-même (« PAS DE SIGNAL ») suivent la langue du projet.
+L'interface est en **français ou en anglais**, au choix de chaque utilisateur. Les textes que le multiview écrit lui-même (« PAS DE SIGNAL ») suivent la langue du multiview.
 
 ---
 
@@ -96,14 +96,14 @@ Guide complet, dossiers de données, pare-feu, proxy : [`docs/INSTALL.md`](docs/
 
 1. Ouvrez `http://<serveur>:8090`. Sur le serveur lui-même, la page propose de **créer le compte administrateur** ; à distance, utilisez `strata-mv-server user add admin`.
 2. **Diffusion › Entrées vidéo** : déclarez les sources (caméras en SDI, flux SRT d'un encodeur, sources NDI du réseau…).
-3. **Projets › Nouveau projet**, puis ouvrez-le dans le **Designer**. Créez un multiview avec **+** : choisissez une **disposition** (2 × 2, 1 + 5, 4 × 4…). Les tuiles sont créées et reçoivent les entrées dans l'ordre.
+3. **Multiviews › Nouveau multiview** : nommez-le, choisissez sa résolution et une **disposition** (2 × 2, 1 + 5, 4 × 4…). Les tuiles sont créées, reçoivent les entrées dans l'ordre, et le multiview s'ouvre dans le **Designer**.
 4. Ajustez les tuiles (entrée, UMD, vu-mètres), ajoutez une horloge, un logo, un titre, puis **Publiez**.
-5. **Diffusion › Flux vidéo** : choisissez le **projet à l'antenne** de la chaîne : son premier multiview publié passe aussitôt à l'antenne ; un autre se choisit dans **Multiview à l'antenne**. Ajoutez les destinations (HTML5, NDI, SDI, ST 2110, flux).
+5. **Diffusion › Flux vidéo** : choisissez le **multiview à l'antenne** de la chaîne : il passe aussitôt à l'antenne. Ajoutez les destinations (HTML5, NDI, SDI, ST 2110, flux).
 6. **Diffusion › Tally et UMD** : ajoutez la régie (TSL, ATEM ou GPI) et reliez ses afficheurs aux entrées.
 
 La sortie HTML5 de la chaîne principale est sur `http://<serveur>:8090/output/main`.
 
-![Les projets](docs/screenshots/home.png)
+![Les multiviews](docs/screenshots/home.png)
 
 ---
 
@@ -113,12 +113,11 @@ La sortie HTML5 de la chaîne principale est sur `http://<serveur>:8090/output/m
 
 ### 4.1 L'espace de travail
 
-- **À gauche** : le projet (nom, historique des versions, publication) et la liste des **multiviews** (vignette, dupliquer, supprimer, renommer, réordonner).
-- **À gauche**, en dessous : les **calques** du multiview ouvert, avec les formes et les widgets à ajouter (**+**) ; un clic sélectionne, un double-clic renomme, un glisser change l'ordre ou range dans un dossier ; clic droit : copier, couper, coller, dupliquer, ordre, supprimer.
-- **Au centre** : la **scène** (règles, repères, zones de sécurité, fond) avec la barre d'outils : **Disposition**, **Logique**, **Affichage**, zoom. Les tuiles y montrent les entrées en direct, leur tally et leurs vu-mètres.
-- **À droite** : l'inspecteur du multiview ou du calque sélectionné.
+- **En haut** : le nom du multiview, annuler / rétablir, l'historique des versions et **Publier**.
+- **Au centre** : la **scène** (règles, repères, zones de sécurité, fond) avec la barre d'outils : **Disposition**, **Source** (une tuile), les formes et les textes, **+** (bandeau, horloge, temps, QR code, vidéo, iframe), **Affichage**, zoom. Les tuiles y montrent les entrées en direct, leur tally et leurs vu-mètres. Un clic sélectionne, un glisser déplace ; clic droit : copier, couper, coller, dupliquer, ordre, supprimer.
+- **À droite** : l'inspecteur de l'élément sélectionné ; sans sélection, le multiview lui-même (résolution, ses tuiles, ses réglages).
 
-Un multiview est une image fixe : il n'y a ni timeline ni animation. Ce qui bouge vient des sources (images, tally, vu-mètres) et des widgets eux-mêmes (horloges, bandeau défilant).
+Un multiview s'édite directement : ni modèles, ni calques, ni timeline, ni animation. Ce qui bouge vient des sources (images, tally, vu-mètres) et des widgets eux-mêmes (horloges, bandeau défilant).
 
 ### 4.2 Dispositions
 
@@ -133,9 +132,9 @@ Une **disposition** place les tuiles Source sur une grille, avec un **espace** e
 | **2 + 8** | deux grandes en haut, huit petites en dessous |
 | **1 + 12** | une grande au centre, douze autour |
 
-Elle se choisit à la création d'un multiview, ou s'applique au multiview ouvert par le bouton **Disposition** : les tuiles existantes sont replacées dans l'ordre de lecture, les manquantes sont ajoutées avec les entrées qu'aucune tuile ne montre encore. Chaque tuile reste ensuite libre (position, taille, réglages).
+Elle se choisit à la création d'un multiview, ou s'applique ensuite par le bouton **Disposition** : les tuiles existantes sont replacées dans l'ordre de lecture, les manquantes sont ajoutées avec les entrées qu'aucune tuile ne montre encore. Chaque tuile reste ensuite libre (position, taille, réglages).
 
-### 4.3 Les autres calques
+### 4.3 Les autres éléments
 
 Tous les widgets de Strata Graphics utiles à un multiview restent disponibles, rendus à l'identique en HTML5 et par le moteur Rust :
 
@@ -232,19 +231,19 @@ Les niveaux arrivent au moteur et aux navigateurs (une douzaine de fois par seco
 
 ![Flux vidéo : une chaîne, son multiview et ses destinations](docs/screenshots/outputs.png)
 
-Une **chaîne** est un programme indépendant : son format vidéo, sa propre horloge, son multiview à l'antenne. Les chaînes se rangent par **site**. Chaque chaîne se règle sur un canvas : *Programme* → *Formats* (l'image principale et d'autres proportions) → *Destinations*.
+Une **chaîne** est un programme indépendant : son format vidéo, sa propre horloge, son multiview à l'antenne. Les chaînes se rangent par **site**. Chaque chaîne se règle sur un canvas : *Programme* → *Destinations*.
 
-Le panneau de la chaîne choisit le **projet à l'antenne** et le **multiview à l'antenne** (parmi les multiviews publiés). Charger un projet met aussitôt son premier multiview à l'antenne ; publier le premier multiview d'un projet déjà chargé aussi.
+Le panneau de la chaîne choisit le **multiview à l'antenne** : il y passe aussitôt, et chaque publication s'y voit à l'image suivante.
 
 | Destination | Détail |
 | --- | --- |
-| **HTML5** | lien `/output/<chaîne>[/<format>]` pour un écran, un navigateur, OBS ou vMix |
+| **HTML5** | lien `/output/<chaîne>` pour un écran, un navigateur, OBS ou vMix |
 | **NDI** | nom de source, groupes ; runtime livré avec les installateurs |
 | **Stream** | SRT (appelant ou écoute), UDP (unicast, multicast), RTMP / RTMPS, HLS servi par Strata ; H.264 ou HEVC, débit, encodage matériel |
 | **SDI** | carte Blackmagic DeckLink, genlock |
 | **ST 2110** | flux 2110-20 4:2:2 10 bits ; multicast, TTL, SDP ; SMPTE 2022-7 sur les réseaux rouge et bleu |
 
-Quand aucun projet n'est chargé, la chaîne envoie une **mire**. Une **avance de rendu** d'une ou deux images garde une cadence régulière.
+Quand aucun multiview n'est chargé, la chaîne envoie une **mire**. Une **avance de rendu** d'une ou deux images garde une cadence régulière.
 
 ### 8.2 Entrées vidéo
 
@@ -263,7 +262,7 @@ Les **entrées en direct** : SRT, UDP, RTMP, HLS, RTSP, toute URL lue par ffmpeg
 
 - **Performances** : processeurs, mémoire, part de Strata et de ffmpeg, avertissements (rendu en retard, images perdues, entrée en défaut, horloge) ; par chaîne la cadence réelle et le temps de rendu ; par sortie ou entrée les images par seconde et les pertes ; la capacité restante de la machine.
 - **Santé** : journal du serveur, arrêts inattendus, archive pour le support.
-- **Utilisateurs** : comptes par rôle, accès limités à certains projets et à certaines chaînes. Mots de passe hachés (Argon2), session en cookie HttpOnly, clés d'API pour l'automation.
+- **Utilisateurs** : comptes par rôle, accès limités à certains multiviews et à certaines chaînes. Mots de passe hachés (Argon2), session en cookie HttpOnly, clés d'API pour l'automation.
 - **Paramètres** : nom du serveur, fuseau horaire, sorties publiques, réseaux, heure, synchro vidéo, mises à jour. *Appliquer* redémarre les sorties sans redémarrer le service (le tally et les entrées continuent).
 
 ```bash
@@ -280,13 +279,13 @@ La page **Système › API** documente toute l'API (OpenAPI 3.1, aussi sur `/api
 | Méthode | Route | Rôle |
 | --- | --- | --- |
 | `POST` | `/api/auth/login` · `/logout` | session (cookie et jeton) |
-| `GET` `POST` `PUT` `DELETE` | `/api/projects[/{id}]` · `/export` · `/import` | projets |
+| `GET` `POST` `PUT` `DELETE` | `/api/projects[/{id}]` · `/export` · `/import` | multiviews (un projet de l'API est un multiview) |
 | `PUT` `DELETE` `POST` | `/api/projects/{id}/templates/{tid}` · `/publish` | multiviews, publication |
-| `GET` `PUT` | `/api/channels` · `/{id}/state` · `/{id}/project` · `/{id}/multiview` · `/{id}/preview.png` | chaînes, projet et multiview à l'antenne, rendu du programme |
+| `GET` `PUT` | `/api/channels` · `/{id}/state` · `/{id}/project` · `/{id}/multiview` · `/{id}/preview.png` | chaînes, multiview à l'antenne, rendu du programme |
 | `GET` `PUT` `DELETE` | `/api/tally` · `/api/tally/config` · `/api/tally/inputs/{entrée}` · `/api/tally/gpi/{source}/{contact}/{on\|off}` | tally et UMD |
 | `GET` | `/api/inputs` · `/api/inputs/{id}/live.mjpeg` | entrées et leurs images |
 | `GET` | `/api/outputs/status` · `/api/system/metrics` · `/api/health` | supervision |
-| `WS` | `/ws` · `/ws?channel={id}` | évènements temps réel (projets, chaînes, signaux des entrées) |
+| `WS` | `/ws` · `/ws?channel={id}` | évènements temps réel (multiviews, chaînes, signaux des entrées) |
 
 ```bash
 curl -X PUT http://localhost:8090/api/channels/main/multiview -H "Authorization: Bearer smv_…" \
@@ -346,7 +345,7 @@ crates/
   strata-mv-core     modèle, animation, widgets (dont la tuile Source), signaux des entrées, playout (sans I/O)
   strata-mv-render   moteur de rendu logiciel (tiny-skia, texte vectoriel)
   strata-mv-output   ST 2110-20, SDI DeckLink (image et audio embarqué), NDI (image et audio), flux
-  strata-mv-server   axum : REST, WebSocket, chaînes, projets, entrées (audio), signaux, tally (TSL, ATEM, GPI), UI embarquée, services OS
+  strata-mv-server   axum : REST, WebSocket, chaînes, multiviews, entrées (audio), signaux, tally (TSL, ATEM, GPI), UI embarquée, services OS
   strata-mv-tray     app de la barre des menus / zone de notification
 assets/       polices Inter (OFL) et icônes
 packaging/    installateurs Linux, macOS, Windows ; ffmpeg ; NDI

@@ -20,7 +20,7 @@ const named = (fmt: string) => /dddd|ddd|MMMM|MMM/.test(fmt.replace(/\[[^\]]*\]/
 function LangSelect() {
   const project = useProjectLang();
   const own = HYPHEN_LANGS.find(([v]) => v === T.nameLang('', project));
-  return <Select label={t('Language')} path="lang" value="en-GB" options={[['', own ? `${t('Project language')} · ${t(own[1])}` : t('Project language')] as [string, string], ...T.LANGS]} />;
+  return <Select label={t('Language')} path="lang" value="en-GB" options={[['', own ? `${t('Multiview language')} · ${t(own[1])}` : t('Multiview language')] as [string, string], ...T.LANGS]} />;
 }
 
 function Inspector({ layer, data, edit, set }: InspP) {

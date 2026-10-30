@@ -6,8 +6,8 @@
 use axum::extract::{Path, State};
 use axum::http::StatusCode;
 use axum::Json;
-use strata_mv_core::{NamedColor, Palette};
 use serde::Deserialize;
+use strata_mv_core::{NamedColor, Palette};
 
 use crate::api::{bad, internal, require, visible_project, ApiResult};
 use crate::auth::CurrentUser;

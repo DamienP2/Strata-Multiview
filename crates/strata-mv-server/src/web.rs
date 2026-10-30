@@ -162,7 +162,10 @@ pub async fn compress(req: Request, next: Next) -> Response {
 }
 
 pub async fn font(Path(name): Path<String>) -> Response {
-    match strata_mv_render::BUNDLED_FONTS.iter().find(|(n, _)| *n == name) {
+    match strata_mv_render::BUNDLED_FONTS
+        .iter()
+        .find(|(n, _)| *n == name)
+    {
         Some((_, data)) => (
             [
                 (header::CONTENT_TYPE, "font/otf"),

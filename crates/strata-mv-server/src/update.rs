@@ -1179,7 +1179,10 @@ mod tests {
             .collect();
         let installer = pick_package_for(no_update, false).map(|a| a.name);
         if cfg!(target_os = "linux") && cfg!(target_arch = "x86_64") {
-            assert_eq!(installer.as_deref(), Some("StrataMV-9.9.9-ubuntu-x64.tar.gz"));
+            assert_eq!(
+                installer.as_deref(),
+                Some("StrataMV-9.9.9-ubuntu-x64.tar.gz")
+            );
         } else if cfg!(target_os = "macos") {
             assert_eq!(
                 installer.as_deref(),

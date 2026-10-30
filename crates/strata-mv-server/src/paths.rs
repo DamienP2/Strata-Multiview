@@ -27,4 +27,3 @@ fn program_data() -> PathBuf {
         .map(PathBuf::from)
         .unwrap_or_else(|| PathBuf::from(r"C:\ProgramData"))
 }
-

@@ -112,7 +112,8 @@ fn open_outputs(
             off(&o.id);
             continue;
         }
-        let hls = (o.protocol == strata_mv_output::stream::Protocol::Hls).then(|| hls_root.join(&o.id));
+        let hls =
+            (o.protocol == strata_mv_output::stream::Protocol::Hls).then(|| hls_root.join(&o.id));
         let r = StreamSender::open(o.clone(), size.0, size.1, rate, hls)
             .map(|s| Box::new(s) as Box<dyn OutputSink>);
         opened(&o.id, &o.name, "stream", r);
@@ -997,7 +998,14 @@ async fn advance(
             let rows = st.auto_rows(p);
             let freed = st.expire_manual(crate::state::now_ms().max(0) as u64);
             if rows || freed {
-                crate::state::bind_state(p, &mut st, &strata_mv_core::datapath::Store::default(), None, None, false);
+                crate::state::bind_state(
+                    p,
+                    &mut st,
+                    &strata_mv_core::datapath::Store::default(),
+                    None,
+                    None,
+                    false,
+                );
                 changed = true;
             }
         }

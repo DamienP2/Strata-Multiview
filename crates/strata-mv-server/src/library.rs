@@ -4,8 +4,8 @@ use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
-use strata_mv_core::Project;
 use serde::Serialize;
+use strata_mv_core::Project;
 
 pub struct Library {
     dir: PathBuf,
@@ -32,6 +32,8 @@ pub struct ProjectSummary {
     pub frame_rate: strata_mv_core::FrameRate,
     pub templates: usize,
     pub rundown: usize,
+    /// The Source tiles of the multiview.
+    pub tiles: usize,
     /// Template shown on the project's card (the first one).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub cover: Option<String>,
@@ -51,6 +53,12 @@ impl From<&Project> for ProjectSummary {
             frame_rate: p.frame_rate,
             templates: p.design_templates().count(),
             rundown: p.rundown.len(),
+            tiles: p.design_templates().next().map_or(0, |t| {
+                t.layers
+                    .iter()
+                    .filter(|l| matches!(l.kind, strata_mv_core::model::LayerKind::Source { .. }))
+                    .count()
+            }),
             cover: p.design_templates().next().map(|t| t.id.clone()),
             modified_at: None,
         }
