@@ -11,7 +11,7 @@ use tiny_skia::{
     Transform,
 };
 
-use super::table::{rect, with_alpha};
+use super::fit::{rect, with_alpha};
 use super::Draw;
 use crate::text as tx;
 
@@ -583,15 +583,14 @@ pub(crate) fn draw(d: &mut Draw, st: &State) -> bool {
         }
         let ts = (size * 0.95).round();
         if let Some(f9) = d.font("Inter", 900) {
-            let (p, _) = super::table::fitted_path(
+            let (p, _) = super::fit::fitted_path(
                 &f9,
                 &c.title.text,
                 ts,
                 ts * 0.06,
                 TextAlign::Center,
                 (0.0, 0.0, (zx - 16.0).max(1.0), h),
-                Some(super::table::Fit {
-                    overflow: cg_core::wid::table::Overflow::Shrink,
+                Some(super::fit::Fit {
                     min_size: ts * 0.5,
                     min_squeeze: 70.0,
                 }),

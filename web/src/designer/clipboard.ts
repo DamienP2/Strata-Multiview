@@ -6,7 +6,6 @@ import { newId, num, propValue } from '../engine/evaluate';
 import { forgetKeys } from '../engine/settings';
 import { setOnTimeline } from '../engine/timelineProps';
 import { COLOR_PROPS, PROPS, TEXT_LIKE, type Field, type Keyframe, type Layer, type Prop, type Template, type Value } from '../engine/types';
-import { useData } from '../data/dataStore';
 import { useApp } from '../store';
 import { widgetOf } from '../widgets';
 import { t, tn } from '../i18n';
@@ -317,7 +316,6 @@ export function pasteLayers() {
   const projectId = useApp.getState().project?.id ?? '';
   const sameProject = clip.projectId === projectId;
   const sameTemplate = sameProject && clip.templateId === st.base.id;
-  const sources = useData.getState().sources;
   const frame = st.frame;
   const newRoots: string[] = [];
   const added: string[] = [];
@@ -359,9 +357,7 @@ export function pasteLayers() {
           continue;
         }
         const copy = structuredClone(f);
-        // A table read through the Data canvas is not copied with it; a source of another project stays there.
-        const src = copy.binding?.source;
-        if (copy.binding && (copy.binding.list !== undefined || (!sameProject && !sources.some((s) => s.id === src && (!s.project || s.project === projectId))))) delete copy.binding;
+        delete copy.binding;
         tpl.fields.push(copy);
         added.push(copy.label || copy.key);
       }

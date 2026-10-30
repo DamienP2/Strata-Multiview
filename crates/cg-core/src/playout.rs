@@ -414,10 +414,7 @@ pub fn is_timed(kind: &LayerKind) -> bool {
         LayerKind::Text { scroll, .. } => !scroll.is_none(),
         LayerKind::Ticker { .. }
         | LayerKind::Roll { .. }
-        | LayerKind::Counter { .. }
-        | LayerKind::Progress { .. }
         | LayerKind::Rotator { .. }
-        | LayerKind::Typewriter { .. }
         | LayerKind::Slideshow { .. }
         | LayerKind::BarChart { .. } => true,
         // A Lottie animation: the operator pauses, plays and restarts it
@@ -815,15 +812,7 @@ fn happened(
                     ended
                 };
             }
-            crate::wid::credits::ended(
-                l,
-                &serde_json::from_value(v).unwrap_or_default(),
-                &data,
-                now,
-                age_secs,
-                m,
-            )
-            .unwrap_or(false)
+            false
         }
         TriggerEvent::TimerZero { layer: id } | TriggerEvent::TimerAt { layer: id, .. } => {
             let Some(l) = layer(id) else { return false };
@@ -946,50 +935,6 @@ fn begin_out(project: &Project, item: &mut PlayoutItem) -> bool {
     item.phase = Phase::Out;
     item.held = 0.0;
     true
-}
-
-/// The data of a graphic on air changed (`old` → `item.data`): its widgets
-/// that keep what they show react (`wid::on_data`: a chart freezes the data
-/// of the take, or tweens to the new values).
-fn data_changed(project: &Project, item: &mut PlayoutItem, old: &crate::anim::Data) {
-    widgets_react(project, item, old, crate::wid::on_data);
-}
-
-/// The data of a graphic on air was changed by its data sources (`old` →
-/// `item.data`, the server's bindings): the widgets that play a change of
-/// their list react (`wid::on_source_data`: the social wall's cards).
-pub fn source_data_changed(project: &Project, item: &mut PlayoutItem, old: &crate::anim::Data) {
-    widgets_react(project, item, old, crate::wid::on_source_data);
-}
-
-type React = fn(
-    &crate::model::Layer,
-    &mut serde_json::Value,
-    &crate::anim::Data,
-    &crate::wid::ActCtx,
-) -> bool;
-
-fn widgets_react(project: &Project, item: &mut PlayoutItem, old: &crate::anim::Data, react: React) {
-    let Some(t) = project.template(&item.template_id) else {
-        return;
-    };
-    let fps = project.frame_rate.as_f64().max(1.0);
-    let ctx = crate::wid::ActCtx {
-        now_ms: now_ms(),
-        age_secs: item.age / fps,
-        fps,
-        data: &item.data,
-    };
-    for l in &t.layers {
-        let mut st = item
-            .widgets
-            .get(&l.id)
-            .cloned()
-            .unwrap_or(serde_json::Value::Null);
-        if react(l, &mut st, old, &ctx) {
-            item.widgets.insert(l.id.clone(), st);
-        }
-    }
 }
 
 impl ChannelState {
@@ -1171,11 +1116,7 @@ impl ChannelState {
                                 length: (fps * 0.5).round(),
                             });
                         }
-                        let old = changed.then(|| item.data.clone());
                         item.data.extend(data);
-                        if let Some(old) = old {
-                            data_changed(project, item, &old);
-                        }
                     }
                 }
             }
@@ -1237,14 +1178,11 @@ impl ChannelState {
                         item.data.insert(row.0, row.1);
                         item.data
                             .insert(ds.shown_key(), format!("{}", item.age.round()));
-                        data_changed(project, item, &old);
                     }
                     RowChange::Cut => {
-                        let old = item.data.clone();
                         item.data.insert(row.0, row.1);
                         item.data
                             .insert(ds.shown_key(), format!("{}", item.age.round()));
-                        data_changed(project, item, &old);
                     }
                 }
             }
@@ -2935,79 +2873,6 @@ mod tests {
         .unwrap();
         ch.tick(4.0);
         assert_eq!(item(&ch), 4.0);
-    }
-
-    #[test]
-    fn continue_serves_the_widgets_before_the_pause() {
-        // A table chained on Continue (3 pages) with the template's pause markers.
-        let mut p = project();
-        let mut c = crate::wid::table::tests::sample(10);
-        c.auto_pages = true;
-        c.auto_on = crate::wid::table::AutoOn::Continue;
-        let table = crate::wid::table::tests::layer(c);
-        p.templates[0].layers.push(table.clone());
-        let mut ch = ChannelState::default();
-        ch.apply(&p, Command::take("z", "t")).unwrap();
-        let key = *ch.layers.keys().next().unwrap();
-        let cont = Command::Continue {
-            zone: Some("z".into()),
-            layer: None,
-        };
-        // Held on the first pause (frame 20); the table on page 1.
-        ch.tick(30.0);
-        let page = |ch: &ChannelState| {
-            let st: crate::wid::table::State = serde_json::from_value(
-                ch.layers[&key]
-                    .widgets
-                    .get(&table.id)
-                    .cloned()
-                    .unwrap_or_default(),
-            )
-            .unwrap_or_default();
-            crate::wid::table::current_page(&st, 3, 0).0
-        };
-        assert_eq!(ch.layers[&key].frame, 20.0);
-        assert_eq!(page(&ch), 0);
-        // F2, F2: the pages turn, the timeline stays on its pause.
-        ch.apply(&p, cont.clone()).unwrap();
-        assert_eq!(page(&ch), 1);
-        assert_eq!(ch.layers[&key].frame, 20.0);
-        ch.apply(&p, cont.clone()).unwrap();
-        assert_eq!(page(&ch), 2);
-        ch.tick(5.0);
-        assert_eq!(ch.layers[&key].frame, 20.0);
-        // The last page: F2 is the timeline's.
-        ch.apply(&p, cont).unwrap();
-        ch.tick(5.0);
-        assert!(ch.layers[&key].frame > 20.0);
-        assert_eq!(page(&ch), 2);
-
-        // A ticker waiting for a trigger starts on it, not on Continue.
-        let mut p = crate::sample::demo_project();
-        let t = p.templates.iter_mut().find(|t| t.id == "ticker").unwrap();
-        let crawl = t.layers.iter_mut().find(|l| is_timed(&l.kind)).unwrap();
-        crawl.manual_start = true;
-        crawl.start_on = Some("trigger".into());
-        crawl.start_trigger = "go".into();
-        let crawl = crawl.clone();
-        let mut ch = ChannelState::default();
-        ch.apply(&p, Command::take("ticker", "ticker")).unwrap();
-        let key = *ch.layers.keys().next().unwrap();
-        ch.tick(10.0);
-        ch.apply(
-            &p,
-            Command::Continue {
-                zone: Some("ticker".into()),
-                layer: None,
-            },
-        )
-        .unwrap();
-        ch.tick(5.0);
-        assert_eq!(ch.layers[&key].layer_age(&crawl), 0.0);
-        ch.apply(&p, Command::Trigger { name: "GO".into() })
-            .unwrap();
-        ch.tick(4.0);
-        assert_eq!(ch.layers[&key].layer_age(&crawl), 4.0);
     }
 
     #[test]

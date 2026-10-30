@@ -307,32 +307,6 @@ pub fn expand(items: &[Item], data: &Data) -> Vec<Item> {
         let tt = t.trim();
         if tt.starts_with('[') {
             if let Ok(serde_json::Value::Array(a)) = serde_json::from_str::<serde_json::Value>(tt) {
-                // A data set's table: its text (or first) column, its category column.
-                if let Some((head, rows)) = super::table::header_rows(&a) {
-                    use super::table::find_col;
-                    let text = find_col(&head, &["text", "title", "headline"]).unwrap_or(0);
-                    let cat = find_col(&head, &["cat", "category"]);
-                    for r in &rows {
-                        let t = if it.format.is_empty() {
-                            r.get(text).map(|s| s.trim()).unwrap_or("").to_string()
-                        } else {
-                            formatted(&it.format, &|k| {
-                                find_col(&head, &[k]).and_then(|i| r.get(i)).cloned()
-                            })
-                        };
-                        if !t.is_empty() {
-                            out.push(Item {
-                                cat: cat
-                                    .and_then(|i| r.get(i))
-                                    .cloned()
-                                    .unwrap_or_else(|| it.cat.clone()),
-                                text: t,
-                                ..Item::default()
-                            });
-                        }
-                    }
-                    continue;
-                }
                 for v in a {
                     let (text, cat) = match &v {
                         serde_json::Value::String(s) => (s.clone(), it.cat.clone()),
@@ -1337,12 +1311,6 @@ mod tests {
         let e = expand(&items, &d);
         let texts: Vec<&str> = e.iter().map(|i| i.text.as_str()).collect();
         assert_eq!(texts, vec!["Sophie L. · Pourquoi ?", "· Seul"]);
-        // A data set's table: by its column names.
-        d.insert(
-            "msgs".into(),
-            r#"[["name","text"],["Kevin","Brest !"]]"#.into(),
-        );
-        assert_eq!(expand(&items, &d)[0].text, "Kevin · Brest !");
         assert_eq!(formatted("{n} min", &|_| Some("58".into())), "58 min");
     }
 }

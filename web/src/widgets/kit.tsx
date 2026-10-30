@@ -17,7 +17,7 @@ import type { Data, FieldKind, Layer, LayerType, PlayoutItem, Prop, Template, Va
 import type { TimeCtx } from '../engine/widgets';
 import { onFrames } from '../engine/frameClock';
 import { ColorField, NumberField, Segmented, TextInput, HexColorField } from '../ui/fields';
-import { alertDialog, confirmDialog, promptDialog } from '../ui/dialogs';
+import { alertDialog, confirmDialog } from '../ui/dialogs';
 import { t } from '../i18n';
 
 export type WidgetGroup = 'Shapes & tools' | 'Time' | 'Data' | 'Sport & interaction';
@@ -790,62 +790,6 @@ export function ListEditor(p: { label?: ReactNode; path?: string; value?: Record
   );
 }
 
-/** Grid of strings (first row = header when `header`), with CSV paste. */
-export function GridEditor(p: { path?: string; value?: string[][]; onChange?: (v: string[][]) => void; header?: boolean; csv?: boolean }) {
-  const [v, set] = useBind<string[][]>(p.path, p.value, p.onChange);
-  const rows = v?.length ? v : [['']];
-  const put = (next: string[][], coalesce?: boolean) => set(next, coalesce);
-  const cell = (i: number, j: number, s: string) =>
-    put(
-      rows.map((r, a) => (a === i ? r.map((c, b) => (b === j ? s : c)) : r)),
-      true,
-    );
-  return (
-    <div className="wk-grid">
-      <div className="wk-grid-scroll">
-        <table>
-          <tbody>
-            {rows.map((r, i) => (
-              <tr key={i} className={i === 0 && p.header ? 'head' : ''}>
-                {r.map((c, j) => (
-                  <td key={j}>
-                    <input value={c} onKeyDown={(e) => e.stopPropagation()} onChange={(e) => cell(i, j, e.target.value)} />
-                  </td>
-                ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-      <div className="wk-btns">
-        <button className="opx-btn small" onClick={() => put([...rows, rows[0].map(() => '')])}>
-          {t('+ Row')}
-        </button>
-        <button className="opx-btn small" onClick={() => rows.length > (p.header ? 2 : 1) && put(rows.slice(0, -1))}>
-          {t('− Row')}
-        </button>
-        <button className="opx-btn small" onClick={() => put(rows.map((r, i) => [...r, i === 0 && p.header ? `Col ${r.length + 1}` : '']))}>
-          {t('+ Column')}
-        </button>
-        <button className="opx-btn small" onClick={() => rows[0].length > 1 && put(rows.map((r) => r.slice(0, -1)))}>
-          {t('− Column')}
-        </button>
-        {p.csv && (
-          <button
-            className="opx-btn small"
-            onClick={async () => {
-              const csv = await promptDialog({ title: t('Paste CSV'), message: t('Comma, semicolon or tab separated; one row per line.'), value: rows.map((r) => r.join(';')).join('\n') });
-              if (csv) put(parseCsv(csv));
-            }}
-          >
-            {t('Import CSV…')}
-          </button>
-        )}
-      </div>
-    </div>
-  );
-}
-
 /** Rows of a CSV text (`,` `;` or tab; quotes allowed). */
 const cellOf = (v: unknown) => (v == null ? '' : typeof v === 'string' ? v : JSON.stringify(v));
 /** A data set's whole table (`[["col", …], [cell, …], …]`: the header, then the rows). */
@@ -856,31 +800,6 @@ export function headerRows(a: unknown[]): { head: string[]; rows: string[][] } |
 }
 /** The column named one of `names` (any case), or -1. */
 export const findCol = (head: string[], names: string[]) => head.findIndex((h) => names.includes(h.trim().toLowerCase()));
-
-export function parseCsv(text: string): string[][] {
-  const lines = text
-    .replace(/\r/g, '')
-    .split('\n')
-    .filter((l) => l.trim());
-  const sep = [';', '\t', ','].find((s) => lines[0]?.includes(s)) ?? ',';
-  return lines.map((l) => {
-    const out: string[] = [];
-    let cur = '';
-    let q = false;
-    for (let i = 0; i < l.length; i++) {
-      const ch = l[i];
-      if (q) {
-        if (ch === '"' && l[i + 1] === '"') ((cur += '"'), i++);
-        else if (ch === '"') q = false;
-        else cur += ch;
-      } else if (ch === '"') q = true;
-      else if (ch === sep) (out.push(cur), (cur = ''));
-      else cur += ch;
-    }
-    out.push(cur);
-    return out.map((s) => s.trim());
-  });
-}
 
 // ------------------------------------------------------------- operator --
 

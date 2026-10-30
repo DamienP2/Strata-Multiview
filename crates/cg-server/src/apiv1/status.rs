@@ -339,17 +339,10 @@ pub async fn channel_status(s: &Shared, ch: &ChannelRt, user: Option<&User>) -> 
     };
     let st = ch.state.read().await.clone();
     let locks = ch.ops.locks();
-    let (next, mut items, mut zones) = match &project {
+    let (next, items, mut zones) = match &project {
         Some(p) => project_status(p, &st, &cue_of(&id)),
         None => Default::default(),
     };
-    if let Some(p) = &project {
-        for (it, r) in items.iter_mut().zip(&p.rundown) {
-            if let Some(t) = p.template(&r.template_id) {
-                it.warnings = s.data.warnings(cg_core::datapath::sources(t));
-            }
-        }
-    }
     for z in &mut zones {
         z.locked_by = locks
             .iter()

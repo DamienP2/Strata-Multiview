@@ -28,8 +28,6 @@ pub fn router() -> Router<Shared> {
         .merge(crate::iconlib::router())
         .merge(crate::health::router())
         .merge(crate::apiv1::router())
-        .merge(crate::social::api::router())
-        .merge(crate::social::moderation::router())
         .route("/api/auth/state", get(auth_state))
         .route("/api/auth/setup", post(auth_setup))
         .route("/api/auth/login", post(auth_login))
@@ -60,17 +58,7 @@ pub fn router() -> Router<Shared> {
         .route("/api/keys/{id}/reveal", post(reveal_key))
         .route("/api/openapi.json", get(openapi))
         .route("/api/projects", get(list_projects).post(create_project))
-        .route("/api/examples", get(list_examples))
-        .route("/api/examples/{id}", post(create_from_example))
-        .route("/api/examples/{id}/cover.png", get(example_cover))
         .route("/api/projects/import", post(import_project))
-        .route(
-            "/api/import/analyze",
-            post(import_analyze).layer(axum::extract::DefaultBodyLimit::max(1024 * 1024 * 1024)),
-        )
-        .route("/api/import/{token}/files/{name}", get(import_file))
-        .route("/api/import/{token}/create", post(import_create))
-        .route("/api/import/{token}/into/{id}", post(import_into))
         .route(
             "/api/projects/{id}",
             get(get_project)
@@ -115,11 +103,9 @@ pub fn router() -> Router<Shared> {
             get(template_thumbnail),
         )
         .route(
-            "/api/projects/{id}/import/after-effects",
-            post(import_after_effects)
-                .layer(axum::extract::DefaultBodyLimit::max(256 * 1024 * 1024)),
+            "/api/projects/{id}/import/lottie",
+            post(import_lottie).layer(axum::extract::DefaultBodyLimit::max(256 * 1024 * 1024)),
         )
-        .route("/api/render", post(render_video))
         .route("/api/channels", get(list_channels))
         .route("/api/channels/{id}/state", get(channel_state))
         .route("/api/channels/{id}/project", put(load_project))
@@ -129,14 +115,6 @@ pub fn router() -> Router<Shared> {
             get(channel_undo_list).post(channel_undo),
         )
         .route("/api/channels/{id}/locks", get(zone_locks))
-        .route(
-            "/api/channels/{id}/schedule",
-            get(crate::schedule::list).post(crate::schedule::create),
-        )
-        .route(
-            "/api/channels/{id}/schedule/{sid}",
-            axum::routing::patch(crate::schedule::patch).delete(crate::schedule::delete),
-        )
         .route(
             "/api/channels/{id}/zones/{zone}/lock",
             put(take_zone).delete(free_zone),
@@ -170,8 +148,6 @@ pub fn router() -> Router<Shared> {
         .route("/api/system/metrics", get(crate::perf::metrics))
         .route("/api/system/logs", get(crate::perf::logs))
         .route("/api/system/logs/download", get(crate::perf::logs_download))
-        .route("/api/asrun", get(crate::asrun::get_asrun))
-        .route("/api/asrun.csv", get(crate::asrun::get_asrun_csv))
         .route("/api/system/config", put(put_system_config))
         .route("/api/system/time", get(get_system_time))
         .route("/api/system/time/sync", post(sync_system_time))
@@ -182,26 +158,6 @@ pub fn router() -> Router<Shared> {
         .route("/api/system/restart-server", post(post_restart_server))
         .route("/api/system/stop", post(post_stop))
         .route("/api/system/network", put(put_network_roles))
-        .route("/api/mos/status", get(mos_status))
-        .route("/api/data/sources", get(list_sources).post(create_source))
-        .route(
-            "/api/data/sources/{id}",
-            put(put_source).delete(delete_source),
-        )
-        .route(
-            "/api/data/sources/{id}/value",
-            get(source_value)
-                .put(push_value)
-                .layer(axum::extract::DefaultBodyLimit::max(
-                    crate::datasources::MAX_BYTES as usize,
-                )),
-        )
-        .route("/api/data/sources/{id}/refresh", post(refresh_source))
-        .route("/api/data/test", post(test_source))
-        .route("/api/data/lookup", post(data_lookup))
-        .route("/api/data/pipeline", post(data_pipeline))
-        .route("/api/widgets/act", post(widget_act))
-        .route("/api/mos/info", get(mos_info))
         .route("/api/system/update", get(update_info))
         .route("/api/system/update/settings", put(update_settings))
         .route("/api/system/update/check", post(update_check))
@@ -694,101 +650,6 @@ async fn create_project(
     Ok(Json(ProjectSummary::from(p.as_ref())))
 }
 
-/// The example projects.
-async fn list_examples(
-    CurrentUser(_me): CurrentUser,
-) -> Json<Vec<crate::examples::ExampleSummary>> {
-    Json(crate::examples::list())
-}
-
-/// A new project made from an example.
-async fn create_from_example(
-    State(s): State<Shared>,
-    CurrentUser(me): CurrentUser,
-    Path(id): Path<String>,
-) -> ApiResult<Json<ProjectSummary>> {
-    let _edit = s.edits.lock().await;
-    require(me.can_create_projects())?;
-    let new_id = cg_core::new_id();
-    let (mut p, sources) =
-        crate::examples::project(&id, &new_id).ok_or_else(|| not_found("example"))?;
-    p.id = new_id;
-    p.rundown.iter_mut().for_each(|r| r.id = cg_core::new_id());
-    // The data sources it reads (shared, or the new project's own), with
-    // their sample value, unless they exist already (never replaced).
-    let mut added = false;
-    for ex in sources {
-        let sid = ex.source.id.clone();
-        if s.data.get(&sid).is_some() {
-            continue;
-        }
-        let src = ex.source;
-        s.data.put(src).map_err(internal)?;
-        added = true;
-        match ex.value {
-            Some(v) => {
-                let changed = s.data.record(&sid, Ok((v, 0)));
-                crate::datasources::updated(&s, &sid, changed).await;
-            }
-            None => s.data.refresh(&sid),
-        }
-    }
-    if added {
-        s.changed("sources");
-    }
-    let p = s.save_project(p).await.map_err(internal)?;
-    Ok(Json(ProjectSummary::from(p.as_ref())))
-}
-
-/// The picture of an example's card: its cover template on air.
-async fn example_cover(
-    State(s): State<Shared>,
-    CurrentUser(_me): CurrentUser,
-    Path(id): Path<String>,
-    Query(q): Query<CoverQuery>,
-) -> ApiResult<Response> {
-    let (p, template) = crate::examples::cover(&id).ok_or_else(|| not_found("example"))?;
-    // The examples are in the program: the same picture until an update.
-    const CACHE: &str = "private, max-age=86400";
-    let width = q.w.unwrap_or(u32::MAX).clamp(16, 7680);
-    let key = crate::thumbs::Key::default()
-        .part("example")
-        .template(&p, &template)
-        .part(&width)
-        .finish();
-    if let Some(bytes) = s.thumbs.get(key) {
-        return Ok(png_cached(bytes, CACHE));
-    }
-    let st = s.clone();
-    let bytes = tokio::task::spawn_blocking(move || {
-        let data = template.default_data();
-        let frame = {
-            let mut r = st.renderer.lock().unwrap_or_else(|e| e.into_inner());
-            r.render_template_scaled(
-                &p,
-                &template,
-                cg_core::MAIN_FORMAT,
-                template.hold_frame(),
-                &data,
-                width,
-            )
-        };
-        cg_render::pool::busy();
-        frame.to_png()
-    })
-    .await
-    .map_err(internal)?;
-    let bytes = Bytes::from(bytes);
-    s.thumbs.put(key, bytes.clone());
-    Ok(png_cached(bytes, CACHE))
-}
-
-#[derive(Deserialize)]
-struct CoverQuery {
-    /// At most this wide (pixels).
-    w: Option<u32>,
-}
-
 /// Copies the files of a directory (not recursive). A missing source is empty.
 async fn copy_dir(from: &std::path::Path, to: &std::path::Path) -> std::io::Result<()> {
     let mut rd = match tokio::fs::read_dir(from).await {
@@ -818,243 +679,6 @@ async fn import_project(
     }
     let p = s.save_project(p).await.map_err(internal)?;
     Ok(Json(ProjectSummary::from(p.as_ref())))
-}
-
-#[derive(Deserialize)]
-struct AnalyzeQuery {
-    /// The file's name (its extension tells the format).
-    #[serde(default)]
-    name: String,
-}
-
-#[derive(Serialize)]
-#[serde(rename_all = "camelCase")]
-struct Analysis {
-    token: String,
-    #[serde(flatten)]
-    converted: crate::import::Converted,
-}
-
-/// Reads an After Effects, MOGRT, Photoshop or SVG file into templates and a
-/// report of each layer, for the import modal (nothing is created yet).
-async fn import_analyze(
-    State(s): State<Shared>,
-    CurrentUser(me): CurrentUser,
-    Query(q): Query<AnalyzeQuery>,
-    body: Bytes,
-) -> ApiResult<Json<Analysis>> {
-    require(me.can_create_projects())?;
-    let st = s.clone();
-    let fonts = tokio::task::spawn_blocking(move || {
-        st.renderer
-            .lock()
-            .unwrap_or_else(|e| e.into_inner())
-            .font_families()
-    })
-    .await
-    .map_err(internal)?;
-    let token = cg_core::new_id();
-    let ctx = crate::import::Ctx {
-        prefix: crate::import::stage_prefix(&token),
-        fonts: fonts.into_iter().map(|f| f.family).collect(),
-        zone: cg_core::Zone::defaults()[0].id.clone(),
-    };
-    let mut converted =
-        tokio::task::spawn_blocking(move || crate::import::analyze(&q.name, &body, &ctx))
-            .await
-            .map_err(internal)?
-            .map_err(|e| (StatusCode::UNPROCESSABLE_ENTITY, e))?;
-    crate::import::stage(&token, &me.username, std::mem::take(&mut converted.files));
-    Ok(Json(Analysis { token, converted }))
-}
-
-/// A picture of an analysed file (the modal's preview).
-async fn import_file(
-    CurrentUser(me): CurrentUser,
-    Path((token, name)): Path<(String, String)>,
-) -> ApiResult<Response> {
-    let bytes = crate::import::staged_file(&token, &me.username, &name)
-        .ok_or((StatusCode::NOT_FOUND, "no such file".to_string()))?;
-    let mime = match name
-        .rsplit('.')
-        .next()
-        .unwrap_or("")
-        .to_lowercase()
-        .as_str()
-    {
-        "png" => "image/png",
-        "jpg" | "jpeg" => "image/jpeg",
-        "svg" => "image/svg+xml",
-        "webp" => "image/webp",
-        "gif" => "image/gif",
-        "mp4" => "video/mp4",
-        "mov" => "video/quicktime",
-        "webm" => "video/webm",
-        _ => "application/octet-stream",
-    };
-    Ok(([(header::CONTENT_TYPE, mime)], bytes).into_response())
-}
-
-#[derive(Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct ImportCreate {
-    name: String,
-    width: u32,
-    height: u32,
-    frame_rate: FrameRate,
-    /// The templates kept (layers switched off already taken out).
-    templates: Vec<Template>,
-}
-
-/// Creates the project of an analysed file: its templates (published) and
-/// the pictures they use.
-async fn import_create(
-    State(s): State<Shared>,
-    CurrentUser(me): CurrentUser,
-    Path(token): Path<String>,
-    Json(c): Json<ImportCreate>,
-) -> ApiResult<Json<ProjectSummary>> {
-    let _edit = s.edits.lock().await;
-    require(me.can_create_projects())?;
-    check_format(c.width, c.height, c.frame_rate)?;
-    if c.name.trim().is_empty() {
-        return Err(bad("a project needs a name"));
-    }
-    if c.templates.is_empty() {
-        return Err(bad("nothing to import"));
-    }
-    let files = crate::import::take_staged(&token, &me.username).ok_or((
-        StatusCode::GONE,
-        "this import has expired: open the file again".to_string(),
-    ))?;
-    let mut p = Project {
-        guides: Default::default(),
-        design_order: Vec::new(),
-        language: "fr".into(),
-        template_secs: None,
-        colors: Vec::new(),
-        id: cg_core::new_id(),
-        name: c.name.trim().to_string(),
-        description: String::new(),
-        width: c.width,
-        height: c.height,
-        frame_rate: c.frame_rate,
-        templates: Vec::new(),
-        rundown: Vec::new(),
-        zones: cg_core::Zone::defaults(),
-        playlists: Vec::new(),
-        formats: Vec::new(),
-        drafts: Vec::new(),
-        starter: None,
-    };
-    // The pictures the kept templates use go to the project's media.
-    let stage = crate::import::stage_prefix(&token);
-    let json = serde_json::to_string(&c.templates).map_err(internal)?;
-    let dir = crate::media::project_dir(&s, &p.id);
-    let mut wrote = false;
-    for (name, bytes) in &files {
-        if json.contains(&format!("{stage}{name}")) {
-            tokio::fs::create_dir_all(&dir).await.map_err(internal)?;
-            tokio::fs::write(dir.join(name), bytes)
-                .await
-                .map_err(internal)?;
-            wrote = true;
-        }
-    }
-    if wrote {
-        s.renderer
-            .lock()
-            .unwrap_or_else(|e| e.into_inner())
-            .invalidate_assets();
-        s.thumbs.clear();
-    }
-    let templates: Vec<Template> =
-        serde_json::from_str(&json.replace(&stage, &crate::media::project_prefix(&p.id)))
-            .map_err(internal)?;
-    let zone = p.zones.first().map(|z| z.id.clone()).unwrap_or_default();
-    for mut t in templates {
-        t.id = cg_core::new_id();
-        t.zone = zone.clone();
-        let id = t.id.clone();
-        p.drafts.push(t);
-        p.publish(&id);
-    }
-    let p = s.save_project(p).await.map_err(internal)?;
-    tracing::info!(user = me.username, project = p.name, "project imported");
-    Ok(Json(ProjectSummary::from(p.as_ref())))
-}
-
-#[derive(Deserialize)]
-struct ImportInto {
-    /// The templates kept, laid out for the project's format.
-    templates: Vec<Template>,
-}
-
-/// Adds the templates of an analysed file to a project, as drafts (the
-/// designer publishes them), with the pictures they use.
-async fn import_into(
-    State(s): State<Shared>,
-    CurrentUser(me): CurrentUser,
-    Path((token, id)): Path<(String, String)>,
-    Json(c): Json<ImportInto>,
-) -> ApiResult<Json<Vec<String>>> {
-    let _edit = s.edits.lock().await;
-    require(me.can_design(&id))?;
-    if c.templates.is_empty() {
-        return Err(bad("nothing to import"));
-    }
-    let mut p = (*visible_project(&s, &me, &id).await?).clone();
-    let files = crate::import::take_staged(&token, &me.username).ok_or((
-        StatusCode::GONE,
-        "this import has expired: open the file again".to_string(),
-    ))?;
-    let stage = crate::import::stage_prefix(&token);
-    let json = serde_json::to_string(&c.templates).map_err(internal)?;
-    let dir = crate::media::project_dir(&s, &p.id);
-    let mut wrote = false;
-    for (name, bytes) in &files {
-        if json.contains(&format!("{stage}{name}")) {
-            tokio::fs::create_dir_all(&dir).await.map_err(internal)?;
-            tokio::fs::write(dir.join(name), bytes)
-                .await
-                .map_err(internal)?;
-            wrote = true;
-        }
-    }
-    if wrote {
-        s.renderer
-            .lock()
-            .unwrap_or_else(|e| e.into_inner())
-            .invalidate_assets();
-        s.thumbs.clear();
-        s.changed(format!("media:{}", p.id));
-    }
-    let templates: Vec<Template> =
-        serde_json::from_str(&json.replace(&stage, &crate::media::project_prefix(&p.id)))
-            .map_err(internal)?;
-    // In the full-screen zone when there is one, else the first.
-    let zone = p
-        .zones
-        .iter()
-        .find(|z| z.id == "full-screen")
-        .or_else(|| p.zones.first())
-        .map(|z| z.id.clone())
-        .unwrap_or_default();
-    let mut ids = Vec::new();
-    for mut t in templates {
-        t.id = cg_core::new_id();
-        t.zone = zone.clone();
-        ids.push(t.id.clone());
-        p.drafts.push(t);
-    }
-    s.save_project(p).await.map_err(internal)?;
-    tracing::info!(
-        user = me.username,
-        project = id,
-        n = ids.len(),
-        "templates imported"
-    );
-    Ok(Json(ids))
 }
 
 async fn export_project(
@@ -1132,20 +756,6 @@ async fn delete_project(
         return Err(not_found("project"));
     }
     let _ = tokio::fs::remove_dir_all(crate::media::project_dir(&s, &id)).await;
-    // Its own data connectors go with it (the shared ones stay).
-    let own: Vec<String> = s
-        .data
-        .list()
-        .into_iter()
-        .filter(|x| x.source.project.as_deref() == Some(id.as_str()))
-        .map(|x| x.source.id)
-        .collect();
-    for sid in &own {
-        let _ = s.data.delete(sid);
-    }
-    if !own.is_empty() {
-        s.changed("sources");
-    }
     Ok(StatusCode::NO_CONTENT)
 }
 
@@ -1435,10 +1045,6 @@ async fn discard_draft(
 struct ImportQuery {
     #[serde(default)]
     name: Option<String>,
-    /// Only convert (its pictures are saved): the Designer puts its layers
-    /// into the open template.
-    #[serde(default)]
-    layers_only: bool,
 }
 
 #[derive(Serialize)]
@@ -1448,9 +1054,10 @@ struct ImportResult {
     warnings: Vec<String>,
 }
 
-/// Imports an After Effects composition exported with Bodymovin /
-/// LottieFiles (`.json`, `.zip`, `.lottie`) as a new template.
-async fn import_after_effects(
+/// Converts a Lottie animation exported with Bodymovin / LottieFiles
+/// (`.json`, `.zip`, `.lottie`): its pictures are saved, the Designer puts
+/// its layers into the open template.
+async fn import_lottie(
     State(s): State<Shared>,
     CurrentUser(me): CurrentUser,
     Path(id): Path<String>,
@@ -1459,14 +1066,14 @@ async fn import_after_effects(
 ) -> ApiResult<Json<ImportResult>> {
     let _edit = s.edits.lock().await;
     require(me.can_design(&id))?;
-    let mut p = (*visible_project(&s, &me, &id).await?).clone();
+    let p = visible_project(&s, &me, &id).await?;
     let opts = cg_core::lottie::Options {
         width: p.width as f64,
         height: p.height as f64,
         fps: p.frame_rate.as_f64(),
         zone: p.zones.first().map(|z| z.id.clone()).unwrap_or_default(),
     };
-    let out = tokio::task::spawn_blocking(move || crate::ae_import::import(&body, &opts))
+    let out = tokio::task::spawn_blocking(move || crate::lottie_import::import(&body, &opts))
         .await
         .map_err(internal)?
         .map_err(|e| (StatusCode::UNPROCESSABLE_ENTITY, e))?;
@@ -1496,10 +1103,6 @@ async fn import_after_effects(
     }
     if let Some(name) = q.name.filter(|n| !n.trim().is_empty()) {
         template.name = name.trim().to_string();
-    }
-    if !q.layers_only {
-        p.save_draft(template.clone());
-        s.save_project(p).await.map_err(internal)?;
     }
     Ok(Json(ImportResult {
         template,
@@ -1773,7 +1376,7 @@ async fn template_thumbnail(
         data.extend(extra);
     }
     // Data sets show their row (the first, or the one asked).
-    cg_core::datapath::bind_datasets(&template, &mut data, &s.data.store());
+    cg_core::datapath::bind_datasets(&template, &mut data, &cg_core::datapath::Store::default());
     let width = q.w.unwrap_or(u32::MAX).clamp(16, 7680);
     let format = q.format.unwrap_or_else(|| cg_core::MAIN_FORMAT.to_string());
     // Made already (another list, another user): the same PNG.
@@ -1823,46 +1426,6 @@ async fn template_thumbnail(
     let bytes = Bytes::from(bytes);
     s.thumbs.put(key, bytes.clone());
     Ok(tagged(png_cached(bytes, cache)))
-}
-
-/// Renders a graphic to a QuickTime file with alpha (post-production).
-async fn render_video(
-    State(s): State<Shared>,
-    CurrentUser(me): CurrentUser,
-    Json(req): Json<crate::render::RenderRequest>,
-) -> ApiResult<Response> {
-    require(me.role != Role::Viewer)?;
-    let p = visible_project(&s, &me, &req.project_id).await?;
-    let name: String = p
-        .template(&req.template_id)
-        .map(|t| t.name.clone())
-        .unwrap_or_default()
-        .chars()
-        .map(|c| if c.is_ascii_alphanumeric() { c } else { '-' })
-        .collect();
-    let assets = s.assets_dir();
-    let tz = s.config.timezone.clone();
-    let started = std::time::Instant::now();
-    let mov =
-        tokio::task::spawn_blocking(move || crate::render::render_clip(&p, &req, assets, &tz))
-            .await
-            .map_err(internal)?
-            .map_err(bad)?;
-    tracing::info!(
-        user = me.username,
-        bytes = mov.len(),
-        ms = started.elapsed().as_millis() as u64,
-        "clip rendered"
-    );
-    let disposition = format!("attachment; filename=\"{name}.mov\"");
-    Ok((
-        [
-            (header::CONTENT_TYPE, "video/quicktime".to_string()),
-            (header::CONTENT_DISPOSITION, disposition),
-        ],
-        mov,
-    )
-        .into_response())
 }
 
 // -------------------------------------------------------------- channels ----
@@ -2739,338 +2302,6 @@ async fn put_network_roles(
     Ok(StatusCode::ACCEPTED)
 }
 
-// ------------------------------------------------------------------ MOS ----
-
-/// What the HTML5 MOS plugin needs to build items.
-async fn mos_info(State(s): State<Shared>, CurrentUser(_): CurrentUser) -> Json<serde_json::Value> {
-    Json(
-        serde_json::json!({ "mosId": s.config.mos.mos_id, "enabled": s.config.mos.enabled, "projectId": s.config.mos.project_id, "schema": crate::mos::SCHEMA }),
-    )
-}
-
-async fn mos_status(
-    State(s): State<Shared>,
-    CurrentUser(me): CurrentUser,
-) -> ApiResult<Json<crate::mos::Status>> {
-    require(me.is_admin())?;
-    Ok(Json(crate::mos::status(&s.mos)))
-}
-
-// ------------------------------------------------------------------ data ----
-
-use crate::datasources::{Source, SourceInfo};
-
-#[derive(Deserialize, Default)]
-struct SourcesQuery {
-    /// A project's own connectors and the shared ones.
-    #[serde(default)]
-    project: Option<String>,
-    /// Only the shared connectors.
-    #[serde(default)]
-    shared: bool,
-}
-
-/// Connectors the user can see: shared ones, and those of the projects they see.
-async fn list_sources(
-    State(s): State<Shared>,
-    CurrentUser(me): CurrentUser,
-    Query(q): Query<SourcesQuery>,
-) -> Json<Vec<SourceInfo>> {
-    Json(
-        s.data
-            .list()
-            .into_iter()
-            .filter(|x| match (&x.source.project, &q.project) {
-                (None, _) => true,
-                (Some(_), _) if q.shared => false,
-                (Some(p), Some(want)) => p == want && me.sees_project(p),
-                (Some(p), None) => me.sees_project(p),
-            })
-            .collect(),
-    )
-}
-
-/// May `me` change this connector: a project's, its designers; a shared one, those who create projects.
-fn may_edit_source(me: &crate::auth::User, project: &Option<String>) -> ApiResult<()> {
-    match project {
-        Some(p) => require(me.sees_project(p) && me.can_design(p)),
-        None => require(me.can_create_projects()),
-    }
-}
-
-fn check_source(src: &mut Source) -> ApiResult<()> {
-    src.name = src.name.trim().to_string();
-    if src.name.is_empty() {
-        return Err(bad("a data source needs a name"));
-    }
-    src.interval = src.interval.clamp(2, 86_400);
-    Ok(())
-}
-
-async fn create_source(
-    State(s): State<Shared>,
-    CurrentUser(me): CurrentUser,
-    Json(mut src): Json<Source>,
-) -> ApiResult<Json<SourceInfo>> {
-    may_edit_source(&me, &src.project)?;
-    if let Some(p) = &src.project {
-        if s.project(p).await.is_none() {
-            return Err(not_found("project"));
-        }
-    }
-    check_source(&mut src)?;
-    if !valid_id(&src.id) || s.data.get(&src.id).is_some() {
-        src.id = cg_core::new_id();
-    }
-    let id = src.id.clone();
-    s.data.put(src).map_err(internal)?;
-    s.data.refresh(&id);
-    s.changed("sources");
-    let info = s
-        .data
-        .list()
-        .into_iter()
-        .find(|x| x.source.id == id)
-        .ok_or_else(|| internal("lost"))?;
-    Ok(Json(info))
-}
-
-async fn put_source(
-    State(s): State<Shared>,
-    CurrentUser(me): CurrentUser,
-    Path(id): Path<String>,
-    Json(mut src): Json<Source>,
-) -> ApiResult<StatusCode> {
-    let old = s.data.get(&id).ok_or_else(|| not_found("data source"))?;
-    may_edit_source(&me, &old.project)?;
-    check_source(&mut src)?;
-    // It stays where it was (shared, or its project's).
-    src.project = old.project;
-    src.id = id.clone();
-    s.data.put(src).map_err(internal)?;
-    s.data.refresh(&id);
-    s.changed("sources");
-    Ok(StatusCode::NO_CONTENT)
-}
-
-async fn delete_source(
-    State(s): State<Shared>,
-    CurrentUser(me): CurrentUser,
-    Path(id): Path<String>,
-) -> ApiResult<StatusCode> {
-    let old = s.data.get(&id).ok_or_else(|| not_found("data source"))?;
-    may_edit_source(&me, &old.project)?;
-    if !s.data.delete(&id).map_err(internal)? {
-        return Err(not_found("data source"));
-    }
-    s.changed("sources");
-    Ok(StatusCode::NO_CONTENT)
-}
-
-/// A connector the user may see (a project's: those who see the project).
-fn visible_source(s: &Shared, me: &crate::auth::User, id: &str) -> ApiResult<Source> {
-    let src = s.data.get(id).ok_or_else(|| not_found("data source"))?;
-    match &src.project {
-        Some(p) if !me.sees_project(p) => Err(not_found("data source")),
-        _ => Ok(src),
-    }
-}
-
-async fn source_value(
-    State(s): State<Shared>,
-    CurrentUser(me): CurrentUser,
-    Path(id): Path<String>,
-) -> ApiResult<Json<serde_json::Value>> {
-    visible_source(&s, &me, &id)?;
-    Ok(Json(s.data.value(&id).unwrap_or(serde_json::Value::Null)))
-}
-
-/// Automation sends the value of a push source (JSON, CSV or XML).
-async fn push_value(
-    State(s): State<Shared>,
-    CurrentUser(me): CurrentUser,
-    Path(id): Path<String>,
-    body: Bytes,
-) -> ApiResult<StatusCode> {
-    require(me.role != Role::Viewer)?;
-    let src = visible_source(&s, &me, &id)?;
-    let crate::datasources::Kind::Push { format } = src.kind else {
-        return Err(bad(
-            "this source fetches its data itself; only push sources take values",
-        ));
-    };
-    let v = crate::datasources::parse_push(format, &body).map_err(bad)?;
-    let changed = s.data.record(&id, Ok((v, body.len())));
-    crate::datasources::updated(&s, &id, changed).await;
-    Ok(StatusCode::NO_CONTENT)
-}
-
-async fn refresh_source(
-    State(s): State<Shared>,
-    CurrentUser(me): CurrentUser,
-    Path(id): Path<String>,
-) -> ApiResult<StatusCode> {
-    visible_source(&s, &me, &id)?;
-    s.data.refresh(&id);
-    Ok(StatusCode::NO_CONTENT)
-}
-
-#[derive(Serialize)]
-#[serde(rename_all = "camelCase")]
-struct TestResult {
-    value: Option<serde_json::Value>,
-    bytes: usize,
-    error: Option<String>,
-}
-
-/// Fetches a source once without saving it (the "Test" button).
-async fn test_source(
-    CurrentUser(me): CurrentUser,
-    Json(src): Json<Source>,
-) -> ApiResult<Json<TestResult>> {
-    require(me.can_create_projects())?;
-    let res = tokio::task::spawn_blocking(move || crate::datasources::fetch(&src))
-        .await
-        .map_err(internal)?;
-    Ok(Json(match res {
-        Ok((v, n)) => TestResult {
-            value: Some(v),
-            bytes: n,
-            error: None,
-        },
-        Err(e) => TestResult {
-            value: None,
-            bytes: 0,
-            error: Some(e),
-        },
-    }))
-}
-
-#[derive(Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct LookupQuery {
-    source: String,
-    path: String,
-    #[serde(default)]
-    data: cg_core::Data,
-    #[serde(default)]
-    filters: Vec<cg_core::DataFilter>,
-    #[serde(default)]
-    sort: Option<cg_core::DataSort>,
-}
-
-/// Resolves a binding path against a source's current value.
-async fn data_lookup(
-    State(s): State<Shared>,
-    CurrentUser(_me): CurrentUser,
-    Json(q): Json<LookupQuery>,
-) -> ApiResult<Json<BTreeMap<&'static str, Option<String>>>> {
-    let v = s
-        .data
-        .value(&q.source)
-        .ok_or_else(|| not_found("value for this data source"))?;
-    Ok(Json(BTreeMap::from([(
-        "value",
-        cg_core::datapath::lookup_filtered(
-            &q.sort
-                .as_ref()
-                .map_or_else(|| v.clone(), |srt| cg_core::datapath::sort(&v, srt)),
-            &q.path,
-            &q.filters,
-            &q.data,
-        ),
-    )])))
-}
-
-#[derive(Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct PipelineQuery {
-    source: String,
-    #[serde(default)]
-    list: String,
-    #[serde(default)]
-    steps: Vec<cg_core::DataStep>,
-    #[serde(default)]
-    data: cg_core::anim::Data,
-}
-
-#[derive(Serialize)]
-struct Stage {
-    columns: Vec<String>,
-    rows: Vec<Vec<String>>,
-    /// Rows before the cut to 200.
-    total: usize,
-}
-
-#[derive(Serialize)]
-struct PipelineResult {
-    /// The source's table, then the table after each step.
-    stages: Vec<Stage>,
-    /// What a field fed by the last step reads.
-    text: String,
-}
-
-/// Runs a table pipeline on a source's current value (Data canvas previews).
-async fn data_pipeline(
-    State(s): State<Shared>,
-    CurrentUser(_me): CurrentUser,
-    Json(q): Json<PipelineQuery>,
-) -> ApiResult<Json<PipelineResult>> {
-    let v = s
-        .data
-        .value(&q.source)
-        .ok_or_else(|| not_found("value for this data source"))?;
-    let stages = cg_core::datapath::pipeline(&v, &q.list, &q.steps, &q.data)
-        .ok_or_else(|| not_found("list in this data source"))?;
-    let text = stages.last().map(|t| t.text()).unwrap_or_default();
-    Ok(Json(PipelineResult {
-        text,
-        stages: stages
-            .into_iter()
-            .map(|t| Stage {
-                total: t.rows.len(),
-                rows: t.rows.into_iter().take(200).collect(),
-                columns: t.columns,
-            })
-            .collect(),
-    }))
-}
-
-/// An operator action tried in the Designer: the layer's state after it.
-#[derive(Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct ActQuery {
-    layer: cg_core::Layer,
-    #[serde(default)]
-    state: serde_json::Value,
-    op: String,
-    #[serde(default)]
-    args: serde_json::Value,
-    #[serde(default)]
-    data: cg_core::Data,
-    #[serde(default)]
-    age_secs: f64,
-    /// Frames per second of the channel (50 when not given).
-    #[serde(default)]
-    fps: f64,
-}
-
-async fn widget_act(
-    CurrentUser(_me): CurrentUser,
-    Json(q): Json<ActQuery>,
-) -> ApiResult<Json<serde_json::Value>> {
-    let ctx = cg_core::wid::ActCtx {
-        now_ms: cg_core::playout::now_ms(),
-        age_secs: q.age_secs,
-        fps: if q.fps >= 1.0 { q.fps } else { 50.0 },
-        data: &q.data,
-    };
-    let mut st = q.state;
-    cg_core::wid::act(&q.layer, &mut st, &q.op, &q.args, &ctx)
-        .map_err(|e| (StatusCode::BAD_REQUEST, e))?;
-    Ok(Json(st))
-}
-
 // --------------------------------------------------------------- update ----
 
 async fn update_info(
@@ -3392,9 +2623,8 @@ async fn ws_session_on(s: &Shared, socket: WebSocket, viewer: &Viewer, socket_id
                     Event::Channel { channel_id, .. } => viewer.sees_channel(channel_id),
                     Event::Presence { .. } => viewer.user.is_some(),
                     Event::ZoneLocks { channel_id, .. } => viewer.user.is_some() && viewer.sees_channel(channel_id),
-                    Event::AsRun { entry } => viewer.user.is_some() && viewer.sees_channel(&entry.channel_id),
                     // Signed-in users (designer, operator, settings), not output pages.
-                    Event::Data { .. } | Event::Folders { .. } => viewer.user.is_some(),
+                    Event::Folders { .. } => viewer.user.is_some(),
                     Event::Changed { what } => viewer.user.as_ref().is_some_and(|u| what.strip_prefix("media:").is_none_or(|p| u.sees_project(p))),
                     Event::Lock { project_id, .. } => viewer.user.as_ref().is_some_and(|u| u.sees_project(project_id)),
                     Event::Channels { channels } => {
@@ -3409,8 +2639,6 @@ async fn ws_session_on(s: &Shared, socket: WebSocket, viewer: &Viewer, socket_id
                         }
                         true
                     }
-                    Event::Schedule { channel_id, .. } => viewer.user.is_some() && viewer.sees_channel(channel_id),
-                    Event::Social { project_id, .. } => viewer.user.as_ref().is_some_and(|u| u.sees_project(project_id)),
                     Event::Error { .. } => false,
                 };
                 if !visible {
@@ -3421,10 +2649,6 @@ async fn ws_session_on(s: &Shared, socket: WebSocket, viewer: &Viewer, socket_id
                 let own = match ev {
                     Event::Channels { channels } if !channels.iter().all(|c| viewer.sees_channel(&c.id)) => Some(Event::Channels { channels: channels.iter().filter(|c| viewer.sees_channel(&c.id)).cloned().collect() }),
                     Event::Presence { present } if !present.iter().all(|p| viewer.sees_channel(&p.channel_id)) => Some(Event::Presence { present: present.iter().filter(|p| viewer.sees_channel(&p.channel_id)).cloned().collect() }),
-                    Event::Schedule { channel_id, items } => {
-                        let sees = |i: &crate::schedule::View| viewer.user.as_ref().is_some_and(|u| u.sees_project(&i.entry.project_id));
-                        (!items.iter().all(sees)).then(|| Event::Schedule { channel_id: channel_id.clone(), items: items.iter().filter(|i| sees(i)).cloned().collect() })
-                    }
                     _ => None,
                 };
                 if let Some(x) = extra {

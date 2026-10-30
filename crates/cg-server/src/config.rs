@@ -268,52 +268,6 @@ impl ChannelConfig {
     }
 }
 
-/// MOS 2.8 device settings (newsroom systems: Saga, iNews, ENPS, Octopus…).
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct MosConfig {
-    #[serde(default)]
-    pub enabled: bool,
-    /// Our MOS ID, as declared in the newsroom system (e.g. "strata.mos").
-    #[serde(default = "default_mos_id")]
-    pub mos_id: String,
-    /// The newsroom system's ID (informational; any NCS is accepted).
-    #[serde(default)]
-    pub ncs_id: String,
-    /// Profile 0/1 port (objects).
-    #[serde(default = "default_lower_port")]
-    pub lower_port: u16,
-    /// Profile 2+ port (running orders).
-    #[serde(default = "default_upper_port")]
-    pub upper_port: u16,
-    /// Project receiving the running orders ("" = the project of the items).
-    #[serde(default)]
-    pub project_id: String,
-}
-
-fn default_mos_id() -> String {
-    "strata.mos".into()
-}
-fn default_lower_port() -> u16 {
-    10540
-}
-fn default_upper_port() -> u16 {
-    10541
-}
-
-impl Default for MosConfig {
-    fn default() -> Self {
-        Self {
-            enabled: false,
-            mos_id: default_mos_id(),
-            ncs_id: String::new(),
-            lower_port: default_lower_port(),
-            upper_port: default_upper_port(),
-            project_id: String::new(),
-        }
-    }
-}
-
 /// OSC (UDP) and TCP text control of the playout (`crate::apiv1`): no
 /// login on these, so they are off until enabled and can be limited to
 /// some machines.
@@ -380,8 +334,6 @@ pub struct ServerConfig {
     pub locations: Vec<Location>,
     #[serde(default)]
     pub channels: Vec<ChannelConfig>,
-    #[serde(default)]
-    pub mos: MosConfig,
     /// Live video inputs (streams, NDI, SDI) shown by the Video widget.
     #[serde(default)]
     pub inputs: Vec<crate::inputs::InputConfig>,
@@ -415,7 +367,6 @@ impl Default for ServerConfig {
             ndi_library: String::new(),
             locations: Vec::new(),
             channels: Vec::new(),
-            mos: MosConfig::default(),
             inputs: Vec::new(),
             hardware: HardwareConfig::default(),
             control: ControlConfig::default(),
@@ -656,17 +607,6 @@ impl ServerConfig {
         }
         if self.channels.is_empty() {
             return Err("at least one channel is required".into());
-        }
-        if self.mos.enabled {
-            if self.mos.mos_id.trim().is_empty() {
-                return Err("MOS: the MOS ID cannot be empty".into());
-            }
-            if self.mos.lower_port == 0
-                || self.mos.upper_port == 0
-                || self.mos.lower_port == self.mos.upper_port
-            {
-                return Err("MOS: two different ports are needed".into());
-            }
         }
         let mut loc_ids = HashSet::new();
         for l in &self.locations {

@@ -10,22 +10,12 @@ import pen from './pen';
 import clock from './clock';
 import time from './time';
 import { eff, timed } from './timer-fmt';
-import table from './table';
 import ticker from './ticker';
-import credits from './credits';
-import typewriter from './typewriter';
-import counter from './counter';
-import progress from './progress';
-import chart from './chart';
-import map from './map';
 import qrcode from './qrcode';
 import web from './web';
-import scoreboard from './scoreboard';
-import socialwall from './socialwall';
-import socialbadge from './socialbadge';
 
 /** In the order of the spec. */
-export const WIDGET_LIST: WidgetDef[] = [quad, polygon, ellipse, text, image, pen, clock, time, table, ticker, credits, typewriter, counter, progress, chart, map, qrcode, scoreboard, socialwall, socialbadge, web] as unknown as WidgetDef[];
+export const WIDGET_LIST: WidgetDef[] = [quad, polygon, ellipse, text, image, pen, clock, time, ticker, qrcode, web] as unknown as WidgetDef[];
 
 /** By layer type (a `clock` layer: the Clock; widgetOf(layer) tells the Clock from the Time). */
 export const WIDGETS: Partial<Record<LayerType, WidgetDef>> = Object.fromEntries([...WIDGET_LIST].reverse().map((w) => [w.type, w]));

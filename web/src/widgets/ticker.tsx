@@ -12,7 +12,7 @@ import { FontPick } from '../ui/FontPick';
 import { useFonts } from '../engine/fonts';
 import { Btns, clamp, ColorPick, findCol, headerRows, hex as cssBg, Content, defineWidget, ease, ListEditor, Num, RangeNum, Row, Section, Seg, Text, Toggle, useBound, useCentreMode, useFrameValue, useKeys, type Warning } from './kit';
 import { Centre, GAP, StartRow, WaitsContinue, WaitsTrigger, type Line2Item } from './centre';
-import { FitLine, FONT_CSS, tw, useLiveClock } from './table-text';
+import { FitLine, FONT_CSS, tw, useLiveClock } from './text-fit';
 import { t, tc } from '../i18n';
 
 export interface Item {

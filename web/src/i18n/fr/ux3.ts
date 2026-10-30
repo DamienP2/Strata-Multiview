@@ -36,33 +36,20 @@ export const ux3: Record<string, string> = {
   'Recent': 'Récents',
   'Click the projects to select': 'Cliquez sur les projets à sélectionner',
   'Move…': 'Déplacer…',
-  'Esc': 'Échap',
   'Close (Esc)': 'Fermer (Échap)',
   // Data
-  'Headers': 'En-têtes',
   'shared': 'partagée',
-  'No source in this project': 'Aucune source dans ce projet',
-  'No shared source': 'Aucune source partagée',
-  'One per line: “Name: value” (an API key…)': 'Un par ligne : « Nom: valeur » (une clé d’API…)',
   // Video streams
   'Properties': 'Propriétés',
   'Close the panel': 'Fermer le panneau',
   // API documentation: its sections (OpenAPI tags)
   '{n} operation': '{n} opération',
   '{n} operations': '{n} opérations',
-  'api|Authentication': 'Authentification',
-  'api|Users & API keys': 'Utilisateurs et clés API',
   'api|Projects': 'Projets',
-  'api|Channels & playout': 'Canaux et diffusion',
-  'api|Assets': 'Ressources',
   'api|System': 'Système',
   'api|Updates': 'Mises à jour',
-  'api|Newsroom (MOS)': 'Rédaction (MOS)',
-  'api|Post-production': 'Postproduction',
   'api|Data': 'Données',
-  'api|Social networks': 'Réseaux sociaux',
   'api|Media': 'Médias',
-  'api|Control surfaces (v1)': 'Surfaces de contrôle',
   // Assets
   '{n} B': '{n} o',
   '{n} KB': '{n} Ko',
@@ -71,8 +58,5 @@ export const ux3: Record<string, string> = {
   'of {max} ({n} cores in use)': 'sur {max} ({n} cœurs utilisés)',
   'The machine uses {cpu} of {max} ({cores})': 'La machine utilise {cpu} sur {max} ({cores})',
   // As-run log
-  'Search…': 'Rechercher…',
-  'asrun|CLEAR': 'TOUT EFFACER',
   // Social
-  'No message': 'Aucun message',
 };

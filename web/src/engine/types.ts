@@ -67,23 +67,13 @@ export type LayerKind =
   | (({ type: 'clock'; mode: ClockMode; format: string; timezone: string; target: string } & FontStyle) & import('../widgets/timer').Config)
   | (({ type: 'ticker'; text: string; separator: string; speed: number } & FontStyle) & import('../widgets/ticker').Config)
   | ({ type: 'roll'; text: string; speed: number; loop: boolean } & FontStyle)
-  | (({ type: 'counter'; from: string; to: string; duration: number; decimals: number; prefix: string; suffix: string; grouping: boolean } & FontStyle) & import('../widgets/counter').Config)
-  | ({ type: 'progress'; value: string; max: string; duration: number; track: string } & import('../widgets/progress').Config)
   | ({ type: 'rotator'; text: string; interval: number; fade: number } & FontStyle)
-  | (({ type: 'typewriter'; text: string; speed: number; cursor: boolean } & FontStyle) & import('../widgets/typewriter').Config)
   | { type: 'slideshow'; images: string; interval: number; fade: number; fit: ImageFit }
   | ({ type: 'qrCode'; data: string; background: string } & import('../widgets/qrcode').Config)
   | ({ type: 'web' } & import('../widgets/web').Config)
-  | ({ type: 'socialWall' } & import('../widgets/socialwall').Config)
-  | ({ type: 'socialBadge' } & import('../widgets/socialbadge').Config)
   | ({ type: 'barChart'; text: string; percent: boolean; duration: number; track: string; textColor: string } & FontStyle)
   | ({ type: 'polygon' } & import('../widgets/polygon').Config)
-  | ({ type: 'pen' } & import('../widgets/pen').Config)
-  | ({ type: 'table' } & import('../widgets/table').Config)
-  | ({ type: 'credits' } & import('../widgets/credits').Config)
-  | ({ type: 'chart' } & import('../widgets/chart').Config)
-  | ({ type: 'map' } & import('../widgets/map').Config)
-  | ({ type: 'scoreboard' } & import('../widgets/scoreboard').Config);
+  | ({ type: 'pen' } & import('../widgets/pen').Config);
 
 export type LayerType = LayerKind['type'];
 
@@ -247,30 +237,6 @@ export interface DataSet {
   change?: RowChange;
 }
 
-/** Data keys of a data set: its row, its number of rows, each column of the current row. */
-export const rowKey = (key: string) => `${key}__row`;
-export const countKey = (key: string) => `${key}__count`;
-/** All the rows of a data set, for widgets showing a table: JSON `[[header…], [cells…], …]`. */
-export const tableKey = (key: string) => `${key}__table`;
-/** Its rows as text lines, for a Text; only the current row when `oneKey` is "1" (chosen in the Operator). */
-export const linesKey = (key: string) => `${key}__lines`;
-export const oneKey = (key: string) => `${key}__one`;
-export const columnKey = (key: string, column: string) => `${key}_${column.replace(/[^A-Za-z0-9]/g, '_')}`;
-
-const usedCache = new WeakMap<object, DataSet[]>();
-/** The data sets the graphic really reads: a key of theirs (row, column, all rows) appears in its layers,
- * variables or logic. A data set node left in the Data canvas, wired to nothing, is not shown to the Operator. */
-export function usedDatasets(t: Pick<Template, 'datasets' | 'layers' | 'fields' | 'logic'>): DataSet[] {
-  const sets = t.datasets ?? [];
-  if (!sets.length) return sets;
-  const hit = usedCache.get(t);
-  if (hit) return hit;
-  const text = JSON.stringify([t.layers, t.fields, t.logic ?? null]);
-  const out = sets.filter((d) => text.includes(`${d.key}_`));
-  usedCache.set(t, out);
-  return out;
-}
-
 /** A node of the Data canvas graph: a source's list, a step, or a data set. */
 export type FlowNode = { id: string; x: number; y: number } & ({ type: 'source'; source: string; list: string } | DataStep | { type: 'dataset'; key: string; name: string; change: RowChange });
 /** The Data canvas graph; an edge goes to a node id or to `field:<key>`. */
@@ -305,26 +271,12 @@ export type DataFilter =
   | { type: 'default'; text: string }
   | { type: 'map'; when: string; then: string };
 
-export type DataSourceKind = { type: 'json'; url: string; headers?: Record<string, string> } | { type: 'csv'; url: string; header?: boolean } | { type: 'rss'; url: string } | { type: 'xml'; url: string; headers?: Record<string, string> } | { type: 'push'; format?: 'json' | 'csv' | 'xml' };
-
-export type DataSource = DataSourceKind & {
-  id: string;
-  name: string;
-  /** The project it belongs to; unset = shared by every project (main menu > Data). */
-  project?: string;
-  /** Seconds between fetches. */
-  interval: number;
-  enabled: boolean;
-};
-
 export interface DataStatus {
   updatedAt?: number | null;
   checkedAt?: number | null;
   error?: string | null;
   bytes?: number;
 }
-
-export type DataSourceInfo = DataSource & DataStatus;
 
 export interface Template {
   id: string;
@@ -597,7 +549,7 @@ export interface User {
 }
 
 /** Layer types whose text is styled with a FontStyle. */
-export const TEXT_LIKE = new Set<LayerType>(['text', 'clock', 'ticker', 'roll', 'counter', 'rotator', 'typewriter', 'barChart']);
+export const TEXT_LIKE = new Set<LayerType>(['text', 'clock', 'ticker', 'roll', 'rotator', 'barChart']);
 
 /** A colour of a palette: the layers using its value follow it when it changes. */
 export interface NamedColor {

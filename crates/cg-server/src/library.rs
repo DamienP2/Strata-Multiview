@@ -164,10 +164,6 @@ impl Library {
         }
     }
 
-    pub fn first_id(&self) -> Option<String> {
-        self.projects.keys().next().cloned()
-    }
-
     pub fn save(&mut self, project: Project) -> std::io::Result<Arc<Project>> {
         Self::write_file(&self.dir, &project)?;
         let p = Arc::new(project);

@@ -43,10 +43,7 @@ export function isTimed(l: Layer): boolean {
       return l.mode === 'elapsed' || l.mode === 'timer';
     case 'ticker':
     case 'roll':
-    case 'counter':
-    case 'progress':
     case 'rotator':
-    case 'typewriter':
     case 'slideshow':
     case 'barChart':
       return true;
@@ -299,30 +296,12 @@ export function grow(duration: number, age: number): number {
   return 1 - Math.pow(1 - t, 3);
 }
 
-function number(raw: string, data: Data): number {
-  const v = parseFloat(interpolateText(raw, data).trim().replace(',', '.').replace(/ /g, ''));
-  return Number.isFinite(v) ? v : 0;
-}
-
 export function formatNumber(v: number, decimals: number, grouping: boolean): string {
   const s = Math.abs(v).toFixed(decimals);
   let [int, frac] = s.split('.');
   if (grouping) int = int.replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
   const sign = v < 0 && Math.abs(v) >= 0.5 * Math.pow(10, -decimals) ? '-' : '';
   return frac !== undefined ? `${sign}${int},${frac}` : `${sign}${int}`;
-}
-
-export function counterText(l: { from: string; to: string; duration: number; decimals: number; prefix: string; suffix: string; grouping: boolean }, data: Data, age: number): string {
-  const a = number(l.from, data);
-  const b = number(l.to, data);
-  const v = a + (b - a) * grow(l.duration, age);
-  return `${interpolateText(l.prefix, data)}${formatNumber(v, l.decimals, l.grouping)}${interpolateText(l.suffix, data)}`;
-}
-
-export function progressRatio(value: string, max: string, duration: number, data: Data, age: number): number {
-  const m = number(max, data);
-  const ratio = m > 0 ? Math.min(1, Math.max(0, number(value, data) / m)) : 0;
-  return ratio * grow(duration, age);
 }
 
 export function lines(text: string, data: Data): string[] {
@@ -349,14 +328,6 @@ export function slideshowState(n: number, interval: number, fade: number, age: n
   fade = Math.min(interval, Math.max(0, fade));
   const mix = fade > 0 && t > interval - fade ? (t - (interval - fade)) / fade : 0;
   return [idx, (idx + 1) % n, mix];
-}
-
-export function typewriterText(text: string, speed: number, cursor: boolean, data: Data, age: number): string {
-  const full = [...interpolateText(text, data)];
-  const shown = Math.min(full.length, Math.max(0, Math.floor(age * speed)));
-  let out = full.slice(0, shown).join('');
-  if (cursor && (shown < full.length || Math.floor(age * 2) % 2 === 0)) out += '|';
-  return out;
 }
 
 export function chartRows(text: string, data: Data): [string, number][] {

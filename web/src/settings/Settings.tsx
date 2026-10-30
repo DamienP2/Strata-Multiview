@@ -1,4 +1,4 @@
-import { Clock, CloudDownload, Cpu, Keyboard, Network, RotateCcw, Server, SlidersHorizontal, Timer } from 'lucide-react';
+import { Clock, CloudDownload, Cpu, Network, RotateCcw, Server, SlidersHorizontal, Timer } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { t } from '../i18n';
 import { NavItem, NavSection, PageHead, SidePage } from '../pages/SidePage';
@@ -11,7 +11,6 @@ import { TimePage } from './TimePage';
 import { VideoSync } from './VideoSync';
 import { Updates } from './Updates';
 import { LibraryUpdates } from './LibraryUpdates';
-import { ShortcutsPage } from './Shortcuts';
 
 const TIMEZONES: string[] = (() => {
   try {
@@ -28,25 +27,15 @@ function uptime(s: number) {
   return d ? `${d}d ${h}h` : h ? `${h}h ${m}m` : `${m}m ${s % 60}s`;
 }
 
-type Section = 'shortcuts' | 'general' | 'network' | 'time' | 'sync' | 'updates' | 'system';
-const SECTIONS: Section[] = ['shortcuts', 'general', 'network', 'time', 'sync', 'updates', 'system'];
+type Section = 'general' | 'network' | 'time' | 'sync' | 'updates' | 'system';
+const SECTIONS: Section[] = ['general', 'network', 'time', 'sync', 'updates', 'system'];
 const sectionOf = (hash: string): Section => SECTIONS.find((s) => `#${s}` === hash) ?? 'general';
 
-/** Your own settings; an admin's also the server's. */
+/** The server's settings (admins). */
 export function Settings() {
   const user = useApp((s) => s.auth?.user);
   if (can.admin(user)) return <ServerSettings />;
-  const nav = (
-    <>
-      <NavSection>{t('You')}</NavSection>
-      <NavItem on icon={<Keyboard size={15} />} label={t('Shortcuts')} />
-    </>
-  );
-  return (
-    <SidePage nav={nav}>
-      <ShortcutsPage />
-    </SidePage>
-  );
+  return <div className="loading">{t('Only an administrator can change the settings.')}</div>;
 }
 
 /** The server: name, clocks, network, updates and what it runs on. */
@@ -83,8 +72,6 @@ function ServerSettings() {
   const item = (s: Section, icon: React.ReactNode, label: string) => <NavItem on={section === s} icon={icon} label={label} onClick={() => go(s)} />;
   const nav = (
     <>
-      <NavSection>{t('You')}</NavSection>
-      {item('shortcuts', <Keyboard size={15} />, t('Shortcuts'))}
       <NavSection>{t('Server')}</NavSection>
       {item('general', <SlidersHorizontal size={15} />, t('General'))}
       {item('network', <Network size={15} />, t('Networks'))}
@@ -95,12 +82,11 @@ function ServerSettings() {
       <div className="lib-nav-foot">
         <span className="nav-dot ok" /> {t('Up {time}', { time: uptime(info.uptimeSecs) })}
         <span className="muted">
-          Strata {info.version} · {info.os}/{info.arch}
+          Strata Multiview {info.version} · {info.os}/{info.arch}
         </span>
       </div>
     </>
   );
-  if (section === 'shortcuts') return <SidePage nav={nav}><ShortcutsPage /></SidePage>;
 
   return (
     <SidePage nav={nav}>
@@ -144,7 +130,7 @@ function ServerSettings() {
           <dl className="sys-list">
             <dt>{t('Version')}</dt>
             <dd>
-              Strata {info.version} · {info.os}/{info.arch}
+              Strata Multiview {info.version} · {info.os}/{info.arch}
             </dd>
             <dt>{t('Machine')}</dt>
             <dd>{info.hostname}</dd>

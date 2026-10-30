@@ -194,22 +194,6 @@ pub(crate) fn picture(
     d.pm.draw_pixmap(0, 0, pm.as_ref().as_ref(), &paint, tf, mask.or(d.mask));
 }
 
-/// Draws `paths` (filled; `stroke`: also stroked that wide) in `color`,
-/// blurred by `blur` px and offset by (dx, dy), like a CSS drop shadow.
-#[allow(clippy::too_many_arguments)]
-pub(crate) fn shadow(
-    d: &mut Draw,
-    paths: &[&Path],
-    stroke: f32,
-    color: Color,
-    dx: f32,
-    dy: f32,
-    blur: f32,
-    mask: Option<&Mask>,
-) {
-    shadow_with(d, paths, &[], stroke, color, dx, dy, blur, mask);
-}
-
 /// The same with colour pictures (emoji: their own transform in layer
 /// space) casting their shadow too, as the browser's drop shadow does.
 #[allow(clippy::too_many_arguments)]

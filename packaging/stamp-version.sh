@@ -14,10 +14,4 @@ esac
 perl -pi -e 's/^version = "[^"]*"/version = "'"$V"'"/ if $. < 10' Cargo.toml
 perl -0pi -e 's/(name = "cg-[a-z-]+"\r?\nversion = ")[^"]+/${1}'"$V"'/g' Cargo.lock
 perl -pi -e 's/"version": "[^"]*"/"version": "'"$V"'"/ if $. < 6' web/package.json
-# Premiere panel: the bundle and extension versions only. The manifest's own
-# Version is the CEP schema (9.0): Premiere rejects the panel if it changes.
-M=integrations/premiere/CSXS/manifest.xml
-perl -pi -e 's/ExtensionBundleVersion="[^"]*"/ExtensionBundleVersion="'"$V"'"/' "$M"
-perl -pi -e 's/(<Extension Id="[^"]*" Version=)"[^"]*"/$1"'"$V"'"/' "$M"
-grep -q '<ExtensionManifest Version="9.0"' "$M" || { echo "manifest schema version changed" >&2; exit 1; }
 echo "version stamped: $V"

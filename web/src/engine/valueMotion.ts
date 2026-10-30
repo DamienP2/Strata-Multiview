@@ -56,9 +56,6 @@ export const layerShows = (json: string, key: string) => json.includes(`{{${key}
 /** A layer as JSON, to look for the data keys it shows: without its own settings by key (mirror of playout::layer_json). */
 export const layerJson = (l: Layer) => JSON.stringify(l.liveChanges ? { ...l, liveChanges: undefined } : l);
 
-/** Whether a data key comes from a source or a data set (its value can change on air). */
-export const fedKey = (t: Template, key: string) => t.fields.some((f) => f.key === key && f.binding) || (t.datasets ?? []).some((d) => key.startsWith(`${d.key}_`));
-
 /** The layers (not groups) showing the sliding or turning values: how and how far. */
 export function movingLayers(t: Template, moves: ValueMove[]): Map<string, [ValueChange, number]> {
   const out = new Map<string, [ValueChange, number]>();

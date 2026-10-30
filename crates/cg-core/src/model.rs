@@ -488,45 +488,6 @@ pub enum LayerKind {
         #[serde(default = "default_accent")]
         accent: String,
     },
-    /// Number counting from `from` to `to` once on air (scores, results…).
-    #[serde(rename_all = "camelCase")]
-    Counter {
-        #[serde(default)]
-        from: String,
-        to: String,
-        /// Seconds.
-        #[serde(default = "default_two")]
-        duration: f64,
-        #[serde(default)]
-        decimals: u8,
-        #[serde(default)]
-        prefix: String,
-        #[serde(default)]
-        suffix: String,
-        /// Thousands separator.
-        #[serde(default = "yes")]
-        grouping: bool,
-        #[serde(flatten)]
-        font: FontStyle,
-        /// Settings of the spec widget (`wid::counter`).
-        #[serde(flatten)]
-        x: crate::wid::counter::Config,
-    },
-    /// Horizontal bar filled to `value` / `max`, animated from empty.
-    #[serde(rename_all = "camelCase")]
-    Progress {
-        value: String,
-        #[serde(default = "default_hundred")]
-        max: String,
-        #[serde(default = "default_one")]
-        duration: f64,
-        /// Colour of the empty part (the bar uses the fill colour).
-        #[serde(default = "default_track")]
-        track: String,
-        /// Settings of the spec widget (`wid::progress`).
-        #[serde(flatten)]
-        x: crate::wid::progress::Config,
-    },
     /// Shows the lines of `text` one after another with a cross-fade.
     #[serde(rename_all = "camelCase")]
     Rotator {
@@ -538,21 +499,6 @@ pub enum LayerKind {
         fade: f64,
         #[serde(flatten)]
         font: FontStyle,
-    },
-    /// Reveals `text` letter by letter.
-    #[serde(rename_all = "camelCase")]
-    Typewriter {
-        text: String,
-        /// Characters per second.
-        #[serde(default = "default_twenty")]
-        speed: f64,
-        #[serde(default = "yes")]
-        cursor: bool,
-        #[serde(flatten)]
-        font: FontStyle,
-        /// Settings of the spec widget (`wid::typewriter`).
-        #[serde(flatten)]
-        x: crate::wid::typewriter::Config,
     },
     /// Cycles through images (one asset path per line) with a cross-fade.
     #[serde(rename_all = "camelCase")]
@@ -580,18 +526,6 @@ pub enum LayerKind {
     Web {
         #[serde(flatten)]
         x: crate::wid::web::Config,
-    },
-    /// Social wall: approved messages of a social source as cards.
-    #[serde(rename_all = "camelCase")]
-    SocialWall {
-        #[serde(flatten)]
-        x: crate::wid::socialwall::Config,
-    },
-    /// A social platform's badge, or a person's avatar.
-    #[serde(rename_all = "camelCase")]
-    SocialBadge {
-        #[serde(flatten)]
-        x: crate::wid::socialbadge::Config,
     },
     /// Horizontal bar chart / poll: one "Label: value" per line.
     #[serde(rename_all = "camelCase")]
@@ -624,41 +558,6 @@ pub enum LayerKind {
         #[serde(flatten)]
         x: crate::wid::pen::Config,
     },
-    /// Table of data with pages.
-    #[serde(rename_all = "camelCase")]
-    Table {
-        /// Settings of the spec widget (`wid::table`).
-        #[serde(flatten)]
-        x: Box<crate::wid::table::Config>,
-    },
-    /// Structured credits: roll, crawl or pages.
-    #[serde(rename_all = "camelCase")]
-    Credits {
-        /// Settings of the spec widget (`wid::credits`).
-        #[serde(flatten)]
-        x: crate::wid::credits::Config,
-    },
-    /// Columns, areas, lines or pie.
-    #[serde(rename_all = "camelCase")]
-    Chart {
-        /// Settings of the spec widget (`wid::chart`).
-        #[serde(flatten)]
-        x: crate::wid::chart::Config,
-    },
-    /// Vector map with views, markers, routes and zones.
-    #[serde(rename_all = "camelCase")]
-    Map {
-        /// Settings of the spec widget (`wid::map`).
-        #[serde(flatten)]
-        x: crate::wid::map::Config,
-    },
-    /// Sport scoreboard with its counting rules.
-    #[serde(rename_all = "camelCase")]
-    Scoreboard {
-        /// Settings of the spec widget (`wid::scoreboard`).
-        #[serde(flatten)]
-        x: crate::wid::scoreboard::Config,
-    },
 }
 
 fn default_accent() -> String {
@@ -670,17 +569,11 @@ fn default_track() -> String {
 fn default_white() -> String {
     "#ffffff".into()
 }
-fn default_hundred() -> String {
-    "100".into()
-}
 fn default_half() -> f64 {
     0.5
 }
 fn default_one() -> f64 {
     1.0
-}
-fn default_two() -> f64 {
-    2.0
 }
 fn default_four() -> f64 {
     4.0
@@ -690,9 +583,6 @@ fn default_five() -> f64 {
 }
 fn default_fade() -> f64 {
     0.8
-}
-fn default_twenty() -> f64 {
-    20.0
 }
 
 /// Font settings shared by the text-based widgets.
@@ -1486,38 +1376,16 @@ pub struct Template {
 }
 
 /// The widget a scrolling Text of older projects becomes: horizontal, the
-/// Ticker it was drawn as (its lines are the items); vertical, the Credits
-/// (its lines are the names, at its speed in px/s, in its font).
+/// Ticker it was drawn as (its lines are the items).
 fn legacy_scroll(kind: &LayerKind) -> Option<LayerKind> {
-    let LayerKind::Text {
-        text,
-        font_family,
-        scroll,
-        speed,
-        ..
-    } = kind
-    else {
+    let LayerKind::Text { scroll, .. } = kind else {
         return None;
     };
     match scroll {
         TextScroll::None => None,
         TextScroll::Horizontal => kind.scrolling_as(),
-        TextScroll::Vertical => {
-            use crate::wid::credits::{parse, Config, SpeedMode};
-            let mut x = Config::default();
-            // Wired to one value (`{{key}}`): the credits read it as their text.
-            let t = text.trim();
-            if t.starts_with("{{") && t.ends_with("}}") && t.matches("{{").count() == 1 {
-                x.link = t.to_string();
-                x.entries.clear();
-            } else {
-                x.entries = parse(text);
-            }
-            x.speed_mode = SpeedMode::Pxs;
-            x.pxs = *speed;
-            x.font = font_family.clone();
-            Some(LayerKind::Credits { x })
-        }
+        // Vertical rolls are not kept.
+        TextScroll::Vertical => None,
     }
 }
 
@@ -1716,13 +1584,6 @@ impl Template {
                 {
                     l.manual_start = true;
                     x.start_mode = StartMode::Auto;
-                    changed = true;
-                }
-            }
-            // A typewriter wired to a data set's table takes its rows as lines, like a Text.
-            if let LayerKind::Typewriter { text, .. } = &mut l.kind {
-                if text.contains("__table}}") {
-                    *text = text.replace("__table}}", "__lines}}");
                     changed = true;
                 }
             }
@@ -2776,23 +2637,6 @@ mod setting_tests {
     }
 
     #[test]
-    fn a_typewriter_on_a_table_reads_its_rows_as_lines() {
-        let mut t = Template::blank("T", "", 50.0);
-        t.layers.push(
-            serde_json::from_str(
-                r#"{"id":"w","name":"W","type":"typewriter","text":"{{news__table}}"}"#,
-            )
-            .unwrap(),
-        );
-        assert!(t.upgrade_layers());
-        let LayerKind::Typewriter { text, .. } = &t.layers[0].kind else {
-            panic!("not a typewriter");
-        };
-        assert_eq!(text, "{{news__lines}}");
-        assert!(!t.upgrade_layers());
-    }
-
-    #[test]
     fn the_empty_starter_template_goes_at_a_publish() {
         let mut p = crate::sample::demo_project();
         p.templates.clear();
@@ -2828,48 +2672,4 @@ mod setting_tests {
         assert!(q.starter.is_none() && q.template(&s.id).is_some());
     }
 
-    #[test]
-    fn scrolling_texts_become_a_ticker_or_credits() {
-        let mut t = Template::blank("T", "", 50.0);
-        let text = |id: &str, scroll: &str, body: &str| -> Layer {
-            serde_json::from_value(serde_json::json!({
-                "id": id, "name": id, "type": "text", "text": body, "fontFamily": "Oswald",
-                "scroll": scroll, "speed": 90.0, "separator": " | "
-            }))
-            .unwrap()
-        };
-        t.layers.push(text("h", "horizontal", "One\nTwo"));
-        t.layers
-            .push(text("v", "vertical", "Directed by | Jane\nThanks"));
-        t.layers.push(text("w", "vertical", "{{roll}}"));
-        t.layers.push(text("f", "none", "Fixed"));
-        assert!(t.upgrade_layers());
-        let LayerKind::Ticker {
-            text,
-            separator,
-            speed,
-            font,
-            ..
-        } = &t.layers[0].kind
-        else {
-            panic!("{:?}", t.layers[0].kind)
-        };
-        assert_eq!(
-            (text.as_str(), separator.as_str(), *speed),
-            ("One\nTwo", " | ", 90.0)
-        );
-        assert_eq!(font.font_family, "Oswald");
-        let LayerKind::Credits { x } = &t.layers[1].kind else {
-            panic!("{:?}", t.layers[1].kind)
-        };
-        assert_eq!(x.entries.len(), 2);
-        assert_eq!((x.pxs, x.font.as_str()), (90.0, "Oswald"));
-        assert_eq!(x.speed_mode, crate::wid::credits::SpeedMode::Pxs);
-        let LayerKind::Credits { x } = &t.layers[2].kind else {
-            panic!()
-        };
-        assert_eq!(x.link, "{{roll}}");
-        assert!(matches!(t.layers[3].kind, LayerKind::Text { .. }));
-        assert!(!t.upgrade_layers());
-    }
 }

@@ -1525,9 +1525,6 @@ impl Renderer {
             return (Motion::Moving, None);
         }
         if cg_core::wid::widget_id(&r.layer.kind).is_some() {
-            if let Some((a, b)) = self.widget(pm, ctx, r, tf, opacity, None, wid::split_motions) {
-                return (a, Some(b));
-            }
             let motion = self.widget(pm, ctx, r, tf, opacity, None, wid::motion);
             if let Some(m) = motion {
                 return (m, None);
@@ -1544,13 +1541,6 @@ impl Renderer {
             | LayerKind::QrCode { .. }
             | LayerKind::Polygon { .. }
             | LayerKind::Pen { .. }
-            | LayerKind::Table { .. }
-            | LayerKind::Credits { .. }
-            | LayerKind::Chart { .. }
-            | LayerKind::Map { .. }
-            | LayerKind::Scoreboard { .. }
-            | LayerKind::SocialWall { .. }
-            | LayerKind::SocialBadge { .. }
             | LayerKind::Web { .. } => Motion::Still,
             // Clocks, tickers, rolls, counters… (by the time on air).
             _ => Motion::Moving,
@@ -1596,11 +1586,6 @@ impl Renderer {
         (inner.iter().fold(own, |m, o| m.and(o.motion)), then)
     }
 
-    /// Drawing a layer in two steps for its sprite: its first step only.
-    pub(crate) fn base_only(&self) -> bool {
-        self.steps.base_only
-    }
-
     /// What the step of `r` is drawn from, hashed (`sprite`): the graphic's
     /// state, the layer's values but its placement, its text, the fonts and
     /// pictures, the sprite's transform; with its children when `subtree`.
@@ -1640,8 +1625,6 @@ impl Renderer {
             matches!(
                 kind,
                 LayerKind::Pen { .. }
-                    | LayerKind::Typewriter { .. }
-                    | LayerKind::Credits { .. }
                     | LayerKind::Roll { .. }
                     | LayerKind::Ticker { .. }
                     | LayerKind::Rotator { .. }
@@ -1921,22 +1904,6 @@ impl Renderer {
         true
     }
 
-    /// Drawing: the second step of a layer drawn in two (the map's markers
-    /// over its base map), begun. Called by the widget between the two.
-    pub(crate) fn sub_step(&mut self, pm: &Pixmap) {
-        let s = &mut self.steps;
-        if s.whole > 0 || s.plan.is_some() || !s.split {
-            return;
-        }
-        s.split = false;
-        if let Some((k, slot)) = &mut s.keep {
-            if *k == s.at && slot.is_none() && !self.pending {
-                *slot = Some(pm.clone());
-            }
-        }
-        s.at += 1;
-    }
-
     /// A layer with its drop shadow (`Layer::drop_shadow`), as the HTML5 renderer's CSS
     /// `drop-shadow()` on the layer's box: offset and blur in the layer's space.
     fn draw_shadowed(
@@ -2026,21 +1993,6 @@ impl Renderer {
             runs: cg_core::rich::layer_runs(ctx.template, r.layer, ctx.data),
             inline: cg_core::rich::layer_images(ctx.template, r.layer, ctx.data),
             moving,
-            follow: match &r.layer.kind {
-                LayerKind::Progress { x: c, .. } => {
-                    let none = Default::default();
-                    cg_core::wid::progress::followed(
-                        &ctx.template.layers,
-                        c,
-                        ctx.item.map_or(&none, |i| &i.widgets),
-                        ctx.data,
-                        time.now_ms,
-                        time.age_secs,
-                        time.default_tz,
-                    )
-                }
-                _ => None,
-            },
         };
         f(&mut d)
     }
@@ -2073,8 +2025,6 @@ impl Renderer {
         let mask = if matches!(
             kind,
             LayerKind::Clock { .. }
-                | LayerKind::Counter { .. }
-                | LayerKind::Typewriter { .. }
                 | LayerKind::Rotator { .. }
                 | LayerKind::BarChart { .. }
                 | LayerKind::Slideshow { .. }
@@ -2417,61 +2367,6 @@ impl Renderer {
                     );
                 }
             }
-            LayerKind::Counter {
-                x: _,
-                from,
-                to,
-                duration,
-                decimals,
-                prefix,
-                suffix,
-                grouping,
-                font,
-            } => {
-                let text = widgets::counter_text(
-                    from,
-                    to,
-                    *duration,
-                    *decimals,
-                    prefix,
-                    suffix,
-                    *grouping,
-                    ctx.data,
-                    time.age_secs,
-                );
-                self.draw_text(
-                    pm,
-                    r,
-                    font,
-                    &text,
-                    (font.align, font.vertical_align),
-                    (0.0, 0.0, w, h),
-                    tf,
-                    opacity,
-                    mask,
-                );
-            }
-            LayerKind::Progress {
-                x: _,
-                value,
-                max,
-                duration,
-                track,
-            } => {
-                let ratio =
-                    widgets::progress_ratio(value, max, *duration, ctx.data, time.age_secs) as f32;
-                let radius = r.num(Prop::CornerRadius) as f32;
-                let track_paint = paint_for(
-                    Color::from_hex(track).unwrap_or(Color::TRANSPARENT),
-                    opacity,
-                );
-                if let Some(p) = rounded_rect(w, h, radius) {
-                    pm.fill_path(&p, &track_paint, FillRule::Winding, tf, mask);
-                }
-                if let Some(p) = rounded_rect(w * ratio, h, radius.min(w * ratio / 2.0)) {
-                    pm.fill_path(&p, &fill, FillRule::Winding, tf, mask);
-                }
-            }
             LayerKind::Rotator {
                 text,
                 interval,
@@ -2498,32 +2393,6 @@ impl Renderer {
                     (0.0, 0.0, w, h),
                     tf,
                     opacity * alpha as f32,
-                    mask,
-                );
-            }
-            LayerKind::Typewriter {
-                x: _,
-                text,
-                speed,
-                cursor,
-                font,
-            } => {
-                let shown =
-                    widgets::typewriter_text(text, *speed, *cursor, ctx.data, time.age_secs);
-                let shown = if font.uppercase {
-                    shown.to_uppercase()
-                } else {
-                    shown
-                };
-                self.draw_text(
-                    pm,
-                    r,
-                    font,
-                    &shown,
-                    (font.align, font.vertical_align),
-                    (0.0, 0.0, w, h),
-                    tf,
-                    opacity,
                     mask,
                 );
             }
@@ -2556,13 +2425,6 @@ impl Renderer {
             // Drawn by src/wid (wid::draw returns true for them).
             LayerKind::Polygon { .. }
             | LayerKind::Pen { .. }
-            | LayerKind::Table { .. }
-            | LayerKind::Credits { .. }
-            | LayerKind::Chart { .. }
-            | LayerKind::Map { .. }
-            | LayerKind::Scoreboard { .. }
-            | LayerKind::SocialWall { .. }
-            | LayerKind::SocialBadge { .. }
             | LayerKind::Web { .. } => {}
             LayerKind::QrCode {
                 data, background, ..
@@ -3685,31 +3547,6 @@ mod tests {
         assert!(count(&f, [255, 0, 0]) > 500, "the text's own colour");
         assert!(count(&f, [0, 255, 0]) > 500, "the green part");
         assert!(count(&f, [0, 0, 255]) > 500, "the operator's blue part");
-    }
-
-    #[test]
-    fn table_rows_take_their_colour_from_the_data() {
-        let project = sample::demo_project();
-        let t: cg_core::Template = serde_json::from_value(serde_json::json!({
-            "id": "tt", "name": "T", "duration": 10.0, "markers": [], "fields": [], "zone": "",
-            "layers": [{
-                "id": "tb", "name": "Table", "type": "table",
-                "grid": [["team", "color"], ["A", "#00ff00"], ["B", "#0000ff"]],
-                "cols": [{"src": "team", "label": "Team", "pct": 100.0}],
-                "title": {"on": false, "text": ""}, "headerRow": false, "showRank": false,
-                "cascade": {"on": false}, "rowH": 100.0, "gap": 0.0,
-                "rowFrom": "color", "rowPaint": "bg",
-                "props": {"x": 0.0, "y": 0.0, "width": 800.0, "height": 400.0}
-            }]
-        }))
-        .unwrap();
-        let mut r = Renderer::new(std::env::temp_dir().join("cg-render-test-assets"));
-        let f = r.render_template(&project, &t, "main", 5.0, &Default::default());
-        let w = f.width as usize;
-        let px = |x: usize, y: usize| &f.data[(y * w + x) * 4..(y * w + x) * 4 + 3];
-        // Far right of each row (no text there): the row's own colour.
-        assert_eq!(px(780, 50), [0, 255, 0], "first row green");
-        assert_eq!(px(780, 150), [0, 0, 255], "second row blue");
     }
 
     #[test]

@@ -1,7 +1,6 @@
-import { ChevronDown, Keyboard, Languages, LogOut, SunMoon } from 'lucide-react';
+import { ChevronDown, Languages, LogOut, SunMoon } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { LANGS, setLang, t, tc, useLang, type Lang } from '../i18n';
-import { openShortcuts } from '../operator/ShortcutsOverlay';
 import { api, useApp } from '../store';
 import { setTheme, useTheme, type ThemePref } from '../theme';
 
@@ -131,17 +130,6 @@ export function UserMenu({ named }: { named?: boolean }) {
             <SunMoon size={14} /> {t('Theme')}
             <ThemeSwitch />
           </div>
-          <button
-            className="ux1-mi"
-            role="menuitem"
-            onClick={() => {
-              shut(false);
-              openShortcuts();
-            }}
-          >
-            <Keyboard size={14} /> {t('Keyboard shortcuts')}
-            <kbd className="ux1-cap">?</kbd>
-          </button>
           <div className="menu-sep" />
           <button className="ux1-mi danger" role="menuitem" onClick={() => (shut(false), void logout())}>
             <LogOut size={14} /> {t('Sign out')}

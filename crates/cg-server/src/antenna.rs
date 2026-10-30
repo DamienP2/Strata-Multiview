@@ -35,15 +35,9 @@ pub enum ActorKind {
     /// An automation system or control surface with an API key (Bitfocus
     /// Buttons, OSC, TCP…).
     Api,
-    /// The newsroom system (MOS).
-    Mos,
     /// The engine itself: auto next, a timed pause or automatic out, a
     /// countdown's trigger.
     Auto,
-    /// A take or out programmed in advance.
-    Schedule,
-    /// A data source changing what is on air.
-    Data,
 }
 
 impl Actor {

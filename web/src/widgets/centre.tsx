@@ -17,8 +17,8 @@ import { confirmDialog } from '../ui/dialogs';
 import { t, tc } from '../i18n';
 import { useApp } from '../store';
 import type { Data, Layer } from '../engine/types';
-import { formatSetting, parseSetting, readPath, withSettings } from '../engine/settings';
-import { Bound, ExposedFilter, Seg, Text, useBound, useCentreMode } from './kit';
+import { parseSetting, readPath } from '../engine/settings';
+import { Seg, Text, useBound, useCentreMode } from './kit';
 
 export { CentreModeContext, ExposedFilter, useCentreMode, type CentreMode } from './kit';
 
@@ -211,28 +211,6 @@ export function Centre({ name, readout, status, actions, rows, children }: { nam
   );
 }
 
-/**
- * The Operator's binding of line 3: the layer with the take's settings applied is read, and a
- * change writes the exposed field of the path into the take (`setData`). Rows whose paths are
- * not exposed are hidden (ExposedFilter).
- */
-export function OperatorBound({ layer, data, setData, children }: { layer: Layer; data: Data; setData?: (patch: Record<string, string>) => void; children: ReactNode }) {
-  const sb = layer.settingBindings ?? {};
-  const shown = withSettings({ layers: [layer], fields: [] } as never, data).layers[0] as Layer;
-  const set = (path: string, v: unknown) => {
-    const key = sb[path];
-    if (key && setData) setData({ [key]: formatSetting(v) });
-  };
-  const exposed = (paths: readonly string[]) => paths.every((p) => !!sb[p]);
-  return (
-    <ExposedFilter.Provider value={exposed}>
-      <Bound obj={shown} set={set} data={data}>
-        {children}
-      </Bound>
-    </ExposedFilter.Provider>
-  );
-}
-
 /** The value of an exposed setting as the take has it (else the layer's). */
 export function exposedValue<T>(layer: Layer, data: Data, path: string, fallback: T): T {
   const key = layer.settingBindings?.[path];
@@ -285,10 +263,3 @@ export function StartStatus({ layer, item }: { layer: { id: string; manualStart?
   return layer.startOn === 'trigger' ? <WaitsTrigger name={layer.startTrigger ?? ''} /> : <WaitsContinue />;
 }
 
-/** How pages / steps / views go on: by themselves after a while, on Continuer (F2) or on a trigger. */
-export type AdvanceMode = 'timed' | 'continue' | 'trigger';
-export const ADVANCE_MODES = (): [AdvanceMode, string][] => [
-  ['timed', tc('cc', 'Timed')],
-  ['continue', tc('cc', 'Continue F2')],
-  ['trigger', tc('cc', 'Trigger')],
-];

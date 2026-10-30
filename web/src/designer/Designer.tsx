@@ -1,10 +1,10 @@
-import { Copy, GripVertical, Link2, Plus, Redo2, Trash2, Undo2, UploadCloud, X, Zap } from 'lucide-react';
+import { Copy, GripVertical, Link2, Plus, Redo2, Trash2, Undo2, X, Zap } from 'lucide-react';
 import { memo, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Dropdown } from '../ui/Dropdown';
 import { newId, num, propValue } from '../engine/evaluate';
 import type { Layer, LayerType, Project, Template } from '../engine/types';
-import { api, importAfterEffects, thumbnailUrl, useApp } from '../store';
+import { api, thumbnailUrl, useApp } from '../store';
 import { descendants, duplicateLayers, findLayer, makeLayer, newTemplate, setProp, useDesigner } from './designerStore';
 import { useShallow } from 'zustand/react/shallow';
 import { Inspector } from './Inspector';
@@ -16,9 +16,6 @@ import { Timeline } from './Timeline';
 import { clearSelectedKeys, copyLayers, cutLayers, pasteClipboard } from './clipboard';
 import { useZoneEdit, ZonesPanel } from './ZoneEditor';
 import { LogicEditor } from './LogicEditor';
-import { DataCanvas, DataCanvasButton } from './DataCanvas';
-import { TableEditor } from '../widgets/table-editor';
-import { exposeRows } from '../widgets/table-rows';
 import { useGuidesView } from './Guides';
 import { DisplayMenu, type StageBackground } from './DisplayMenu';
 import { ProjectHistory, ProjectPanel } from './ProjectPanel';
@@ -28,8 +25,7 @@ import { formatById } from '../engine/formats';
 import { zoneArea } from '../engine/zones';
 import { designTemplates, publishState } from '../engine/drafts';
 import { confirmDialog } from '../ui/dialogs';
-import { t, tn } from '../i18n';
-import { ImportModal } from '../pages/ImportModal';
+import { t } from '../i18n';
 import { useDisplayPref } from '../displayPrefs';
 
 function usePlayback(fps: number) {
@@ -194,16 +190,12 @@ function duplicateSelection() {
   duplicateLayers(useDesigner.getState().selected);
 }
 
-/** The files a template can be made from. */
-const TEMPLATE_FILES = '.psd,.psb,.svg,.mogrt,.aep,.json,.zip,.lottie';
-
 function TemplateList({ project }: { project: Project }) {
   // Not the playhead: the list is not drawn again on each frame of the playback.
   const { template, load, format } = useDesigner(useShallow((s) => ({ template: s.template, load: s.load, format: s.format })));
   const saveTemplate = useApp((s) => s.saveTemplate);
   const deleteTemplate = useApp((s) => s.deleteTemplate);
   const toast = useApp((s) => s.toast);
-  const fileRef = useRef<HTMLInputElement>(null);
   // « + »: a blank template, or one from a file dropped or picked.
   const [newOpen, setNewOpen] = useState(false);
   const [newName, setNewName] = useState('');
@@ -217,31 +209,6 @@ function TemplateList({ project }: { project: Project }) {
     setNewOpen(false);
     void create(undefined, newName, newZone || undefined);
   };
-  const [over, setOver] = useState(false);
-  const [importing, setImporting] = useState(false);
-  const fromFile = async (f: File) => {
-    setNewOpen(false);
-    // Photoshop, SVG, Motion Graphics, After Effects projects: the import window (what to keep, how).
-    if (/\.(psd|psb|svg|mogrt|aep)$/i.test(f.name)) return setImportFile(f);
-    // Bodymovin / Lottie: straight in.
-    setImporting(true);
-    try {
-      const { template: imp, warnings } = await importAfterEffects(project.id, f);
-      load(imp);
-      toast(warnings.length ? t('Imported “{name}” — not converted: {warnings}', { name: imp.name, warnings: warnings.join('; ') }) : t('Imported “{name}”', { name: imp.name }), 'info');
-    } catch (err) {
-      toast(String(err instanceof Error ? err.message : err), 'error');
-    } finally {
-      setImporting(false);
-    }
-  };
-  // A file in the import window, then the first template it added (opened once the project has it).
-  const [importFile, setImportFile] = useState<File | null>(null);
-  const [toOpen, setToOpen] = useState<string | null>(null);
-  useEffect(() => {
-    const tpl = toOpen && designTemplates(project).find((x) => x.id === toOpen);
-    if (tpl) (load(tpl), setToOpen(null));
-  }, [project, toOpen]);
   // Dragging a template to another place in the list: the one moved, and where it goes.
   const [dragging, setDragging] = useState<string | null>(null);
   const [dropAt, setDropAt] = useState<{ id: string; after: boolean } | null>(null);
@@ -268,21 +235,10 @@ function TemplateList({ project }: { project: Project }) {
       <header onClick={(e) => e.stopPropagation()}>
         <span>{t('Templates')}</span>
         <div className="header-actions">
-          <button className="opx-add" title={t('New template')} disabled={importing} onClick={openNew}>
+          <button className="opx-add" title={t('New template')} onClick={openNew}>
             <Plus size={15} />
           </button>
         </div>
-        <input
-          ref={fileRef}
-          type="file"
-          accept={TEMPLATE_FILES}
-          hidden
-          onChange={(e) => {
-            const f = e.target.files?.[0];
-            e.target.value = '';
-            if (f) void fromFile(f);
-          }}
-        />
         {newOpen &&
           createPortal(
           <div className="modal-back" onPointerDown={() => setNewOpen(false)}>
@@ -317,44 +273,11 @@ function TemplateList({ project }: { project: Project }) {
                     <Plus size={14} /> {t('Create')}
                   </button>
                 </form>
-                <span className="new-tpl-sep" />
-                <button
-                  type="button"
-                  className={`new-tpl-drop ${over ? 'over' : ''}`}
-                  onClick={() => fileRef.current?.click()}
-                  onDragOver={(e) => {
-                    e.preventDefault();
-                    setOver(true);
-                  }}
-                  onDragLeave={() => setOver(false)}
-                  onDrop={(e) => {
-                    e.preventDefault();
-                    setOver(false);
-                    const f = e.dataTransfer.files?.[0];
-                    if (f) void fromFile(f);
-                  }}
-                >
-                  <UploadCloud size={26} />
-                  <strong>{t('Drop a file here or click to choose one')}</strong>
-                  <span>{t('Photoshop (.psd), SVG, Motion Graphics (.mogrt), After Effects (.aep, Bodymovin .json, .zip, .lottie)')}</span>
-                </button>
               </div>
             </div>
           </div>,
             document.body,
           )}
-        {importFile && (
-          <ImportModal
-            file={importFile}
-            into={project}
-            onClose={() => setImportFile(null)}
-            onImported={(ids) => {
-              setImportFile(null);
-              setToOpen(ids[0] ?? null);
-              toast(tn(ids.length, '{n} template imported', '{n} templates imported'), 'info');
-            }}
-          />
-        )}
       </header>
       {designTemplates(project).map((tpl) => {
         const { published, draft } = publishState(project, tpl.id);
@@ -551,8 +474,6 @@ export const Designer = memo(function Designer() {
     }
     update((t) => {
       t.layers.push(l);
-      // A table without a data set: the operator types its rows.
-      if (type === 'table') exposeRows(t, findLayer(t, l.id)!);
     });
     select([l.id]);
   };
@@ -598,7 +519,6 @@ export const Designer = memo(function Designer() {
               <button className={`btn small ${template.triggers?.nodes.length ? 'has' : ''}`} onClick={() => setTriggersOpen(true)} title={t('What happens on air: events, out, a pause playing on…')}>
                 <Zap size={13} /> {t('Triggers')}
               </button>
-              <DataCanvasButton />
             </>
           )}
           <DisplayMenu
@@ -633,8 +553,6 @@ export const Designer = memo(function Designer() {
       {lock.state.status === 'held' && <LockOverlay holder={lock.state.holder} template={template?.name ?? ''} onTakeOver={lock.takeOver} />}
       {logicOpen && <LogicEditor onClose={() => setLogicOpen(false)} />}
       {triggersOpen && <LogicEditor graph="triggers" onClose={() => setTriggersOpen(false)} />}
-      <DataCanvas />
-      <TableEditor />
       <PasteDialog />
       <AnimationsDialog />
     </div>

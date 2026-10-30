@@ -8,11 +8,11 @@ import '../hardware/hardware.css';
 
 /*
  * Settings › Networks: which network card does what (web interface and
- * API, NDI, the ST 2110 red and blue networks, MOS), then the cards of
+ * API, NDI, the ST 2110 red and blue networks), then the cards of
  * the machine. Saving restarts the server on its new addresses.
  */
 
-type RoleKey = 'control' | 'ndi' | 'mediaRed' | 'mediaBlue' | 'mos' | 'ptp' | 'buttons';
+type RoleKey = 'control' | 'ndi' | 'mediaRed' | 'mediaBlue' | 'ptp' | 'buttons';
 
 const ipOf = (n?: Nic) => n?.ipv4[0]?.split('/')[0];
 
@@ -66,18 +66,6 @@ export function Networks({ info, cfg, edit, det }: { info: SystemInfo; cfg: Serv
     { key: 'mediaRed', label: t('2110 red'), cell: picker(net.mediaRed, (v) => set('mediaRed', v), t('Not set'), t('2110 red')), addr: address(net.mediaRed, false), port: <span className="muted">—</span> },
     { key: 'mediaBlue', label: t('2110 blue'), cell: picker(net.mediaBlue, (v) => set('mediaBlue', v), t('Not set'), t('2110 blue')), addr: address(net.mediaBlue, false), port: <span className="muted">—</span> },
     {
-      key: 'mos',
-      label: 'MOS',
-      cell: picker(net.mos ?? '', (v) => set('mos', v), t('Every interface'), 'MOS'),
-      addr: address(net.mos ?? '', true),
-      port: (
-        <span className="net-ports">
-          <input type="number" min={1} max={65535} value={cfg.mos.lowerPort} aria-label={t('MOS lower port')} onChange={(e) => edit((c) => void (c.mos.lowerPort = +e.target.value))} />
-          <input type="number" min={1} max={65535} value={cfg.mos.upperPort} aria-label={t('MOS upper port')} onChange={(e) => edit((c) => void (c.mos.upperPort = +e.target.value))} />
-        </span>
-      ),
-    },
-    {
       // OSC and TCP control of Bitfocus Buttons (API page), on every interface.
       key: 'buttons',
       label: 'OSC · TCP',
@@ -98,7 +86,6 @@ export function Networks({ info, cfg, edit, det }: { info: SystemInfo; cfg: Serv
     const out: { label: string; cls: string }[] = [];
     if (net.control === n.name || (!net.control && anyBind && on)) out.push({ label: 'Web', cls: 'on' });
     if (net.ndi === n.name || (!net.ndi && on)) out.push({ label: 'NDI', cls: 'on' });
-    if (cfg.mos.enabled && (net.mos === n.name || (!net.mos && on))) out.push({ label: 'MOS', cls: 'on' });
     if (net.mediaRed === n.name) out.push({ label: t('2110 red'), cls: 'red' });
     if (net.mediaBlue === n.name) out.push({ label: t('2110 blue'), cls: 'blue' });
     if (net.ptp === n.name) out.push({ label: 'PTP', cls: 'on' });

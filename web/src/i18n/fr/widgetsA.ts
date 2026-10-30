@@ -8,8 +8,6 @@ export const widgetsA: Record<string, string> = {
   // Text
   'text|Spacing': 'Interlettrage',
   // Image, Video
-  'Reload the picture': 'Recharger l’image',
-  'Reload': 'Recharger',
   'PNG sequence': 'Séquence PNG',
   'Folder or zip…': 'Dossier ou zip…',
   'A folder or a zip of numbered PNG pictures (with transparency): choose the pictures of the folder, or drop it here': 'Un dossier ou un zip d’images PNG numérotées (avec transparence) : choisissez les images du dossier, ou déposez-le ici',

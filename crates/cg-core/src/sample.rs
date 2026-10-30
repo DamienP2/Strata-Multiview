@@ -831,17 +831,7 @@ pub fn poll() -> Template {
     let mut total = layer(
         "pl-total",
         "Total votes",
-        LayerKind::Counter {
-            x: Default::default(),
-            from: "0".into(),
-            to: "{{votes}}".into(),
-            duration: 2.0,
-            decimals: 0,
-            prefix: String::new(),
-            suffix: " votes".into(),
-            grouping: true,
-            font: font(500, TextAlign::Right),
-        },
+        text("{{votes}} votes", 500),
         None,
         &[
             (X, n(600.0)),
@@ -956,13 +946,7 @@ pub fn countdown() -> Template {
     let mut label = layer(
         "cd-label",
         "Label",
-        LayerKind::Typewriter {
-            x: Default::default(),
-            text: "{{label}}".into(),
-            speed: 18.0,
-            cursor: false,
-            font: font(600, TextAlign::Center),
-        },
+        text("{{label}}", 600),
         None,
         &[
             (X, n(710.0)),

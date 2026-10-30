@@ -9,8 +9,7 @@ import { Check, Database, Radio, RotateCcw, AlignCenter, AlignLeft, AlignRight, 
 import { createContext, Fragment, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { applyEasing, col, holdFrame, interpolateText, num, parseHex, propValue, resolveLayer, toHex } from '../engine/evaluate';
 import { applyLogic, measureLayer } from '../engine/logic';
-import { useBoundData } from '../data/dataStore';
-import { MAIN_FORMAT, rowKey, TEXT_LIKE, usedDatasets, type DataSet, type TextOverflow, type Easing, type FontStyle, type Layer, type LayerType, type Prop, type Template, type Value } from '../engine/types';
+import { MAIN_FORMAT, TEXT_LIKE, type TextOverflow, type Easing, type FontStyle, type Layer, type LayerType, type Prop, type Template, type Value } from '../engine/types';
 import { useApp } from '../store';
 import { ColorField, NumberField, Segmented, TextInput } from '../ui/fields';
 import { useZoneEdit } from './ZoneEditor';
@@ -29,7 +28,6 @@ import { Bound, CentreModeContext, FirstSection, Row as KitRow, Section as SpecS
 import { t, tc, tn } from '../i18n';
 import { useDisplayPref } from '../displayPrefs';
 import { START_MODES, startMode } from '../widgets/centre';
-import { datasetUse, useDatasetRows } from '../operator/DataSets';
 
 interface PropSpec {
   prop: Prop;
@@ -266,7 +264,7 @@ const DrivenContext = createContext<Map<string, Value>>(new Map());
 
 function useDrivenValues(layer: Layer): Map<string, Value> {
   const { template, frame, previewData } = useDesigner(useShallow((s) => ({ template: s.template, frame: s.frame, previewData: s.previewData })));
-  const bound = useBoundData(template, previewData);
+  const bound = previewData;
   return useMemo(() => {
     const out = new Map<string, Value>();
     if (!template) return out;
@@ -525,45 +523,6 @@ export function WidgetSettings({ layer, set, data = {} }: { layer: Layer; set: (
           {check('loop', t('Loop'))}
         </>
       );
-    case 'counter':
-      return (
-        <>
-          <Row label={t('From')}>
-            <TextInput value={layer.from} onChange={(v) => set('from', v, true)} />
-          </Row>
-          <span className="prop-label">{t('To')}</span>
-          {text('to')}
-          <Row label={t('Duration')}>
-            <Num value={layer.duration} onChange={(v) => set('duration', v, true)} min={0} step={0.1} precision={1} suffix=" s" />
-          </Row>
-          <Row label={t('Decimals')}>
-            <Num value={layer.decimals} onChange={(v) => set('decimals', Math.round(v), true)} min={0} max={6} />
-          </Row>
-          <Row label={t('Prefix')}>
-            <TextInput value={layer.prefix} onChange={(v) => set('prefix', v, true)} />
-          </Row>
-          <Row label={t('Suffix')}>
-            <TextInput value={layer.suffix} onChange={(v) => set('suffix', v, true)} />
-          </Row>
-          {check('grouping', t('Thousands separator'))}
-        </>
-      );
-    case 'progress':
-      return (
-        <>
-          <span className="prop-label">{t('Value')}</span>
-          {text('value')}
-          <Row label={t('Max')}>
-            <TextInput value={layer.max} onChange={(v) => set('max', v, true)} />
-          </Row>
-          <Row label={t('Animation')}>
-            <Num value={layer.duration} onChange={(v) => set('duration', v, true)} min={0} step={0.1} precision={1} suffix=" s" />
-          </Row>
-          <Row label={t('Track')}>
-            <HexInput value={layer.track} onChange={(v) => set('track', v, true)} />
-          </Row>
-        </>
-      );
     case 'rotator':
       return (
         <>
@@ -575,16 +534,6 @@ export function WidgetSettings({ layer, set, data = {} }: { layer: Layer; set: (
           <Row label={t('Fade')}>
             <Num value={layer.fade} onChange={(v) => set('fade', v, true)} min={0} step={0.1} precision={1} suffix=" s" />
           </Row>
-        </>
-      );
-    case 'typewriter':
-      return (
-        <>
-          {text('text', true)}
-          <Row label={t('Speed')}>
-            <Num value={layer.speed} onChange={(v) => set('speed', v, true)} min={1} suffix={` ${t('char/s')}`} />
-          </Row>
-          {check('cursor', t('Blinking cursor'))}
         </>
       );
     case 'slideshow':
@@ -733,7 +682,6 @@ export function FontControls({ layer, set }: { layer: Layer & FontStyle; set: (k
 }
 
 const FILL_LABEL: Partial<Record<LayerType, string>> = {
-  progress: 'Bar',
   barChart: 'Bars',
   qrCode: 'Modules',
 };
@@ -778,7 +726,7 @@ function WiredValue({ value, multiline }: { value: string; multiline?: boolean }
 
 function LayerGeneral({ layer }: { layer: Layer }) {
   const { update, template, previewData } = useDesigner(useShallow((s) => ({ update: s.update, template: s.template, previewData: s.previewData })));
-  const data = useBoundData(template, previewData);
+  const data = previewData;
   if (!template) return null;
   const edit = (fn: (l: Layer) => void, key?: string) => update((t) => fn(findLayer(t, layer.id)!), key);
   const set = (key: string, v: unknown, coalesce?: boolean) => edit((l) => void ((l as unknown as Attrs)[key] = v), coalesce ? `${key}-${layer.id}` : undefined);
@@ -933,7 +881,7 @@ function LottieSource({ layer }: { layer: Layer }) {
 /** Settings of a spec widget (web/src/widgets) and its warnings. */
 function SpecInspector({ layer }: { layer: Layer }) {
   const { update, template, previewData } = useDesigner(useShallow((s) => ({ update: s.update, template: s.template, previewData: s.previewData })));
-  const data = useBoundData(template, previewData);
+  const data = previewData;
   const state = useDesigner((s) => s.widgetState[layer.id]);
   const actWidget = useDesigner((s) => s.actWidget);
   if (!template) return null;
@@ -964,7 +912,7 @@ function SpecInspector({ layer }: { layer: Layer }) {
 /** The control centre of a widget (web/src/widgets/centre.tsx), to try in the Designer: under its name, always shown. */
 function OperatorPreview({ layer }: { layer: Layer }) {
   const { template, previewData, update } = useDesigner(useShallow((s) => ({ template: s.template, previewData: s.previewData, update: s.update })));
-  const data = useBoundData(template, previewData);
+  const data = previewData;
   const state = useDesigner((s) => s.widgetState[layer.id]);
   const actWidget = useDesigner((s) => s.actWidget);
   // Its settings (line 3) edit the layer, as the inspector's rows do.
@@ -972,10 +920,8 @@ function OperatorPreview({ layer }: { layer: Layer }) {
   if (!template) return null;
   const def = widgetOf(layer);
   const Op = def?.Operator && (def.controls ? def.controls(layer as never, data) : true) ? def.Operator : undefined;
-  // A Text fed by data sets: the row the Designer shows, one to the next, as the Operator does.
-  const sets = usedDatasets(template).filter((ds) => datasetUse(template, ds).texts.some((l) => l.id === layer.id));
   const timed = !def?.Inspector && isTimed(layer);
-  if (!Op && !sets.length && !timed) return null;
+  if (!Op && !timed) return null;
   const act = (op: string, args?: unknown) => void actWidget(layer.id, op, args);
   // Until its first Play here, a widget that moves by itself waits, as in the Operator's preview.
   const held = state === undefined && !!(def?.plays ? def.plays(layer as never, data) : isTimed(layer));
@@ -983,9 +929,6 @@ function OperatorPreview({ layer }: { layer: Layer }) {
   return (
     <div className="pp-try">
       {timed && <WidgetRunButtons layer={layer} />}
-      {sets.map((ds) => (
-        <RowStep key={ds.key} ds={ds} />
-      ))}
       {Op && (
         <CentreModeContext.Provider value="designer">
           <Bound obj={layer} set={set} data={data}>
@@ -997,32 +940,11 @@ function OperatorPreview({ layer }: { layer: Layer }) {
   );
 }
 
-function RowStep({ ds }: { ds: DataSet }) {
-  const previewData = useDesigner((s) => s.previewData);
-  const stage = useDatasetRows(ds, previewData);
-  const total = stage?.rows.length ?? 0;
-  const row = Math.min(Math.max(1, parseInt(previewData[rowKey(ds.key)] ?? '1', 10) || 1), Math.max(1, total));
-  const go = (n: number) => useDesigner.setState((st) => ({ previewData: { ...st.previewData, [rowKey(ds.key)]: String(n) } }));
-  return (
-    <KitRow label={ds.name}>
-      <div className="wk-rowstep">
-        <button className="icon-btn" title={t('Previous row')} disabled={row <= 1} onClick={() => go(row - 1)}>
-          <ChevronLeft size={14} />
-        </button>
-        <span className="wk-rowstep-n">{total ? `${row} / ${total}` : '—'}</span>
-        <button className="icon-btn" title={t('Next row')} disabled={row >= total} onClick={() => go(row + 1)}>
-          <ChevronRight size={14} />
-        </button>
-      </div>
-    </KitRow>
-  );
-}
-
 function LayerInspector({ layer }: { layer: Layer }) {
   const { update } = useDesigner(useShallow((s) => ({ update: s.update })));
   const edit = (fn: (l: Layer) => void, key?: string) => update((t) => fn(findLayer(t, layer.id)!), key);
   const textLike = TEXT_LIKE.has(layer.type);
-  const radius = layer.type === 'rect' || layer.type === 'group' || layer.type === 'progress';
+  const radius = layer.type === 'rect' || layer.type === 'group';
   const Icon = layerIcon(layer);
   const hasLook = layer.type !== 'image' && layer.type !== 'slideshow' && !widgetOf(layer)?.ownsLook;
   const driven = useDrivenValues(layer);
@@ -1056,9 +978,9 @@ function LayerInspector({ layer }: { layer: Layer }) {
         {(hasLook || layer.type === 'group' || (layer.type === 'image' && !spec?.Inspector)) && (
           <Group id="contents" title={t('Contents')} level={2}>
             {hasLook && <ColorGroupRow layer={layer} prop="fill" label={FILL_LABEL[layer.type] ?? (textLike ? 'Color' : 'Fill')} />}
-            {hasLook && layer.type !== 'progress' && layer.type !== 'qrCode' && <ColorGroupRow layer={layer} prop="stroke" label="Stroke" />}
+            {hasLook && layer.type !== 'qrCode' && <ColorGroupRow layer={layer} prop="stroke" label="Stroke" />}
             {hasLook &&
-              STYLE.filter((st) => (st.prop === 'cornerRadius' ? radius : !['progress', 'qrCode'].includes(layer.type))).map((st) => (
+              STYLE.filter((st) => (st.prop === 'cornerRadius' ? radius : layer.type !== 'qrCode')).map((st) => (
                 <GroupRow
                   key={st.prop}
                   layer={layer}
@@ -1284,7 +1206,7 @@ const OVERFLOWS: { value: TextOverflow; label: string; hint: string }[] = [
 /** What a text does when it is too long for its box, and how it does now with the preview values. */
 function TextFitControls({ layer, edit }: { layer: Layer & { type: 'text' }; edit: (fn: (l: Layer) => void, key?: string) => void }) {
   const { frame, previewData, template } = useDesigner(useShallow((s) => ({ frame: s.frame, previewData: s.previewData, template: s.template })));
-  const data = useBoundData(template, previewData);
+  const data = previewData;
   const mode = layer.overflow ?? 'fit';
   const fit = fitLayer(layer, resolveLayer(layer, frame, data, template ? holdFrame(template) : 0), layerText(layer, data));
   const pct = (v: number) => `${Math.round(v * 100)} %`;

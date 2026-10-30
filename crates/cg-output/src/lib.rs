@@ -7,7 +7,6 @@
 pub mod colorspace;
 pub mod decklink;
 pub mod ffmpeg;
-pub mod mov;
 pub mod ndi;
 pub mod sdi;
 pub mod st2110;

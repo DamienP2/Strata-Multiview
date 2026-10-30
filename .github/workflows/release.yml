@@ -1,8 +1,7 @@
 name: Release
 
 # Builds the release files: Strata for macOS (.dmg and .pkg), Windows (.msi)
-# and Ubuntu (server .tar.gz), the Premiere Pro panel for macOS (.pkg) and
-# Windows (.msi), and the update packages installed servers download
+# and Ubuntu (server .tar.gz), and the update packages installed servers download
 # (Strata-<version>-<platform>: the server alone).
 # Push a tag `v*` to publish a GitHub release, or run manually for artifacts.
 on:
@@ -233,52 +232,9 @@ jobs:
             dist/*.pkg
             dist/*.tar.gz
 
-  # The Premiere Pro panel: macOS package and Windows MSI, both per user.
-  # Installed once: it then updates from the server.
-  premiere-panel:
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [macos-latest, windows-latest]
-    runs-on: ${{ matrix.os }}
-    env:
-      MACOS_INSTALLER_IDENTITY: ${{ secrets.MACOS_INSTALLER_IDENTITY }}
-    steps:
-      - uses: actions/checkout@v4
-      - name: Version from the tag
-        shell: bash
-        run: packaging/stamp-version.sh
-      - name: Stage the panel
-        shell: bash
-        run: |
-          VERSION=$(grep -m1 '^version' Cargo.toml | cut -d'"' -f2)
-          SUFFIX=$VERSION; [ "$GITHUB_REF_TYPE" = tag ] || SUFFIX=dev-${GITHUB_SHA::7}
-          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
-          echo "SUFFIX=$SUFFIX" >> "$GITHUB_ENV"
-          packaging/premiere/stage.sh dist/premiere
-      - name: macOS package
-        if: runner.os == 'macOS'
-        run: packaging/premiere/build-pkg.sh "$VERSION" "dist/Strata-Premiere-$SUFFIX-macos.pkg"
-      - name: Windows installer (MSI)
-        if: runner.os == 'Windows'
-        shell: bash
-        run: |
-          dotnet tool install --global wix --version 5.0.2
-          export PATH="$PATH:$HOME/.dotnet/tools"
-          wix extension add --global WixToolset.Util.wixext/5.0.2
-          wix build packaging/premiere/strata-premiere.wxs -ext WixToolset.Util.wixext \
-            -d Version="$VERSION" -d PanelDir=dist/premiere/io.stratagraphics.premiere -d DocsDir=. \
-            -o "dist/Strata-Premiere-$SUFFIX-windows.msi"
-      - uses: actions/upload-artifact@v4
-        with:
-          name: strata-premiere-${{ runner.os }}
-          path: |
-            dist/*.pkg
-            dist/*.msi
-
   publish:
     if: startsWith(github.ref, 'refs/tags/v')
-    needs: [build, macos-installer, premiere-panel]
+    needs: [build, macos-installer]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@v4

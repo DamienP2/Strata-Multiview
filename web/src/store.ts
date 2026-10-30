@@ -2,7 +2,6 @@ import { useEffect, useRef } from 'react';
 import { lang, pickedByHand, setLang, t } from './i18n';
 import { setTheme } from './theme';
 import { create } from 'zustand';
-import { useData } from './data/dataStore';
 import { designTemplates } from './engine/drafts';
 import type { ChannelInfo, ChannelState, Command, DataStatus, Project, ProjectSummary, RundownItem, Template, User, Zone } from './engine/types';
 
@@ -157,8 +156,6 @@ export class ApiError extends Error {
 /** API key used instead of the session cookie (pages embedded in other
  *  applications: newsroom MOS plugin). */
 let apiKey: string | null = null;
-export const setApiKey = (k: string | null) => void (apiKey = k);
-
 /** A designer's edit lock on a template. */
 export interface EditLock {
   userId: string;
@@ -172,11 +169,6 @@ export const lockEvents = new EventTarget();
 
 /** Other server events, by their `type` (`detail`: the event). */
 export const serverEvents = new EventTarget();
-
-/** Sends a message on the socket (dropped while disconnected). */
-export function sendWs(msg: object) {
-  if (socket?.readyState === WebSocket.OPEN) socket.send(JSON.stringify(msg));
-}
 
 /** Lists changed by another client (`media`, `media:<project>`, `sources`, `config`). */
 export const changeEvents = new EventTarget();
@@ -338,7 +330,6 @@ export const useApp = create<AppStore>((set, get) => {
               break;
             case 'changed':
               changeEvents.dispatchEvent(new CustomEvent(msg.what));
-              if (msg.what === 'sources') void useData.getState().load();
               break;
             case 'channels':
               set({ channels: msg.channels });
@@ -348,9 +339,6 @@ export const useApp = create<AppStore>((set, get) => {
               break;
             case 'lock':
               lockEvents.dispatchEvent(new CustomEvent('lock', { detail: msg }));
-              break;
-            case 'data':
-              useData.getState().onStatus(msg.source, msg.status);
               break;
             case 'presence':
               set({ presence: msg.present });
@@ -502,10 +490,10 @@ export async function uploadAsset(file: File, projectId?: string | null, onProgr
   return done;
 }
 
-/** Imports an After Effects composition (Bodymovin / LottieFiles export) as a new template. */
-export async function importAfterEffects(projectId: string, file: File, layersOnly = false): Promise<{ template: Template; warnings: string[] }> {
+/** Converts a Lottie animation (Bodymovin / LottieFiles export) into layers. */
+export async function importLottie(projectId: string, file: File): Promise<{ template: Template; warnings: string[] }> {
   const name = file.name.replace(/\.(json|zip|lottie|mogrt)$/i, '');
-  const res = await fetch(`/api/projects/${encodeURIComponent(projectId)}/import/after-effects?name=${encodeURIComponent(name)}${layersOnly ? '&layersOnly=true' : ''}`, {
+  const res = await fetch(`/api/projects/${encodeURIComponent(projectId)}/import/lottie?name=${encodeURIComponent(name)}`, {
     method: 'POST',
     body: file,
     credentials: 'same-origin',

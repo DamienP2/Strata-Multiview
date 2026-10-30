@@ -2,26 +2,17 @@
 //! returns false while it does not draw its layer, so the generic code of
 //! `lib.rs` still does.
 
-mod chart;
-mod counter;
-mod credits;
 mod ellipse;
+mod fit;
 mod image;
-mod map;
 mod pen;
 mod polygon;
-mod progress;
 pub(crate) mod qrcode;
 mod quad;
-mod scoreboard;
 mod shape;
-mod socialbadge;
-mod socialwall;
-mod table;
 mod text;
 mod ticker;
 mod timer;
-mod typewriter;
 
 use cg_core::anim::{Data, ResolvedLayer};
 use cg_core::widgets::TimeCtx;
@@ -63,8 +54,6 @@ pub(crate) struct Draw<'a, 'b> {
     pub runs: Option<Vec<cg_core::rich::Run>>,
     /// A Text's pictures (`<img>`), by rank.
     pub inline: Vec<cg_core::rich::InlineImage>,
-    /// A Progress following another widget: its value and natural end.
-    pub follow: Option<(f64, Option<f64>)>,
     /// The layer (or a parent) moves or changes size now (keyframes):
     /// pictures are scaled with a cheaper filter while it does.
     pub moving: bool,
@@ -233,34 +222,11 @@ pub(crate) fn draw(d: &mut Draw) -> bool {
         "image" => image::draw(d, &state(&raw)),
         "pen" => pen::draw(d, &state(&raw)),
         "timer" => timer::draw(d, &state(&raw)),
-        "table" => table::draw(d, &state(&raw)),
         "ticker" => ticker::draw(d, &state(&raw)),
-        "credits" => credits::draw(d, &state(&raw)),
-        "typewriter" => typewriter::draw(d, &state(&raw)),
-        "counter" => counter::draw(d, &state(&raw)),
-        "progress" => progress::draw(d, &state(&raw)),
-        "chart" => chart::draw(d, &state(&raw)),
-        "map" => map::draw(d, &state(&raw)),
         "qrcode" => qrcode::draw(d, &state(&raw)),
-        "scoreboard" => scoreboard::draw(d, &state(&raw)),
-        "socialwall" => socialwall::draw(d, &state(&raw)),
-        "socialbadge" => socialbadge::draw(d, &state(&raw)),
         // No browser here: its box stays empty on these outputs.
         "web" => true,
         _ => false,
-    }
-}
-
-/// A widget drawn in two steps (the map: under the markers, then the
-/// markers): how each depends on time. See `Renderer::sub_step`.
-pub(crate) fn split_motions(d: &mut Draw) -> Option<(Motion, Motion)> {
-    match &d.layer.kind {
-        cg_core::LayerKind::Map { .. } => {
-            let st: cg_core::wid::map::State =
-                serde_json::from_value(d.state.clone()).unwrap_or_default();
-            map::motions(d, &st)
-        }
-        _ => None,
     }
 }
 
@@ -281,15 +247,7 @@ pub(crate) fn motion(d: &mut Draw) -> Option<Motion> {
         "image" => image::motion(d, &state(raw)),
         "pen" => pen::motion(d),
         "timer" => timer::motion(d, &state(raw)),
-        "table" => table::motion(d, &state(raw)),
-        "counter" => counter::motion(d, &state(raw)),
-        "progress" => progress::motion(d, &state(raw)),
-        "chart" => chart::motion(d, &state(raw)),
-        "scoreboard" => scoreboard::motion(d, &state(raw)),
-        "socialwall" => socialwall::motion(d, &state(raw)),
-        "socialbadge" => socialbadge::motion(d, &state(raw)),
-        "map" => map::motions(d, &state(raw)).map(|(under, _)| under),
-        // Tickers, credits, typewriters: by the time on air.
+        // Tickers: by the time on air.
         _ => Some(Motion::Moving),
     }
 }

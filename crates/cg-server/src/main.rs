@@ -1,36 +1,26 @@
-mod ae_import;
 mod antenna;
 mod api;
 mod apiv1;
-mod asrun;
 mod auth;
 mod colors;
 mod config;
-mod datarules;
-mod datasources;
 mod decklink;
 mod engine;
-mod examples;
 mod firewall;
 mod hardware;
 mod health;
 mod iconlib;
-mod import;
 mod inputs;
 mod library;
+mod lottie_import;
 mod locks;
 mod logs;
 mod media;
-mod mos;
 mod paths;
 mod perf;
 mod prefs;
-mod premiere;
-mod render;
 mod rt;
-mod schedule;
 mod service;
-mod social;
 mod state;
 mod sync;
 mod thumbs;
@@ -433,10 +423,6 @@ pub async fn serve(
     update::spawn_auto_check(data_dir.clone());
     // Sessions survive engine restarts.
     let auth = Arc::new(auth::Auth::load(&data_dir));
-    let mos_store = Arc::new(mos::Store::load(&data_dir));
-    let data_hub = Arc::new(datasources::Hub::load(&data_dir));
-    let social_hub = Arc::new(social::Hub::load(&data_dir));
-    let moderation = Arc::new(social::moderation::Desk::load(&data_dir));
     let locks = Arc::new(locks::Locks::default());
     let output_status = Arc::new(state::OutputStatus::default());
     // Live inputs keep running across engine restarts.
@@ -556,10 +542,6 @@ pub async fn serve(
             thumbs: Default::default(),
             saving: Default::default(),
             auth: auth.clone(),
-            mos: mos_store.clone(),
-            data: data_hub.clone(),
-            social: social_hub.clone(),
-            moderation: moderation.clone(),
             locks: locks.clone(),
             edits: Default::default(),
             output_status: output_status.clone(),
@@ -571,7 +553,6 @@ pub async fn serve(
             restart: Notify::new(),
             closing,
             presence: Default::default(),
-            schedule: schedule::Schedule::load(&data_dir),
         });
         shared.inputs.apply(&shared.config.inputs);
         shared
@@ -581,13 +562,8 @@ pub async fn serve(
             .set_live(shared.inputs.clone());
         let channels = engine::start(&shared);
         let engine = vec![
-            tokio::spawn(mos::serve(shared.clone())),
-            tokio::spawn(datasources::run(shared.clone())),
-            tokio::spawn(social::run::run(shared.clone())),
-            tokio::spawn(social::moderation::run(shared.clone())),
             // OSC and TCP control (Bitfocus Buttons…), when enabled.
             tokio::spawn(apiv1::serve(shared.clone())),
-            tokio::spawn(schedule::run(shared.clone())),
             // The picture library's updates, looked for once a week.
             tokio::spawn(iconlib::run(shared.clone())),
             tokio::spawn(engine::give_back_memory()),
@@ -595,7 +571,6 @@ pub async fn serve(
 
         let app = api::router()
             .route("/fonts/{name}", get(web::font))
-            .merge(premiere::router())
             .nest_service("/assets", ServeDir::new(data_dir.join("assets")))
             // HLS stream outputs (index.m3u8 and its segments).
             .nest_service("/hls", ServeDir::new(data_dir.join("hls")));

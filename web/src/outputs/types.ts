@@ -1,5 +1,4 @@
 import type { FrameRate } from '../engine/types';
-import type { MosConfig } from '../mos/MosPage';
 
 /** Mirrors crates/cg-server/src/config.rs and crates/cg-output. */
 
@@ -190,7 +189,6 @@ export interface ServerConfig {
   ndiLibrary?: string;
   locations?: Location[];
   channels: ChannelConfig[];
-  mos: MosConfig;
   /** Live video inputs. */
   inputs?: InputConfig[];
   /** DeckLink cards and ST 2110 flows (Hardware page). */
@@ -273,8 +271,6 @@ export interface NetworkRoles {
   mediaRed: string;
   mediaBlue: string;
   ptp: string;
-  /** The MOS ports listen on this one only ("" = every interface). */
-  mos?: string;
 }
 
 export type ClockReference = 'auto' | 'free' | 'ptp' | 'decklink';
@@ -308,7 +304,7 @@ export interface HardwareConfig {
   sync?: SyncConfig;
 }
 
-export const emptyNetwork = (): NetworkRoles => ({ control: '', ndi: '', ndiDiscovery: '', mediaRed: '', mediaBlue: '', ptp: '', mos: '' });
+export const emptyNetwork = (): NetworkRoles => ({ control: '', ndi: '', ndiDiscovery: '', mediaRed: '', mediaBlue: '', ptp: '' });
 export const emptySync = (): SyncConfig => ({ reference: 'auto', ptpDomain: 127, taiOffset: 37, version: 1 });
 
 /** NTP / PTP status (crates/cg-server/src/sync.rs). */

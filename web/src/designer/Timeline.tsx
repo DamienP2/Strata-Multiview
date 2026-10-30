@@ -1075,22 +1075,12 @@ type MenuItem = {
 /** The + menu: one list of widgets, in this order. */
 const MENU: { type?: LayerType; widget?: string; label: string; soon?: typeof Video; patch?: Record<string, unknown>; action?: 'video' | 'lottie'; hint?: string; preset?: string }[] = [
   { type: 'ticker', label: 'Ticker' },
-  { type: 'credits', label: 'Credits' },
   { widget: 'clock', label: 'Clock' },
   { widget: 'time', label: 'Time' },
-  { type: 'table', label: 'Table' },
-  { type: 'counter', label: 'Counter' },
-  { type: 'chart', label: 'Chart' },
-  { type: 'typewriter', label: 'Typewriter' },
-  { type: 'progress', label: 'Progress bar' },
-  { type: 'map', label: 'Map' },
   { type: 'qrCode', label: 'QR code' },
   { label: 'Video', soon: Video, action: 'video', hint: 'A video file (mp4, mov, webm…; alpha kept) played as frames, at most a minute' },
   { type: 'web', label: 'Iframe', soon: Code, hint: 'A web page or your HTML code (HTML5 outputs)' },
   { label: 'Animation (Lottie)', soon: Sparkles, action: 'lottie', hint: 'A Lottie / Bodymovin file (.json, .zip, .lottie) added as layers' },
-  { type: 'scoreboard', label: 'Scoreboard' },
-  { type: 'socialWall', label: 'Social wall' },
-  { type: 'socialBadge', label: 'Social badge' },
 ];
 type Menu = MenuItem & { action?: 'video' | 'lottie' };
 const menu = (): Menu[] =>

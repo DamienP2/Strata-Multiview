@@ -1,4 +1,4 @@
-import { BookOpen, Download, FileJson, Hash, KeyRound, LayoutGrid } from 'lucide-react';
+import { BookOpen, FileJson, Hash, KeyRound, LayoutGrid } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { t, tc, tn } from '../i18n';
 import { InfoTip } from '../ui/InfoTip';
@@ -29,10 +29,6 @@ export function ApiPage() {
         <NavItem key={tag.name} on={view.kind === 'tag' && view.name === tag.name} icon={<Hash size={15} />} label={tc('api', tag.name)} count={byTag.get(tag.name)?.length ?? 0} onClick={() => setView({ kind: 'tag', name: tag.name })} />
       ))}
       <NavSection>{t('Tools')}</NavSection>
-      <a className="lib-nav-item" href="/premiere/strata-premiere.zip" title={t('The Premiere Pro panel, set to this server (it updates itself from it)')}>
-        <Download size={15} />
-        <span className="grow">{t('Premiere Pro panel')}</span>
-      </a>
       <a className="lib-nav-item" href="/api/openapi.json" target="_blank" rel="noreferrer" title={t('Import it into Postman, Insomnia or a code generator')}>
         <FileJson size={15} />
         <span className="grow">OpenAPI 3.1</span>

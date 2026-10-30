@@ -294,11 +294,3 @@ export const typedKeys = (t: Pick<Template, 'fields'> | null | undefined) => {
 /** The template's typed keys, for the texts drawn inside it (set by Scene). */
 export const RichKeys = createContext<(key: string) => boolean>(() => false);
 
-/** Whether the operator can style the value of `key` (typed, and only shown in Texts). */
-export function richField(t: Pick<Template, 'fields' | 'layers'>, key: string): boolean {
-  const f = t.fields.find((x) => x.key === key);
-  if (!f || f.binding || (f.kind !== 'text' && f.kind !== 'multiline')) return false;
-  const token = `{{${key}}}`;
-  const users = t.layers.filter((l) => JSON.stringify(l).includes(token));
-  return users.length > 0 && users.every((l) => l.type === 'text' && l.text.includes(token) && !JSON.stringify({ ...l, text: '' }).includes(token));
-}

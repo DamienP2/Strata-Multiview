@@ -11,7 +11,6 @@ fn main() {
     }
     println!("cargo:rerun-if-changed=../../web/dist");
     gzipped(&dist);
-    examples(dir);
     icon();
 }
 
@@ -92,34 +91,4 @@ fn gzipped(dist: &Path) {
     out.push_str("]\n");
     let dest = Path::new(&std::env::var("OUT_DIR").unwrap()).join("web_gz.rs");
     std::fs::write(dest, out).expect("gzipped web app list written");
-}
-
-/// The example projects: every `examples/ex-*.json` is embedded, in name
-/// order (src/examples.rs includes the list written here).
-fn examples(dir: &Path) {
-    let src = dir.join("examples");
-    println!("cargo:rerun-if-changed=examples");
-    let mut files: Vec<_> = std::fs::read_dir(&src)
-        .map(|rd| {
-            rd.filter_map(|e| e.ok())
-                .map(|e| e.path())
-                .filter(|p| {
-                    let name = p.file_name().and_then(|n| n.to_str()).unwrap_or("");
-                    name.starts_with("ex-") && name.ends_with(".json")
-                })
-                .collect()
-        })
-        .unwrap_or_default();
-    files.sort();
-    let mut out = String::from("&[\n");
-    for f in &files {
-        println!("cargo:rerun-if-changed={}", f.display());
-        out.push_str(&format!(
-            "    include_str!({:?}),\n",
-            f.display().to_string()
-        ));
-    }
-    out.push_str("]\n");
-    let dest = Path::new(&std::env::var("OUT_DIR").unwrap()).join("examples.rs");
-    std::fs::write(dest, out).expect("examples list written");
 }

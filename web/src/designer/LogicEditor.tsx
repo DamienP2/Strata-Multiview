@@ -72,7 +72,7 @@ export const kindOf = (n: LogicNode) => KINDS.find((k) => k.type === (n.type ===
 /** Layers an event can watch. */
 const timerLayer = (l: Layer) => l.type === 'clock' && !!((l as { timerMode?: string }).timerMode || ['countdown', 'stopwatch'].includes((l as { mode?: string }).mode ?? ''));
 const videoLayer = (l: Layer) => l.type === 'image' && !!((l as { video?: boolean }).video || ((l as { frames?: string[] }).frames?.length ?? 0) > 0);
-const scrollLayer = (l: Layer) => l.type === 'ticker' || l.type === 'credits';
+const scrollLayer = (l: Layer) => l.type === 'ticker';
 
 const MATH: { value: MathOp; label: string }[] = [
   { value: 'add', label: 'A + B' },
@@ -104,7 +104,7 @@ export function propsOf(l: Layer | undefined, numeric: boolean): Prop[] {
   const has = (p: Prop) => {
     if (p === 'fill') return l.type !== 'image';
     if (p === 'stroke' || p === 'strokeWidth') return l.type !== 'image' && l.type !== 'qrCode';
-    if (p === 'cornerRadius') return l.type === 'rect' || l.type === 'group' || l.type === 'progress';
+    if (p === 'cornerRadius') return l.type === 'rect' || l.type === 'group';
     if (p === 'fontSize' || p === 'letterSpacing') return TEXT_LIKE.has(l.type);
     if (p.startsWith('crop')) return l.type === 'image';
     if (p === 'arcStart' || p === 'arcEnd' || p === 'innerRadius') return l.type === 'ellipse';

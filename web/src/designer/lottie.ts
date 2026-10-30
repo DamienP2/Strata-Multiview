@@ -5,7 +5,7 @@
 import type { Layer } from '../engine/types';
 import { newId } from '../engine/evaluate';
 import { t, tn } from '../i18n';
-import { importAfterEffects, useApp } from '../store';
+import { importLottie, useApp } from '../store';
 import { descendants, findLayer, useDesigner } from './designerStore';
 
 const num = (v: unknown, d = 0) => (typeof v === 'number' && Number.isFinite(v) ? v : d);
@@ -15,7 +15,7 @@ export async function loadLottie(groupId: string, file: File, src: string) {
   const app = useApp.getState();
   const p = app.project;
   if (!p) return;
-  const { template: imp, warnings } = await importAfterEffects(p.id, file, true);
+  const { template: imp, warnings } = await importLottie(p.id, file);
   const [W, H] = [p.width, p.height];
   useDesigner.getState().update((tpl) => {
     const g = findLayer(tpl, groupId);

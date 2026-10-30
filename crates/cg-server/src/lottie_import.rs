@@ -1,4 +1,4 @@
-//! After Effects import: reads what the Bodymovin / LottieFiles exporters
+//! Lottie import: reads what the Bodymovin / LottieFiles exporters
 //! produce (`.json`, a `.zip` with `data.json` + `images/`, or a
 //! `.lottie`) and converts it with [`cg_core::lottie`].
 //!

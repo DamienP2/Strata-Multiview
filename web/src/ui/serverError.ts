@@ -44,8 +44,3 @@ export function friendlyError(raw: string | null | undefined): string {
   return s;
 }
 
-/** The short text, and the raw one as a tooltip when they differ. */
-export function errorProps(raw: string | null | undefined): { text: string; title?: string } {
-  const text = friendlyError(raw);
-  return { text, title: raw && raw.trim() !== text ? raw.trim() : undefined };
-}

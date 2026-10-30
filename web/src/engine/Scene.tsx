@@ -21,7 +21,7 @@ import { widgetOf } from '../widgets';
 export { TimeContext } from './LiveTime';
 
 /** Layers whose look depends on the clock: they alone are redrawn on each frame (useLayerTime). */
-export const LIVE_TYPES: ReadonlySet<LayerType> = new Set(['clock', 'ticker', 'roll', 'counter', 'progress', 'rotator', 'typewriter', 'slideshow', 'barChart']);
+export const LIVE_TYPES: ReadonlySet<LayerType> = new Set(['clock', 'ticker', 'roll', 'rotator', 'slideshow', 'barChart']);
 
 interface SceneProps {
   template: Template;
@@ -169,7 +169,7 @@ function layerStyle(layer: Layer, frame: number, data: Data, hold: number, logic
       return { style, src: interpolateText(layer.src, data) };
     default:
       // Widgets draw their own content (see WidgetContent), inside their box.
-      if (layer.type !== 'progress' && layer.type !== 'qrCode') style.overflow = 'hidden';
+      if (layer.type !== 'qrCode') style.overflow = 'hidden';
       return { style };
   }
 }
@@ -260,10 +260,6 @@ function WidgetContent({ layer, frame, data, hold }: { layer: Layer; frame: numb
   switch (layer.type) {
     case 'clock':
       return <TextBox text={up(W.clockText(layer.mode, layer.format, layer.timezone, layer.target, data, time), layer)} font={layer} r={r} align={layer.align} valign={layer.verticalAlign} box={[0, 0, w, h]} />;
-    case 'counter':
-      return <TextBox text={up(W.counterText(layer, data, age), layer)} font={layer} r={r} align={layer.align} valign={layer.verticalAlign} box={[0, 0, w, h]} />;
-    case 'typewriter':
-      return <TextBox text={up(W.typewriterText(layer.text, layer.speed, layer.cursor, data, age), layer)} font={layer} r={r} align={layer.align} valign={layer.verticalAlign} box={[0, 0, w, h]} />;
     case 'rotator': {
       const items = W.lines(layer.text, data);
       if (!items.length) return null;
@@ -294,16 +290,6 @@ function WidgetContent({ layer, frame, data, hold }: { layer: Layer; frame: numb
             <TextBox key={i} text={body} font={layer} r={r} align={layer.align} valign="top" box={[0, y, w, block]} />
           ))}
         </div>
-      );
-    }
-    case 'progress': {
-      const ratio = W.progressRatio(layer.value, layer.max, layer.duration, data, age);
-      const radius = num(r.cornerRadius);
-      return (
-        <>
-          <div style={{ position: 'absolute', inset: 0, background: hexColor(layer.track), borderRadius: radius }} />
-          <div style={{ position: 'absolute', left: 0, top: 0, height: h, width: w * ratio, background: cssColor(col(r.fill)), borderRadius: Math.min(radius, (w * ratio) / 2) }} />
-        </>
       );
     }
     case 'slideshow': {

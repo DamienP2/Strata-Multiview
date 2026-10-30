@@ -1,4 +1,3 @@
-import { useTableEditor } from '../widgets/table-editor-store';
 import { clientNow } from '../store';
 import { useShallow } from 'zustand/react/shallow';
 import { settingDefaults } from '../engine/settings';
@@ -15,7 +14,6 @@ import { ZoneOverlay } from './ZoneOverlay';
 import { useZoneEdit, ZonesEditOverlay } from './ZoneEditor';
 import { ClipboardMenu, type ClipMenuAt } from './ClipboardMenu';
 import { widgetOf } from '../widgets';
-import { useBoundData } from '../data/dataStore';
 import { snapTargets, StageGuides, stageViewStyle, useGuidesView, useProjectGuides } from './Guides';
 import { t, tn } from '../i18n';
 import { useLiveFrame } from '../engine/liveInputs';
@@ -95,9 +93,7 @@ export function StageZoom() {
 export function Stage({ project: _project, size, showZones, background, bgInput }: { project: Project; size: { width: number; height: number }; showZones: boolean; background: string; /** The live input shown behind (« video » background). */ bgInput: string }) {
   const project = { ..._project, width: size.width, height: size.height };
   const { template, frame, previewData, selected, format } = useDesigner(useShallow((s) => ({ template: s.template, frame: s.frame, previewData: s.previewData, selected: s.selected, format: s.format })));
-  // Bound fields show their live value, like on air.
-  const bound = useBoundData(template, previewData);
-  const data = useMemo(() => ({ ...bound, ...settingDefaults(template) }), [bound, template]);
+  const data = useMemo(() => ({ ...previewData, ...settingDefaults(template) }), [previewData, template]);
   const wrapRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<HTMLDivElement>(null);
   // Fitted to the canvas area (Auto), or as set by hand (StageZoom).
@@ -515,14 +511,6 @@ export function Stage({ project: _project, size, showZones, background, bgInput 
     beginDrag(e, 'move', sel);
   };
 
-  // A double-click on a Table opens its editor.
-  const onDoubleClick = (e: React.MouseEvent) => {
-    const id = layerAt(e);
-    const st = useDesigner.getState();
-    const l = id && st.template ? findLayer(st.template, id) : undefined;
-    if (l?.type === 'table' && !l.locked) useTableEditor.getState().open(l.id);
-  };
-
   // Program, fill or key, for the whole stage (canvas toolbar).
   const shown = stageViewStyle(view.stageView, background);
   if (!template) return <Overview project={_project} size={project} format={format} scale={scale} background={shown.background} bgInput={bgInput} filter={shown.filter} showZones={showZones} wrapRef={wrapRef} ticking={running ? 'all' : false} fps={fps} />;
@@ -536,7 +524,6 @@ export function Stage({ project: _project, size, showZones, background, bgInput 
           <div
             ref={sceneRef}
             onPointerDown={onPointerDown}
-            onDoubleClick={onDoubleClick}
             onContextMenu={(e) => {
               const id = layerAt(e);
               if (!id) return;
@@ -701,8 +688,7 @@ function Overview({
  */
 function OverviewScene({ template, format, ticking, fps, lang }: { template: Template; format: string; ticking: Ticking; fps: number; lang?: string }) {
   const defaults = useMemo(() => defaultData(template), [template]);
-  const bound = useBoundData(template, defaults);
-  const data = useMemo(() => ({ ...bound, ...settingDefaults(template) }), [bound, template]);
+  const data = useMemo(() => ({ ...defaults, ...settingDefaults(template) }), [defaults, template]);
   const shown = useMemo(() => inFormat(template, format), [template, format]);
   const hold = holdFrame(template);
   return (

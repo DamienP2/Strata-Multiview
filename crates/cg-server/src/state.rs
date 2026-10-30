@@ -65,12 +65,6 @@ pub enum Event {
         lock: Option<crate::locks::Lock>,
         taken_from: Option<String>,
     },
-    /// A data source was checked or changed (the value itself is fetched
-    /// with GET /api/data/sources/{id}/value).
-    Data {
-        source: String,
-        status: crate::datasources::Status,
-    },
     /// A list other clients show changed and should be fetched again:
     /// `media` (shared media), `media:<project>`, `sources`, `config`.
     Changed {
@@ -79,22 +73,6 @@ pub enum Event {
     /// Folders of the project list changed.
     Folders {
         folders: crate::media::Folders,
-    },
-    /// A new entry of the as-run log.
-    AsRun {
-        entry: Box<crate::asrun::Entry>,
-    },
-    /// What is programmed on a channel changed (`crate::schedule`).
-    #[serde(rename_all = "camelCase")]
-    Schedule {
-        channel_id: String,
-        items: Vec<crate::schedule::View>,
-    },
-    /// A project's social desk changed (`crate::social::moderation`).
-    #[serde(rename_all = "camelCase")]
-    Social {
-        project_id: String,
-        change: Box<crate::social::moderation::Change>,
     },
     Error {
         message: String,
@@ -353,14 +331,6 @@ pub struct AppState {
     pub saving: tokio::sync::Mutex<()>,
     /// Users and sessions outlive engine restarts.
     pub auth: Arc<Auth>,
-    /// Running orders received from the newsroom system (MOS).
-    pub mos: Arc<crate::mos::Store>,
-    /// Data connectors and their latest values.
-    pub data: Arc<crate::datasources::Hub>,
-    /// Social network connections and their messages.
-    pub social: Arc<crate::social::Hub>,
-    /// What each project does with them: moderation, hashtags, on air.
-    pub moderation: Arc<crate::social::moderation::Desk>,
     /// Who edits which template in the designer.
     pub locks: Arc<crate::locks::Locks>,
     /// Held from reading a project to saving it, so two edits at the same
@@ -383,8 +353,6 @@ pub struct AppState {
     pub closing: watch::Sender<bool>,
     /// Who has the Operator open, on which channel.
     pub presence: crate::antenna::Presence,
-    /// Takes and outs programmed in advance.
-    pub schedule: crate::schedule::Schedule,
 }
 
 pub type Shared = Arc<AppState>;
@@ -645,7 +613,7 @@ impl AppState {
             .project(&pid)
             .await
             .ok_or("the loaded project no longer exists")?;
-        let store = self.data.store();
+        let store = cg_core::datapath::Store::default();
         let zone = crate::antenna::command_zone(&project, &cmd);
         if let Some(l) = zone.as_deref().and_then(|z| ch.ops.held_by_other(z, actor)) {
             return Err(format!("{} holds this zone", l.user_name));
@@ -733,27 +701,6 @@ impl AppState {
                     }
                 }
             }
-            // A widget's "reload": its graphic's sources are read again now.
-            if let Command::Act {
-                zone, layer, op, ..
-            } = &cmd
-            {
-                if op == "reload" {
-                    let at = layer.or_else(|| {
-                        zone.as_deref()
-                            .and_then(|z| project.zone(z))
-                            .map(|z| z.layer)
-                    });
-                    if let Some(t) = at
-                        .and_then(|l| st.layers.get(&l))
-                        .and_then(|it| project.template(&it.template_id))
-                    {
-                        for src in cg_core::datapath::sources(t) {
-                            self.data.refresh(src);
-                        }
-                    }
-                }
-            }
             st.apply(&project, cmd).map_err(|e| e.to_string())?;
             bind_state(&project, &mut st, &store, None, taken.as_deref(), false);
             if actor.kind != crate::antenna::ActorKind::Auto {
@@ -771,22 +718,6 @@ impl AppState {
                     before,
                 });
             }
-            crate::asrun::record(
-                self,
-                crate::asrun::Entry {
-                    at: now_ms(),
-                    channel_id: channel_id.into(),
-                    channel_name: ch.config.name.clone(),
-                    project_id: project.id.clone(),
-                    project_name: project.name.clone(),
-                    action: action.into(),
-                    label,
-                    zone: zone.clone().unwrap_or_default(),
-                    actor: actor.clone(),
-                    values: std::mem::take(&mut values),
-                    detail: String::new(),
-                },
-            );
             st.clone()
         };
         let _ = self.events.send(Event::Channel {
@@ -853,26 +784,10 @@ impl AppState {
             }
             *st = before;
             if let Some(p) = &project {
-                bind_state(p, &mut st, &self.data.store(), None, None, false);
+                bind_state(p, &mut st, &cg_core::datapath::Store::default(), None, None, false);
             }
             st.clone()
         };
-        crate::asrun::record(
-            self,
-            crate::asrun::Entry {
-                at: now_ms(),
-                channel_id: channel_id.into(),
-                channel_name: ch.config.name.clone(),
-                project_id: project.as_ref().map(|p| p.id.clone()).unwrap_or_default(),
-                project_name: project.as_ref().map(|p| p.name.clone()).unwrap_or_default(),
-                action: "undo".into(),
-                label: step.label.clone(),
-                zone: step.zone.clone(),
-                actor: actor.clone(),
-                values: BTreeMap::new(),
-                detail: step.action.clone(),
-            },
-        );
         let _ = self.events.send(Event::Channel {
             channel_id: channel_id.into(),
             state: snapshot.clone(),
@@ -986,8 +901,6 @@ pub fn bind_state(
             &mut item.data,
         );
         if item.data != old {
-            // Widgets that play a change of their list (the social wall's cards).
-            cg_core::playout::source_data_changed(project, item, &old);
             // New values of the sources shown as their layers say (fade,
             // slide, count, held until the operator updates…).
             if live {
@@ -999,28 +912,6 @@ pub fn bind_state(
         }
     }
     changed
-}
-
-impl AppState {
-    /// Re-applies data bindings on every channel after a source changed.
-    pub async fn rebind(&self, source: Option<&str>) {
-        let store = self.data.store();
-        for ch in self.channels.values() {
-            let Some(pid) = ch.project_id.read().await.clone() else {
-                continue;
-            };
-            let Some(project) = self.project(&pid).await else {
-                continue;
-            };
-            let changed = {
-                let mut st = ch.state.write().await;
-                bind_state(&project, &mut st, &store, source, None, true)
-            };
-            if changed {
-                self.broadcast_channel(ch).await;
-            }
-        }
-    }
 }
 
 /// What clients do with an `Event::ProjectTemplate`: the template replaces

@@ -9,12 +9,7 @@ export const ccC: Record<string, string> = {
   'Step of − +': 'Pas des − +',
   // The Counter.
   'cc|on air': 'à l’antenne',
-  'cc|frozen': 'figé',
-  'Freeze the display': 'Figer l’affichage',
   'cc|Step': 'Pas',
-  'cc|Extra steps': 'Pas supplémentaires',
   // The Progress bar.
-  'cc|by hand': 'à la main',
-  'follows “{name}”': 'suit « {name} »',
   'cc|Data': 'Données',
 };

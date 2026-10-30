@@ -51,9 +51,6 @@ pub struct NetworkRoles {
     /// system clock through phc2sys).
     #[serde(default)]
     pub ptp: String,
-    /// The MOS ports listen on this one only ("" = every interface).
-    #[serde(default)]
-    pub mos: String,
 }
 
 /// What the channel clocks follow.

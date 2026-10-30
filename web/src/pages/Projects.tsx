@@ -1,58 +1,16 @@
 import { FormatButtons } from '../designer/ProjectPanel';
-import { ArrowLeft, Check, CheckSquare, ChevronRight, Clock, Copy, Database, GraduationCap, Download, Folder, FolderInput, FolderOpen, FolderPlus, Library as LibraryIcon, Inbox, Layers, LayoutGrid, MonitorPlay, MoreHorizontal, PenTool, Pencil, Plus, Radio, Search, Trash2, Upload, X } from 'lucide-react';
+import { ArrowLeft, Check, CheckSquare, ChevronRight, Clock, Copy, Download, Folder, FolderInput, FolderOpen, FolderPlus, Library as LibraryIcon, Inbox, Layers, LayoutGrid, MonitorPlay, MoreHorizontal, PenTool, Pencil, Plus, Radio, Search, Trash2, Upload, X } from 'lucide-react';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { FrameRate, ProjectSummary } from '../engine/types';
 import { api, can, useApp } from '../store';
 import { useShallow } from 'zustand/react/shallow';
 import { navigate, projectPath, type ProjectPage } from '../router';
 import { confirmDialog, promptDialog } from '../ui/dialogs';
-import { lang, locale, t, tn } from '../i18n';
+import { locale, t, tn } from '../i18n';
 import { NavItem, NavSection } from './SidePage';
-import { ImportModal } from './ImportModal';
 import { useMetrics, type ChannelMetrics } from '../engine/metrics';
 import { Bar } from '../perf/bits';
 import { fps as fpsText, fpsTone, pct, slowest, worstTone } from '../perf/format';
-
-export const FORMATS: {
-  label: string;
-  width: number;
-  height: number;
-  rate: FrameRate;
-}[] = [
-  { label: '1080p 50', width: 1920, height: 1080, rate: { num: 50, den: 1 } },
-  { label: '1080p 25', width: 1920, height: 1080, rate: { num: 25, den: 1 } },
-  {
-    label: '1080p 59.94',
-    width: 1920,
-    height: 1080,
-    rate: { num: 60000, den: 1001 },
-  },
-  {
-    label: '1080p 29.97',
-    width: 1920,
-    height: 1080,
-    rate: { num: 30000, den: 1001 },
-  },
-  { label: '720p 50', width: 1280, height: 720, rate: { num: 50, den: 1 } },
-  {
-    label: '2160p 50 (UHD)',
-    width: 3840,
-    height: 2160,
-    rate: { num: 50, den: 1 },
-  },
-  {
-    label: 'Vertical 1080×1920 30',
-    width: 1080,
-    height: 1920,
-    rate: { num: 30, den: 1 },
-  },
-  {
-    label: 'Square 1080×1080 30',
-    width: 1080,
-    height: 1080,
-    rate: { num: 30, den: 1 },
-  },
-];
 
 const fps = (r: FrameRate) => +(r.num / r.den).toFixed(2);
 
@@ -182,89 +140,6 @@ function CardMenu({ children, page }: { children: React.ReactNode; page: number 
   );
 }
 
-interface ExampleInfo {
-  id: string;
-  name: string;
-  category: string;
-  tags: string[];
-  description: string;
-  summary?: string;
-  en?: { name: string; description: string; summary?: string };
-  templates: string[];
-  formats: string[];
-}
-
-/** The example projects: a copy of one becomes a project of the user. */
-function ExampleBank({ onClose }: { onClose: () => void }) {
-  const toast = useApp((s) => s.toast);
-  const [examples, setExamples] = useState<ExampleInfo[] | null>(null);
-  const [busy, setBusy] = useState<string | null>(null);
-  const french = lang().startsWith('fr');
-  useEffect(() => {
-    api<ExampleInfo[]>('GET', '/api/examples')
-      .then(setExamples)
-      .catch((e) => toast((e as Error).message, 'error'));
-  }, []);
-  const create = async (d: ExampleInfo) => {
-    setBusy(d.id);
-    try {
-      const p = await api<ProjectSummary>('POST', `/api/examples/${encodeURIComponent(d.id)}`);
-      toast(t('“{name}” added to your projects', { name: p.name }), 'info');
-    } catch (e) {
-      toast((e as Error).message, 'error');
-    } finally {
-      setBusy(null);
-    }
-  };
-  return (
-    <div className="modal-back" onPointerDown={onClose}>
-      <div className="modal wide example-bank" onPointerDown={(e) => e.stopPropagation()}>
-        <header>
-          <GraduationCap size={18} />
-          <h2>{t('Examples')}</h2>
-          <div className="spacer" />
-          <kbd className="ux3-esc">{t('Esc')}</kbd>
-          <button className="icon-btn ghost" title={t('Close (Esc)')} onClick={onClose}>
-            <X size={16} />
-          </button>
-        </header>
-        <div className="example-grid ux3-examples">
-          {examples === null && <p className="muted">{t('Loading…')}</p>}
-          {examples?.map((d) => {
-            const name = (!french && d.en?.name) || d.name;
-            const description = (!french && d.en?.description) || d.description;
-            const summary = (!french && d.en?.summary) || d.summary || description;
-            return (
-              <div key={d.id} className="example-card">
-                <div className="example-cover">
-                  <Thumb src={`/api/examples/${encodeURIComponent(d.id)}/cover.png?w=640`} />
-                  <span className="example-num">{d.id.match(/^ex-(\d+)/)?.[1] ?? ''}</span>
-                </div>
-                <div className="example-body">
-                  <div className="example-top">
-                    <strong>{name.replace(/^\d+ · /, '')}</strong>
-                    {d.category && <span className="example-cat">{d.category}</span>}
-                  </div>
-                  <p title={description}>{summary}</p>
-                  <div className="example-tags" title={[...d.formats, ...d.tags].join(' · ')}>
-                    <span>{tn(d.templates.length, '{n} template', '{n} templates')}</span>
-                    {[...d.formats, ...d.tags].slice(0, 1).map((x) => (
-                      <span key={x}>{x}</span>
-                    ))}
-                  </div>
-                  <button className="btn primary small" disabled={busy !== null} onClick={() => create(d)}>
-                    <Plus size={13} /> {busy === d.id ? t('Adding…') : t('Add to my projects')}
-                  </button>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-    </div>
-  );
-}
-
 export function Projects() {
   // Not the channels' live state: the list is not drawn again on each frame on air.
   const { projects, channels, auth, toast, folders, saveFolders } = useApp(useShallow((s) => ({ projects: s.projects, channels: s.channels, auth: s.auth, toast: s.toast, folders: s.folders, saveFolders: s.saveFolders })));
@@ -272,7 +147,6 @@ export function Projects() {
   const user = auth?.user;
   const design = can.design(user);
   const [dialog, setDialog] = useState<{ from?: ProjectSummary } | null>(null);
-  const [examples, setExamples] = useState(false);
   const [view, setView] = useState<View>({ kind: 'all' });
   const [query, setQuery] = useState('');
   const [sort, setSort] = useState<Sort>('recent');
@@ -428,14 +302,8 @@ export function Projects() {
     setView({ kind: 'all' });
   };
 
-  const [importing, setImporting] = useState(false);
-  const imported = (p: ProjectSummary) => {
-    setImporting(false);
-    if (view.kind === 'folder') moveTo(p.id, view.name);
-    toast(t('Imported “{name}”', { name: p.name }));
-  };
+  const importRef = useRef<HTMLInputElement>(null);
   const importFile = async (file: File) => {
-    setImporting(false);
     try {
       const p = await api<ProjectSummary>('POST', '/api/projects/import', JSON.parse(await file.text()));
       if (view.kind === 'folder') moveTo(p.id, view.name);
@@ -573,12 +441,20 @@ export function Projects() {
             <div className="spacer" />
             {design && (
               <>
-                <button className="btn" title={t('Ready-to-air graphics packages to start from')} onClick={() => setExamples(true)}>
-                  <GraduationCap size={14} /> {t('Examples')}
-                </button>
-                <button className="btn" title={t('After Effects, Motion Graphics template, Photoshop, SVG or Strata project')} onClick={() => setImporting(true)}>
+                <button className="btn" title={t('A project exported from Strata Multiview (.json)')} onClick={() => importRef.current?.click()}>
                   <Upload size={14} /> {t('Import')}
                 </button>
+                <input
+                  ref={importRef}
+                  type="file"
+                  accept=".json"
+                  hidden
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    e.target.value = '';
+                    if (f) void importFile(f);
+                  }}
+                />
                 <button className="btn primary" onClick={() => setDialog({})}>
                   <Plus size={14} /> {t('New project')}
                 </button>
@@ -691,7 +567,7 @@ export function Projects() {
                 >
                   <a
                     className="project-cover"
-                    href={projectPath(p.id, design ? 'designer' : 'operator')}
+                    href={projectPath(p.id, design ? 'designer' : 'media')}
                     target="_blank"
                     rel="noopener"
                     draggable={false}
@@ -757,7 +633,6 @@ export function Projects() {
                             </CardMenu>
                           ) : (
                             <CardMenu page={0}>
-                              {page('data', <Database size={13} />, t('Data'), design)}
                               {page('media', <LibraryIcon size={13} />, t('Library'), can.operate(user))}
                               <div className="menu-sep" />
                               <a href={`/api/projects/${encodeURIComponent(p.id)}/export`} onClick={() => setMenu(null)}>
@@ -801,7 +676,7 @@ export function Projects() {
                   </div>
                   <div className="project-links ux3-two">
                     {link('designer', <PenTool size={15} />, t('Designer'), design)}
-                    {link('operator', <Radio size={15} />, t('Operator'), can.operate(user))}
+                    {link('media', <LibraryIcon size={15} />, t('Library'), can.operate(user))}
                   </div>
                 </div>
               );
@@ -815,8 +690,6 @@ export function Projects() {
           </div>
         </div>
       </main>
-      {examples && <ExampleBank onClose={() => setExamples(false)} />}
-      {importing && <ImportModal onClose={() => setImporting(false)} onCreated={imported} onProject={importFile} />}
       {dialog && <NewProject from={dialog.from} folder={view.kind === 'folder' ? view.name : undefined} onClose={() => setDialog(null)} />}
     </div>
   );

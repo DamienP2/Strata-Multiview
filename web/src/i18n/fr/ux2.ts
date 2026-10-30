@@ -13,16 +13,10 @@ export const ux2: Record<string, string> = {
   'Published · {n} template': 'Publié · {n} modèle',
   'Published · {n} templates': 'Publié · {n} modèles',
   'Publish to the Operator': 'Publier dans l’Opérateur',
-  '{n} template has changes the Operator does not have yet. They stay saved here as drafts; Publish, at the top, puts them on air.': '{n} modèle a des modifications que l’Opérateur n’a pas encore. Elles restent enregistrées ici en brouillon ; Publier, en haut, les met à l’antenne.',
-  '{n} templates have changes the Operator does not have yet. They stay saved here as drafts; Publish, at the top, puts them on air.': '{n} modèles ont des modifications que l’Opérateur n’a pas encore. Elles restent enregistrées ici en brouillon ; Publier, en haut, les met à l’antenne.',
   // Right-click menu of a layer
-  'Show its keyframes in the timeline': 'Voir ses images clés dans la timeline',
   'Animation…': 'Animation…',
   'Bring to front': 'Premier plan',
   'Send to back': 'Arrière-plan',
   // Default names
-  'New text': 'Nouveau texte',
-  'Data set {n}': 'Jeu de données {n}',
-  'Field {n}': 'Champ {n}',
   'No template open': 'Aucun modèle ouvert',
 };

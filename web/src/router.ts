@@ -1,5 +1,5 @@
 /** Minimal history router. */
-export type ProjectPage = 'designer' | 'operator' | 'social' | 'data' | 'media';
+export type ProjectPage = 'designer' | 'media';
 
 export type Route =
   | { page: 'projects' }
@@ -10,28 +10,19 @@ export type Route =
   | { page: 'hardware' }
   | { page: 'performance' }
   | { page: 'health' }
-  | { page: 'asrun' }
-  | { page: 'data' }
   | { page: 'settings' }
   | { page: 'api' }
-  | { page: 'mos' }
   | {
       page: 'project';
       projectId: string;
       sub: ProjectPage;
-      channelId: string | null;
     }
-  // Pre-0.10 links, resolved to the project pages.
-  | { page: 'legacyDesigner'; projectId: string | null }
-  | { page: 'legacyOperator'; channelId: string | null }
-  | { page: 'mosPlugin' }
-  | { page: 'embedPreview' }
   | { page: 'output'; channelId: string | null; rendition: string | null };
 
-const SUBS: ProjectPage[] = ['designer', 'operator', 'social', 'data', 'media'];
+const SUBS: ProjectPage[] = ['designer', 'media'];
 
 export function parseRoute(path = location.pathname): Route {
-  const [first, second, third, fourth] = path.split('/').filter(Boolean).map(decodeURIComponent);
+  const [first, second, third] = path.split('/').filter(Boolean).map(decodeURIComponent);
   switch (first) {
     case 'project':
       if (!second) return { page: 'projects' };
@@ -39,12 +30,7 @@ export function parseRoute(path = location.pathname): Route {
         page: 'project',
         projectId: second,
         sub: SUBS.includes(third as ProjectPage) ? (third as ProjectPage) : 'designer',
-        channelId: fourth ?? null,
       };
-    case 'designer':
-      return { page: 'legacyDesigner', projectId: second ?? null };
-    case 'operator':
-      return { page: 'legacyOperator', channelId: second ?? null };
     case 'settings':
       return { page: 'settings' };
     case 'users':
@@ -61,14 +47,6 @@ export function parseRoute(path = location.pathname): Route {
       return { page: 'performance' };
     case 'health':
       return { page: 'health' };
-    case 'asrun':
-      return { page: 'asrun' };
-    case 'data':
-      return { page: 'data' };
-    case 'mos':
-      return second === 'plugin' ? { page: 'mosPlugin' } : { page: 'mos' };
-    case 'embed':
-      return second === 'preview' ? { page: 'embedPreview' } : { page: 'projects' };
     case 'api-docs':
       return { page: 'api' };
     case 'output':
@@ -82,13 +60,13 @@ export function parseRoute(path = location.pathname): Route {
   }
 }
 
-/** URL of a project page (`channelId`: the operated channel). */
-export function projectPath(projectId: string, sub: ProjectPage = 'designer', channelId?: string | null) {
-  return `/project/${encodeURIComponent(projectId)}/${sub}${channelId ? `/${encodeURIComponent(channelId)}` : ''}`;
+/** URL of a project page. */
+export function projectPath(projectId: string, sub: ProjectPage = 'designer') {
+  return `/project/${encodeURIComponent(projectId)}/${sub}`;
 }
 
 /** Browser tab of a project: opening it again focuses the same tab. */
-export const projectTab = (projectId: string) => `pulse-project-${projectId}`;
+export const projectTab = (projectId: string) => `strata-mv-project-${projectId}`;
 
 function go(path: string, replace: boolean) {
   if (replace) history.replaceState(null, '', path);
