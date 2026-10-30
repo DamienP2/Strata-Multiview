@@ -45,7 +45,7 @@ export function ApiPage() {
           sub={
             <>
               {t('Permanent keys for Companion, newsroom systems and scripts.')}
-              <InfoTip text={`${t('For automation (Companion / Stream Deck, newsroom systems, scripts): send')} Authorization: Bearer smv_…. ${t('A key acts with the rights of its user — create a dedicated operator account scoped to the right channels for each system.')}`} />
+              <InfoTip text={`${t('For automation (Companion / Stream Deck, tally systems, scripts): send')} Authorization: Bearer smv_…. ${t('A key acts with the rights of its user — create a dedicated operator account scoped to the right channels for each system.')}`} />
             </>
           }
         />

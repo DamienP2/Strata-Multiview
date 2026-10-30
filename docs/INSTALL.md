@@ -1,6 +1,6 @@
-# Installer le serveur Strata
+# Installer le serveur Strata Multiview
 
-Le serveur tient dans **un seul exécutable**, `strata-mv-server`. Il contient le moteur de rendu, l'API, la web app (Designer, Opérateur, sortie HTML5) et les polices Inter. Il n'a besoin ni de Node, ni de navigateur, ni de runtime à installer sur le serveur.
+Le serveur tient dans **un seul exécutable**, `strata-mv-server`. Il contient le moteur de rendu, l'API, la web app (Designer, Tally, sortie HTML5) et les polices Inter. Il n'a besoin ni de Node, ni de navigateur, ni de runtime à installer sur le serveur.
 
 | OS | Paquet | Service | Données | Journaux |
 | --- | --- | --- | --- | --- |
@@ -8,19 +8,19 @@ Le serveur tient dans **un seul exécutable**, `strata-mv-server`. Il contient l
 | macOS 11 ou plus récent (Apple Silicon / Intel) | **`StrataMV-<version>-macos-universal.dmg`** (ou le `.pkg` seul) | launchd `com.stratamultiview.server` | `/Library/Application Support/Strata Multiview` | `/Library/Logs/Strata Multiview/strata-mv-server.log` |
 | Windows Server 2016 ou plus récent / Windows 10+ x64 | **`StrataMV-<version>-windows-x64.msi`** | service Windows `strata-multiview` (démarrage auto, redémarrage sur échec) | `C:\ProgramData\Strata Multiview` | `C:\ProgramData\Strata Multiview\logs\strata-mv-server.log` |
 
-Les paquets sont produits par la CI (`.github/workflows/release.yml`) à chaque tag `v*`, avec le panneau Premiere Pro (`Strata-Premiere-<version>-macos.pkg` et `-windows.msi`) et les paquets de mise à jour (`StrataMV-<version>-<plateforme>`, le serveur seul) que les serveurs installés téléchargent.
+Les paquets sont produits par la CI (`.github/workflows/release.yml`) à chaque tag `v*`, avec les paquets de mise à jour (`StrataMV-<version>-<plateforme>`, le serveur seul) que les serveurs installés téléchargent.
 
 ## Windows : installateur MSI (recommandé)
 
 Double-cliquez sur **`StrataMV-<version>-windows-x64.msi`**. Le MSI :
 - copie le binaire dans `C:\Program Files\Strata Multiview` et l'ajoute au `PATH` ;
 - crée le service `strata-multiview` (démarrage automatique, redémarrage en cas d'échec) et le démarre ;
-- ajoute la règle de pare-feu et les raccourcis *Strata Designer* / *Operator* dans le menu Démarrer ;
+- ajoute la règle de pare-feu et les raccourcis *Strata Multiview* (projets) et *Strata Multiview Outputs* (flux vidéo) dans le menu Démarrer ;
 - se met à jour en installant simplement une version plus récente (données conservées) ; se désinstalle depuis *Paramètres → Applications*, le raccourci *Uninstall Strata* du menu Démarrer ou le menu de l'icône Strata.
 
 Déploiement silencieux (GPO, Intune, SCCM) :
 ```powershell
-msiexec /i Strata-0.1.0-windows-x64.msi /qn PORT=8080 LISTEN_ADDR=0.0.0.0
+msiexec /i StrataMV-0.1.0-windows-x64.msi /qn PORT=8090 LISTEN_ADDR=0.0.0.0
 ```
 Lors d'une mise à jour silencieuse, repassez `PORT` si vous l'aviez changé.
 
@@ -46,7 +46,7 @@ tar xzf Strata-*-ubuntu-x64.tar.gz && cd Strata-*/
 sudo ./install.sh
 ```
 L'installateur pose ses questions au fur et à mesure (en français si la langue du système l'est) :
-1. le **port** de l'interface web (8080 par défaut ; une mise à jour garde le port et le dossier de données) ;
+1. le **port** de l'interface web (8090 par défaut ; une mise à jour garde le port et le dossier de données) ;
 2. le **runtime NDI** : il télécharge le SDK NDI pour Linux (licence de Vizrt NDI AB à accepter), installe `libndi` dans `/opt/strata-multiview/lib` et Avahi (découverte des sources NDI) ;
 3. le **pilote des cartes DeckLink** (Blackmagic Desktop Video), proposé quand une carte Blackmagic est détectée. Blackmagic demande un enregistrement pour le télécharger : récupérez « Desktop Video » pour Linux sur https://www.blackmagicdesign.com/support/family/capture-and-playback, puis donnez le chemin de l'archive. L'installateur ajoute DKMS et les en-têtes du noyau, installe le pilote et signale si Secure Boot demande de signer le module ou si un firmware est à mettre à jour ;
 4. le **compte administrateur**, quand il n'y en a pas encore.
@@ -59,7 +59,7 @@ sudo /opt/strata-multiview/install.sh decklink --decklink-driver ~/Blackmagic_De
 
 Sans questions (déploiement automatisé) :
 ```bash
-sudo ./install.sh --yes --bind 0.0.0.0:8080 --data-dir /srv/strata \
+sudo ./install.sh --yes --bind 0.0.0.0:8090 --data-dir /srv/strata \
   --ndi --accept-ndi-license \
   --decklink-driver /tmp/Blackmagic_Desktop_Video_Linux_14.4.1.tar.gz
 ```
@@ -86,7 +86,7 @@ Elle se trouve aussi dans *Applications* (macOS) et dans le menu Démarrer (Wind
 
 ## Réglages du serveur
 
-Toute la configuration se fait dans la page **Réglages** (`http://<serveur>:8080/settings`) et s'applique sans réinstaller : le moteur redémarre en une seconde environ.
+Toute la configuration se fait dans la page **Réglages** (`http://<serveur>:8090/settings`) et s'applique sans réinstaller : le moteur redémarre en une seconde environ.
 
 - **Serveur** : nom, interface réseau et port d'écoute de l'interface web et de l'API (la page vous suit sur le nouveau port), fuseau horaire par défaut des horloges, accès libre ou non aux pages de sortie HTML5.
 - **Chaînes de sortie** : une par studio ou par régie, chacune avec :
@@ -101,14 +101,14 @@ La page **Réglages** est réservée aux administrateurs. Les comptes se gèrent
 
 ## Après l'installation
 
-1. Ouvrez `http://localhost:8080` **sur le serveur** et créez le compte administrateur. Sur un serveur sans écran, lancez plutôt `sudo strata-mv-server user add admin` (dans un terminal administrateur sous Windows).
-2. Dans **Utilisateurs**, créez les comptes des designers et des opérateurs, avec si besoin les projets et les chaînes auxquels ils ont accès.
+1. Ouvrez `http://localhost:8090` **sur le serveur** et créez le compte administrateur. Sur un serveur sans écran, lancez plutôt `sudo strata-mv-server user add admin` (dans un terminal administrateur sous Windows).
+2. Dans **Utilisateurs**, créez les comptes des designers et des opérateurs (qui choisissent le multiview des chaînes), avec si besoin les projets et les chaînes auxquels ils ont accès.
 3. Dans **Réglages**, créez une chaîne par studio ou par régie, avec ses sorties.
 
 Adresses utiles :
 
-- Web app (projets, designer, opérateur) : `http://<serveur>:8080/`
-- Sortie HTML5 d'une chaîne (OBS, vMix, CasparCG) : `http://<serveur>:8080/output/<chaîne>`, par exemple `/output/main`
+- Web app (projets, Designer, diffusion, tally) : `http://<serveur>:8090/`
+- Sortie HTML5 d'une chaîne (OBS, vMix, CasparCG) : `http://<serveur>:8090/output/<chaîne>`, par exemple `/output/main`
 
 Les sorties ST 2110 / SDI se configurent dans la page **Réglages** (`/settings`).
 
@@ -143,7 +143,7 @@ strata-mv-server service status
 strata-mv-server service stop
 strata-mv-server service start
 strata-mv-server service uninstall
-strata-mv-server service install --bind 0.0.0.0:8080 --data-dir <dossier>
+strata-mv-server service install --bind 0.0.0.0:8090 --data-dir <dossier>
 ```
 
 ## ffmpeg (flux vidéo, entrées, vidéos)
@@ -202,7 +202,3 @@ Le dossier utilisateur par défaut est `~/.local/share/stratamultiview` (Linux),
 - **NDI** : sous Ubuntu, `sudo /opt/strata-multiview/install.sh ndi` ; les installateurs macOS et Windows embarquent le runtime.
 - **Multicast** : sur une machine qui a plusieurs interfaces, choisissez la carte du réseau média de chaque sortie dans la page **Réglages**.
 - **Mot de passe perdu** : `strata-mv-server user passwd <nom>` sur le serveur.
-
-## Mise à jour depuis Pulse CG (avant 0.16)
-
-Le produit s'appelait Pulse CG. Installez la 0.16 avec le `.pkg`, le `.msi` ou `install.sh` (la mise à jour par le web ne suffit pas pour ce passage) : l'ancien service est arrêté et supprimé, et les données (projets, utilisateurs, réglages) sont déplacées dans leur nouveau dossier. Les éléments MOS créés avant le renommage restent lisibles.
