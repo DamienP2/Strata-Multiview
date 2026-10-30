@@ -11,6 +11,7 @@ pub mod palette;
 pub mod playout;
 pub mod rich;
 pub mod sample;
+pub mod signal;
 pub mod wid;
 pub mod widgets;
 

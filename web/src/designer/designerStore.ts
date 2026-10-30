@@ -301,6 +301,7 @@ export function descendants(t: Template, id: string): string[] {
 
 /** Layer type names, in English: translated where shown. */
 export const LABELS: Record<LayerType, string> = {
+  source: 'Source',
   group: 'Group',
   rect: 'Rectangle',
   ellipse: 'Ellipse',

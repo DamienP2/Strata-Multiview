@@ -73,7 +73,8 @@ export type LayerKind =
   | ({ type: 'web' } & import('../widgets/web').Config)
   | ({ type: 'barChart'; text: string; percent: boolean; duration: number; track: string; textColor: string } & FontStyle)
   | ({ type: 'polygon' } & import('../widgets/polygon').Config)
-  | ({ type: 'pen' } & import('../widgets/pen').Config);
+  | ({ type: 'pen' } & import('../widgets/pen').Config)
+  | ({ type: 'source' } & import('../widgets/source').Config);
 
 export type LayerType = LayerKind['type'];
 

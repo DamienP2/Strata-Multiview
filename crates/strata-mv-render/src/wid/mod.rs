@@ -10,6 +10,7 @@ mod polygon;
 pub(crate) mod qrcode;
 mod quad;
 mod shape;
+mod source;
 mod text;
 mod ticker;
 mod timer;
@@ -224,6 +225,7 @@ pub(crate) fn draw(d: &mut Draw) -> bool {
         "timer" => timer::draw(d, &state(&raw)),
         "ticker" => ticker::draw(d, &state(&raw)),
         "qrcode" => qrcode::draw(d, &state(&raw)),
+        "source" => source::draw(d),
         // No browser here: its box stays empty on these outputs.
         "web" => true,
         _ => false,
@@ -246,6 +248,7 @@ pub(crate) fn motion(d: &mut Draw) -> Option<Motion> {
         "text" => text::motion(d),
         "image" => image::motion(d, &state(raw)),
         "pen" => pen::motion(d),
+        "source" => source::motion(d),
         "timer" => timer::motion(d, &state(raw)),
         // Tickers: by the time on air.
         _ => Some(Motion::Moving),

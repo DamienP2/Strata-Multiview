@@ -21147,3 +21147,57 @@ textarea.tx-grow {
     animation: none;
   }
 }
+
+/* Multiview layouts (designer/Layouts.tsx): the presets as small grids. */
+.mv-layouts {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.mv-layout-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
+  gap: 8px;
+}
+.mv-layout {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 6px 6px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--panel-2);
+  color: var(--text-3);
+  font-size: var(--fs-11);
+  cursor: pointer;
+}
+.mv-layout:hover {
+  border-color: var(--line-2);
+  color: var(--text-2);
+}
+.mv-layout.on {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--text);
+}
+.mv-layout-empty {
+  width: 64px;
+  height: 36px;
+  border: 1px dashed currentColor;
+  border-radius: 2px;
+  opacity: 0.55;
+}
+.mv-layout-fields {
+  display: flex;
+  gap: 12px;
+}
+.mv-layout-fields .set-field {
+  flex: 1;
+}
+.mv-layout-modal {
+  width: min(560px, calc(100vw - 32px));
+}
+.mv-layout-modal > p {
+  margin: 0 0 12px;
+}

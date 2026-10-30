@@ -431,6 +431,12 @@ impl DeckLinkInput {
         self.card.signal()
     }
 
+    /// The levels of its embedded audio since the last call: each
+    /// channel's (peak, mean power), full scale = 1 (empty: none came).
+    pub fn audio(&self) -> Vec<(f32, f32)> {
+        self.card.audio()
+    }
+
     /// Waits up to `timeout_ms` for a frame newer than `seq` (woken as soon
     /// as the card hands one over).
     pub fn wait(&self, seq: u64, timeout_ms: u32) -> bool {

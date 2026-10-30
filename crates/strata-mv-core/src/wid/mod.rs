@@ -13,6 +13,7 @@ pub mod polygon;
 pub mod qrcode;
 pub mod quad;
 pub mod shape;
+pub mod source;
 pub mod text;
 pub mod ticker;
 pub mod timer;
@@ -50,6 +51,7 @@ pub fn widget_id(kind: &LayerKind) -> Option<&'static str> {
         LayerKind::Ticker { .. } => "ticker",
         LayerKind::QrCode { .. } => "qrcode",
         LayerKind::Web { .. } => "web",
+        LayerKind::Source { .. } => "source",
         _ => return None,
     })
 }

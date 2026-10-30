@@ -29,8 +29,10 @@ typedef bool dl_bool;
 typedef const char *dl_string;
 #endif
 
+#include <algorithm>
 #include <atomic>
 #include <chrono>
+#include <cmath>
 #include <condition_variable>
 #include <cstddef>
 #include <cstdint>
@@ -523,6 +525,12 @@ class Input final : public IDeckLinkInputCallback {
     uint64_t seq = 0;
     int signal = -1; // -1 unknown, 0 no input source, 1 locked
     uint32_t mode = 0; // the BMDDisplayMode captured (the detected one once the signal is known)
+    // Audio (48 kHz, 32-bit, `achannels` interleaved): each channel's peak and
+    // sum of squares (full scale = 1) since the levels were last read.
+    int achannels = 0;
+    std::vector<float> apeak;
+    std::vector<double> asum;
+    uint64_t asamples = 0;
 
     HRESULT STDMETHODCALLTYPE QueryInterface(REFIID iid, LPVOID *ppv) override {
         if (!ppv) {
@@ -568,7 +576,27 @@ class Input final : public IDeckLinkInputCallback {
 
     HRESULT STDMETHODCALLTYPE VideoInputFrameArrived(IDeckLinkVideoInputFrame *f,
                                                      IDeckLinkAudioInputPacket *audio) override {
-        (void)audio;
+        if (audio && achannels > 0) {
+            void *bytes = NULL;
+            long n = audio->GetSampleFrameCount();
+            if (n > 0 && audio->GetBytes(&bytes) == S_OK && bytes) {
+                const int32_t *s = (const int32_t *)bytes;
+                std::lock_guard<std::mutex> lk(m);
+                apeak.resize((size_t)achannels, 0.0f);
+                asum.resize((size_t)achannels, 0.0);
+                for (long i = 0; i < n; i++) {
+                    for (int c = 0; c < achannels; c++) {
+                        float v = (float)s[(size_t)i * (size_t)achannels + (size_t)c] / 2147483648.0f;
+                        float a = v < 0 ? -v : v;
+                        if (a > apeak[(size_t)c]) {
+                            apeak[(size_t)c] = a;
+                        }
+                        asum[(size_t)c] += (double)v * (double)v;
+                    }
+                }
+                asamples += (uint64_t)n;
+            }
+        }
         if (!f) {
             return S_OK;
         }
@@ -614,6 +642,7 @@ class Input final : public IDeckLinkInputCallback {
             in->StopStreams();
             in->SetCallback(NULL);
             in->DisableVideoInput();
+            in->DisableAudioInput();
         }
     }
 
@@ -1048,6 +1077,24 @@ void *dl_input_open(int index, uint32_t mode, char *err, int errlen) {
         set_err(err, errlen, "cannot enable the video input (device in use by another application?)");
         goto fail;
     }
+    {
+        // Its embedded audio: as many channels as the card takes (16, 8 or 2);
+        // a card without audio still captures the picture.
+        IDeckLinkProfileAttributes *attrs = NULL;
+        int64_t most = 2;
+        if (dev->QueryInterface(IID_IDeckLinkProfileAttributes, (void **)&attrs) == S_OK) {
+            int32_t ok = 0;
+            int64_t v = int_attribute(attrs, BMDDeckLinkMaximumAudioChannels, &ok);
+            if (ok && v > 0) {
+                most = v;
+            }
+            release(attrs);
+        }
+        int channels = most >= 16 ? 16 : most >= 8 ? 8 : 2;
+        if (in->in->EnableAudioInput(bmdAudioSampleRate48kHz, bmdAudioSampleType32bitInteger, (uint32_t)channels) == S_OK) {
+            in->achannels = channels;
+        }
+    }
     if (in->in->StartStreams() != S_OK) {
         set_err(err, errlen, "cannot start the capture");
         goto fail;
@@ -1099,6 +1146,26 @@ uint32_t dl_input_mode(void *h) {
     Input *in = (Input *)h;
     std::lock_guard<std::mutex> lk(in->m);
     return in->mode;
+}
+
+// The levels of the audio since the last call: each channel's peak and
+// mean power (full scale = 1) in `peak` and `rms`. The number of channels,
+// 0 when no audio came.
+int dl_input_audio(void *h, float *peak, float *rms, int cap) {
+    Input *in = (Input *)h;
+    std::lock_guard<std::mutex> lk(in->m);
+    if (in->asamples == 0 || in->achannels == 0) {
+        return 0;
+    }
+    int n = in->achannels < cap ? in->achannels : cap;
+    for (int c = 0; c < n; c++) {
+        peak[c] = in->apeak[(size_t)c];
+        rms[c] = (float)std::sqrt(in->asum[(size_t)c] / (double)in->asamples);
+    }
+    std::fill(in->apeak.begin(), in->apeak.end(), 0.0f);
+    std::fill(in->asum.begin(), in->asum.end(), 0.0);
+    in->asamples = 0;
+    return n;
 }
 
 // 1 signal present, 0 no input source, -1 unknown (nothing received yet).

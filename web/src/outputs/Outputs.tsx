@@ -14,6 +14,7 @@ import { friendlyError } from '../ui/serverError';
 import { InfoTip } from '../ui/InfoTip';
 import { InputsMode } from './Inputs';
 import { useInputs } from '../engine/liveInputs';
+import type { Project } from '../engine/types';
 import { OnSwitch } from './OnSwitch';
 import { useMetrics, type OutputMetrics } from '../engine/metrics';
 import { corePct, fps as fpsText, fpsTone, num, outputTone, pct, pictureTone } from '../perf/format';
@@ -1284,6 +1285,7 @@ export function Outputs({ mode }: { mode: Mode }) {
                           </select>
                         </Field>
                       )}
+                      {liveCh?.projectId && <MultiviewPick channelId={ch.id} projectId={liveCh.projectId} onAir={Object.values(liveState[ch.id]?.state.layers ?? {})[0]?.templateId ?? ''} />}
                       <Field label={t('Render ahead')} hint={t('Frames rendered ahead, each on its own thread: absorbs slow frames; adds that many frames of delay.')}>
                         <select value={ch.renderAhead ?? 2} onChange={(e) => editCh((c) => void (c.renderAhead = +e.target.value))}>
                           {RENDER_AHEAD.map((n) => (
@@ -1886,4 +1888,44 @@ function Group({ label, hint, children }: { label: string; hint?: string; childr
 /** The notes of the inspector, as one "i" after its title. */
 function Notes({ list }: { list: string[] }) {
   return list.length ? <InfoTip text={list.join('\n\n')} /> : null;
+}
+
+/** The multiview a channel shows: one of its project's, published (the first one when the project is loaded). */
+function MultiviewPick({ channelId, projectId, onAir }: { channelId: string; projectId: string; onAir: string }) {
+  const toast = useApp((s) => s.toast);
+  const [list, setList] = useState<{ id: string; name: string }[] | null>(null);
+  // Read again when the project is saved (a multiview published).
+  const modified = useApp((s) => s.projects.find((p) => p.id === projectId)?.modifiedAt);
+  useEffect(() => {
+    let gone = false;
+    api<Project>('GET', `/api/projects/${encodeURIComponent(projectId)}`)
+      .then((p) => {
+        if (gone) return;
+        const order = new Map((p.designOrder ?? []).map((id, i) => [id, i]));
+        setList([...p.templates].sort((a, b) => (order.get(a.id) ?? 1e9) - (order.get(b.id) ?? 1e9)).map((x) => ({ id: x.id, name: x.name })));
+      })
+      .catch(() => !gone && setList([]));
+    return () => {
+      gone = true;
+    };
+  }, [projectId, modified]);
+  if (!list) return null;
+  return (
+    <Field label={t('Multiview on air')} hint={list.length ? t('Takes effect at once. Only published multiviews are listed.') : t('Publish a multiview of this project in the Designer: it goes on air at once.')}>
+      <select
+        value={onAir}
+        disabled={!list.length}
+        onChange={(e) =>
+          void api('PUT', `/api/channels/${encodeURIComponent(channelId)}/multiview`, { templateId: e.target.value }).catch((err) => toast(friendlyError((err as Error).message), 'error'))
+        }
+      >
+        {!onAir && <option value="">{t('— none —')}</option>}
+        {list.map((m) => (
+          <option key={m.id} value={m.id}>
+            {m.name}
+          </option>
+        ))}
+      </select>
+    </Field>
+  );
 }

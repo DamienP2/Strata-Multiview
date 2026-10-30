@@ -177,6 +177,10 @@ impl Frame {
 pub trait LiveInputs: Send + Sync {
     /// The latest picture of an input (premultiplied RGBA), if it has one.
     fn picture(&self, id: &str) -> Option<Arc<Pixmap>>;
+    /// Its name, format, tally, UMD and audio levels (the Source widget).
+    fn source(&self, _id: &str) -> Option<strata_mv_core::signal::SourceView> {
+        None
+    }
 }
 
 pub struct Renderer {
@@ -556,6 +560,11 @@ impl Renderer {
     /// Where the Video widget finds the pictures of the live inputs.
     pub fn set_live(&mut self, live: Arc<dyn LiveInputs>) {
         self.live = Some(live);
+    }
+
+    /// What the Source widget shows of a live input besides its picture.
+    pub fn live_source(&self, id: &str) -> Option<strata_mv_core::signal::SourceView> {
+        self.live.as_ref()?.source(id)
     }
 
     /// The latest picture of a live input.
@@ -2425,6 +2434,7 @@ impl Renderer {
             // Drawn by src/wid (wid::draw returns true for them).
             LayerKind::Polygon { .. }
             | LayerKind::Pen { .. }
+            | LayerKind::Source { .. }
             | LayerKind::Web { .. } => {}
             LayerKind::QrCode {
                 data, background, ..

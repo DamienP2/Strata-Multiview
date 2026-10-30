@@ -1,9 +1,7 @@
 // French texts, by English wording. One file per part of the interface.
 //
-// Words: template → modèle, layer → calque, rundown → conducteur, channel →
-// canal, on air → à l’antenne, data set → jeu de données, lower third →
-// synthé, asset → ressource. Buttons of the transport (TAKE, NEXT, OUT,
-// CUE, UPDATE, CONTINUE, PVW, PGM) keep their broadcast names. French
+// Words: template → modèle, layer → calque, channel → canal, on air → à
+// l’antenne, asset → ressource, tile → tuile, meter → vu-mètre. French
 // spacing: a no-break space (U+00A0) before ? ! : ; and inside « ».
 import { buttons } from './buttons';
 import { common } from './common';
@@ -22,5 +20,6 @@ import { ux3 } from './ux3';
 import { ux1 } from './ux1';
 import { ux2 } from './ux2';
 import { shared } from './shared';
+import { multiview } from './multiview';
 
-export const fr: Record<string, string> = { ...common, ...controls, ...ccA, ...ccB, ...ccC, ...ccD, ...home, ...designer, ...widgets, ...widgetsA, ...widgetsB, ...widgetsC, ...buttons, ...ux3, ...ux1, ...ux2, ...shared };
+export const fr: Record<string, string> = { ...common, ...controls, ...ccA, ...ccB, ...ccC, ...ccD, ...home, ...designer, ...widgets, ...widgetsA, ...widgetsB, ...widgetsC, ...buttons, ...ux3, ...ux1, ...ux2, ...shared, ...multiview };

@@ -110,6 +110,7 @@ pub fn router() -> Router<Shared> {
         .route("/api/channels/{id}/state", get(channel_state))
         .route("/api/channels/{id}/project", put(load_project))
         .route("/api/channels/{id}/command", post(channel_command))
+        .route("/api/channels/{id}/multiview", put(put_multiview))
         .route(
             "/api/channels/{id}/undo",
             get(channel_undo_list).post(channel_undo),
@@ -948,6 +949,8 @@ async fn publish_project(
     if let Err(e) = s.library.read().await.save_version(&p, who(&me), &note) {
         tracing::warn!("cannot keep a version: {e}");
     }
+    // A channel waiting for a multiview of this project gets its first one.
+    s.fill_empty_channels(&id).await;
     Ok(Json(out))
 }
 
@@ -1490,6 +1493,28 @@ async fn load_project(
         require(me.sees_project(pid))?;
     }
     s.load_project(&id, l.project_id).await.map_err(bad)?;
+    Ok(StatusCode::NO_CONTENT)
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct ShowMultiview {
+    template_id: String,
+}
+
+/// Puts another multiview of the loaded project on air.
+async fn put_multiview(
+    State(s): State<Shared>,
+    CurrentUser(me): CurrentUser,
+    Path(id): Path<String>,
+    Json(m): Json<ShowMultiview>,
+) -> ApiResult<StatusCode> {
+    visible_channel(&me, &id)?;
+    require(me.can_operate(&id))?;
+    sees_loaded(&s, &me, &id).await?;
+    s.show_multiview(&id, Some(m.template_id))
+        .await
+        .map_err(bad)?;
     Ok(StatusCode::NO_CONTENT)
 }
 
@@ -2639,6 +2664,8 @@ async fn ws_session_on(s: &Shared, socket: WebSocket, viewer: &Viewer, socket_id
                         }
                         true
                     }
+                    // Signed-in users and output pages (the Source widget).
+                    Event::Signals { .. } => true,
                     Event::Error { .. } => false,
                 };
                 if !visible {

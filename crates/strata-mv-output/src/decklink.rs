@@ -241,6 +241,7 @@ mod ffi {
             seq: *mut u64,
         ) -> i64;
         pub fn dl_input_signal(h: *mut c_void) -> c_int;
+        pub fn dl_input_audio(h: *mut c_void, peak: *mut f32, rms: *mut f32, cap: c_int) -> c_int;
         pub fn dl_input_mode(h: *mut c_void) -> u32;
         pub fn dl_input_wait(h: *mut c_void, seq: u64, timeout_ms: c_int) -> c_int;
         pub fn dl_input_close(h: *mut c_void);
@@ -737,6 +738,25 @@ impl InputHandle {
             std::thread::sleep(std::time::Duration::from_millis(timeout_ms.into()));
             false
         }
+    }
+
+    /// The levels of the embedded audio since the last call: each
+    /// channel's (peak, mean power), full scale = 1. Empty when none came.
+    pub fn audio(&self) -> Vec<(f32, f32)> {
+        #[cfg(decklink_shim)]
+        {
+            let mut peak = [0f32; 16];
+            let mut rms = [0f32; 16];
+            // SAFETY: open handle, buffers of 16.
+            let n = unsafe {
+                ffi::dl_input_audio(self.raw, peak.as_mut_ptr(), rms.as_mut_ptr(), 16)
+            };
+            (0..n.clamp(0, 16) as usize)
+                .map(|c| (peak[c], rms[c]))
+                .collect()
+        }
+        #[cfg(not(decklink_shim))]
+        Vec::new()
     }
 
     /// A signal is coming in (None: nothing received yet).

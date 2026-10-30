@@ -74,6 +74,10 @@ pub enum Event {
     Folders {
         folders: crate::media::Folders,
     },
+    /// The tally, UMD and audio levels of the inputs (`crate::signals`).
+    Signals {
+        sources: BTreeMap<String, crate::signals::SignalView>,
+    },
     Error {
         message: String,
     },
@@ -526,11 +530,67 @@ impl AppState {
         }
         ch.state.write().await.layers.clear();
         self.persist_loaded_projects().await;
+        // Its first multiview, on air at once.
+        if let Err(e) = self.show_multiview(channel_id, None).await {
+            tracing::warn!(channel = channel_id, "cannot show the multiview: {e}");
+        }
         self.broadcast_channel(ch).await;
         let _ = self.events.send(Event::Channels {
             channels: self.channel_infos().await,
         });
         Ok(())
+    }
+
+    /// Puts a multiview of the channel's project on air, alone, at once
+    /// (`None`: its first one published; nothing when there is none).
+    pub async fn show_multiview(
+        &self,
+        channel_id: &str,
+        template_id: Option<String>,
+    ) -> Result<(), String> {
+        let ch = self.channel(channel_id).ok_or("no such channel")?;
+        let pid = ch
+            .project_id
+            .read()
+            .await
+            .clone()
+            .ok_or("no project loaded on this channel")?;
+        let project = self
+            .project(&pid)
+            .await
+            .ok_or("the loaded project no longer exists")?;
+        let Some(id) = template_id.or_else(|| first_multiview(&project)) else {
+            return Ok(());
+        };
+        if project.template(&id).is_none() {
+            return Err("this multiview is not published".into());
+        }
+        ch.state.write().await.layers.clear();
+        let take = Command::Take {
+            zone: None,
+            layer: None,
+            template_id: id,
+            data: None,
+            rundown_id: None,
+        };
+        self.command(channel_id, take, &crate::antenna::Actor::auto("multiview"))
+            .await
+            .map(|_| ())
+    }
+
+    /// The channels showing `project_id` with nothing on air take its first
+    /// multiview (its first one was just published).
+    pub async fn fill_empty_channels(&self, project_id: &str) {
+        for (id, ch) in &self.channels {
+            if ch.project_id.read().await.as_deref() != Some(project_id)
+                || !ch.state.read().await.layers.is_empty()
+            {
+                continue;
+            }
+            if let Err(e) = self.show_multiview(id, None).await {
+                tracing::warn!(channel = id, "cannot show the multiview: {e}");
+            }
+        }
     }
 
     /// Re-keys graphics on air after zones of a project changed layer.
@@ -912,6 +972,15 @@ pub fn bind_state(
         }
     }
     changed
+}
+
+/// The first published multiview of a project, in the Designer's order.
+pub fn first_multiview(p: &Project) -> Option<String> {
+    p.design_order
+        .iter()
+        .find(|id| p.template(id).is_some())
+        .cloned()
+        .or_else(|| p.templates.first().map(|t| t.id.clone()))
 }
 
 /// What clients do with an `Event::ProjectTemplate`: the template replaces

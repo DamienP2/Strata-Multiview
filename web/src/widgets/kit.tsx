@@ -20,7 +20,7 @@ import { ColorField, NumberField, Segmented, TextInput, HexColorField } from '..
 import { alertDialog, confirmDialog } from '../ui/dialogs';
 import { t } from '../i18n';
 
-export type WidgetGroup = 'Shapes & tools' | 'Time' | 'Data' | 'Sport & interaction';
+export type WidgetGroup = 'Multiview' | 'Shapes & tools' | 'Time' | 'Data' | 'Sport & interaction';
 export type LayerOf<T extends LayerType> = Extract<Layer, { type: T }>;
 
 export interface Warning {

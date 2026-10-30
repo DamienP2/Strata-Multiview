@@ -3,7 +3,8 @@ import { lang, pickedByHand, setLang, t } from './i18n';
 import { setTheme } from './theme';
 import { create } from 'zustand';
 import { designTemplates } from './engine/drafts';
-import type { ChannelInfo, ChannelState, Command, DataStatus, Project, ProjectSummary, RundownItem, Template, User, Zone } from './engine/types';
+import { setSignals, type SignalView } from './engine/liveInputs';
+import type { ChannelInfo, ChannelState, Command, Project, ProjectSummary, RundownItem, Template, User, Zone } from './engine/types';
 
 type ServerEvent =
   | { type: 'hello'; user: User | null; serverName: string; serverTime: number; timezone: string; channels: ChannelInfo[]; projects: ProjectSummary[] }
@@ -13,12 +14,12 @@ type ServerEvent =
   | { type: 'projectDeleted'; id: string }
   | { type: 'channels'; channels: ChannelInfo[] }
   | { type: 'channel'; channelId: string; state: ChannelState; serverTime: number }
-  | { type: 'data'; source: string; status: DataStatus }
   | { type: 'lock'; projectId: string; templateId: string; lock: EditLock | null; takenFrom: string | null }
   | { type: 'folders'; folders: Folders }
   | { type: 'changed'; what: string }
   | { type: 'presence'; present: Present[] }
   | { type: 'zoneLocks'; channelId: string; locks: ZoneLock[]; takenFrom: string | null }
+  | { type: 'signals'; sources: Record<string, SignalView> }
   | { type: 'error'; message: string };
 
 /** Someone with the Operator open on a channel. */
@@ -333,6 +334,9 @@ export const useApp = create<AppStore>((set, get) => {
               break;
             case 'channels':
               set({ channels: msg.channels });
+              break;
+            case 'signals':
+              setSignals(msg.sources);
               break;
             case 'channel':
               set({ live: { ...get().live, [msg.channelId]: { state: msg.state, at: now } }, serverOffset: clockOffset(msg.serverTime, now) });

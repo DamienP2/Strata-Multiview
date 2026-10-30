@@ -22,6 +22,7 @@ mod prefs;
 mod rt;
 mod service;
 mod state;
+mod signals;
 mod sync;
 mod thumbs;
 mod timectl;
@@ -560,6 +561,8 @@ pub async fn serve(
             // The picture library's updates, looked for once a week.
             tokio::spawn(iconlib::run(shared.clone())),
             tokio::spawn(engine::give_back_memory()),
+            // Tally and audio levels to the browsers.
+            tokio::spawn(signals::broadcast(shared.clone())),
         ];
 
         let app = api::router()

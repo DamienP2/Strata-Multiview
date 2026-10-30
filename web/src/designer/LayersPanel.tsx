@@ -1,4 +1,4 @@
-import { Globe, Pentagon, PenTool, Pilcrow, BarChart3, Circle, Clock, Folder, GalleryHorizontal, Image, MoveHorizontal, MoveVertical, QrCode, Repeat, Sparkles, Square, Timer, Type, Video } from 'lucide-react';
+import { Globe, MonitorPlay, Pentagon, PenTool, Pilcrow, BarChart3, Circle, Clock, Folder, GalleryHorizontal, Image, MoveHorizontal, MoveVertical, QrCode, Repeat, Sparkles, Square, Timer, Type, Video } from 'lucide-react';
 import type { Layer, LayerType, Template } from '../engine/types';
 import { descendants, findLayer } from './designerStore';
 import { num, propValue } from '../engine/evaluate';
@@ -7,6 +7,7 @@ import { eff, timed } from '../widgets/timer-fmt';
 /** Layer type icons (timeline, menus). */
 export const ICONS: Record<LayerType, typeof Square> = {
   group: Folder,
+  source: MonitorPlay,
   rect: Square,
   ellipse: Circle,
   text: Type,

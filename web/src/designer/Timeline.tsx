@@ -1074,6 +1074,7 @@ type MenuItem = {
 
 /** The + menu: one list of widgets, in this order. */
 const MENU: { type?: LayerType; widget?: string; label: string; soon?: typeof Video; patch?: Record<string, unknown>; action?: 'video' | 'lottie'; hint?: string; preset?: string }[] = [
+  { type: 'source', label: 'Source', hint: 'A live input with its tally, UMD and audio meters' },
   { type: 'ticker', label: 'Ticker' },
   { widget: 'clock', label: 'Clock' },
   { widget: 'time', label: 'Time' },

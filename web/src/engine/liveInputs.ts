@@ -242,3 +242,43 @@ export function useLiveFrame(id: string, kind: FeedKind = 'preview'): { url: str
     () => (id ? feedFor(id, kind).snap : none),
   );
 }
+
+// -------------------------------------------------------------- signals --
+// The tally, UMD and audio levels of the inputs (crates/strata-mv-server/src/signals.rs),
+// pushed by the server a dozen times a second while they change.
+
+/** Tally lamps and the switcher's UMD text (mirrors strata_mv_core::signal::Tally). */
+export interface Tally {
+  program?: boolean;
+  preview?: boolean;
+  aux?: boolean;
+  umd?: string;
+}
+
+/** One input's signals: per audio channel, [peak, mean power, hold] in dBFS. */
+export interface SignalView {
+  tally?: Tally;
+  levels?: [number, number, number][];
+}
+
+let signals: Record<string, SignalView> = {};
+const signalSubs = new Set<() => void>();
+
+/** From the WebSocket (store.ts). */
+export function setSignals(all: Record<string, SignalView>) {
+  signals = all;
+  signalSubs.forEach((f) => f());
+}
+
+const NONE: SignalView = {};
+
+/** The signals of an input, redrawn when they change. */
+export function useSignal(id: string): SignalView {
+  return useSyncExternalStore(
+    (f) => {
+      signalSubs.add(f);
+      return () => void signalSubs.delete(f);
+    },
+    () => (id ? (signals[id] ?? NONE) : NONE),
+  );
+}

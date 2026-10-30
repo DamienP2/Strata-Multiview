@@ -551,6 +551,13 @@ pub enum LayerKind {
         #[serde(flatten)]
         x: crate::wid::polygon::Config,
     },
+    /// A tile of a multiview: a live input, its tally, UMD and meters.
+    #[serde(rename_all = "camelCase")]
+    Source {
+        /// Settings of the spec widget (`wid::source`).
+        #[serde(flatten)]
+        x: Box<crate::wid::source::Config>,
+    },
     /// Bézier path drawn with the pen tool.
     #[serde(rename_all = "camelCase")]
     Pen {

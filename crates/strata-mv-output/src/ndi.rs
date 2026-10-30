@@ -62,6 +62,19 @@ struct VideoFrameV2 {
     timestamp: i64,
 }
 
+/// `NDIlib_audio_frame_v2_t`: 32-bit float samples, one plane per channel.
+#[repr(C)]
+struct AudioFrameV2 {
+    sample_rate: i32,
+    no_channels: i32,
+    no_samples: i32,
+    timecode: i64,
+    p_data: *const f32,
+    channel_stride_in_bytes: i32,
+    p_metadata: *const c_char,
+    timestamp: i64,
+}
+
 const fn fourcc(s: &[u8; 4]) -> u32 {
     s[0] as u32 | (s[1] as u32) << 8 | (s[2] as u32) << 16 | (s[3] as u32) << 24
 }
@@ -406,6 +419,7 @@ struct RecvCreateV3 {
 const RECV_COLOR_RGBX_RGBA: i32 = 2;
 const RECV_BANDWIDTH_HIGHEST: i32 = 100;
 const FRAME_TYPE_VIDEO: i32 = 1;
+const FRAME_TYPE_AUDIO: i32 = 2;
 const FRAME_TYPE_ERROR: i32 = 4;
 
 /// The receiving side of the runtime (looked up once the runtime is loaded).
@@ -414,9 +428,15 @@ struct RecvLib {
     find_wait: unsafe extern "C" fn(Instance, u32) -> bool,
     find_sources: unsafe extern "C" fn(Instance, *mut u32) -> *const Source,
     recv_create: unsafe extern "C" fn(*const RecvCreateV3) -> Instance,
-    recv_capture:
-        unsafe extern "C" fn(Instance, *mut VideoFrameV2, *mut c_void, *mut c_void, u32) -> i32,
+    recv_capture: unsafe extern "C" fn(
+        Instance,
+        *mut VideoFrameV2,
+        *mut AudioFrameV2,
+        *mut c_void,
+        u32,
+    ) -> i32,
     recv_free_video: unsafe extern "C" fn(Instance, *const VideoFrameV2),
+    recv_free_audio: unsafe extern "C" fn(Instance, *const AudioFrameV2),
     recv_destroy: unsafe extern "C" fn(Instance),
 }
 
@@ -436,6 +456,7 @@ fn recv_lib() -> Result<&'static RecvLib, String> {
             recv_create: *l.get(b"NDIlib_recv_create_v3\0").map_err(why)?,
             recv_capture: *l.get(b"NDIlib_recv_capture_v2\0").map_err(why)?,
             recv_free_video: *l.get(b"NDIlib_recv_free_video_v2\0").map_err(why)?,
+            recv_free_audio: *l.get(b"NDIlib_recv_free_audio_v2\0").map_err(why)?,
             recv_destroy: *l.get(b"NDIlib_recv_destroy\0").map_err(why)?,
         })
     })
@@ -523,7 +544,23 @@ pub struct Received<'a> {
     pub interlaced: bool,
 }
 
-/// Receives the video of one NDI source.
+/// Audio received from an NDI source: `channels` planes of `samples`
+/// 32-bit float samples (-1…1).
+pub struct ReceivedAudio<'a> {
+    pub channels: usize,
+    pub samples: usize,
+    pub sample_rate: u32,
+    planes: Vec<&'a [f32]>,
+}
+
+impl ReceivedAudio<'_> {
+    /// The samples of one channel.
+    pub fn channel(&self, i: usize) -> &[f32] {
+        self.planes.get(i).copied().unwrap_or(&[])
+    }
+}
+
+/// Receives the video and audio of one NDI source.
 pub struct NdiReceiver {
     lib: &'static RecvLib,
     instance: Instance,
@@ -557,7 +594,14 @@ impl NdiReceiver {
 
     /// Waits up to `timeout_ms` for a picture and hands it to `f`. Ok(false):
     /// nothing came; Err: the connection failed.
-    pub fn capture(&mut self, timeout_ms: u32, f: impl FnOnce(Received)) -> Result<bool, String> {
+    /// Waits for the next frame: a picture goes to `f`, audio to `sound`.
+    /// True when it was a picture.
+    pub fn capture(
+        &mut self,
+        timeout_ms: u32,
+        f: impl FnOnce(Received),
+        sound: impl FnOnce(ReceivedAudio),
+    ) -> Result<bool, String> {
         let mut v = VideoFrameV2 {
             xres: 0,
             yres: 0,
@@ -572,17 +616,44 @@ impl NdiReceiver {
             p_metadata: std::ptr::null(),
             timestamp: 0,
         };
+        let mut a = AudioFrameV2 {
+            sample_rate: 0,
+            no_channels: 0,
+            no_samples: 0,
+            timecode: 0,
+            p_data: std::ptr::null(),
+            channel_stride_in_bytes: 0,
+            p_metadata: std::ptr::null(),
+            timestamp: 0,
+        };
         // SAFETY: the frame is freed with the runtime's own function after use.
         unsafe {
             let kind = (self.lib.recv_capture)(
                 self.instance,
                 &mut v,
-                std::ptr::null_mut(),
+                &mut a,
                 std::ptr::null_mut(),
                 timeout_ms,
             );
             if kind == FRAME_TYPE_ERROR {
                 return Err("the NDI connection was lost".into());
+            }
+            if kind == FRAME_TYPE_AUDIO {
+                let (n, len) = (a.no_channels.max(0) as usize, a.no_samples.max(0) as usize);
+                let stride = (a.channel_stride_in_bytes.max(0) as usize) / 4;
+                if !a.p_data.is_null() && n > 0 && len > 0 && stride >= len {
+                    let planes = (0..n)
+                        .map(|c| std::slice::from_raw_parts(a.p_data.add(c * stride), len))
+                        .collect();
+                    sound(ReceivedAudio {
+                        channels: n,
+                        samples: len,
+                        sample_rate: a.sample_rate.max(0) as u32,
+                        planes,
+                    });
+                }
+                (self.lib.recv_free_audio)(self.instance, &a);
+                return Ok(false);
             }
             if kind != FRAME_TYPE_VIDEO {
                 return Ok(false);

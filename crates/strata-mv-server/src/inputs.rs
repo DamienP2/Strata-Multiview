@@ -108,9 +108,14 @@ fn default_fps() -> u32 {
     25
 }
 
+/// The levels of the audio, measured by ffmpeg every 40 ms (at 48 kHz) and
+/// written to its log (read by [`MeterLog`]).
+const METER_FILTER: &str = "asetnsamples=n=1920:p=0,astats=metadata=1:reset=1:measure_overall=none:measure_perchannel=Peak_level+RMS_level,ametadata=mode=print";
+
 impl InputConfig {
-    /// The ffmpeg arguments that decode this stream to raw RGBA on stdout.
-    pub fn ffmpeg_args(&self) -> Result<Vec<String>, String> {
+    /// The ffmpeg arguments that decode this stream to raw RGBA on stdout,
+    /// and measure its first audio track (`audio`).
+    pub fn ffmpeg_args(&self, audio: bool) -> Result<Vec<String>, String> {
         // An SRT listener needs only its port.
         let own;
         let url = if self.kind == InputKind::Srt && self.listen && self.port > 0 {
@@ -190,8 +195,11 @@ impl InputConfig {
             a.extend(["-hwaccel", "auto"].map(String::from));
         }
         // The source's own size and rate.
-        a.extend(["-i".into(), url, "-an".into()]);
-        a.extend(["-pix_fmt", "rgba", "-f", "rawvideo", "pipe:1"].map(String::from));
+        a.extend(["-i".into(), url]);
+        a.extend(["-map", "0:v:0", "-pix_fmt", "rgba", "-f", "rawvideo", "pipe:1"].map(String::from));
+        if audio {
+            a.extend(["-map", "0:a:0", "-af", METER_FILTER, "-f", "null", "-"].map(String::from));
+        }
         Ok(a)
     }
 }
@@ -244,6 +252,10 @@ struct Live {
     /// Pictures a second of the source, once known (fields when interlaced).
     rate: Mutex<Option<f64>>,
     interlaced: AtomicBool,
+    /// Where its audio levels go.
+    signals: Arc<crate::signals::Signals>,
+    /// The stream has no audio: ffmpeg is started without the meters.
+    no_audio: AtomicBool,
 }
 
 impl Live {
@@ -373,6 +385,8 @@ impl Live {
 #[derive(Default)]
 pub struct Inputs {
     live: RwLock<BTreeMap<String, Arc<Live>>>,
+    /// Their tally, UMD and audio levels.
+    signals: Arc<crate::signals::Signals>,
 }
 
 impl Inputs {
@@ -388,6 +402,7 @@ impl Inputs {
             }
             keep
         });
+        self.signals.forget_audio(|id| map.contains_key(id));
         for c in configs {
             if map.contains_key(&c.id) || c.id.is_empty() {
                 continue;
@@ -405,6 +420,8 @@ impl Inputs {
                 child: Mutex::new(None),
                 rate: Mutex::new(None),
                 interlaced: AtomicBool::new(false),
+                signals: self.signals.clone(),
+                no_audio: AtomicBool::new(false),
             });
             let l = live.clone();
             let spawned = std::thread::Builder::new()
@@ -482,6 +499,11 @@ impl Inputs {
         Some((l.received.load(Ordering::Relaxed), pic))
     }
 
+    /// The tally, UMD and audio levels of the inputs.
+    pub fn signals(&self) -> &crate::signals::Signals {
+        &self.signals
+    }
+
     pub fn exists(&self, id: &str) -> bool {
         self.live
             .read()
@@ -499,6 +521,41 @@ impl strata_mv_render::LiveInputs for Inputs {
             .get(id)?
             .clone();
         live.current()
+    }
+
+    fn source(&self, id: &str) -> Option<strata_mv_core::signal::SourceView> {
+        let l = self
+            .live
+            .read()
+            .unwrap_or_else(|p| p.into_inner())
+            .get(id)?
+            .clone();
+        let fresh = l
+            .last_at
+            .lock()
+            .unwrap_or_else(|p| p.into_inner())
+            .is_some_and(|t| t.elapsed() < Duration::from_secs(2));
+        let height = l
+            .picture
+            .read()
+            .unwrap_or_else(|p| p.into_inner())
+            .as_ref()
+            .map_or(0, |p| p.height());
+        let fields = l.interlaced.load(Ordering::Relaxed);
+        let rate = *l.rate.lock().unwrap_or_else(|p| p.into_inner());
+        let format = match rate {
+            Some(r) if fresh && height > 0 => {
+                format_name(height, if fields { r / 2.0 } else { r }, fields).unwrap_or_default()
+            }
+            _ => String::new(),
+        };
+        Some(strata_mv_core::signal::SourceView {
+            name: l.config.name.clone(),
+            format,
+            live: fresh,
+            tally: self.signals.tally(id),
+            levels: self.signals.levels(id),
+        })
     }
 }
 
@@ -676,14 +733,18 @@ fn ndi_shot(source: &str, width: u32) -> Result<Option<NdiShot>, String> {
     let until = Instant::now() + Duration::from_secs(4);
     while Instant::now() < until {
         let mut got = None;
-        rx.capture(500, |f| {
-            let fps = if f.rate.1 > 0 {
-                f.rate.0 as f64 / f.rate.1 as f64
-            } else {
-                0.0
-            };
-            got = premultiplied(&f).map(|pm| (pm, fps, f.interlaced));
-        })?;
+        rx.capture(
+            500,
+            |f| {
+                let fps = if f.rate.1 > 0 {
+                    f.rate.0 as f64 / f.rate.1 as f64
+                } else {
+                    0.0
+                };
+                got = premultiplied(&f).map(|pm| (pm, fps, f.interlaced));
+            },
+            |_| {},
+        )?;
         if let Some((pm, fps, interlaced)) = got {
             let (w, h) = (pm.width(), pm.height());
             return Ok(strata_mv_render::jpeg(&pm, width, 75).map(|jpeg| NdiShot {
@@ -823,11 +884,12 @@ pub async fn mjpeg(
 /// A stream through ffmpeg, started again 2 s after it stops.
 fn run_stream(l: &Live) {
     let c = &l.config;
-    let args = match c.ffmpeg_args() {
-        Ok(a) => a,
-        Err(e) => return l.say(e),
-    };
+    if let Err(e) = c.ffmpeg_args(false) {
+        return l.say(e);
+    }
     while !l.stopped() {
+        let audio = !l.no_audio.load(Ordering::Relaxed);
+        let args = c.ffmpeg_args(audio).unwrap_or_default();
         let spawned = strata_mv_output::ffmpeg::command()
             .args(&args)
             .stdin(Stdio::null())
@@ -855,10 +917,19 @@ fn run_stream(l: &Live) {
         let (format_tx, format_rx) = std::sync::mpsc::channel::<(u32, u32, Option<f64>)>();
         if let Some(err) = child.stderr.take() {
             let log = log.clone();
+            let (signals, id) = (l.signals.clone(), c.id.clone());
             std::thread::spawn(move || {
                 let mut sent = false;
                 let mut in_output = false;
+                let mut meters = MeterLog::default();
                 for line in log_lines(err) {
+                    // The audio levels: to the meters, not to the log.
+                    if let Some(levels) = meters.line(&line) {
+                        if let Some(levels) = levels {
+                            signals.measure(&id, &levels);
+                        }
+                        continue;
+                    }
                     if line.starts_with("Output #") {
                         in_output = true;
                     }
@@ -913,11 +984,72 @@ fn run_stream(l: &Live) {
         if l.stopped() {
             return;
         }
+        // No audio track: again at once, without the meters.
+        if audio
+            && log
+                .lock()
+                .unwrap_or_else(|p| p.into_inner())
+                .contains("matches no streams")
+        {
+            l.no_audio.store(true, Ordering::Relaxed);
+            continue;
+        }
         let why = strata_mv_output::ffmpeg::tail(&log.lock().unwrap_or_else(|p| p.into_inner()));
         l.say(format!("Stopped: {why} — trying again"));
         if !l.pause(Duration::from_secs(2)) {
             return;
         }
+    }
+}
+
+/// Reads the levels ffmpeg writes in its log (`ametadata=mode=print` after
+/// `astats`): `frame:… pts:…`, then `lavfi.astats.<channel>.Peak_level=…` and
+/// `RMS_level=…` for each channel.
+#[derive(Default)]
+struct MeterLog {
+    /// Peak and power of each channel (1-based) of the frame being read.
+    frame: BTreeMap<usize, (f32, f32)>,
+}
+
+impl MeterLog {
+    /// None: not a line of the meters. Some(Some(levels)): a frame read
+    /// whole (the next one starts).
+    fn line(&mut self, line: &str) -> Option<Option<Vec<strata_mv_core::signal::Level>>> {
+        use strata_mv_core::signal::{Level, SILENCE};
+        if !line.contains("Parsed_ametadata") {
+            return None;
+        }
+        if let Some(rest) = line.split("lavfi.astats.").nth(1) {
+            let (key, value) = rest.split_once('=')?;
+            let (ch, what) = key.split_once('.')?;
+            let ch: usize = ch.parse().ok()?;
+            let v = value
+                .trim()
+                .parse::<f32>()
+                .ok()
+                .filter(|v| v.is_finite())
+                .unwrap_or(SILENCE)
+                .max(SILENCE);
+            let e = self.frame.entry(ch).or_insert((SILENCE, SILENCE));
+            match what {
+                "Peak_level" => e.0 = v,
+                "RMS_level" => e.1 = v,
+                _ => {}
+            }
+            return Some(None);
+        }
+        if line.contains("frame:") && !self.frame.is_empty() {
+            let levels = std::mem::take(&mut self.frame)
+                .into_values()
+                .map(|(peak, rms)| Level {
+                    peak,
+                    rms,
+                    hold: peak,
+                })
+                .collect();
+            return Some(Some(levels));
+        }
+        Some(None)
     }
 }
 
@@ -977,10 +1109,20 @@ fn run_ndi(l: &Live) {
         let mut shown = None;
         while !l.stopped() {
             let (mut pic, mut format) = (None, ((0, 0), false));
-            match rx.capture(500, |f| {
-                pic = premultiplied(&f);
-                format = (f.rate, f.interlaced);
-            }) {
+            let signals = &l.signals;
+            match rx.capture(
+                500,
+                |f| {
+                    pic = premultiplied(&f);
+                    format = (f.rate, f.interlaced);
+                },
+                |a| {
+                    let levels: Vec<_> = (0..a.channels)
+                        .map(|c| strata_mv_core::signal::Level::of(a.channel(c).iter().copied()))
+                        .collect();
+                    signals.measure(&l.config.id, &levels);
+                },
+            ) {
                 Ok(_) => {}
                 Err(e) => {
                     l.say(format!("{e} — trying again"));
@@ -1119,6 +1261,20 @@ fn run_sdi(l: &Live) {
                     } else if let Some(pm) = Pixmap::from_vec(rgba, size) {
                         l.put(pm);
                     }
+                    // Its embedded audio, measured since the last picture.
+                    let audio = card.audio();
+                    if !audio.is_empty() {
+                        use strata_mv_core::signal::{db, Level};
+                        let levels: Vec<Level> = audio
+                            .iter()
+                            .map(|&(peak, rms)| Level {
+                                peak: db(peak),
+                                rms: db(rms),
+                                hold: db(peak),
+                            })
+                            .collect();
+                        l.signals.measure(&c.id, &levels);
+                    }
                 }
                 None => {
                     if card.signal() == Some(false) {
@@ -1200,6 +1356,8 @@ mod tests {
             child: Mutex::new(None),
             rate: Mutex::new(None),
             interlaced: AtomicBool::new(false),
+            signals: Default::default(),
+            no_audio: AtomicBool::new(false),
         }
     }
 
@@ -1287,7 +1445,7 @@ mod tests {
     fn an_srt_listener_needs_only_its_port() {
         let mut c = input(InputKind::Srt, "", true);
         c.port = 10001;
-        let a = c.ffmpeg_args().unwrap();
+        let a = c.ffmpeg_args(true).unwrap();
         assert!(
             a.contains(&"srt://0.0.0.0:10001?mode=listener&latency=120000".to_string()),
             "{a:?}"
@@ -1297,7 +1455,7 @@ mod tests {
         let mut c = input(InputKind::Srt, "srt://cam:9000", false);
         c.latency = 300;
         assert!(c
-            .ffmpeg_args()
+            .ffmpeg_args(true)
             .unwrap()
             .contains(&"srt://cam:9000?latency=300000".to_string()));
     }
@@ -1305,22 +1463,46 @@ mod tests {
     #[test]
     fn stream_addresses() {
         let a = input(InputKind::Srt, "srt://0.0.0.0:9000", true)
-            .ffmpeg_args()
+            .ffmpeg_args(true)
             .unwrap();
         // An old listener given by its address keeps it.
         assert!(a.contains(&"srt://0.0.0.0:9000?mode=listener&latency=120000".to_string()));
         let a = input(InputKind::Rtmp, "rtmp://0.0.0.0/live/cam", true)
-            .ffmpeg_args()
+            .ffmpeg_args(true)
             .unwrap();
         assert!(a.windows(2).any(|w| w == ["-listen", "1"]));
         assert!(input(InputKind::Hls, "srt://x", false)
-            .ffmpeg_args()
+            .ffmpeg_args(true)
             .is_err());
-        assert!(input(InputKind::Udp, "", false).ffmpeg_args().is_err());
+        assert!(input(InputKind::Udp, "", false).ffmpeg_args(true).is_err());
         let a = input(InputKind::Udp, "udp://@239.1.1.1:5000", false)
-            .ffmpeg_args()
+            .ffmpeg_args(true)
             .unwrap();
         assert!(a.windows(2).any(|w| w == ["-f", "rawvideo"]));
+        // The audio measured on a second output, unless there is none.
+        assert!(a.windows(2).any(|w| w == ["-map", "0:a:0"]));
+        assert!(!input(InputKind::Udp, "udp://@239.1.1.1:5000", false)
+            .ffmpeg_args(false)
+            .unwrap()
+            .iter()
+            .any(|x| x == "0:a:0"));
+    }
+
+    #[test]
+    fn the_meters_are_read_from_the_log() {
+        let mut m = MeterLog::default();
+        assert!(m.line("Input #0, mpegts, from 'udp://…':").is_none());
+        let p = "[Parsed_ametadata_2 @ 0x55d0c]";
+        assert_eq!(m.line(&format!("{p} frame:0    pts:0       pts_time:0")), Some(None));
+        assert_eq!(m.line(&format!("{p} lavfi.astats.1.Peak_level=-6.020600")), Some(None));
+        assert_eq!(m.line(&format!("{p} lavfi.astats.1.RMS_level=-9.031400")), Some(None));
+        assert_eq!(m.line(&format!("{p} lavfi.astats.2.Peak_level=-inf")), Some(None));
+        let Some(Some(l)) = m.line(&format!("{p} frame:1    pts:1920    pts_time:0.04")) else {
+            panic!("a frame read whole")
+        };
+        assert_eq!(l.len(), 2);
+        assert!((l[0].peak + 6.0206).abs() < 1e-3 && (l[0].rms + 9.0314).abs() < 1e-3);
+        assert_eq!(l[1].peak, strata_mv_core::signal::SILENCE);
     }
 
     #[test]
@@ -1351,6 +1533,69 @@ mod tests {
     }
 
     /// A stream sent by ffmpeg comes back as pictures (needs ffmpeg).
+    #[test]
+    fn the_audio_of_a_stream_is_measured() {
+        if strata_mv_output::ffmpeg::command()
+            .arg("-version")
+            .output()
+            .is_err()
+        {
+            return;
+        }
+        let port = 46_000 + (std::process::id() % 1000) as u16;
+        let hub = Inputs::default();
+        hub.apply(&[InputConfig {
+            width: 320,
+            height: 180,
+            ..input(InputKind::Udp, &format!("udp://127.0.0.1:{port}"), false)
+        }]);
+        // Two channels: -6 dBFS and -20 dBFS.
+        let mut send = strata_mv_output::ffmpeg::command()
+            .args([
+                "-re",
+                "-f",
+                "lavfi",
+                "-i",
+                "testsrc=size=320x180:rate=25",
+                "-f",
+                "lavfi",
+                "-i",
+                "aevalsrc=0.5*sin(2*PI*440*t)|0.1*sin(2*PI*880*t):s=48000",
+                "-t",
+                "8",
+                "-c:v",
+                "libx264",
+                "-preset",
+                "ultrafast",
+                "-g",
+                "25",
+                "-c:a",
+                "aac",
+                "-f",
+                "mpegts",
+            ])
+            .arg(format!("udp://127.0.0.1:{port}?pkt_size=1316"))
+            .stdout(Stdio::null())
+            .stderr(Stdio::null())
+            .spawn()
+            .unwrap();
+        let mut levels = Vec::new();
+        for _ in 0..80 {
+            std::thread::sleep(Duration::from_millis(100));
+            levels = hub.signals().levels("in-1");
+            if levels.len() == 2 && levels[0].peak > -10.0 {
+                break;
+            }
+        }
+        let _ = send.kill();
+        let _ = send.wait();
+        assert_eq!(levels.len(), 2, "{:?}", hub.status());
+        assert!((levels[0].peak + 6.0).abs() < 2.0, "{levels:?}");
+        assert!((levels[1].peak + 20.0).abs() < 2.0, "{levels:?}");
+        let view = strata_mv_render::LiveInputs::source(&hub, "in-1").unwrap();
+        assert_eq!(view.levels.len(), 2);
+    }
+
     #[test]
     fn a_udp_stream_is_received() {
         if strata_mv_output::ffmpeg::command()

@@ -13,9 +13,10 @@ import { eff, timed } from './timer-fmt';
 import ticker from './ticker';
 import qrcode from './qrcode';
 import web from './web';
+import source from './source';
 
 /** In the order of the spec. */
-export const WIDGET_LIST: WidgetDef[] = [quad, polygon, ellipse, text, image, pen, clock, time, ticker, qrcode, web] as unknown as WidgetDef[];
+export const WIDGET_LIST: WidgetDef[] = [source, quad, polygon, ellipse, text, image, pen, clock, time, ticker, qrcode, web] as unknown as WidgetDef[];
 
 /** By layer type (a `clock` layer: the Clock; widgetOf(layer) tells the Clock from the Time). */
 export const WIDGETS: Partial<Record<LayerType, WidgetDef>> = Object.fromEntries([...WIDGET_LIST].reverse().map((w) => [w.type, w]));

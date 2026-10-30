@@ -1,3 +1,5 @@
+import { applyLayout, LayoutButton, LayoutPicker, PRESETS, type LayoutPreset } from './Layouts';
+import { useInputs } from '../engine/liveInputs';
 import { Copy, GripVertical, Link2, Plus, Redo2, Trash2, Undo2, X, Zap } from 'lucide-react';
 import { memo, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
@@ -200,14 +202,18 @@ function TemplateList({ project }: { project: Project }) {
   const [newOpen, setNewOpen] = useState(false);
   const [newName, setNewName] = useState('');
   const [newZone, setNewZone] = useState('');
+  const [newLayout, setNewLayout] = useState('2x2');
+  const [newGap, setNewGap] = useState(4);
+  const [newMargin, setNewMargin] = useState(0);
+  const inputs = useInputs();
   const openNew = () => {
-    setNewName(t('Template {n}', { n: designTemplates(project).length + 1 }));
+    setNewName(t('Multiview {n}', { n: designTemplates(project).length + 1 }));
     setNewZone(defaultZone ?? '');
     setNewOpen(true);
   };
   const createNew = () => {
     setNewOpen(false);
-    void create(undefined, newName, newZone || undefined);
+    void create(undefined, newName, newZone || undefined, PRESETS.find((p) => p.id === newLayout));
   };
   // Dragging a template to another place in the list: the one moved, and where it goes.
   const [dragging, setDragging] = useState<string | null>(null);
@@ -223,8 +229,10 @@ function TemplateList({ project }: { project: Project }) {
     api('PUT', `/api/projects/${encodeURIComponent(project.id)}/design-order`, rest).catch((e) => toast((e as Error).message, 'error'));
   };
   const defaultZone = (project.zones.find((z) => z.id === 'full-screen' || /full/i.test(z.name)) ?? project.zones[0])?.id;
-  const create = async (base?: Template, name?: string, zone?: string) => {
-    const tpl = base ? { ...structuredClone(base), id: newId(), name: t('{name} copy', { name: base.name }) } : newTemplate(name?.trim() || t('Template {n}', { n: designTemplates(project).length + 1 }), zone ?? defaultZone, project.frameRate.num / project.frameRate.den, project.templateSecs ?? 1);
+  const create = async (base?: Template, name?: string, zone?: string, layout?: LayoutPreset) => {
+    const tpl = base ? { ...structuredClone(base), id: newId(), name: t('{name} copy', { name: base.name }) } : newTemplate(name?.trim() || t('Multiview {n}', { n: designTemplates(project).length + 1 }), zone ?? defaultZone, project.frameRate.num / project.frameRate.den, project.templateSecs ?? 1);
+    // Its tiles placed on the layout chosen, with the inputs in order.
+    if (layout && !base) applyLayout(tpl, layout, { width: project.width, height: project.height }, newGap, newMargin, inputs);
     // Open it at once; the save follows.
     load(tpl);
     await saveTemplate(tpl);
@@ -233,18 +241,18 @@ function TemplateList({ project }: { project: Project }) {
     // A click beside the templates leaves the open one, like Esc.
     <div className="template-list" onClick={() => template && load(null)}>
       <header onClick={(e) => e.stopPropagation()}>
-        <span>{t('Templates')}</span>
+        <span>{t('Multiviews')}</span>
         <div className="header-actions">
-          <button className="opx-add" title={t('New template')} onClick={openNew}>
+          <button className="opx-add" title={t('New multiview')} onClick={openNew}>
             <Plus size={15} />
           </button>
         </div>
         {newOpen &&
           createPortal(
           <div className="modal-back" onPointerDown={() => setNewOpen(false)}>
-            <div className="modal new-tpl" role="dialog" aria-label={t('New template')} onPointerDown={(e) => e.stopPropagation()}>
+            <div className="modal new-tpl" role="dialog" aria-label={t('New multiview')} onPointerDown={(e) => e.stopPropagation()}>
               <header>
-                <h2>{t('New template')}</h2>
+                <h2>{t('New multiview')}</h2>
                 <button type="button" className="icon-btn ghost" title={t('Close')} onClick={() => setNewOpen(false)}>
                   <X size={16} />
                 </button>
@@ -268,6 +276,10 @@ function TemplateList({ project }: { project: Project }) {
                       options={project.zones.map((z) => ({ value: z.id, label: z.name || '—', note: `L${z.layer}`, icon: <span className="ntpl-dot" style={{ background: z.color }} /> }))}
                       onChange={setNewZone}
                     />
+                  </div>
+                  <div className="set-field">
+                    <span className="set-label">{t('Layout')}</span>
+                    <LayoutPicker value={newLayout} onChange={setNewLayout} gap={newGap} margin={newMargin} onGap={setNewGap} onMargin={setNewMargin} none />
                   </div>
                   <button className="btn primary">
                     <Plus size={14} /> {t('Create')}
@@ -513,6 +525,7 @@ export const Designer = memo(function Designer() {
           <div className="spacer" />
           {template && (
             <>
+              <LayoutButton project={project} />
               <button className={`btn small ${logicCount ? 'has' : ''}`} onClick={() => setLogicOpen(true)} title={t('Relations between values: a box that follows a text, conditions…')}>
                 <Link2 size={13} /> {t('Logic')}
               </button>
