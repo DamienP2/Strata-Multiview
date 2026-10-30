@@ -5,13 +5,12 @@ import { create } from 'zustand';
 import { newId, num, propValue } from '../engine/evaluate';
 import { forgetKeys } from '../engine/settings';
 import { setOnTimeline } from '../engine/timelineProps';
-import { COLOR_PROPS, PROPS, TEXT_LIKE, type Field, type Keyframe, type Layer, type Prop, type Template, type Value } from '../engine/types';
+import { TEXT_LIKE, type Field, type Keyframe, type Layer, type Prop, type Template, type Value } from '../engine/types';
 import { useApp } from '../store';
 import { widgetOf } from '../widgets';
 import { t, tn } from '../i18n';
 import { PROP_LABELS } from './Inspector';
-import { descendants, findLayer, setProp, useDesigner } from './designerStore';
-import { confirmDialog } from '../ui/dialogs';
+import { descendants, findLayer, useDesigner } from './designerStore';
 
 /** Copied layers, with their children, as saved (all formats). */
 export interface LayersClip {
@@ -62,23 +61,6 @@ const propName = (p: Prop) => t(PROP_LABELS[p] ?? p);
 // ---------------------------------------------------------------------------
 // Animation
 
-/** The animated properties of a layer, in timeline order. */
-export const animatedProps = (l: Layer) => PROPS.filter((p) => l.tracks[p]?.length);
-
-/** Copies the keyframes of a layer (all its animated properties) or of some of its properties. */
-export function copyAnimation(layerId: string, props?: Prop[], rowLabel?: string) {
-  const tpl = useDesigner.getState().template;
-  const l = tpl && findLayer(tpl, layerId);
-  if (!l) return;
-  const list = (props ?? PROPS).filter((p) => l.tracks[p]?.length);
-  if (!list.length) return toast(t('Nothing to copy: no keyframes here'), 'error');
-  const tracks: AnimClip['tracks'] = {};
-  for (const p of list) tracks[p] = structuredClone(l.tracks[p]!);
-  const label = rowLabel ? `${l.name} · ${t(rowLabel)}` : l.name;
-  useClipboard.setState({ animation: { tracks, props: list, scope: props ? 'row' : 'layer', label }, last: 'animation' });
-  toast(props ? t('Animation of {what} copied: paste it on another property or layer', { what: label }) : tn(list.length, 'Animation of {name} copied ({n} property): paste it on another layer (Ctrl+V)', 'Animation of {name} copied ({n} properties): paste it on another layer (Ctrl+V)', { name: l.name }));
-}
-
 const ALWAYS = new Set<Prop>(['x', 'y', 'width', 'height', 'anchorX', 'anchorY', 'rotation', 'scaleX', 'scaleY', 'opacity', 'cropLeft', 'cropRight', 'cropTop', 'cropBottom']);
 
 /** Whether a layer has a property (as its properties panel shows them). */
@@ -97,14 +79,6 @@ export function layerHasProp(l: Layer, p: Prop): boolean {
   if (p === 'cornerTl' || p === 'cornerTr' || p === 'cornerBr' || p === 'cornerBl') return l.type === 'rect';
   if (p === 'fill2') return ['rect', 'ellipse', 'polygon', 'pen', 'text'].includes(l.type);
   return false;
-}
-
-/** Which copied property goes to which property of a row: the same ones, or a row of the same kind (Fill → Stroke). */
-export function rowMapping(clip: AnimClip, target: Prop[]): [Prop, Prop][] {
-  const common = target.filter((p) => clip.props.includes(p));
-  if (common.length) return common.map((p) => [p, p]);
-  if (clip.props.length === target.length && clip.props.every((p, i) => COLOR_PROPS.has(p) === COLOR_PROPS.has(target[i]))) return clip.props.map((p, i) => [p, target[i]]);
-  return [];
 }
 
 function applyTracks(l: Layer, pairs: [Prop, Prop][], clip: AnimClip) {
@@ -138,83 +112,8 @@ export function pasteAnimation(layerIds: string[]) {
   toast(skipped.size ? tn(done, 'Animation pasted on {n} layer — skipped (not on this widget): {props}', 'Animation pasted on {n} layers — skipped (not on these widgets): {props}', { props: names }) : tn(done, 'Animation pasted on {n} layer', 'Animation pasted on {n} layers'));
 }
 
-/** Pastes the copied animation on one property row of a layer. */
-export function pasteAnimationOnRow(layerId: string, props: Prop[]) {
-  const st = useDesigner.getState();
-  const clip = useClipboard.getState().animation;
-  if (!clip || !st.template || st.readOnly) return;
-  const pairs = rowMapping(clip, props);
-  if (!pairs.length) return toast(t('This animation does not fit this property'), 'error');
-  st.update((tpl) => {
-    const l = findLayer(tpl, layerId);
-    if (l) applyTracks(l, pairs, clip);
-  });
-}
-
 // ---------------------------------------------------------------------------
 // Copy all, paste as chosen
-
-/** The values « Paste… » offers, by group. */
-export const PASTE_GROUPS: { id: string; label: string; props: Prop[] }[] = [
-  { id: 'position', label: 'Position', props: ['x', 'y'] },
-  { id: 'size', label: 'Size', props: ['width', 'height'] },
-  { id: 'scale', label: 'Scale', props: ['scaleX', 'scaleY'] },
-  { id: 'rotation', label: 'Rotation', props: ['rotation'] },
-  { id: 'opacity', label: 'Opacity', props: ['opacity'] },
-  { id: 'anchor', label: 'Anchor', props: ['anchorX', 'anchorY'] },
-  { id: 'crop', label: 'Reveal mask', props: ['cropLeft', 'cropRight', 'cropTop', 'cropBottom'] },
-  { id: 'colours', label: 'Colours', props: ['fill', 'fill2', 'stroke', 'strokeWidth'] },
-  { id: 'corners', label: 'Corners', props: ['cornerRadius', 'cornerTl', 'cornerTr', 'cornerBr', 'cornerBl'] },
-  { id: 'text', label: 'Text size and spacing', props: ['fontSize', 'letterSpacing'] },
-];
-
-/** Copies everything of a layer: its values at the playhead, its keyframes and its span. */
-export function copyAll(layerId: string) {
-  const st = useDesigner.getState();
-  const l = st.template && findLayer(st.template, layerId);
-  if (!l) return;
-  const values: AllClip['values'] = {};
-  for (const g of PASTE_GROUPS) for (const p of g.props) if (layerHasProp(l, p)) values[p] = structuredClone(propValue(l, p, st.frame));
-  const tracks: AllClip['tracks'] = {};
-  for (const p of animatedProps(l)) tracks[p] = structuredClone(l.tracks[p]!);
-  useClipboard.setState({ all: { values, tracks, span: l.span ? { ...l.span } : undefined, label: l.name }, last: 'all' });
-  toast(t('“{name}” copied: paste on another layer to choose what to take', { name: l.name }));
-}
-
-/** What « Paste… » can paste on these layers: the value groups both sides have, the animation, the span. */
-export function pasteChoices(clip: AllClip, targets: Layer[]) {
-  const has = (p: Prop) => clip.values[p] !== undefined && targets.some((l) => layerHasProp(l, p));
-  const animated = (Object.keys(clip.tracks) as Prop[]).filter((p) => targets.some((l) => layerHasProp(l, p)));
-  return { groups: PASTE_GROUPS.filter((g) => g.props.some(has)), animated, span: !!clip.span };
-}
-
-/** Pastes on layers what was chosen: value groups, then the animation (its keyframes win), then the span. */
-export function pasteAll(layerIds: string[], chosen: { groups: string[]; animation: boolean; span: boolean }) {
-  const st = useDesigner.getState();
-  const clip = useClipboard.getState().all;
-  if (!clip || !st.template || st.readOnly) return;
-  const props = PASTE_GROUPS.filter((g) => chosen.groups.includes(g.id)).flatMap((g) => g.props);
-  st.update((tpl) => {
-    for (const id of layerIds) {
-      const l = findLayer(tpl, id);
-      if (!l || l.locked) continue;
-      for (const p of props) if (clip.values[p] !== undefined && layerHasProp(l, p)) setProp(l, p, structuredClone(clip.values[p]!), st.frame);
-      if (chosen.animation) {
-        const ps = (Object.keys(clip.tracks) as Prop[]).filter((p) => layerHasProp(l, p));
-        applyTracks(
-          l,
-          ps.map((p) => [p, p]),
-          { tracks: clip.tracks, props: ps, scope: 'layer', label: clip.label },
-        );
-      }
-      if (chosen.span) {
-        if (clip.span) l.span = { ...clip.span };
-        else delete l.span;
-      }
-    }
-  });
-  toast(tn(layerIds.length, 'Pasted on {n} layer', 'Pasted on {n} layers'));
-}
 
 // ---------------------------------------------------------------------------
 // Layers
@@ -407,52 +306,3 @@ export function pasteClipboard() {
   if (c.layers) pasteLayers();
 }
 
-/**
- * Erases the keyframes of layers (all their properties, or some), once confirmed. A property
- * left without keyframes keeps its value at the playhead (and stays on the timeline).
- */
-export async function clearKeyframes(layerIds: string[], props: Prop[] | undefined, title: string) {
-  const st = useDesigner.getState();
-  const tpl = st.template;
-  if (!tpl) return;
-  const list: readonly Prop[] = props ?? PROPS;
-  let n = 0;
-  for (const id of layerIds) for (const p of list) n += findLayer(tpl, id)?.tracks[p]?.length ?? 0;
-  if (!n || !(await confirmDialog({ title, message: tn(n, '{n} keyframe is erased.', '{n} keyframes are erased.'), confirm: t('Erase keyframes'), danger: true }))) return;
-  const frame = useDesigner.getState().frame;
-  st.update((d) => {
-    for (const id of layerIds) {
-      const l = findLayer(d, id);
-      if (!l) continue;
-      for (const p of list)
-        if (l.tracks[p]?.length) {
-          l.props[p] = propValue(l, p, frame);
-          delete l.tracks[p];
-        }
-    }
-  });
-  st.selectKeys(useDesigner.getState().selectedKeys.filter((k) => !layerIds.includes(k.layerId) || !list.includes(k.prop)));
-}
-
-/** Erases the selected keyframes (Del, or once confirmed from the menu). */
-export async function clearSelectedKeys(ask: boolean) {
-  const st = useDesigner.getState();
-  const keys = st.selectedKeys;
-  if (!keys.length) return;
-  if (ask && !(await confirmDialog({ title: tn(keys.length, 'Erase the selected keyframe?', 'Erase the {n} selected keyframes?'), confirm: t('Erase keyframes'), danger: true }))) return;
-  const frame = st.frame;
-  st.update((d) => {
-    for (const k of keys) {
-      const l = findLayer(d, k.layerId);
-      const tr = l?.tracks[k.prop];
-      if (!l || !tr) continue;
-      const remaining = tr.filter((x) => x.frame !== k.frame);
-      if (remaining.length) l.tracks[k.prop] = remaining;
-      else {
-        l.props[k.prop] = propValue(l, k.prop, frame);
-        delete l.tracks[k.prop];
-      }
-    }
-  });
-  st.selectKeys([]);
-}

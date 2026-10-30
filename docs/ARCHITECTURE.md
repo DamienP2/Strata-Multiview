@@ -4,7 +4,7 @@
 
 | | **Strata Multiview** |
 | --- | --- |
-| Création | Designer dans le navigateur : dispositions, tuiles Source, horloges, logos, textes ; timeline, logique, publication |
+| Création | Designer dans le navigateur : dispositions, tuiles Source, horloges, logos, textes ; logique, publication (ni timeline ni animation) |
 | Rendu | **Un seul modèle de scène, deux moteurs** : Rust (baseband) et DOM (HTML5) |
 | Entrées | SRT, UDP, RTMP, HLS, RTSP, URL (ffmpeg), NDI, SDI (DeckLink) ; image et audio (niveaux par canal) |
 | Signaux | Tally et UMD : TSL UMD 3.1 et 5.0, Blackmagic ATEM, GPI, API |
@@ -37,9 +37,8 @@
 - **Modèle** (`model.rs`) : `Project`, puis `Template` (un multiview), puis `Layer` (group, rect, ellipse, text, image et les widgets), avec ses `props` statiques et ses `tracks` de keyframes. Le modèle est sérialisé en JSON camelCase ; il a un miroir TypeScript dans `web/src/engine/types.ts`.
 - **Tuile Source** (`wid/source.rs`) : réglages (entrée, ajustement, cadre de tally, UMD, vu-mètres, format) et **géométrie** (`layout`) : où vont l'image, la barre d'UMD, ses lampes, son texte et chaque barre de vu-mètre. Les deux moteurs la suivent ; miroir TypeScript : `web/src/widgets/source.tsx`.
 - **Signaux** (`signal.rs`) : ce qu'une entrée porte en plus de son image, tel que la tuile le dessine : `Tally` (antenne, préparation, aux, texte d'UMD), `Level` (crête, puissance, maintien en dBFS par canal), `SourceView`.
-- **Animation** (`anim.rs`, `easing.rs`) et **playout** (`playout.rs`) : un multiview est un modèle à l'antenne sur la couche de sa zone ; il entre, puis reste à son point d'antenne.
+- **Playout** (`playout.rs`) : un multiview est un modèle à l'antenne sur la couche de sa zone. Le Designer ne crée ni images clés ni animation ; le moteur (`anim.rs`) résout simplement les propriétés de chaque calque.
 - **Logique** (`logic.rs`) : graphe de relations par modèle, évalué à chaque image ; miroir TypeScript `web/src/engine/logic.ts`.
-- **Lottie** (`lottie.rs`) : conversion d'un export Bodymovin / Lottie en calques (`strata-mv-server/src/lottie_import.rs` lit les archives).
 - **Widgets** (`wid/`) : chaque widget est une fonction pure de ses réglages, de l'heure du serveur et du temps à l'antenne : les rendus Rust et HTML5 sont identiques.
 
 ### Conventions de rendu (communes aux deux moteurs)

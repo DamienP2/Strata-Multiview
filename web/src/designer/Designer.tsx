@@ -1,6 +1,6 @@
 import { applyLayout, LayoutButton, LayoutPicker, PRESETS, type LayoutPreset } from './Layouts';
 import { useInputs } from '../engine/liveInputs';
-import { Copy, GripVertical, Link2, Plus, Redo2, Trash2, Undo2, X, Zap } from 'lucide-react';
+import { Copy, GripVertical, Link2, Plus, Redo2, Trash2, Undo2, X } from 'lucide-react';
 import { memo, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Dropdown } from '../ui/Dropdown';
@@ -12,10 +12,8 @@ import { useShallow } from 'zustand/react/shallow';
 import { Inspector } from './Inspector';
 import { LockOverlay, TopPublish, useEditLock } from './Collab';
 import { Stage, StageZoom } from './Stage';
-import { PasteDialog } from './PasteDialog';
-import { AnimationsDialog } from './AnimationsDialog';
-import { Timeline } from './Timeline';
-import { clearSelectedKeys, copyLayers, cutLayers, pasteClipboard } from './clipboard';
+import { LayerList } from './LayerList';
+import { copyLayers, cutLayers, pasteClipboard } from './clipboard';
 import { useZoneEdit, ZonesPanel } from './ZoneEditor';
 import { LogicEditor } from './LogicEditor';
 import { useGuidesView } from './Guides';
@@ -29,49 +27,6 @@ import { designTemplates, publishState } from '../engine/drafts';
 import { confirmDialog } from '../ui/dialogs';
 import { t } from '../i18n';
 import { useDisplayPref } from '../displayPrefs';
-
-function usePlayback(fps: number) {
-  const playing = useDesigner((s) => s.playing);
-  useEffect(() => {
-    if (!playing) return;
-    let raf = 0;
-    let last = performance.now();
-    const tick = (now: number) => {
-      const st = useDesigner.getState();
-      const t = st.template;
-      if (!t) return;
-      // The first rAF timestamp can precede the effect: never step back.
-      const dt = (Math.max(0, now - last) / 1000) * fps;
-      last = now;
-      let next = st.frame + dt;
-      // Like on air: stop on the pauses and the On air point (Loop plays through).
-      if (!st.loop) {
-        const stop = t.markers.filter((m) => (m.kind === 'pause' || m.kind === 'out') && m.frame > st.frame + 1e-3 && m.frame <= next).sort((a, b) => a.frame - b.frame)[0];
-        if (stop) {
-          useDesigner.setState({ frame: stop.frame, playing: false });
-          // A timed pause plays on by itself, as on air.
-          if (stop.resume?.type === 'after')
-            setTimeout(() => {
-              const s = useDesigner.getState();
-              if (!s.playing && Math.abs(s.frame - stop.frame) < 1e-3) s.setPlaying(true);
-            }, stop.resume.seconds * 1000);
-          return;
-        }
-      }
-      if (next >= t.duration) {
-        if (st.loop) next = 0;
-        else {
-          useDesigner.setState({ frame: t.duration, playing: false });
-          return;
-        }
-      }
-      useDesigner.setState({ frame: next });
-      raf = requestAnimationFrame(tick);
-    };
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
-  }, [playing, fps]);
-}
 
 /** The project the Designer's open template belongs to (the store outlives the Designer). */
 let designedProject: string | null = null;
@@ -148,23 +103,15 @@ function useShortcuts() {
         // Space held: the hand, to move the canvas (Stage). A focused button would also "click" on it.
         e.preventDefault();
         if (target.closest('button')) (target as HTMLElement).blur();
-      } else if (!mod && !e.altKey && e.key.toLowerCase() === 'k') {
-        e.preventDefault();
-        if (!e.repeat) st.setPlaying(!st.playing);
       } else if (e.key === 'Delete' || e.key === 'Backspace') {
-        if (st.selectedKeys.length) void clearSelectedKeys(false);
-        else if (st.selected.length) {
+        if (st.selected.length) {
           st.update((d) => {
             const ids = new Set(st.selected.flatMap((id) => [id, ...descendants(d, id)]));
             d.layers = d.layers.filter((l) => !ids.has(l.id));
           });
           st.select([]);
         }
-      } else if (e.key === 'Home') st.setFrame(0);
-      else if (e.key === 'End') st.setFrame(t.duration);
-      else if (e.key === ',' || e.key === 'PageUp') st.setFrame(Math.round(st.frame) - (e.shiftKey ? 10 : 1));
-      else if (e.key === '.' || e.key === 'PageDown') st.setFrame(Math.round(st.frame) + (e.shiftKey ? 10 : 1));
-      else if (e.key.startsWith('Arrow') && st.selected.length) {
+      } else if (e.key.startsWith('Arrow') && st.selected.length) {
         e.preventDefault();
         const d = e.shiftKey ? 10 : 1;
         const [dx, dy] = {
@@ -378,35 +325,16 @@ export const Designer = memo(function Designer() {
   useEffect(() => setTopSlot(document.getElementById('topbar-slot')), []);
   const [showZones, setShowZones] = useDisplayPref('designer.zones', true);
   const [logicOpen, setLogicOpen] = useState(false);
-  const [triggersOpen, setTriggersOpen] = useState(false);
-  // A marker set to « Déclencheurs » opens them.
-  useEffect(() => {
-    const open = () => setTriggersOpen(true);
-    window.addEventListener('strata:open-triggers', open);
-    return () => window.removeEventListener('strata:open-triggers', open);
-  }, []);
   const logicCount = useDesigner((s) => s.template?.logic?.nodes.length ?? 0);
   // Panel sizes, adjustable with the splitters.
   const [layout, setLayout] = useLayout('designer.layout', {
     left: 320,
     right: 380,
-    timeline: 300,
-    // Layout (Display menu): a side panel on the whole height, the timeline beside it (1) or under it (0).
-    leftFull: 0,
-    rightFull: 0,
-    // The timeline's layer column when it no longer lines up with the left panel.
-    layers: MIN_LEFT,
   }, true);
-  // Room for the timeline property values (two 5-digit fields).
   const left = Math.max(MIN_LEFT, layout.left);
-  const leftFull = !!layout.leftFull;
-  const rightFull = !!layout.rightFull;
-  const layersW = leftFull ? Math.max(MIN_LEFT, layout.layers) : left;
   const [background, setBackground] = useDisplayPref<StageBackground>('designer.background', 'checker');
   // The live video input behind the stage (« video » background).
   const [bgInput, setBgInput] = useDisplayPref<string>('designer.backgroundInput', '');
-  const fps = project ? project.frameRate.num / project.frameRate.den : 50;
-  usePlayback(fps);
   useShortcuts();
   const { state: saveState, flush: flushSaves } = useAutosave();
   const lock = useEditLock(project, template?.id);
@@ -492,18 +420,17 @@ export const Designer = memo(function Designer() {
 
   return (
     <div
-      className={`designer ${lock.state.status === 'held' ? 'locked' : ''} ${leftFull ? 'ux2-left-full' : ''} ${rightFull ? 'ux2-right-full' : ''}`}
+      className={`designer ${lock.state.status === 'held' ? 'locked' : ''}`}
       style={{
         ['--left-w' as string]: `${left}px`,
         ['--right-w' as string]: `${layout.right}px`,
-        ['--tl-h' as string]: `${layout.timeline}px`,
-        ['--tl-layers-w' as string]: `${layersW}px`,
       }}
     >
       <aside className="panel left">
         <Splitter axis="x" className="edge-right" value={left} min={MIN_LEFT} max={520} reset={320} onChange={(v) => setLayout('left', v)} />
         <ProjectPanel project={project} readOnly={lock.state.status === 'held'} />
         <TemplateList project={project} />
+        <LayerList onAdd={add} />
       </aside>
       <main className="center">
         <div className="toolbar">
@@ -529,9 +456,6 @@ export const Designer = memo(function Designer() {
               <button className={`btn small ${logicCount ? 'has' : ''}`} onClick={() => setLogicOpen(true)} title={t('Relations between values: a box that follows a text, conditions…')}>
                 <Link2 size={13} /> {t('Logic')}
               </button>
-              <button className={`btn small ${template.triggers?.nodes.length ? 'has' : ''}`} onClick={() => setTriggersOpen(true)} title={t('What happens on air: events, out, a pause playing on…')}>
-                <Zap size={13} /> {t('Triggers')}
-              </button>
             </>
           )}
           <DisplayMenu
@@ -543,9 +467,6 @@ export const Designer = memo(function Designer() {
             onBackground={setBackground}
             bgInput={bgInput}
             onBgInput={setBgInput}
-            leftFull={leftFull}
-            rightFull={rightFull}
-            onLayout={(side, on) => setLayout(side, on ? 1 : 0)}
           />
           <StageZoom />
         </div>
@@ -557,17 +478,8 @@ export const Designer = memo(function Designer() {
         <Splitter axis="x" className="edge-left" sign={-1} value={layout.right} min={300} max={620} reset={380} onChange={(v) => setLayout('right', v)} />
         {zonesEdit && project ? <ZonesPanel project={project} /> : <Inspector />}
       </aside>
-      <div className="timeline-wrap">
-        <Splitter axis="y" className="edge-top" sign={-1} value={layout.timeline} min={140} max={800} reset={300} onChange={(v) => setLayout('timeline', v)} />
-        {/* Beside a full-height left panel, the layer column has its own width. */}
-        {leftFull && <Splitter axis="x" className="ux2-tl-split" value={layersW} min={MIN_LEFT} max={520} reset={MIN_LEFT} onChange={(v) => setLayout('layers', v)} />}
-        <Timeline fps={fps} leftW={layersW} onAdd={add} />
-      </div>
       {lock.state.status === 'held' && <LockOverlay holder={lock.state.holder} template={template?.name ?? ''} onTakeOver={lock.takeOver} />}
       {logicOpen && <LogicEditor onClose={() => setLogicOpen(false)} />}
-      {triggersOpen && <LogicEditor graph="triggers" onClose={() => setTriggersOpen(false)} />}
-      <PasteDialog />
-      <AnimationsDialog />
     </div>
   );
 });

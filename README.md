@@ -114,9 +114,11 @@ La sortie HTML5 de la chaîne principale est sur `http://<serveur>:8090/output/m
 ### 4.1 L'espace de travail
 
 - **À gauche** : le projet (nom, historique des versions, publication) et la liste des **multiviews** (vignette, dupliquer, supprimer, renommer, réordonner).
-- **Au centre** : la **scène** (règles, repères, zones de sécurité, fond) avec la barre d'outils : **Disposition**, **Logique**, **Déclencheurs**, **Affichage**, zoom. Les tuiles y montrent les entrées en direct, leur tally et leurs vu-mètres.
+- **À gauche**, en dessous : les **calques** du multiview ouvert, avec les formes et les widgets à ajouter (**+**) ; un clic sélectionne, un double-clic renomme, un glisser change l'ordre ou range dans un dossier ; clic droit : copier, couper, coller, dupliquer, ordre, supprimer.
+- **Au centre** : la **scène** (règles, repères, zones de sécurité, fond) avec la barre d'outils : **Disposition**, **Logique**, **Affichage**, zoom. Les tuiles y montrent les entrées en direct, leur tally et leurs vu-mètres.
 - **À droite** : l'inspecteur du multiview ou du calque sélectionné.
-- **En bas** : la timeline et la liste des calques (groupes, renommer, dupliquer, masquer, verrouiller).
+
+Un multiview est une image fixe : il n'y a ni timeline ni animation. Ce qui bouge vient des sources (images, tally, vu-mètres) et des widgets eux-mêmes (horloges, bandeau défilant).
 
 ### 4.2 Dispositions
 
@@ -140,7 +142,7 @@ Tous les widgets de Strata Graphics utiles à un multiview restent disponibles, 
 | Pour | Widgets |
 | --- | --- |
 | **Horloges** | Horloge (heure, date, n'importe quel fuseau, cadran analogique), Temps (chronomètre, compte à rebours) |
-| **Logos** | Image (PNG, JPEG, SVG, GIF, vidéo en boucle), animation Lottie |
+| **Logos** | Image (PNG, JPEG, SVG, GIF, vidéo en boucle) |
 | **Labels** | Texte (styles, ombre, ajustement), bandeau défilant (Ticker), QR code, page web |
 | **Habillage** | rectangle, ellipse, polygone, plume, groupes, masques, dégradés |
 

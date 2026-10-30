@@ -5,7 +5,7 @@ import { replaceColor } from '../colors';
 import { create } from 'zustand';
 import { DEFAULTS, defaultData, newId, propValue } from '../engine/evaluate';
 import { fromFormatView, inFormat } from '../engine/formats';
-import { MAIN_FORMAT, MARKER_MODEL, type Data, type FontStyle, type Keyframe, type Layer, type LayerType, type Marker, type Prop, type Template, type Value } from '../engine/types';
+import { MAIN_FORMAT, MARKER_MODEL, type Data, type FontStyle, type Keyframe, type Layer, type LayerType, type Prop, type Template, type Value } from '../engine/types';
 import { t, tc } from '../i18n';
 
 export interface KeyRef {
@@ -273,23 +273,6 @@ export function toggleStopwatch(l: Layer, p: Prop, frame: number) {
   }
 }
 
-export function toggleKeyAt(l: Layer, p: Prop, frame: number) {
-  const f = Math.round(frame);
-  const track = l.tracks[p] ?? [];
-  const idx = track.findIndex((k) => k.frame === f);
-  if (idx >= 0) {
-    track.splice(idx, 1);
-    if (!track.length) {
-      l.props[p] = propValue({ ...l, tracks: {} }, p, f);
-      delete l.tracks[p];
-    }
-  } else {
-    track.push({ frame: f, value: propValue(l, p, f), easing: nearestEasing(track, f) });
-    track.sort((a, b) => a.frame - b.frame);
-    l.tracks[p] = track;
-  }
-}
-
 export function descendants(t: Template, id: string): string[] {
   const out: string[] = [];
   const walk = (pid: string) => {
@@ -436,12 +419,6 @@ export function newTemplate(name: string, zone = '', fps = 25, secs = 1): Templa
     layers: [],
     markerModel: MARKER_MODEL,
   };
-}
-
-/** How a marker reads: the On air point (green; the out animation starts
- *  there too), pauses (orange) and labels. */
-export function markerRole(_t: Template, m: Marker): 'onair' | 'pause' | 'label' {
-  return m.kind === 'out' ? 'onair' : m.kind;
 }
 
 /** Duplicates layers (with their children) just above the originals and selects the copies. */

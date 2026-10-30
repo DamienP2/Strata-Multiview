@@ -268,7 +268,7 @@ export function Row({ label, children, title, lead, tail, expose, exposeValue, e
   }
   return (
     <div className={`row wk-row ${label === undefined ? 'full' : ''} ${stack ? 'stack' : ''}`} title={title}>
-      {lead ?? <span className="wk-gut" />}
+      {lead}
       {label !== undefined && <span className="prop-label">{label}</span>}
       <div className="wk-ctl">{children}</div>
       {tail ?? (paths ? <ExposeSetting paths={paths} label={typeof label === 'string' ? label : undefined} value={exposeValue} options={exposeOptions} range={exposeRange} /> : <span className="wk-gut" />)}

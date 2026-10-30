@@ -494,19 +494,6 @@ export async function uploadAsset(file: File, projectId?: string | null, onProgr
   return done;
 }
 
-/** Converts a Lottie animation (Bodymovin / LottieFiles export) into layers. */
-export async function importLottie(projectId: string, file: File): Promise<{ template: Template; warnings: string[] }> {
-  const name = file.name.replace(/\.(json|zip|lottie|mogrt)$/i, '');
-  const res = await fetch(`/api/projects/${encodeURIComponent(projectId)}/import/lottie?name=${encodeURIComponent(name)}`, {
-    method: 'POST',
-    body: file,
-    credentials: 'same-origin',
-    headers: apiKey ? { Authorization: `Bearer ${apiKey}` } : undefined,
-  });
-  if (!res.ok) throw new Error((await res.text()) || res.statusText);
-  return res.json();
-}
-
 /** Rights, mirroring crates/strata-mv-server/src/auth.rs. */
 export const can = {
   design: (u: User | null | undefined) => u?.role === 'admin' || u?.role === 'designer',

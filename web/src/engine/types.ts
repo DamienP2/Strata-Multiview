@@ -272,13 +272,6 @@ export type DataFilter =
   | { type: 'default'; text: string }
   | { type: 'map'; when: string; then: string };
 
-export interface DataStatus {
-  updatedAt?: number | null;
-  checkedAt?: number | null;
-  error?: string | null;
-  bytes?: number;
-}
-
 export interface Template {
   id: string;
   name: string;

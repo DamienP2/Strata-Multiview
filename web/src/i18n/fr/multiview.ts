@@ -2,6 +2,7 @@
 export const multiview: Record<string, string> = {
   Source: 'Source',
   Field: 'Champ',
+  'Add a tile, a clock, a logo or a text with the buttons above.': 'Ajoutez une tuile, une horloge, un logo ou un texte avec les boutons ci-dessus.',
   'Source {n}': 'Source {n}',
   'A live input with its tally, UMD and audio meters': 'Une entrée en direct, avec son tally, son UMD et ses vu-mètres',
   '(removed input)': '(entrée supprimée)',

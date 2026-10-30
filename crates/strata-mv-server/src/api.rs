@@ -103,10 +103,6 @@ pub fn router() -> Router<Shared> {
             "/api/projects/{id}/templates/{tid}/thumbnail.png",
             get(template_thumbnail),
         )
-        .route(
-            "/api/projects/{id}/import/lottie",
-            post(import_lottie).layer(axum::extract::DefaultBodyLimit::max(256 * 1024 * 1024)),
-        )
         .route("/api/channels", get(list_channels))
         .route("/api/channels/{id}/state", get(channel_state))
         .route("/api/channels/{id}/project", put(load_project))
@@ -1036,76 +1032,6 @@ async fn discard_draft(
     p.drafts.retain(|t| t.id != tid);
     s.save_project(p).await.map_err(internal)?;
     Ok(StatusCode::NO_CONTENT)
-}
-
-#[derive(Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct ImportQuery {
-    #[serde(default)]
-    name: Option<String>,
-}
-
-#[derive(Serialize)]
-#[serde(rename_all = "camelCase")]
-struct ImportResult {
-    template: Template,
-    warnings: Vec<String>,
-}
-
-/// Converts a Lottie animation exported with Bodymovin / LottieFiles
-/// (`.json`, `.zip`, `.lottie`): its pictures are saved, the Designer puts
-/// its layers into the open template.
-async fn import_lottie(
-    State(s): State<Shared>,
-    CurrentUser(me): CurrentUser,
-    Path(id): Path<String>,
-    Query(q): Query<ImportQuery>,
-    body: Bytes,
-) -> ApiResult<Json<ImportResult>> {
-    let _edit = s.edits.lock().await;
-    require(me.can_design(&id))?;
-    let p = visible_project(&s, &me, &id).await?;
-    let opts = strata_mv_core::lottie::Options {
-        width: p.width as f64,
-        height: p.height as f64,
-        fps: p.frame_rate.as_f64(),
-        zone: p.zones.first().map(|z| z.id.clone()).unwrap_or_default(),
-    };
-    let out = tokio::task::spawn_blocking(move || crate::lottie_import::import(&body, &opts))
-        .await
-        .map_err(internal)?
-        .map_err(|e| (StatusCode::UNPROCESSABLE_ENTITY, e))?;
-    // Its images go to the project's media.
-    let mut template = out.imported.template;
-    if !out.files.is_empty() {
-        let dir = crate::media::project_dir(&s, &id);
-        tokio::fs::create_dir_all(&dir).await.map_err(internal)?;
-        for (name, bytes) in &out.files {
-            tokio::fs::write(dir.join(name), bytes)
-                .await
-                .map_err(internal)?;
-        }
-        s.renderer
-            .lock()
-            .unwrap_or_else(|e| e.into_inner())
-            .invalidate_assets();
-        s.thumbs.clear();
-        let mut json = serde_json::to_string(&template).map_err(internal)?;
-        for (name, _) in &out.files {
-            json = json.replace(
-                &format!("\"/assets/{name}\""),
-                &format!("\"{}{name}\"", crate::media::project_prefix(&id)),
-            );
-        }
-        template = serde_json::from_str(&json).map_err(internal)?;
-    }
-    if let Some(name) = q.name.filter(|n| !n.trim().is_empty()) {
-        template.name = name.trim().to_string();
-    }
-    Ok(Json(ImportResult {
-        template,
-        warnings: out.imported.warnings,
-    }))
 }
 
 async fn delete_template(

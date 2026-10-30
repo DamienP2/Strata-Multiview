@@ -1,4 +1,4 @@
-import { Check, ChevronDown, ChevronRight, Contrast, Eye, Layers, LayoutGrid, PanelLeft, PanelRight, Ruler, Settings2, ShieldCheck, SquareDashed } from 'lucide-react';
+import { Check, ChevronDown, ChevronRight, Contrast, Eye, Layers, LayoutGrid, Ruler, Settings2, ShieldCheck, SquareDashed } from 'lucide-react';
 import { inputMessage, useInputs, useLiveFrame, type InputInfo } from '../engine/liveInputs';
 import { useEffect, useState } from 'react';
 import type { Project } from '../engine/types';
@@ -34,9 +34,6 @@ export function DisplayMenu({
   onBackground,
   bgInput,
   onBgInput,
-  leftFull,
-  rightFull,
-  onLayout,
 }: {
   project: Project;
   showZones: boolean;
@@ -47,9 +44,6 @@ export function DisplayMenu({
   /** The live input behind the stage (« video »). */
   bgInput: string;
   onBgInput: (id: string) => void;
-  leftFull: boolean;
-  rightFull: boolean;
-  onLayout: (side: 'leftFull' | 'rightFull', on: boolean) => void;
 }) {
   const view = useGuidesView();
   const ghosts = useGhosts();
@@ -152,18 +146,6 @@ export function DisplayMenu({
             <Segmented value={background} onChange={onBackground} options={BACKGROUNDS.map((b) => ({ value: b.id, label: t(b.label) }))} />
           </div>
           {background === 'video' && <InputPick value={bgInput} onChange={onBgInput} />}
-          <div className="menu-sep" />
-          <div className="ux2-dline">
-            <span>{t('Panel layout')}</span>
-            <span className="ux2-layout">
-              <button className={leftFull ? 'on' : ''} aria-pressed={leftFull} title={t('Left panel full height')} onClick={() => onLayout('leftFull', !leftFull)}>
-                <PanelLeft size={15} />
-              </button>
-              <button className={rightFull ? 'on' : ''} aria-pressed={rightFull} title={t('Right panel full height')} onClick={() => onLayout('rightFull', !rightFull)}>
-                <PanelRight size={15} />
-              </button>
-            </span>
-          </div>
         </div>
       )}
     </div>

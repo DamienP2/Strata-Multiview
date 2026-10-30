@@ -12,7 +12,6 @@ mod health;
 mod iconlib;
 mod inputs;
 mod library;
-mod lottie_import;
 mod locks;
 mod logs;
 mod media;

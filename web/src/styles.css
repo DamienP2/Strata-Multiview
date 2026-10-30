@@ -552,6 +552,7 @@ code {
 .panel-title,
 .panel-header,
 .template-list header,
+.mv-layers > header,
 .insp-section header {
   display: flex;
   align-items: center;
@@ -572,7 +573,7 @@ code {
 .designer {
   display: grid;
   grid-template-columns: var(--left-w, 250px) minmax(0, 1fr) var(--right-w, 340px);
-  grid-template-rows: minmax(0, 1fr) var(--tl-h, 300px);
+  grid-template-rows: minmax(0, 1fr);
   height: 100%;
 }
 /* The timeline spans the whole width; its layer column lines up with the templates. */
@@ -7519,9 +7520,6 @@ a.btn {
   gap: 8px;
   margin-top: 4px;
 }
-.pp-general .pp-row {
-  margin-left: -26px;
-}
 /* Rulers, guides, areas to keep clear. */
 .ruler {
   position: absolute;
@@ -10198,11 +10196,11 @@ body.cv-moving * {
   min-width: 220px;
 }
 
-/* ---- Properties: one grid for every row (◆ · label · fields · exposed), fields 6 digits wide ---- */
+/* ---- Properties: one grid for every row (label · fields · exposed), fields 6 digits wide ---- */
 .pp-row,
 .wk-row {
   display: grid;
-  grid-template-columns: 22px 84px minmax(0, 1fr) 24px;
+  grid-template-columns: 84px minmax(0, 1fr) 24px;
   align-items: center;
   gap: 6px;
   min-height: 30px;
@@ -21200,4 +21198,32 @@ textarea.tx-grow {
 }
 .mv-layout-modal > p {
   margin: 0 0 12px;
+}
+
+/* The layers of the open multiview, under the multiviews (designer/LayerList.tsx). */
+.designer > .panel.left > .template-list {
+  flex: 0 1 auto;
+  max-height: 38%;
+}
+.mv-layers {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid var(--line);
+}
+.mv-insert.tl-insert {
+  margin: 0;
+  padding: 4px 8px;
+  border-right: 0;
+  border-bottom: 1px solid var(--line);
+}
+.mv-layer-rows {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+.mv-layers-empty {
+  padding: 10px 12px;
+  font-size: var(--fs-11);
 }

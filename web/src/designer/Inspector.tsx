@@ -2,22 +2,20 @@ import { Boundary } from '../ui/Boundary';
 import { useShallow } from 'zustand/react/shallow';
 import { Dropdown } from '../ui/Dropdown';
 import { FontPick } from '../ui/FontPick';
-import { AssetLibrary, AssetPicker } from './AssetPicker';
-import { loadLottieAsset } from './lottie';
+import { AssetPicker } from './AssetPicker';
 import { fieldUsed } from '../engine/settings';
-import { Check, Database, Radio, RotateCcw, AlignCenter, AlignLeft, AlignRight, ChevronDown, ChevronLeft, ChevronRight, Diamond, Link as LinkIcon, Link2, LayoutTemplate, Settings2, Sparkles, Unlink } from 'lucide-react';
-import { createContext, Fragment, useContext, useEffect, useMemo, useRef, useState } from 'react';
-import { applyEasing, col, holdFrame, interpolateText, num, parseHex, propValue, resolveLayer, toHex } from '../engine/evaluate';
+import { Check, Database, Radio, RotateCcw, AlignCenter, AlignLeft, AlignRight, ChevronDown, Link as LinkIcon, Link2, LayoutTemplate, Settings2, Unlink } from 'lucide-react';
+import { createContext, Fragment, useContext, useEffect, useMemo, useRef } from 'react';
+import { col, holdFrame, interpolateText, num, parseHex, propValue, resolveLayer, toHex } from '../engine/evaluate';
 import { applyLogic, measureLayer } from '../engine/logic';
-import { MAIN_FORMAT, TEXT_LIKE, type TextOverflow, type Easing, type FontStyle, type Layer, type LayerType, type Prop, type Template, type Value } from '../engine/types';
+import { MAIN_FORMAT, TEXT_LIKE, type TextOverflow, type FontStyle, type Layer, type LayerType, type Prop, type Template, type Value } from '../engine/types';
 import { useApp } from '../store';
 import { ColorField, NumberField, Segmented, TextInput } from '../ui/fields';
 import { useZoneEdit } from './ZoneEditor';
 import { loadFonts, useFonts } from '../engine/fonts';
 import { isOverridden, resetOverride } from '../engine/formats';
-import { findLayer, isAnimated, LABELS, setProp, toggleKeyAt, useDesigner } from './designerStore';
+import { findLayer, isAnimated, LABELS, setProp, useDesigner } from './designerStore';
 import { isTimed } from '../engine/widgets';
-import { onTimeline, setOnTimeline } from '../engine/timelineProps';
 import { WidgetRunButtons } from './WidgetRun';
 import { AreaInspector, useGuidesView } from './Guides';
 import { fitLayer, layerText } from '../engine/Scene';
@@ -27,7 +25,6 @@ import { widgetOf } from '../widgets';
 import { Bound, CentreModeContext, FirstSection, Row as KitRow, Section as SpecSection, setPath, Toggle, Warnings, wiredKeys } from '../widgets/kit';
 import { t, tc, tn } from '../i18n';
 import { useDisplayPref } from '../displayPrefs';
-import { START_MODES, startMode } from '../widgets/centre';
 
 interface PropSpec {
   prop: Prop;
@@ -178,33 +175,6 @@ const TRANSFORM_ROWS: RowSpec[] = [
   },
 ];
 
-/**
- * ◆ of a property row. Off the timeline (dim): click puts the property on
- * the timeline. On it (yellow): click adds / removes the keyframe at the
- * playhead (filled when there is one).
- */
-export function TimelineButton({ layer, props }: { layer: Layer; props: Prop[] }) {
-  const { frame, update } = useDesigner(useShallow((s) => ({ frame: s.frame, update: s.update })));
-  const on = props.every((p) => onTimeline(layer).has(p));
-  const here = props.some((p) => (layer.tracks[p] ?? []).some((k) => Math.abs(k.frame - frame) < 0.5));
-  return (
-    <button
-      className={`pp-tl ${on ? 'on' : ''} ${here ? 'key' : ''}`}
-      title={!on ? t('Not on the timeline: click to animate it') : here ? t('Remove the keyframe at the playhead') : t('On the timeline: click to add a keyframe at the playhead')}
-      onClick={() => {
-        update((t) => {
-          const l = findLayer(t, layer.id)!;
-          if (!on) return setOnTimeline(l, props, true);
-          for (const p of props) if (here === (l.tracks[p] ?? []).some((k) => Math.abs(k.frame - frame) < 0.5)) toggleKeyAt(l, p, frame);
-        });
-        if (on && !here) useDesigner.setState((st) => ({ expanded: { ...st.expanded, [layer.id]: true } }));
-      }}
-    >
-      <Diamond size={12} fill={here ? 'currentColor' : 'none'} />
-    </button>
-  );
-}
-
 /** Lit when a Logic relation drives one of the row's properties. */
 function LogicBadge({ layer, props }: { layer: Layer; props: Prop[] }) {
   const driven = useDesigner((s) => s.template?.logic?.nodes.some((n) => n.type === 'target' && n.layer === layer.id && props.includes(n.prop as Prop)));
@@ -313,7 +283,6 @@ export function GroupRow({ layer, spec }: { layer: Layer; spec: RowSpec }) {
     }, `prop-${layer.id}-${spec.label}`);
   return (
     <div className={`pp-row ${spec.props.some((p) => isAnimated(layer, p)) ? 'animated' : ''}`}>
-      <TimelineButton layer={layer} props={spec.props} />
       <span className="pp-label">
         {t(spec.label)}
         <LogicBadge layer={layer} props={spec.props} />
@@ -350,7 +319,6 @@ export function ColorGroupRow({ layer, prop, label }: { layer: Layer; prop: 'fil
   const driven = useContext(DrivenContext).get(prop);
   return (
     <div className={`pp-row ${isAnimated(layer, prop) ? 'animated' : ''}`}>
-      <TimelineButton layer={layer} props={[prop]} />
       <span className="pp-label">
         {t(label)}
         <LogicBadge layer={layer} props={[prop]} />
@@ -593,12 +561,6 @@ export function WidgetSettings({ layer, set, data = {} }: { layer: Layer; set: (
   }
 }
 
-/** A new duration: markers past the end come back to it (they would be out of reach). */
-function setDuration(t: Template, v: number) {
-  t.duration = Math.max(1, v);
-  for (const m of t.markers) if (m.frame > t.duration) m.frame = t.duration;
-}
-
 /** Font picker: the fonts the server really has (bundled, uploaded, system). */
 export function FontControls({ layer, set }: { layer: Layer & FontStyle; set: (key: string, v: unknown) => void }) {
   const families = useFonts((s) => s.families);
@@ -818,63 +780,8 @@ function LayerGeneral({ layer }: { layer: Layer }) {
       )}
       {layer.type === 'image' && (wiredKeys(layer.src).length ? <WiredValue value={interpolateText(layer.src, data)} /> : <AssetPicker value={layer.src} onChange={(v) => edit((l) => void (l.type === 'image' && (l.src = v)))} />)}
       <WidgetSettings layer={layer} set={set} data={data} />
-      {isTimed(layer) && !widgetOf(layer)?.Operator && (
-        <>
-          <div className="row" title={t('How it starts on air: at the In, on Continue (F2), or on a trigger (also the API action widget)')}>
-            <span className="prop-label">{tc('cc', 'Start')}</span>
-            <Segmented
-              value={startMode(layer)}
-              onChange={(v) =>
-                edit((l) => {
-                  l.manualStart = v !== 'in' ? true : undefined;
-                  l.startOn = v === 'trigger' ? 'trigger' : undefined;
-                })
-              }
-              options={START_MODES().map(([value, label]) => ({ value, label }))}
-            />
-          </div>
-          {startMode(layer) === 'trigger' && (
-            <div className="row">
-              <span className="prop-label">{tc('cc', 'Trigger name')}</span>
-              <TextInput value={layer.startTrigger ?? ''} commitOnBlur onChange={(v) => edit((l) => void (l.startTrigger = v.trim() || undefined))} />
-            </div>
-          )}
-        </>
-      )}
-      {layer.type === 'group' && layer.lottie !== undefined && <LottieSource layer={layer} />}
       {layer.type !== 'text' && layer.type !== 'image' && layer.type !== 'group' && !isTimed(layer) && <p className="hint">{t(LABELS[layer.type])}</p>}
     </div>
-  );
-}
-
-/** The file of a Lottie layer: chosen in the assets (or uploaded there), converted into its layers. */
-function LottieSource({ layer }: { layer: Layer }) {
-  const [lib, setLib] = useState(false);
-  const [busy, setBusy] = useState(false);
-  const toast = useApp((s) => s.toast);
-  const file = layer.type === 'group' ? (layer.lottie ?? '') : '';
-  const choose = async (src: string) => {
-    setLib(false);
-    setBusy(true);
-    try {
-      await loadLottieAsset(layer.id, src);
-    } catch (e) {
-      toast((e as Error).message, 'error');
-    } finally {
-      setBusy(false);
-    }
-  };
-  return (
-    <>
-      <div className="row">
-        <span className="prop-label">{t('File')}</span>
-        <button type="button" className="pick video-pick" disabled={busy} onClick={() => setLib(true)} title={file || undefined}>
-          <Sparkles size={14} />
-          <span className={`pick-nm ${file ? '' : 'ph'}`}>{busy ? t('Converting…') : file ? decodeURIComponent(file.split('/').pop() || file) : t('Choose a Lottie file…')}</span>
-        </button>
-      </div>
-      {lib && <AssetLibrary kind="lottie" title={t('Choose a Lottie animation')} value={file} onClose={() => setLib(false)} onChoose={(src) => void choose(src)} />}
-    </>
   );
 }
 
@@ -1054,148 +961,6 @@ function EffectsGroup({ layer }: { layer: Layer }) {
   );
 }
 
-const EASINGS: { value: Easing['type']; label: string }[] = [
-  { value: 'linear', label: 'Linear' },
-  { value: 'easeIn', label: 'Ease in' },
-  { value: 'easeOut', label: 'Ease out' },
-  { value: 'easeInOut', label: 'Easy ease' },
-  { value: 'back', label: 'Back (overshoot)' },
-  { value: 'elastic', label: 'Elastic' },
-  { value: 'bounce', label: 'Bounce' },
-  { value: 'bezier', label: 'Custom bezier' },
-  { value: 'hold', label: 'Hold' },
-];
-
-export function EasingCurve({ easing, size = 120 }: { easing: Easing; size?: number }) {
-  const pad = 14;
-  const s = size - pad * 2;
-  const pts = Array.from({ length: 61 }, (_, i) => {
-    const t = i / 60;
-    const y = easing.type === 'hold' ? (t < 1 ? 0 : 1) : applyEasing(easing, t);
-    return `${pad + t * s},${pad + (1 - y) * s * 0.75 + s * 0.125}`;
-  }).join(' ');
-  return (
-    <svg className="easing-curve" width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-      <rect x={pad} y={pad} width={s} height={s} rx={4} />
-      <polyline points={pts} />
-    </svg>
-  );
-}
-
-/** The easing of the stretch between two keyframes (clicked in the timeline): nothing else. */
-function SegmentInspector() {
-  const { template, selectedSegment: seg, update } = useDesigner(useShallow((s) => ({ template: s.template, selectedSegment: s.selectedSegment, update: s.update })));
-  if (!template || !seg) return null;
-  const layer = findLayer(template, seg.layerId);
-  const k = seg.props.map((p) => layer?.tracks[p]?.find((x) => x.frame === seg.frame)).find(Boolean);
-  if (!layer || !k) return null;
-  const next = Math.min(...seg.props.flatMap((p) => (layer.tracks[p] ?? []).filter((x) => x.frame > seg.frame).map((x) => x.frame)));
-  const setEasing = (e: Easing) =>
-    update((t) => {
-      for (const p of seg.props) {
-        const kk = findLayer(t, seg.layerId)?.tracks[p]?.find((x) => x.frame === seg.frame);
-        if (kk) kk.easing = e;
-      }
-    });
-  const bez = k.easing.type === 'bezier' ? k.easing : { x1: 0.42, y1: 0, x2: 0.58, y2: 1 };
-  return (
-    <Section title={t('Easing · {layer} · {props}', { layer: layer.name, props: seg.props.map((p) => t(PROP_LABELS[p])).join(', ') })}>
-      <p className="hint">{t('From frame {from} to {to}', { from: seg.frame, to: Number.isFinite(next) ? next : '…' })}</p>
-      <div className="easing-picks">
-        {EASINGS.map((e) => (
-          <button key={e.value} className={k.easing.type === e.value ? 'on' : ''} title={t(e.label)} onClick={() => setEasing(e.value === 'bezier' ? { type: 'bezier', ...bez } : ({ type: e.value } as Easing))}>
-            <EasingCurve easing={e.value === 'bezier' ? { type: 'bezier', ...bez } : ({ type: e.value } as Easing)} size={44} />
-            <span>{t(e.label)}</span>
-          </button>
-        ))}
-      </div>
-      <div className="easing-box">
-        <EasingCurve easing={k.easing} />
-        {k.easing.type === 'bezier' && (
-          <div className="bez-grid">
-            {(['x1', 'y1', 'x2', 'y2'] as const).map((c) => (
-              <NumberField key={c} label={c} value={bez[c]} step={0.01} precision={2} display={1} onChange={(v) => setEasing({ type: 'bezier', ...bez, [c]: c.startsWith('x') ? Math.min(1, Math.max(0, v)) : v })} />
-            ))}
-          </div>
-        )}
-      </div>
-    </Section>
-  );
-}
-
-/** "5" or "5s" seconds, "2:10" seconds and frames, "1:02:10" minutes too → frames. */
-function parseDuration(text: string, rate: number): number | null {
-  const t = text.trim().replace(/s$/i, '');
-  if (/^\d+([.,]\d+)?$/.test(t)) return Math.round(parseFloat(t.replace(',', '.')) * rate);
-  const parts = t.split(':').map((x) => parseInt(x, 10));
-  if (parts.length < 2 || parts.length > 3 || parts.some((x) => Number.isNaN(x) || x < 0)) return null;
-  const [m, sec, fr] = parts.length === 3 ? parts : [0, ...parts];
-  return Math.round((m * 60 + sec) * rate) + fr;
-}
-const pad2 = (n: number) => String(n).padStart(2, '0');
-/** Frames as mm:ss:ff. */
-const timecode = (frames: number, rate: number) => {
-  const r = Math.round(rate);
-  const sec = Math.floor(frames / r);
-  return `${pad2(Math.floor(sec / 60))}:${pad2(sec % 60)}:${pad2(frames % r)}`;
-};
-
-/** A template's length: a timecode to type in, steps of one frame or one second, and usual lengths. */
-function DurationField({ frames, rate, onChange }: { frames: number; rate: number; onChange: (frames: number) => void }) {
-  const [text, setText] = useState<string | null>(null);
-  const r = Math.round(rate);
-  const commit = () => {
-    if (text !== null) {
-      const v = parseDuration(text, rate);
-      if (v !== null) onChange(Math.max(1, v));
-    }
-    setText(null);
-  };
-  const step = (d: number) => onChange(Math.max(1, frames + d));
-  return (
-    <div className="dur-field">
-      <div className="dur-main">
-        <button className="dur-step" title={t('− 1 second (Shift: − 1 frame)')} onClick={(e) => step(e.shiftKey ? -1 : -r)}>
-          <ChevronLeft size={14} />
-        </button>
-        <input
-          className="dur-tc"
-          value={text ?? timecode(frames, rate)}
-          title={t('Minutes:seconds:frames — or type 5, 5s, 2:10')}
-          onFocus={(e) => (setText(timecode(frames, rate)), e.currentTarget.select())}
-          onChange={(e) => setText(e.target.value)}
-          onBlur={commit}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') e.currentTarget.blur();
-            if (e.key === 'Escape') (setText(null), e.currentTarget.blur());
-            if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
-              e.preventDefault();
-              step((e.key === 'ArrowUp' ? 1 : -1) * (e.shiftKey ? 1 : r));
-              setText(null);
-            }
-            e.stopPropagation();
-          }}
-        />
-        <button className="dur-step" title={t('+ 1 second (Shift: + 1 frame)')} onClick={(e) => step(e.shiftKey ? 1 : r)}>
-          <ChevronRight size={14} />
-        </button>
-      </div>
-      <div className="dur-units">
-        <span>{t('min')}</span>
-        <span>{t('sec')}</span>
-        <span>{t('frames')}</span>
-      </div>
-      <div className="dur-presets">
-        {[3, 5, 8, 10, 15, 30].map((sec) => (
-          <button key={sec} className={frames === sec * r ? 'on' : ''} onClick={() => onChange(sec * r)}>
-            {sec}s
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-}
-
 const OVERFLOWS: { value: TextOverflow; label: string; hint: string }[] = [
   { value: 'fit', label: 'Fit', hint: 'Narrower, then smaller, down to the minimums below; then cut at the box' },
   { value: 'ellipsis', label: '…', hint: 'Shortened with “…”' },
@@ -1255,10 +1020,8 @@ function TextFitControls({ layer, edit }: { layer: Layer & { type: 'text' }; edi
 
 function TemplateInspector({ template }: { template: Template }) {
   const { update } = useDesigner(useShallow((s) => ({ update: s.update })));
-  const fps = useApp((s) => s.project?.frameRate);
   const project = useApp((s) => s.project);
   const zones = project?.zones ?? [];
-  const rate = fps ? fps.num / fps.den : 50;
   const sorted = [...zones].sort((a, b) => b.layer - a.layer);
   return (
     <>
@@ -1274,10 +1037,6 @@ function TemplateInspector({ template }: { template: Template }) {
         </div>
       )}
       <div className="tpl-props">
-        <div className="tpl-field">
-          <span className="tpl-label">{t('Duration')}</span>
-          <DurationField frames={template.duration} rate={rate} onChange={(v) => (update((t) => setDuration(t, v), 'duration'), useDesigner.getState().setFrame(useDesigner.getState().frame))} />
-        </div>
         <div className="tpl-field">
           <span className="tpl-label">
             {t('Zone')}
@@ -1303,7 +1062,7 @@ function TemplateInspector({ template }: { template: Template }) {
 }
 
 export function Inspector() {
-  const { template, selected, selectedSegment } = useDesigner(useShallow((s) => ({ template: s.template, selected: s.selected, selectedSegment: s.selectedSegment })));
+  const { template, selected } = useDesigner(useShallow((s) => ({ template: s.template, selected: s.selected })));
   const editSafe = useGuidesView((s) => s.editSafe);
   const project = useApp((s) => s.project);
   if (editSafe && project)
@@ -1323,9 +1082,7 @@ export function Inspector() {
   const layer = selected.length === 1 ? findLayer(template, selected[0]) : undefined;
   return (
     <div className="inspector">
-      {selectedSegment ? (
-        <SegmentInspector />
-      ) : layer ? (
+      {layer ? (
         <LayerInspector key={layer.id} layer={layer} />
       ) : selected.length > 1 ? (
         <Section title={t('Selection')}>
