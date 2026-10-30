@@ -1,5 +1,5 @@
 // Quad: rectangle, diamond, parallelogram or trapezoid.
-// Same picture as crates/cg-render/src/wid/quad.rs; geometry mirrors crates/cg-core/src/wid/quad.rs.
+// Same picture as crates/strata-mv-render/src/wid/quad.rs; geometry mirrors crates/strata-mv-core/src/wid/quad.rs.
 import { Square } from 'lucide-react';
 import { num } from '../engine/evaluate';
 import { GroupRow } from '../designer/Inspector';

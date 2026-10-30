@@ -1,27 +1,27 @@
 #!/bin/sh
-# "Uninstall Strata Graphics.app" — asks for confirmation, then runs the uninstall
+# "Uninstall Strata Multiview.app" — asks for confirmation, then runs the uninstall
 # script with administrator rights (the macOS password prompt).
-SCRIPT=/usr/local/strata/uninstall.sh
+SCRIPT=/usr/local/strata-multiview/uninstall.sh
 ICON="$(cd "$(dirname "$0")/../Resources" && pwd)/AppIcon.icns"
 
 case "$(defaults read -g AppleLanguages 2>/dev/null | sed -n 2p | tr -d ' ",')" in
   fr*)
-    TITLE="Désinstaller Strata Graphics"
-    ASK="Le serveur Strata Graphics, l'application de la barre des menus et ce désinstallateur vont être supprimés.
+    TITLE="Désinstaller Strata Multiview"
+    ASK="Le serveur Strata Multiview, l'application de la barre des menus et ce désinstallateur vont être supprimés.
 
 Faut-il aussi supprimer vos données (templates, rundown, médias et réglages) ?"
     CANCEL="Annuler"; KEEP="Garder mes données"; PURGE="Tout supprimer"
-    DONE="Strata Graphics a été désinstallé."
-    MISSING="Strata Graphics n'est pas installé sur ce Mac."
+    DONE="Strata Multiview a été désinstallé."
+    MISSING="Strata Multiview n'est pas installé sur ce Mac."
     FAILED="La désinstallation a échoué :" ;;
   *)
-    TITLE="Uninstall Strata Graphics"
-    ASK="The Strata Graphics server, the menu bar app and this uninstaller will be removed.
+    TITLE="Uninstall Strata Multiview"
+    ASK="The Strata Multiview server, the menu bar app and this uninstaller will be removed.
 
 Do you also want to delete your data (templates, rundown, media and settings)?"
     CANCEL="Cancel"; KEEP="Keep my data"; PURGE="Delete everything"
-    DONE="Strata Graphics has been uninstalled."
-    MISSING="Strata Graphics is not installed on this Mac."
+    DONE="Strata Multiview has been uninstalled."
+    MISSING="Strata Multiview is not installed on this Mac."
     FAILED="Uninstall failed:" ;;
 esac
 

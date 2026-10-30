@@ -5,7 +5,7 @@ import { emptyHardware, emptyNetwork, emptySync, type ClockReference, type DeckL
  * The video hardware of the server (Hardware page), shared with the Video
  * streams page: DeckLink card models, what each connector does, and how a
  * destination takes its settings from what Hardware declares (the server
- * does the same when it loads the settings: crates/cg-server/src/hardware.rs).
+ * does the same when it loads the settings: crates/strata-mv-server/src/hardware.rs).
  */
 
 export type { PortCap };
@@ -46,7 +46,7 @@ export interface Bracket {
   cardProfile: boolean;
 }
 
-/** The table entry of a card's model (crates/cg-server/src/decklink.rs): by name, else by the hand-declared model. */
+/** The table entry of a card's model (crates/strata-mv-server/src/decklink.rs): by name, else by the hand-declared model. */
 export function modelEntry(c: { modelName?: string; model?: string }, models: DeckLinkModel[]): DeckLinkModel | undefined {
   const name = c.modelName?.trim().toLowerCase();
   return (name ? models.find((m) => m.name.toLowerCase() === name) : undefined) ?? (c.model && c.model !== 'other' && !name ? models.find((m) => m.legacy === c.model) : undefined);

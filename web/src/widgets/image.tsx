@@ -1,6 +1,6 @@
 // Image: fits (incl. original size and tile), focal point, crop, rounded / circle mask, stroke,
 // colorize, fallback picture when the source is missing.
-// Same picture as crates/cg-render/src/wid/image.rs; geometry and actions mirror crates/cg-core/src/wid/image.rs.
+// Same picture as crates/strata-mv-render/src/wid/image.rs; geometry and actions mirror crates/strata-mv-core/src/wid/image.rs.
 import { useEffect, useRef, useState, useSyncExternalStore, type CSSProperties, type ReactNode } from 'react';
 import { api, uploadAsset, useApp } from '../store';
 import { Film, Image, Pause, Play, Radio, RefreshCw, RotateCcw } from 'lucide-react';

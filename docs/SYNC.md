@@ -135,4 +135,4 @@ branchée sur son entrée REF, sinon son propre quartz. Si la carte ne donne
 plus de tops, le canal continue sur l'horloge de la machine.
 
 Le paquet Ubuntu (glibc) charge le pilote comme les installateurs macOS et
-Windows ; un serveur compilé en statique (musl) ne le peut pas. Voir `crates/cg-output/src/sdi.rs`.
+Windows ; un serveur compilé en statique (musl) ne le peut pas. Voir `crates/strata-mv-output/src/sdi.rs`.

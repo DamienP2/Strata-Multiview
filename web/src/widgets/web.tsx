@@ -1,6 +1,6 @@
 // Web page: a web address or some HTML in the graphic. Only a browser draws it: the HTML5 outputs and
 // the previews show it; the engine's own outputs (SDI, NDI, ST 2110) leave its box empty.
-// Model: crates/cg-core/src/wid/web.rs.
+// Model: crates/strata-mv-core/src/wid/web.rs.
 import { useEffect, useReducer, useRef, useState } from 'react';
 import { Globe, RefreshCw } from 'lucide-react';
 import type { Data } from '../engine/types';
@@ -18,7 +18,7 @@ export interface Config {
   zoom?: number;
   /** The page's own background (on a white page); off: the page is made transparent. */
   opaque?: boolean;
-  /** Fetched by the server (sites that refuse to be framed); see cg-server/src/webproxy.rs. */
+  /** Fetched by the server (sites that refuse to be framed); see strata-mv-server/src/webproxy.rs. */
   proxy?: boolean;
 }
 export interface State {
@@ -134,7 +134,7 @@ function View({ layer, w, h, data, state, nowMs, designer }: { layer: WebLayer; 
     return () => clearTimeout(tm);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [wantId]);
-  // The proxy's error page says why (cg-server/src/webproxy.rs).
+  // The proxy's error page says why (strata-mv-server/src/webproxy.rs).
   useEffect(() => {
     const on = (e: MessageEvent) => {
       const m = e.data as { strataWeb?: string; msg?: string } | null;

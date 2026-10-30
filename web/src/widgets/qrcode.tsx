@@ -1,5 +1,5 @@
 // QR code: settings, drawing, inspector and the readability check.
-// Same picture as crates/cg-render/src/wid/qrcode.rs; structure / payload / geometry mirror crates/cg-core/src/wid/qrcode.rs.
+// Same picture as crates/strata-mv-render/src/wid/qrcode.rs; structure / payload / geometry mirror crates/strata-mv-core/src/wid/qrcode.rs.
 // The matrix comes from the server (`/api/qr?data=…&ec=…`, the Rust `qrcode` crate): one encoder for both renderers.
 import { useEffect, useReducer, useRef } from 'react';
 import { ChevronDown, QrCode, SkipBack, SkipForward } from 'lucide-react';
@@ -455,7 +455,7 @@ function check(layer: QrLayer, data: Data, st: State | undefined, r: Resolved | 
   if (q === undefined) return { ready: false, ok: true, issues, payload: text };
   if (q === null) {
     const n = new TextEncoder().encode(text).length;
-    // The server takes 2 048 bytes at most (crates/cg-server/src/api.rs).
+    // The server takes 2 048 bytes at most (crates/strata-mv-server/src/api.rs).
     const msg = n > 2048 ? t('Too long: {n} bytes, the server encodes 2,048 at most.', { n }) : t('Too long: {n} bytes do not fit even in version 40 at level {level}.', { n, level: c.ecl });
     return { ready: true, ok: false, issues: [{ level: 'error', text: msg, op: true }], payload: text };
   }

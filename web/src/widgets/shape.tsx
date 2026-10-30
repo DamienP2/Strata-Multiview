@@ -1,6 +1,6 @@
 // What the shape widgets share (quad, polygon, ellipse, pen): fill and
 // stroke styles, outlines as path commands, and their inspector sections.
-// Mirror of crates/cg-core/src/wid/shape.rs and cg-render/src/wid/shape.rs.
+// Mirror of crates/strata-mv-core/src/wid/shape.rs and strata-mv-render/src/wid/shape.rs.
 import { col, cssColor, interpolateText, num, propValue, type Resolved } from '../engine/evaluate';
 import type { Data, Layer } from '../engine/types';
 import { ColorGroupRow, GroupRow, AssetPicker } from '../designer/Inspector';

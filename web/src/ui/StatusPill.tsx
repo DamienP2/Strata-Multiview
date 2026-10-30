@@ -78,7 +78,7 @@ export function StatusPill({ newTab }: { newTab?: boolean }) {
       </>
     );
 
-  const lines = [serverName || 'Strata', state === 'lost' ? t('Server lost · reconnecting…') : connected ? t('Connected to engine') : t('Connecting…')];
+  const lines = [serverName || 'Strata Multiview', state === 'lost' ? t('Server lost · reconnecting…') : connected ? t('Connected to engine') : t('Connecting…')];
   if (m && !lost) {
     const { machine } = m;
     lines.push(`CPU ${pct(machine.cpu)} · ${tn(machine.cores, '{n} core', '{n} cores')}`);

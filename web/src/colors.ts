@@ -103,7 +103,7 @@ export function namedOf(value: string | Color | undefined, project = useApp.getS
 
 /**
  * Replaces `from` by `to` in an object (a template): hex strings anywhere,
- * `[r, g, b, a]` property and keyframe values. Mirror of cg_core::palette.
+ * `[r, g, b, a]` property and keyframe values. Mirror of strata_mv_core::palette.
  */
 export function replaceColor(v: unknown, from: string, to: string): number {
   const f = colorKey(from);

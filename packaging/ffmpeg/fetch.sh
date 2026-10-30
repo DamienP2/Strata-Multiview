@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Downloads a static ffmpeg to ship with Strata: stream outputs (SRT, UDP,
 # RTMP, HLS), live inputs and video conversion go through it. The server
-# looks for it in bin/ next to itself (crates/cg-output/src/ffmpeg.rs).
+# looks for it in bin/ next to itself (crates/strata-mv-output/src/ffmpeg.rs).
 #
 # Usage: packaging/ffmpeg/fetch.sh <platform> <out-dir>
 #   platform: linux-x86_64 | linux-arm64 | windows-x86_64 |
@@ -73,7 +73,7 @@ riedl_universal() { # dest
 # The ffmpeg (bin/ffmpeg) of the newest earlier Strata release whose macOS
 # package has one that streams over SRT. Sets FROM_RELEASE.
 from_release() { # dest
-  local repo=${GITHUB_REPOSITORY:-DamienP2/CG} tag dir ff
+  local repo=${GITHUB_REPOSITORY:-DamienP2/Strata-Multiview} tag dir ff
   command -v gh >/dev/null || return 1
   for tag in $(gh release list --repo "$repo" --limit 30 --exclude-drafts --json tagName --jq '.[].tagName'); do
     dir="$WORK/release-$tag"

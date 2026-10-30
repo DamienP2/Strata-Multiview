@@ -1,4 +1,4 @@
-// TypeScript mirror of crates/cg-core/src/model.rs — keep in sync.
+// TypeScript mirror of crates/strata-mv-core/src/model.rs — keep in sync.
 
 export type Color = [number, number, number, number];
 export type Value = number | Color;

@@ -11,7 +11,7 @@ import { Logs } from './Logs';
  * System › Health (admins): how the server has been doing — its uptime, the
  * crashes of the month, the errors and warnings of the day grouped as
  * incidents, the journal kept on disk (30 days), the live log, and an
- * archive of all of it for the support (cg-server health.rs).
+ * archive of all of it for the support (strata-mv-server health.rs).
  */
 
 type Section = 'overview' | 'journal' | 'live';

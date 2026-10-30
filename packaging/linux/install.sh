@@ -1,14 +1,14 @@
 #!/bin/sh
-# Strata Graphics — Ubuntu installer (systemd).
+# Strata Multiview — Ubuntu installer (systemd).
 #
 #   sudo ./install.sh                          asks its questions as it goes
 #   sudo ./install.sh --yes [options]          no questions (defaults, options)
-#   sudo /opt/strata/install.sh ndi            add the NDI runtime later
-#   sudo /opt/strata/install.sh decklink       add the DeckLink driver later
+#   sudo /opt/strata-multiview/install.sh ndi            add the NDI runtime later
+#   sudo /opt/strata-multiview/install.sh decklink       add the DeckLink driver later
 #
 # Options:
-#   --bind ADDR:PORT          web interface and API (first install: 0.0.0.0:8080)
-#   --data-dir DIR            data folder (default /var/lib/strata-graphics)
+#   --bind ADDR:PORT          web interface and API (first install: 0.0.0.0:8090)
+#   --data-dir DIR            data folder (default /var/lib/strata-multiview)
 #   --ndi | --no-ndi          install the NDI runtime (downloads the NDI SDK)
 #   --ndi-sdk FILE            NDI SDK for Linux already downloaded (.tar.gz)
 #   --accept-ndi-license      accept the NDI SDK licence without asking
@@ -23,8 +23,8 @@ step() { printf '\n== %s\n' "$(say "$1" "$2")"; }
 warn() { printf '!  %s\n' "$(say "$1" "$2")" >&2; }
 die() { printf 'x  %s\n' "$(say "$1" "$2")" >&2; exit 1; }
 
-PREFIX=/opt/strata
-UNIT=/etc/systemd/system/strata-graphics.service
+PREFIX=/opt/strata-multiview
+UNIT=/etc/systemd/system/strata-multiview.service
 NDI_URL=${NDI_SDK_URL:-https://downloads.ndi.tv/SDK/NDI_SDK_Linux/Install_NDI_SDK_v6_Linux.tar.gz}
 DECKLINK_PAGE=https://www.blackmagicdesign.com/support/family/capture-and-playback
 HERE=$(cd "$(dirname "$0")" && pwd)
@@ -55,8 +55,8 @@ done
 
 [ "$(id -u)" -eq 0 ] || die "Lancez-le en administrateur : sudo $0" "Please run as root: sudo $0"
 command -v systemctl >/dev/null || die \
-  "systemd est nécessaire (sinon lancez 'strata-server run' avec votre propre système de démarrage)." \
-  "systemd is required (run 'strata-server run' under your own init system otherwise)."
+  "systemd est nécessaire (sinon lancez 'strata-mv-server run' avec votre propre système de démarrage)." \
+  "systemd is required (run 'strata-mv-server run' under your own init system otherwise)."
 
 # Questions only with someone at the terminal, and without --yes.
 INTERACTIVE=
@@ -105,42 +105,35 @@ unit_bind() {
 
 # ---------------------------------------------------------------- server ----
 install_server() {
-  step "Serveur Strata Graphics" "Strata Graphics server"
+  step "Serveur Strata Multiview" "Strata Multiview server"
   [ "$HERE" != "$PREFIX" ] || die \
     "Lancez l'installateur du paquet (ou mettez à jour depuis Réglages › Mises à jour)." \
     "Run the package's installer (or update from Settings › Updates)."
-  [ -f "$HERE/strata-server" ] || die "strata-server est introuvable à côté de ce script." "strata-server not found next to this script."
+  [ -f "$HERE/strata-mv-server" ] || die "strata-mv-server est introuvable à côté de ce script." "strata-mv-server not found next to this script."
   if [ -f "$UNIT" ]; then
     # Re-install / upgrade: keep the data folder, stop the service first.
     [ -n "$DATA_DIR" ] || DATA_DIR=$(unit_data_dir)
     [ -n "$BIND" ] || BIND=$(unit_bind)
-    "$PREFIX/strata-server" service uninstall >/dev/null 2>&1 || true
+    "$PREFIX/strata-mv-server" service uninstall >/dev/null 2>&1 || true
   elif [ -z "$BIND" ]; then
-    port=$(prompt "Port de l'interface web" "Web interface port" 8080)
+    port=$(prompt "Port de l'interface web" "Web interface port" 8090)
     case "$port" in ''|*[!0-9]*) die "Port invalide : $port" "Invalid port: $port" ;; esac
     BIND=0.0.0.0:$port
   fi
-  # An install from before the rename (Pulse CG): stop it; the service
-  # install below moves its data and removes its service account.
-  if [ -f /etc/systemd/system/pulse-cg.service ]; then
-    systemctl stop pulse-cg 2>/dev/null || true
-  fi
   install -d "$PREFIX"
-  install -m 0755 "$HERE/strata-server" "$PREFIX/strata-server"
+  install -m 0755 "$HERE/strata-mv-server" "$PREFIX/strata-mv-server"
   # This installer stays, to add NDI or DeckLink later.
   install -m 0755 "$HERE/install.sh" "$PREFIX/install.sh"
   [ -f "$HERE/uninstall.sh" ] && install -m 0755 "$HERE/uninstall.sh" "$PREFIX/uninstall.sh"
   cp "$HERE"/*.md "$HERE"/OFL.txt "$PREFIX/" 2>/dev/null || true
   # ffmpeg shipped with the package (streams, inputs, video conversion).
   if [ -d "$HERE/bin" ]; then install -d "$PREFIX/bin" && cp "$HERE"/bin/* "$PREFIX/bin/" && chmod 0755 "$PREFIX/bin/ffmpeg"; fi
-  ln -sf "$PREFIX/strata-server" /usr/local/bin/strata-server
+  ln -sf "$PREFIX/strata-mv-server" /usr/local/bin/strata-mv-server
 
   set --
   [ -n "$BIND" ] && set -- "$@" --bind "$BIND"
   [ -n "$DATA_DIR" ] && set -- "$@" --data-dir "$DATA_DIR"
-  "$PREFIX/strata-server" service install "$@"
-  rm -rf /opt/pulse-cg
-  rm -f /usr/local/bin/cg-server
+  "$PREFIX/strata-mv-server" service install "$@"
 }
 
 # ------------------------------------------------------------------- NDI ----
@@ -268,8 +261,8 @@ install_decklink() {
   # The service account must open the cards.
   for dev in /dev/blackmagic/*; do
     [ -e "$dev" ] || continue
-    if ! runuser -u strata -- test -r "$dev" -a -w "$dev" 2>/dev/null; then
-      usermod -aG "$(stat -c %G "$dev")" strata 2>/dev/null || true
+    if ! runuser -u strata-mv -- test -r "$dev" -a -w "$dev" 2>/dev/null; then
+      usermod -aG "$(stat -c %G "$dev")" strata-mv 2>/dev/null || true
     fi
   done
 }
@@ -277,21 +270,21 @@ install_decklink() {
 # ----------------------------------------------------------------- admin ----
 create_admin() {
   data=${DATA_DIR:-$(unit_data_dir)}
-  data=${data:-/var/lib/strata-graphics}
+  data=${data:-/var/lib/strata-multiview}
   grep -q '"username"' "$data/users.json" 2>/dev/null && return 0
   [ -n "$ADMIN" ] && [ -n "$INTERACTIVE" ] || return 0
   step "Compte administrateur" "Administrator account"
   ask "Créer le compte administrateur maintenant ?" "Create the administrator account now?" y || return 0
   name=$(prompt "Nom du compte" "Account name" admin)
-  "$PREFIX/strata-server" user add "$name" --data-dir "$data" ||
-    warn "Compte non créé : sudo strata-server user add $name" "Account not created: sudo strata-server user add $name"
+  "$PREFIX/strata-mv-server" user add "$name" --data-dir "$data" ||
+    warn "Compte non créé : sudo strata-mv-server user add $name" "Account not created: sudo strata-mv-server user add $name"
   # Readable by the service, whatever the server's version.
-  chown -R strata:strata "$data"
+  chown -R strata-mv:strata-mv "$data"
 }
 
 # ------------------------------------------------------------------ main ----
 if [ -n "$ONLY" ]; then
-  [ -x "$PREFIX/strata-server" ] || die "Installez d'abord Strata : sudo ./install.sh" "Install Strata first: sudo ./install.sh"
+  [ -x "$PREFIX/strata-mv-server" ] || die "Installez d'abord Strata : sudo ./install.sh" "Install Strata first: sudo ./install.sh"
   for c in $ONLY; do
     case "$c" in
       ndi) install_ndi ;;
@@ -319,15 +312,15 @@ fi
 
 # Web updates (Settings > Updates) replace the program in place: let the
 # service account write its own folder (and nothing else on the system).
-chown -R strata:strata "$PREFIX"
-systemctl restart strata-graphics 2>/dev/null || true
+chown -R strata-mv:strata-mv "$PREFIX"
+systemctl restart strata-multiview 2>/dev/null || true
 
 step "Terminé" "Done"
 if [ -z "$ONLY" ]; then
   ip=$(hostname -I 2>/dev/null | awk '{print $1}')
   port=${BIND##*:}
-  say "Interface : http://${ip:-<serveur>}:${port:-8080}" "Web interface: http://${ip:-<server>}:${port:-8080}"
+  say "Interface : http://${ip:-<serveur>}:${port:-8090}" "Web interface: http://${ip:-<server>}:${port:-8090}"
 fi
-say "Journal : journalctl -u strata-graphics -f" "Logs: journalctl -u strata-graphics -f"
+say "Journal : journalctl -u strata-multiview -f" "Logs: journalctl -u strata-multiview -f"
 say "Ajouter NDI ou DeckLink plus tard : sudo $PREFIX/install.sh ndi | decklink" \
     "Add NDI or DeckLink later: sudo $PREFIX/install.sh ndi | decklink"

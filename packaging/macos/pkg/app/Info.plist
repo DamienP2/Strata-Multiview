@@ -2,10 +2,10 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-  <key>CFBundleName</key><string>Strata Graphics</string>
-  <key>CFBundleDisplayName</key><string>Strata Graphics</string>
-  <key>CFBundleIdentifier</key><string>com.stratagraphics.app</string>
-  <key>CFBundleExecutable</key><string>strata-tray</string>
+  <key>CFBundleName</key><string>Strata Multiview</string>
+  <key>CFBundleDisplayName</key><string>Strata Multiview</string>
+  <key>CFBundleIdentifier</key><string>com.stratamultiview.app</string>
+  <key>CFBundleExecutable</key><string>strata-mv-tray</string>
   <key>CFBundleIconFile</key><string>AppIcon</string>
   <key>CFBundlePackageType</key><string>APPL</string>
   <key>CFBundleShortVersionString</key><string>__VERSION__</string>

@@ -1,5 +1,5 @@
 // Which properties of a layer are on the Designer's timeline (animatable).
-// Mirror of `Layer::timeline` (crates/cg-core/src/model.rs).
+// Mirror of `Layer::timeline` (crates/strata-mv-core/src/model.rs).
 import { PROPS, type Layer, type Prop } from './types';
 
 /** A new layer: position, size and opacity. */

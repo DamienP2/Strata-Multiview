@@ -2,10 +2,10 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-  <key>Label</key><string>com.stratagraphics.tray</string>
+  <key>Label</key><string>com.stratamultiview.tray</string>
   <key>ProgramArguments</key>
   <array>
-    <string>/Applications/Strata Graphics/Strata Graphics.app/Contents/MacOS/strata-tray</string>
+    <string>/Applications/Strata Multiview/Strata Multiview.app/Contents/MacOS/strata-mv-tray</string>
     <string>--background</string>
   </array>
   <key>RunAtLoad</key><true/>

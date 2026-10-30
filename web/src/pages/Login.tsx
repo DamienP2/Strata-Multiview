@@ -44,7 +44,7 @@ export function Login() {
         <div className="login-head">
           <Brand stacked />
           {/* The server's own name, when it has one other than the product's. */}
-          {auth?.serverName && auth.serverName !== 'Strata' && <p className="muted">{auth.serverName}</p>}
+          {auth?.serverName && auth.serverName !== 'Strata Multiview' && <p className="muted">{auth.serverName}</p>}
         </div>
         {firstRun ? (
           <div className="login-intro">
@@ -79,7 +79,7 @@ export function Login() {
         </button>
         {firstRun && (
           <p className="set-hint">
-            {t('For security this page only works on the server itself (http://localhost). Remotely, run this on the server:')} <code>strata-server user add admin</code>
+            {t('For security this page only works on the server itself (http://localhost). Remotely, run this on the server:')} <code>strata-mv-server user add admin</code>
           </p>
         )}
       </form>

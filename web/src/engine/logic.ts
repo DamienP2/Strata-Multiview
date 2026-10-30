@@ -1,4 +1,4 @@
-// Relations between values — mirror of crates/cg-core/src/logic.rs.
+// Relations between values — mirror of crates/strata-mv-core/src/logic.rs.
 import { COLOR_PROPS, type Data, type Layer, type Logic, type LogicNode, type Prop, type TextMetric } from './types';
 import { parseHex, transformText, type Resolved } from './evaluate';
 import { lineWidth } from './textFit';

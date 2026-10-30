@@ -4,7 +4,7 @@ import { api, useApp } from '../store';
 import { t, tn } from '../i18n';
 import { ago } from './Updates';
 
-/** A picture library shipped with the app (cg-server iconlib.rs). */
+/** A picture library shipped with the app (strata-mv-server iconlib.rs). */
 interface Library {
   id: string;
   kind: 'icons' | 'emoji' | 'flags' | 'illustrations';

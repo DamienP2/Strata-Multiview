@@ -417,100 +417,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f079e83a288787bcd14a6aea84cee5c87a67c5a3e660c30f557a3d24761b3527"
 
 [[package]]
-name = "cg-core"
-version = "0.7.1"
-dependencies = [
- "jiff",
- "serde",
- "serde_json",
- "thiserror 2.0.21",
- "uuid",
-]
-
-[[package]]
-name = "cg-output"
-version = "0.7.1"
-dependencies = [
- "cc",
- "cg-render",
- "libc",
- "libloading 0.8.9",
- "serde",
- "socket2 0.5.10",
- "thiserror 2.0.21",
- "tracing",
-]
-
-[[package]]
-name = "cg-render"
-version = "0.7.1"
-dependencies = [
- "ab_glyph",
- "cg-core",
- "fontdb",
- "image",
- "qrcode",
- "resvg",
- "serde",
- "serde_json",
- "tiny-skia",
- "tracing",
-]
-
-[[package]]
-name = "cg-server"
-version = "0.7.1"
-dependencies = [
- "anyhow",
- "argon2",
- "axum",
- "base64 0.22.1",
- "cg-core",
- "cg-output",
- "cg-render",
- "clap",
- "directories",
- "flate2",
- "futures-util",
- "gethostname",
- "hayro-svg",
- "if-addrs",
- "jiff",
- "libc",
- "resvg",
- "ring",
- "rpassword",
- "rust-embed",
- "serde",
- "serde_json",
- "sha2 0.10.9",
- "sysinfo",
- "tar",
- "tiny-skia",
- "tokio",
- "tower-http",
- "tracing",
- "tracing-subscriber",
- "ureq",
- "uuid",
- "windows-service",
- "windows-sys 0.61.2",
- "winresource",
- "zip",
-]
-
-[[package]]
-name = "cg-tray"
-version = "0.7.1"
-dependencies = [
- "serde_json",
- "tao",
- "tray-icon",
- "ureq",
- "winresource",
-]
-
-[[package]]
 name = "clap"
 version = "4.6.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3341,6 +3247,100 @@ name = "stable_deref_trait"
 version = "1.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6ce2be8dc25455e1f91df71bfa12ad37d7af1092ae736f3a6cd0e37bc7810596"
+
+[[package]]
+name = "strata-mv-core"
+version = "0.7.1"
+dependencies = [
+ "jiff",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.21",
+ "uuid",
+]
+
+[[package]]
+name = "strata-mv-output"
+version = "0.7.1"
+dependencies = [
+ "cc",
+ "libc",
+ "libloading 0.8.9",
+ "serde",
+ "socket2 0.5.10",
+ "strata-mv-render",
+ "thiserror 2.0.21",
+ "tracing",
+]
+
+[[package]]
+name = "strata-mv-render"
+version = "0.7.1"
+dependencies = [
+ "ab_glyph",
+ "fontdb",
+ "image",
+ "qrcode",
+ "resvg",
+ "serde",
+ "serde_json",
+ "strata-mv-core",
+ "tiny-skia",
+ "tracing",
+]
+
+[[package]]
+name = "strata-mv-server"
+version = "0.7.1"
+dependencies = [
+ "anyhow",
+ "argon2",
+ "axum",
+ "base64 0.22.1",
+ "clap",
+ "directories",
+ "flate2",
+ "futures-util",
+ "gethostname",
+ "hayro-svg",
+ "if-addrs",
+ "jiff",
+ "libc",
+ "resvg",
+ "ring",
+ "rpassword",
+ "rust-embed",
+ "serde",
+ "serde_json",
+ "sha2 0.10.9",
+ "strata-mv-core",
+ "strata-mv-output",
+ "strata-mv-render",
+ "sysinfo",
+ "tar",
+ "tiny-skia",
+ "tokio",
+ "tower-http",
+ "tracing",
+ "tracing-subscriber",
+ "ureq",
+ "uuid",
+ "windows-service",
+ "windows-sys 0.61.2",
+ "winresource",
+ "zip",
+]
+
+[[package]]
+name = "strata-mv-tray"
+version = "0.7.1"
+dependencies = [
+ "serde_json",
+ "tao",
+ "tray-icon",
+ "ureq",
+ "winresource",
+]
 
 [[package]]
 name = "strict-num"

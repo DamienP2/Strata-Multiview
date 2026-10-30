@@ -1,4 +1,4 @@
-// The picture library shipped with the app (cg-server iconlib.rs reads it):
+// The picture library shipped with the app (strata-mv-server iconlib.rs reads it):
 // dist/iconlib/<set>.json.gz, one per set, in the Iconify JSON format
 // (prefix, info, icons, aliases, categories, width, height), and
 // dist/iconlib/manifest.json saying what each one is.

@@ -1,6 +1,6 @@
 // Polygon: regular (with a star option), triangle presets, or a free polygon edited on the stage.
 // Free vertices are fractions of the box (they scale with it).
-// Same picture as crates/cg-render/src/wid/polygon.rs; geometry mirrors crates/cg-core/src/wid/polygon.rs.
+// Same picture as crates/strata-mv-render/src/wid/polygon.rs; geometry mirrors crates/strata-mv-core/src/wid/polygon.rs.
 import { useEffect, useState, useSyncExternalStore } from 'react';
 import { Pentagon } from 'lucide-react';
 import { useApp } from '../store';

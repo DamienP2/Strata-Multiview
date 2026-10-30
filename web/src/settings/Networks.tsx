@@ -37,7 +37,7 @@ export function Networks({ info, cfg, edit, det }: { info: SystemInfo; cfg: Serv
     edit((c) => {
       c.hardware = hardwareOf(c);
       c.hardware.network = { ...emptyNetwork(), ...c.hardware.network, control: v.startsWith('ip:') ? '' : v };
-      c.bind = joinAddr(v.startsWith('ip:') ? v.slice(3) : '0.0.0.0', bindPort || '8080');
+      c.bind = joinAddr(v.startsWith('ip:') ? v.slice(3) : '0.0.0.0', bindPort || '8090');
     });
 
   const picker = (value: string, onChange: (v: string) => void, none: string, label: string, extra?: React.ReactNode) => (

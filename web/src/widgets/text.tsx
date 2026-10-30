@@ -1,7 +1,7 @@
 // Text: settings, drawing and inspector (no Operator controls: the Operator's
 // fit warnings come from engine/Scene.tsx textWarnings).
-// Same picture as crates/cg-render/src/wid/text.rs; fit chain in engine/textFit.ts
-// (fitLines, mirror of text::fit_lines); language rules in crates/cg-core/src/wid/text.rs.
+// Same picture as crates/strata-mv-render/src/wid/text.rs; fit chain in engine/textFit.ts
+// (fitLines, mirror of text::fit_lines); language rules in crates/strata-mv-core/src/wid/text.rs.
 import { FontPick } from '../ui/FontPick';
 import { useContext, useState, type CSSProperties } from 'react';
 import { align, decodeChar, decodeLine, encodeRuns, imageIndex, imgHeightPx, imgMiddle, inlineImages, RichKeys, runs as richRuns, type InlineImage, type Run, type RunStyle, type VarStyle, type VarStyles } from '../engine/rich';

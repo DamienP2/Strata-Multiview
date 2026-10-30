@@ -1,4 +1,4 @@
-# Strata Graphics
+# Strata Multiview
 
 **Serveur d'habillage broadcast temps réel.** Strata dessine les habillages d'antenne (synthés, bandeaux, scores, classements, murs de messages…) à partir de modèles conçus dans le navigateur, les alimente avec des données en direct et les envoie vers les sorties du studio : HTML5, NDI, flux SRT / RTMP / HLS, SDI (DeckLink) et SMPTE ST 2110-20 fill + key.
 
@@ -73,14 +73,14 @@ Le serveur est **un exécutable autonome** par plateforme : il embarque l'interf
 
 | Plateforme | Paquet | Service |
 | --- | --- | --- |
-| **Windows** | installateur `.msi` avec l'app Strata Graphics (zone de notification) ; déploiement silencieux `msiexec /qn` | service Windows |
-| **macOS** | installateur `.pkg` universel (Apple Silicon + Intel) avec l'app Strata Graphics (barre des menus), livré en image disque | launchd |
+| **Windows** | installateur `.msi` avec l'app Strata Multiview (zone de notification) ; déploiement silencieux `msiexec /qn` | service Windows |
+| **macOS** | installateur `.pkg` universel (Apple Silicon + Intel) avec l'app Strata Multiview (barre des menus), livré en image disque | launchd |
 | **Linux** | archive avec binaire statique et `sudo ./install.sh` | systemd |
 
 Les commandes de service sont les mêmes partout :
 
 ```bash
-strata-server service install | uninstall | start | stop | status
+strata-mv-server service install | uninstall | start | stop | status
 ```
 
 Les **mises à jour** se font sans désinstaller, depuis **Système › Paramètres › Mises à jour** : en ligne (releases GitHub) ou en déposant l'archive de la version pour un serveur hors ligne, avec retour automatique à la version précédente si la nouvelle ne démarre pas.
@@ -93,7 +93,7 @@ Guide complet, dossiers de données, pare-feu, proxy : [`docs/INSTALL.md`](docs/
 
 ## 3. Premiers pas
 
-1. Ouvrez `http://<serveur>:8080`. Sur le serveur lui-même, la page propose de **créer le compte administrateur** ; à distance, utilisez `strata-server user add admin`.
+1. Ouvrez `http://<serveur>:8080`. Sur le serveur lui-même, la page propose de **créer le compte administrateur** ; à distance, utilisez `strata-mv-server user add admin`.
 2. Une chaîne de sortie **`main`** (1080p50) est créée ; la liste des projets est vide. La sortie HTML5 de la chaîne est sur `http://<serveur>:8080/output/main`.
 3. Dans **Projets › Exemples**, créez un projet à partir d'un des **21 exemples** : journal télévisé, info continue, football, soirée électorale, météo, bourse, talk-show, e-sport, grand prix, tennis, podcast, festival, documentaire, keynote, cérémonie, jeu télévisé, basket, cyclisme, matinale, live shopping, réseaux sociaux. Chacun est complet : modèles, conducteur, sources de données.
 4. Ouvrez le projet dans le **Designer** pour voir comment il est fait, puis dans l'**Opérateur** pour le jouer sur la chaîne.
@@ -344,8 +344,8 @@ Chaque action à l'antenne est journalisée : quoi, qui, quand, sur quelle chaî
 Les comptes en cartes, filtrés par rôle. Pour chaque utilisateur (hors admin), l'accès peut être limité à **certains projets** et à **certaines chaînes**. Mots de passe hachés (Argon2), session dans un cookie HttpOnly, jeton Bearer pour l'automation. Les pages `/output/<chaîne>` restent accessibles sans connexion pour les sources navigateur ; l'option se désactive dans les Paramètres.
 
 ```bash
-strata-server user add <nom> [--role admin|designer|operator|viewer]
-strata-server user list | passwd <nom> | delete <nom>
+strata-mv-server user add <nom> [--role admin|designer|operator|viewer]
+strata-mv-server user list | passwd <nom> | delete <nom>
 ```
 
 ### 10.4 Paramètres
@@ -366,7 +366,7 @@ Le panneau Premiere Pro liste les projets et leurs modèles, règle la durée et
 
 ### 11.3 Surfaces de contrôle
 
-Chemins courts sous `/api/v1/{chaîne}/…` (POST, clé d'API `Authorization: Bearer pcg_…`), pour Bitfocus Buttons / Companion, Stream Deck, pupitres :
+Chemins courts sous `/api/v1/{chaîne}/…` (POST, clé d'API `Authorization: Bearer smv_…`), pour Bitfocus Buttons / Companion, Stream Deck, pupitres :
 
 | Action | Chemin |
 | --- | --- |
@@ -422,7 +422,7 @@ Pré-requis : Rust stable (1.80 ou plus) et Node 22.
 cd web && npm install && npm run build && cd ..
 
 # 2. Serveur (API, WebSocket, playout, sorties)
-cargo run --release -p cg-server -- --data-dir data
+cargo run --release -p strata-mv-server -- --data-dir data
 # → http://localhost:8080/
 # → http://localhost:8080/output/main
 ```
@@ -433,9 +433,9 @@ En développement de l'interface, `npm run dev` dans `web/` sert l'UI sur le por
 
 | Option | Variable | Défaut |
 | --- | --- | --- |
-| `--bind` | `CG_BIND` | `0.0.0.0:8080` |
-| `--data-dir` | `CG_DATA_DIR` | dossier de données de l'utilisateur ; pour le service : `/var/lib/strata-graphics`, `/Library/Application Support/Strata Graphics` ou `%ProgramData%\Strata Graphics` |
-| `--web-dir` | `CG_WEB_DIR` | UI embarquée (`web/dist` en développement) |
+| `--bind` | `STRATA_MV_BIND` | `0.0.0.0:8080` |
+| `--data-dir` | `STRATA_MV_DATA_DIR` | dossier de données de l'utilisateur ; pour le service : `/var/lib/strata-multiview`, `/Library/Application Support/Strata Multiview` ou `%ProgramData%\Strata Multiview` |
+| `--web-dir` | `STRATA_MV_WEB_DIR` | UI embarquée (`web/dist` en développement) |
 | | `FFMPEG_PATH` · `NDI_LIB_PATH` | ffmpeg et runtime NDI, si hors des emplacements livrés |
 
 ### 12.2 Configuration (`config.json`)
@@ -473,10 +473,10 @@ En développement de l'interface, `npm run dev` dans `web/` sert l'UI sur le por
 
 ```
 crates/
-  cg-core     modèle, keyframes et easing, widgets, logique, playout (sans I/O)
-  cg-render   moteur de rendu logiciel (tiny-skia, texte vectoriel)
-  cg-output   ST 2110-20 (RFC 4175, fill + key, SDP), SDI DeckLink, NDI, flux
-  cg-server   axum : REST, WebSocket, chaînes, projets, données, réseaux sociaux, utilisateurs, UI embarquée, services OS
+  strata-mv-core     modèle, keyframes et easing, widgets, logique, playout (sans I/O)
+  strata-mv-render   moteur de rendu logiciel (tiny-skia, texte vectoriel)
+  strata-mv-output   ST 2110-20 (RFC 4175, fill + key, SDP), SDI DeckLink, NDI, flux
+  strata-mv-server   axum : REST, WebSocket, chaînes, projets, données, réseaux sociaux, utilisateurs, UI embarquée, services OS
     examples/ les 21 projets d'exemple
     src/openapi.json
 assets/fonts  polices Inter (OFL) embarquées : rendu identique sur tous les OS
@@ -494,8 +494,8 @@ cargo clippy --workspace --all-targets -- -D warnings
 cargo test --workspace
 cd web && npx tsc --noEmit -p . && npm run build
 node web/scripts/i18n-check.mjs          # textes sans traduction française
-cargo run --release -p cg-render --example bench_render       # environ 1,5 ms par image 1080p
-cargo run --release -p cg-output --example bench_packetize    # environ 7 ms par image 1080p
+cargo run --release -p strata-mv-render --example bench_render       # environ 1,5 ms par image 1080p
+cargo run --release -p strata-mv-output --example bench_packetize    # environ 7 ms par image 1080p
 ```
 
 ---

@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["crates/cg-core", "crates/cg-render", "crates/cg-output", "crates/cg-server", "crates/cg-tray"]
+members = ["crates/strata-mv-core", "crates/strata-mv-render", "crates/strata-mv-output", "crates/strata-mv-server", "crates/strata-mv-tray"]
 
 [workspace.package]
 version = "0.7.1"
@@ -14,9 +14,9 @@ thiserror = "2"
 anyhow = "1"
 tracing = "0.1"
 uuid = { version = "1", features = ["v4", "serde"] }
-cg-core = { path = "crates/cg-core" }
-cg-render = { path = "crates/cg-render" }
-cg-output = { path = "crates/cg-output" }
+strata-mv-core = { path = "crates/strata-mv-core" }
+strata-mv-render = { path = "crates/strata-mv-render" }
+strata-mv-output = { path = "crates/strata-mv-output" }
 
 [profile.release]
 lto = "thin"

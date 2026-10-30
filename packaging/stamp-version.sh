@@ -12,6 +12,6 @@ case "$V" in
   *) V=$V.0.0 ;;
 esac
 perl -pi -e 's/^version = "[^"]*"/version = "'"$V"'"/ if $. < 10' Cargo.toml
-perl -0pi -e 's/(name = "cg-[a-z-]+"\r?\nversion = ")[^"]+/${1}'"$V"'/g' Cargo.lock
+perl -0pi -e 's/(name = "strata-mv-[a-z-]+"\r?\nversion = ")[^"]+/${1}'"$V"'/g' Cargo.lock
 perl -pi -e 's/"version": "[^"]*"/"version": "'"$V"'"/ if $. < 6' web/package.json
 echo "version stamped: $V"

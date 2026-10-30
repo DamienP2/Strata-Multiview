@@ -1,5 +1,5 @@
 // Values a data source changed on air, moving in the layers showing them
-// (mirror of cg-core playout::Change, count_value, shown_data and of the
+// (mirror of strata-mv-core playout::Change, count_value, shown_data and of the
 // renderer's value_tf): a count, a slide, a turn over.
 import { createContext } from 'react';
 import type { Data, Layer, PlayoutItem, Template, ValueChange, ValueMove } from './types';

@@ -2,7 +2,7 @@ name: Release
 
 # Builds the release files: Strata for macOS (.dmg and .pkg), Windows (.msi)
 # and Ubuntu (server .tar.gz), and the update packages installed servers download
-# (Strata-<version>-<platform>: the server alone).
+# (StrataMV-<version>-<platform>: the server alone).
 # Push a tag `v*` to publish a GitHub release, or run manually for artifacts.
 on:
   push:
@@ -63,7 +63,7 @@ jobs:
           save-if: false
       - name: Build
         # The tray app ships with the Windows installer (macOS builds it in macos-installer).
-        run: cargo build --release --locked -p cg-server ${{ matrix.pkg == 'windows' && '-p cg-tray' || '' }} --target ${{ matrix.target }}
+        run: cargo build --release --locked -p strata-mv-server ${{ matrix.pkg == 'windows' && '-p strata-mv-tray' || '' }} --target ${{ matrix.target }}
       - name: NDI runtime
         if: matrix.pkg == 'windows'
         shell: bash
@@ -85,9 +85,9 @@ jobs:
         if: matrix.pkg == 'linux'
         shell: bash
         run: |
-          NAME=Strata-$SUFFIX-${{ matrix.name }}
+          NAME=StrataMV-$SUFFIX-${{ matrix.name }}
           mkdir -p "dist/$NAME"
-          cp "target/${{ matrix.target }}/release/strata-server" "dist/$NAME/"
+          cp "target/${{ matrix.target }}/release/strata-mv-server" "dist/$NAME/"
           find packaging/linux -maxdepth 1 -type f -exec cp {} "dist/$NAME/" \;
           cp docs/INSTALL.md docs/SYNC.md assets/fonts/OFL.txt docs/outputs.example.json "dist/$NAME/"
           # ffmpeg in bin/ next to the server.
@@ -101,10 +101,10 @@ jobs:
       - name: Update package
         shell: bash
         run: |
-          NAME=Strata-$SUFFIX-${{ matrix.platform }}
+          NAME=StrataMV-$SUFFIX-${{ matrix.platform }}
           mkdir -p "dist/update/$NAME"
           EXT=""; [ "${{ matrix.pkg }}" = windows ] && EXT=.exe
-          cp "target/${{ matrix.target }}/release/strata-server$EXT" "dist/update/$NAME/"
+          cp "target/${{ matrix.target }}/release/strata-mv-server$EXT" "dist/update/$NAME/"
           cd dist/update
           if [ "${{ matrix.pkg }}" = windows ]; then
             7z a "../$NAME.zip" "$NAME" >/dev/null
@@ -123,7 +123,7 @@ jobs:
           wix build packaging/windows/msi/strata.wxs -arch x64 \
             -ext WixToolset.Util.wixext -ext WixToolset.Firewall.wixext \
             -d Version="$VERSION" -d BinDir="target/${{ matrix.target }}/release" -d DocsDir=. "${NDI[@]}" \
-            -o "dist/Strata-$SUFFIX-${{ matrix.name }}.msi"
+            -o "dist/StrataMV-$SUFFIX-${{ matrix.name }}.msi"
       - uses: actions/upload-artifact@v4
         with:
           name: strata-${{ matrix.name }}
@@ -159,10 +159,10 @@ jobs:
       - name: Build universal binary
         run: |
           for t in aarch64-apple-darwin x86_64-apple-darwin; do
-            cargo build --release --locked -p cg-server -p cg-tray --target $t
+            cargo build --release --locked -p strata-mv-server -p strata-mv-tray --target $t
           done
           mkdir -p dist
-          for b in strata-server strata-tray; do
+          for b in strata-mv-server strata-mv-tray; do
             lipo -create -output dist/$b target/aarch64-apple-darwin/release/$b target/x86_64-apple-darwin/release/$b
             lipo -info dist/$b
           done
@@ -198,8 +198,8 @@ jobs:
         run: |
           VERSION=$(grep -m1 '^version' Cargo.toml | cut -d'"' -f2)
           SUFFIX=$VERSION; [ "$GITHUB_REF_TYPE" = tag ] || SUFFIX=dev-${GITHUB_SHA::7}
-          packaging/macos/pkg/build.sh dist/strata-server dist/strata-tray "$VERSION" "dist/Strata-$SUFFIX-macos-universal.pkg"
-          pkgutil --payload-files dist/*.pkg | grep -E "Applications|strata-server$|bin/ffmpeg$"
+          packaging/macos/pkg/build.sh dist/strata-mv-server dist/strata-mv-tray "$VERSION" "dist/StrataMV-$SUFFIX-macos-universal.pkg"
+          pkgutil --payload-files dist/*.pkg | grep -E "Applications|strata-mv-server$|bin/ffmpeg$"
           pkgutil --payload-files dist/*.pkg | grep -q "bin/ffmpeg$" || { echo "::error::the macOS package has no ffmpeg"; exit 1; }
           echo "VERSION=$VERSION" >> "$GITHUB_ENV"
           echo "SUFFIX=$SUFFIX" >> "$GITHUB_ENV"
@@ -214,14 +214,14 @@ jobs:
           xcrun stapler staple dist/*.pkg
       # Disk image: keeps the custom icons on the download (after notarization).
       - name: Disk image
-        run: packaging/macos/pkg/make-dmg.sh dist/Strata-$SUFFIX-macos-universal.pkg "$VERSION" "dist/Strata-$SUFFIX-macos-universal.dmg"
+        run: packaging/macos/pkg/make-dmg.sh dist/StrataMV-$SUFFIX-macos-universal.pkg "$VERSION" "dist/StrataMV-$SUFFIX-macos-universal.dmg"
       # Update packages (the server alone, per processor), as above.
       - name: Update packages
         run: |
           for a in arm64:aarch64-apple-darwin x86_64:x86_64-apple-darwin; do
-            NAME=Strata-$SUFFIX-macos-${a%%:*}
+            NAME=StrataMV-$SUFFIX-macos-${a%%:*}
             mkdir -p "dist/update/$NAME"
-            cp "target/${a#*:}/release/strata-server" "dist/update/$NAME/"
+            cp "target/${a#*:}/release/strata-mv-server" "dist/update/$NAME/"
             (cd dist/update && tar czf "../$NAME.tar.gz" "$NAME")
           done
       - uses: actions/upload-artifact@v4

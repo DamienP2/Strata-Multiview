@@ -1,6 +1,6 @@
 import type { FrameRate } from '../engine/types';
 
-/** Mirrors crates/cg-server/src/config.rs and crates/cg-output. */
+/** Mirrors crates/strata-mv-server/src/config.rs and crates/strata-mv-output. */
 
 export type St2110Encoding = 'fillKey' | 'rgba' | 'ycbcra';
 
@@ -49,7 +49,7 @@ export interface Html5Output {
 
 export type StreamProtocol = 'srt' | 'udp' | 'rtmp' | 'hls';
 
-/** An SRT, UDP, RTMP or HLS stream, encoded by ffmpeg (crates/cg-output/src/stream.rs). */
+/** An SRT, UDP, RTMP or HLS stream, encoded by ffmpeg (crates/strata-mv-output/src/stream.rs). */
 export interface StreamOutput {
   id: string;
   enabled?: boolean;
@@ -80,7 +80,7 @@ export interface OutputsConfig {
 
 export type InputKind = 'srt' | 'udp' | 'rtmp' | 'hls' | 'rtsp' | 'url' | 'ndi' | 'sdi' | 'st2110';
 
-/** A live video input (crates/cg-server/src/inputs.rs). */
+/** A live video input (crates/strata-mv-server/src/inputs.rs). */
 export interface InputConfig {
   id: string;
   /** Off: kept in the settings, not started (true when missing). */
@@ -183,7 +183,7 @@ export interface ServerConfig {
   bind?: string | null;
   publicOutputs: boolean;
   timezone: string;
-  /** How the machine keeps its time (NTP), see crates/cg-server/src/timectl.rs. */
+  /** How the machine keeps its time (NTP), see crates/strata-mv-server/src/timectl.rs. */
   time?: TimeConfig;
   /** Path of the NDI runtime library ("" = search for it). */
   ndiLibrary?: string;
@@ -193,11 +193,11 @@ export interface ServerConfig {
   inputs?: InputConfig[];
   /** DeckLink cards and ST 2110 flows (Hardware page). */
   hardware?: HardwareConfig;
-  /** OSC and TCP control (Bitfocus Buttons), see crates/cg-server/src/apiv1. */
+  /** OSC and TCP control (Bitfocus Buttons), see crates/strata-mv-server/src/apiv1. */
   control?: { oscEnabled: boolean; oscPort: number; tcpEnabled: boolean; tcpPort: number; allow: string[] };
 }
 
-// ---- Hardware (crates/cg-server/src/hardware.rs) ----
+// ---- Hardware (crates/strata-mv-server/src/hardware.rs) ----
 
 export type SdiModel = 'miniMonitor' | 'miniRecorder' | 'sdi4k' | 'duo2' | 'quad2' | '8kPro' | 'other';
 
@@ -307,7 +307,7 @@ export interface HardwareConfig {
 export const emptyNetwork = (): NetworkRoles => ({ control: '', ndi: '', ndiDiscovery: '', mediaRed: '', mediaBlue: '', ptp: '' });
 export const emptySync = (): SyncConfig => ({ reference: 'auto', ptpDomain: 127, taiOffset: 37, version: 1 });
 
-/** NTP / PTP status (crates/cg-server/src/sync.rs). */
+/** NTP / PTP status (crates/strata-mv-server/src/sync.rs). */
 export interface SyncStatus {
   ntp: { tool?: string | null; synced?: boolean | null; enabled?: boolean | null; source?: string | null; offsetMs?: number | null };
   ptp: { running: boolean; message?: string | null; domain: number; portState?: string | null; grandmaster?: string | null; offsetNs?: number | null; jitterNs?: number | null; locked: boolean; setsClock?: boolean };
@@ -339,7 +339,7 @@ export interface HardwareInfo {
 
 export type PortCap = 'in' | 'out' | 'both';
 
-/** A DeckLink card the driver lists (crates/cg-server/src/decklink.rs). */
+/** A DeckLink card the driver lists (crates/strata-mv-server/src/decklink.rs). */
 export interface DetectedCard {
   id: string;
   modelName: string;

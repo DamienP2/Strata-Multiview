@@ -1,69 +1,69 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Strata Graphics — Windows Installer package (WiX Toolset v5).
+  Strata Multiview — Windows Installer package (WiX Toolset v5).
   Build: wix build strata.wxs -arch x64 -ext WixToolset.Util.wixext -ext WixToolset.Firewall.wixext
-         -d Version=0.1.0 -d BinDir=<dir with strata-server.exe> -d DocsDir=<repo root> -o Strata.msi
+         -d Version=0.1.0 -d BinDir=<dir with strata-mv-server.exe> -d DocsDir=<repo root> -o Strata.msi
   Silent install with a custom port: msiexec /i Strata.msi /qn PORT=80
   (LISTEN_ADDR restricts the interface, e.g. LISTEN_ADDR=10.10.0.21)
 -->
 <Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"
      xmlns:util="http://wixtoolset.org/schemas/v4/wxs/util"
      xmlns:fire="http://wixtoolset.org/schemas/v4/wxs/firewall">
-  <Package Name="Strata Graphics"
-           Manufacturer="Strata Graphics"
+  <Package Name="Strata Multiview"
+           Manufacturer="Strata Multiview"
            Version="$(var.Version)"
-           UpgradeCode="c38ad561-9f05-45ea-ab99-17ee287adb85"
+           UpgradeCode="e6cc9f1d-f5eb-44a1-bd0d-35694181aecc"
            Scope="perMachine"
            Codepage="1252"
            Compressed="yes">
-    <SummaryInformation Description="Strata Graphics broadcast graphics server" />
+    <SummaryInformation Description="Strata Multiview broadcast graphics server" />
     <MajorUpgrade DowngradeErrorMessage="Une version plus récente de [ProductName] est déjà installée." />
     <MediaTemplate EmbedCab="yes" />
 
     <!-- Listening address of the service; override with msiexec PORT=... LISTEN_ADDR=... -->
     <Property Id="LISTEN_ADDR" Value="0.0.0.0" Secure="yes" />
-    <Property Id="PORT" Value="8080" Secure="yes" />
+    <Property Id="PORT" Value="8090" Secure="yes" />
     <Property Id="ARPNOMODIFY" Value="1" />
     <!-- Icon in "Installed apps" / Add-Remove Programs. -->
-    <Icon Id="StrataGraphics.ico" SourceFile="$(var.DocsDir)\assets\icons\strata.ico" />
-    <Property Id="ARPPRODUCTICON" Value="StrataGraphics.ico" />
+    <Icon Id="StrataMultiview.ico" SourceFile="$(var.DocsDir)\assets\icons\strata.ico" />
+    <Property Id="ARPPRODUCTICON" Value="StrataMultiview.ico" />
 
     <StandardDirectory Id="ProgramFiles64Folder">
-      <Directory Id="INSTALLFOLDER" Name="Strata Graphics">
+      <Directory Id="INSTALLFOLDER" Name="Strata Multiview">
         <Directory Id="BinFolder" Name="bin" />
       </Directory>
     </StandardDirectory>
     <StandardDirectory Id="ProgramMenuFolder">
-      <Directory Id="MenuFolder" Name="Strata Graphics" />
+      <Directory Id="MenuFolder" Name="Strata Multiview" />
     </StandardDirectory>
 
     <ComponentGroup Id="Product" Directory="INSTALLFOLDER">
       <Component Id="Server">
-        <File Id="ServerExe" Source="$(var.BinDir)\strata-server.exe" KeyPath="yes">
-          <fire:FirewallException Id="FirewallServer" Name="Strata Graphics Server" Scope="any" Profile="all" />
+        <File Id="ServerExe" Source="$(var.BinDir)\strata-mv-server.exe" KeyPath="yes">
+          <fire:FirewallException Id="FirewallServer" Name="Strata Multiview Server" Scope="any" Profile="all" />
         </File>
         <ServiceInstall Id="ServiceInstall"
-                        Name="strata-graphics"
-                        DisplayName="Strata Graphics Server"
+                        Name="strata-multiview"
+                        DisplayName="Strata Multiview Server"
                         Description="Broadcast character generator: HTML5, SDI and SMPTE ST 2110 graphics playout"
                         Type="ownProcess"
                         Start="auto"
                         ErrorControl="normal"
                         Vital="yes"
-                        Arguments="run --service --default-bind [LISTEN_ADDR]:[PORT] --data-dir &quot;[CommonAppDataFolder]Strata Graphics&quot;">
+                        Arguments="run --service --default-bind [LISTEN_ADDR]:[PORT] --data-dir &quot;[CommonAppDataFolder]Strata Multiview&quot;">
           <util:ServiceConfig FirstFailureActionType="restart"
                               SecondFailureActionType="restart"
                               ThirdFailureActionType="restart"
                               RestartServiceDelayInSeconds="2"
                               ResetPeriodInDays="1" />
         </ServiceInstall>
-        <ServiceControl Id="ServiceControl" Name="strata-graphics" Start="install" Stop="both" Remove="uninstall" Wait="yes" />
+        <ServiceControl Id="ServiceControl" Name="strata-multiview" Start="install" Stop="both" Remove="uninstall" Wait="yes" />
         <Environment Id="PathEntry" Name="PATH" Value="[INSTALLFOLDER]" Part="last" Action="set" System="yes" Permanent="no" />
       </Component>
       <!-- Notification-area app, started at every logon. -->
       <Component Id="TrayApp">
-        <File Id="TrayExe" Source="$(var.BinDir)\strata-tray.exe" KeyPath="yes" />
-        <RegistryValue Root="HKLM" Key="Software\Microsoft\Windows\CurrentVersion\Run" Name="Strata Graphics" Type="string" Value="&quot;[#TrayExe]&quot; --background" />
+        <File Id="TrayExe" Source="$(var.BinDir)\strata-mv-tray.exe" KeyPath="yes" />
+        <RegistryValue Root="HKLM" Key="Software\Microsoft\Windows\CurrentVersion\Run" Name="Strata Multiview" Type="string" Value="&quot;[#TrayExe]&quot; --background" />
       </Component>
       <!-- One unversioned file per component (auto-generated GUIDs). -->
       <Component Id="DocInstall">
@@ -94,19 +94,17 @@
       </Component>
       <?endif ?>
       <Component Id="StartMenu" Directory="MenuFolder">
-        <Shortcut Id="TrayShortcut" Name="Strata Graphics" Description="Strata Graphics server status, settings and shortcuts" Target="[#TrayExe]" WorkingDirectory="INSTALLFOLDER" />
-        <Shortcut Id="UninstallShortcut" Name="Uninstall Strata Graphics" Description="Remove Strata Graphics (your data is kept)" Target="[System64Folder]msiexec.exe" Arguments="/x [ProductCode]" Icon="StrataGraphics.ico" />
-        <util:InternetShortcut Id="DesignerShortcut" Name="Strata Graphics Designer" Target="http://localhost:[PORT]/designer" Type="url" />
-        <util:InternetShortcut Id="OperatorShortcut" Name="Strata Graphics Operator" Target="http://localhost:[PORT]/operator" Type="url" />
+        <Shortcut Id="TrayShortcut" Name="Strata Multiview" Description="Strata Multiview server status, settings and shortcuts" Target="[#TrayExe]" WorkingDirectory="INSTALLFOLDER" />
+        <Shortcut Id="UninstallShortcut" Name="Uninstall Strata Multiview" Description="Remove Strata Multiview (your data is kept)" Target="[System64Folder]msiexec.exe" Arguments="/x [ProductCode]" Icon="StrataMultiview.ico" />
+        <util:InternetShortcut Id="ProjectsShortcut" Name="Strata Multiview" Target="http://localhost:[PORT]/projects" Type="url" />
+        <util:InternetShortcut Id="OutputsShortcut" Name="Strata Multiview Outputs" Target="http://localhost:[PORT]/outputs" Type="url" />
         <RemoveFolder Id="RemoveMenuFolder" On="uninstall" />
-        <RegistryValue Root="HKLM" Key="Software\Strata Graphics" Name="StartMenu" Type="integer" Value="1" KeyPath="yes" />
+        <RegistryValue Root="HKLM" Key="Software\Strata Multiview" Name="StartMenu" Type="integer" Value="1" KeyPath="yes" />
       </Component>
     </ComponentGroup>
 
     <!-- Upgrades / uninstall: close the tray app so its exe can be replaced. -->
-    <util:CloseApplication Id="CloseTray" Target="strata-tray.exe" CloseMessage="yes" TerminateProcess="0" RebootPrompt="no" />
-    <!-- The tray app of an install from before the rename. -->
-    <util:CloseApplication Id="CloseFormerTray" Target="pulse-cg-tray.exe" CloseMessage="yes" TerminateProcess="0" RebootPrompt="no" />
+    <util:CloseApplication Id="CloseTray" Target="strata-mv-tray.exe" CloseMessage="yes" TerminateProcess="0" RebootPrompt="no" />
 
     <!-- Start the tray app for the installing user right away. -->
     <CustomAction Id="LaunchTray" FileRef="TrayExe" ExeCommand="--background" Return="asyncNoWait" Impersonate="yes" Execute="immediate" />
@@ -114,7 +112,7 @@
       <Custom Action="LaunchTray" After="InstallFinalize" Condition="NOT (REMOVE~=&quot;ALL&quot;)" />
     </InstallExecuteSequence>
 
-    <Feature Id="Main" Title="Strata Graphics">
+    <Feature Id="Main" Title="Strata Multiview">
       <ComponentGroupRef Id="Product" />
     </Feature>
   </Package>

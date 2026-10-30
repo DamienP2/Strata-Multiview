@@ -1,5 +1,5 @@
 // One line of text fitted to its box for the ticker: shrink → squeeze → ellipsis,
-// the chain of crates/cg-render/src/wid/fit.rs `fitted_path` (engine/textFit.ts fitText = cg_render text::fit_text).
+// the chain of crates/strata-mv-render/src/wid/fit.rs `fitted_path` (engine/textFit.ts fitText = strata_mv_render text::fit_text).
 import { useRef, type CSSProperties } from 'react';
 import { fitText, textWidth } from '../engine/textFit';
 

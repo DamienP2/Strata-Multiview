@@ -1,4 +1,4 @@
-// Live video inputs (crates/cg-server/src/inputs.rs) for the Video widget:
+// Live video inputs (crates/strata-mv-server/src/inputs.rs) for the Video widget:
 // their list and status, and their pictures, shared by everything on the
 // page showing the same input, and stopped when nothing shows it any more.
 // - HTML5 outputs (and the Operator's program) read a Motion JPEG stream:

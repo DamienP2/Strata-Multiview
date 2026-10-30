@@ -173,7 +173,7 @@ export function Logs() {
   );
 }
 
-/** "cg_output::stream" → "output::stream". */
+/** "strata_mv_output::stream" → "output::stream". */
 const shortTarget = (s: string) => s.replace(/^cg_/, '');
 
 const Row = memo(function Row({ e }: { e: LogEntry }) {

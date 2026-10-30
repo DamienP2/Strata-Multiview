@@ -1,6 +1,6 @@
 // Ellipse: portion (sector / arc / chord) between a start and an end angle, ring / donut (a circle: the Dimensions lock).
 // Drawn as a path in layer pixels (never a scaled circle), so a flat ellipse keeps an even stroke.
-// Same picture as crates/cg-render/src/wid/ellipse.rs; geometry mirrors crates/cg-core/src/wid/ellipse.rs.
+// Same picture as crates/strata-mv-render/src/wid/ellipse.rs; geometry mirrors crates/strata-mv-core/src/wid/ellipse.rs.
 // Start, End and Inner radius are animatable properties (arcStart, arcEnd, innerRadius); unset, the
 // settings below give them (older layers).
 import { Circle } from 'lucide-react';

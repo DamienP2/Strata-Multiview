@@ -1,5 +1,5 @@
 // Multi-format projects (16:9 + 9:16…): mirror of Template::in_format and
-// Project::format_for in crates/cg-core/src/model.rs, plus the designer's
+// Project::format_for in crates/strata-mv-core/src/model.rs, plus the designer's
 // edit-in-format helpers and the smart adaptation.
 import { holdFrame, num, propValue, sortKeys } from './evaluate';
 import { MAIN_FORMAT, PROPS, type Format, type Keyframe, type Layer, type LayerOverride, type Project, type Prop, type Template, type Value } from './types';

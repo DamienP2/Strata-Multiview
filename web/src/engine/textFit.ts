@@ -2,7 +2,7 @@ import type { TextOverflow } from './types';
 
 /*
  * A text made to fit its box, with the same rules as the Rust renderer
- * (crates/cg-render/src/text.rs, fit_text): narrower first (one line of
+ * (crates/strata-mv-render/src/text.rs, fit_text): narrower first (one line of
  * text), then smaller down to the minimum, then cut at the box; or "…",
  * or cut, or drawn outside.
  */
@@ -141,8 +141,8 @@ export function fitText(content: string, o: FitOptions): Fitted {
 
 /* ------------------------------------------------------------ rich text --
  * The fit chain of the Text widget, same as `fit_lines` in
- * crates/cg-render/src/text.rs, and the language rules of
- * crates/cg-core/src/wid/text.rs (graphemes, hyphenation, French spaces).
+ * crates/strata-mv-render/src/text.rs, and the language rules of
+ * crates/strata-mv-core/src/wid/text.rs (graphemes, hyphenation, French spaces).
  */
 
 const GS = typeof Intl !== 'undefined' && 'Segmenter' in Intl ? new Intl.Segmenter(undefined, { granularity: 'grapheme' }) : null;

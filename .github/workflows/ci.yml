@@ -20,10 +20,7 @@ jobs:
           components: clippy
       - uses: Swatinem/rust-cache@v2
       - run: cargo clippy --workspace --all-targets -- -D warnings
-      # The example renders load every core: they run on their own, after the
-      # timing tests, so those measure the code and not a saturated runner.
-      - run: cargo test --workspace -- --skip every_example_loads_and_renders
-      - run: cargo test -p cg-server --bin strata-server every_example_loads_and_renders
+      - run: cargo test --workspace
 
   web:
     runs-on: ubuntu-latest

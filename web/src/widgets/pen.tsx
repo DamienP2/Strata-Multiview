@@ -1,7 +1,7 @@
 // Pen: a Bézier path edited on the stage; points and handles are fractions of the box.
 // The visible portion (start / end %, the animatable drawStart / drawEnd) is what the In draws,
 // over the pen's own duration after its delay; arrows follow the visible tip.
-// Same picture as crates/cg-render/src/wid/pen.rs; geometry mirrors crates/cg-core/src/wid/pen.rs.
+// Same picture as crates/strata-mv-render/src/wid/pen.rs; geometry mirrors crates/strata-mv-core/src/wid/pen.rs.
 import { useEffect, useState, useSyncExternalStore } from 'react';
 import { PenTool } from 'lucide-react';
 import { col, cssColor, holdFrame, num, propValue } from '../engine/evaluate';

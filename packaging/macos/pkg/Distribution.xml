@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <installer-gui-script minSpecVersion="2">
-  <title>Strata Graphics</title>
+  <title>Strata Multiview</title>
   <background file="background.png" alignment="bottomleft" scaling="none"/>
   <background-darkAqua file="background.png" alignment="bottomleft" scaling="none"/>
   <welcome file="welcome.html" mime-type="text/html"/>
@@ -11,11 +11,11 @@
     <allowed-os-versions><os-version min="11.0"/></allowed-os-versions>
   </volume-check>
   <choices-outline>
-    <line choice="default"><line choice="com.stratagraphics.server"/></line>
+    <line choice="default"><line choice="com.stratamultiview.server"/></line>
   </choices-outline>
   <choice id="default"/>
-  <choice id="com.stratagraphics.server" visible="false">
-    <pkg-ref id="com.stratagraphics.server"/>
+  <choice id="com.stratamultiview.server" visible="false">
+    <pkg-ref id="com.stratamultiview.server"/>
   </choice>
-  <pkg-ref id="com.stratagraphics.server" version="__VERSION__" onConclusion="none">component.pkg</pkg-ref>
+  <pkg-ref id="com.stratamultiview.server" version="__VERSION__" onConclusion="none">component.pkg</pkg-ref>
 </installer-gui-script>

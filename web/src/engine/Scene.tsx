@@ -1,6 +1,6 @@
 import { SceneLayers } from './sceneLayers';
 import { RichKeys, runs as richRuns, typedKeys } from './rich';
-// HTML5 renderer: same conventions as crates/cg-render (box at x/y in parent
+// HTML5 renderer: same conventions as crates/strata-mv-render (box at x/y in parent
 // space, rotate/scale around the anchor, crop as a reveal mask).
 import { Boundary } from '../ui/Boundary';
 import { Sparkles } from 'lucide-react';
@@ -108,7 +108,7 @@ function layerStyle(layer: Layer, frame: number, data: Data, hold: number, logic
     const p = (v: number) => `${Math.min(1, Math.max(0, v)) * 100}%`;
     style.clipPath = `inset(${p(ct)} ${p(cr)} ${p(cb)} ${p(cl)})`;
   }
-  // Drop shadow of the layer and its children, in its own space (cg-render draws the same); a Text has its own.
+  // Drop shadow of the layer and its children, in its own space (strata-mv-render draws the same); a Text has its own.
   const shadow = layerShadow(layer, r);
   if (shadow) style.filter = shadow;
   // The spec widgets draw everything inside their box (SpecWidget).

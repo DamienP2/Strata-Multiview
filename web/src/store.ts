@@ -108,7 +108,7 @@ let socket: WebSocket | null = null;
 let reconnected = false;
 
 /** `p` with a template (or draft) replaced, or added when new: as the server
- * changed it (crates/cg-server/src/state.rs, apply_template). */
+ * changed it (crates/strata-mv-server/src/state.rs, apply_template). */
 function withTemplate(p: Project | undefined, draft: boolean, t: Template): Project | undefined {
   if (!p) return undefined;
   const list = (draft ? p.drafts : p.templates) ?? [];
@@ -503,7 +503,7 @@ export async function importLottie(projectId: string, file: File): Promise<{ tem
   return res.json();
 }
 
-/** Rights, mirroring crates/cg-server/src/auth.rs. */
+/** Rights, mirroring crates/strata-mv-server/src/auth.rs. */
 export const can = {
   design: (u: User | null | undefined) => u?.role === 'admin' || u?.role === 'designer',
   operate: (u: User | null | undefined) => u?.role === 'admin' || u?.role === 'designer' || u?.role === 'operator',

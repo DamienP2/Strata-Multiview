@@ -46,10 +46,10 @@ export function AudioVisuel({ height }: { height: number }) {
 }
 
 /** The module of Strata this app is. */
-export const MODULE = 'Graphics';
+export const MODULE = 'Multiview';
 
 /**
- * « Strata Graphics » with the F AudioVisuel signature, small, under it (top
+ * « Strata Multiview » with the F AudioVisuel signature, small, under it (top
  * bar). `stacked`: centred and larger (login page).
  */
 export function Brand({ stacked = false }: { stacked?: boolean }) {

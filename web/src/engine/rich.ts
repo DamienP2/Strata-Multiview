@@ -1,5 +1,5 @@
 // Rich text: parts of a typed text in bold, italic, underlined, struck
-// through or in another colour. Mirror of crates/cg-core/src/rich.rs.
+// through or in another colour. Mirror of crates/strata-mv-core/src/rich.rs.
 //
 //   <b>bold</b> <i>italic</i> <u>underlined</u> <s>struck</s> <c=#ff3b5c>red</c>
 //

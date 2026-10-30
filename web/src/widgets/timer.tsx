@@ -2,8 +2,8 @@
 // date) and the Time (« Temps », ./time.tsx: stopwatch and countdown). Both are `clock`
 // layers with the same settings; `timerMode` says which widget a layer is (widgetOf).
 // Here: the drawing, the inspector rows both use, the control centre and the warnings.
-// Same picture as crates/cg-render/src/wid/timer.rs; logic mirrored in ./timer-fmt.ts
-// (crates/cg-core/src/wid/timer.rs); actions in crates/cg-core/src/wid/timer.rs.
+// Same picture as crates/strata-mv-render/src/wid/timer.rs; logic mirrored in ./timer-fmt.ts
+// (crates/strata-mv-core/src/wid/timer.rs); actions in crates/strata-mv-core/src/wid/timer.rs.
 import { Dropdown } from '../ui/Dropdown';
 import { useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { Flag, Minus, Pause, Play, Plus, RotateCcw, RotateCw, type LucideIcon } from 'lucide-react';
@@ -246,7 +246,7 @@ function TimerView({ layer, r, w, h, data, time, state, fps, designer, lang }: {
   return <>{els}</>;
 }
 
-/** Analog faces side by side (one per city), labels under them. Same geometry as draw_analog in cg-render. */
+/** Analog faces side by side (one per city), labels under them. Same geometry as draw_analog in strata-mv-render. */
 function AnalogFaces({ e, st, at, zones, w, h, align, valign, ink, labelCol, fam, wt, labelWt }: { e: T.Eff; st: State | undefined; at: T.At; zones: [T.ZoneSel | undefined, string][]; w: number; h: number; align?: string; valign?: string; ink: string; labelCol: string; fam: string; wt: number; labelWt: number }) {
   const a = e.c.analog;
   const n = Math.max(1, zones.length);

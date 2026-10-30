@@ -1,7 +1,7 @@
 // Ticker: crawl (horizontal, continuous), roll (vertical, line by line) or flip (one item at a time), separators
 // text / symbol / picture, categories, title block, edge fade, end of list. The queue lives in the operator's
 // state (seeded from the layer's items); its edits apply at the next pass, without a jump.
-// Same picture as crates/cg-render/src/wid/ticker.rs; tape logic mirrors crates/cg-core/src/wid/ticker.rs.
+// Same picture as crates/strata-mv-render/src/wid/ticker.rs; tape logic mirrors crates/strata-mv-core/src/wid/ticker.rs.
 import { memo, useMemo, useState } from 'react';
 import { ArrowLeftRight, Pause, Play, RefreshCw, SkipBack, SkipForward } from 'lucide-react';
 import { cssColor, col, interpolateText, num } from '../engine/evaluate';
@@ -507,7 +507,7 @@ function TickerRender({ l, r, w, h, data, time, state }: { l: TL; r: Record<stri
       );
     };
     if (k.mode === 'flip' && k.trans === 'type') {
-      // Typed in: the first item too, once the ticker runs (as cg-core's `typed`).
+      // Typed in: the first item too, once the ticker runs (as strata-mv-core's `typed`).
       if (cur) {
         const chars = Array.from(cur.text ?? '');
         const typing = started && wk < k.transDur && chars.length > 0;

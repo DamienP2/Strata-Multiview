@@ -3,7 +3,7 @@ import { create } from 'zustand';
 import { api } from '../store';
 
 /*
- * The server's health (cg-server health.rs), for admins: the System menu's
+ * The server's health (strata-mv-server health.rs), for admins: the System menu's
  * dot, the banner after a crash and the Health page. Asked every minute.
  */
 

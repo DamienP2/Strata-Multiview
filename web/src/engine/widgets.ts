@@ -1,4 +1,4 @@
-// Prefab widgets — mirror of crates/cg-core/src/widgets.rs (keep in sync):
+// Prefab widgets — mirror of crates/strata-mv-core/src/widgets.rs (keep in sync):
 // everything is a pure function of (wall-clock time, time on air) so the
 // HTML5 output matches the Rust renderer.
 import { interpolateText } from './evaluate';

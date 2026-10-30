@@ -8,7 +8,7 @@ import type { ApiKey } from './ApiKeys';
 import { PageHead } from './SidePage';
 
 /*
- * API › Bitfocus Buttons: the control API for surfaces (crates/cg-server/src/apiv1):
+ * API › Bitfocus Buttons: the control API for surfaces (crates/strata-mv-server/src/apiv1):
  * HTTP actions, the feedback WebSocket, OSC and TCP, with this server's
  * address and a key filled in, ready to copy.
  */
@@ -110,7 +110,7 @@ export function ApiButtons({ keys, onCreateKey }: { keys: ApiKey[]; onCreateKey:
   const channel = channels.find((c) => c.id === channelId) ?? channels[0];
   const ch = status?.channels.find((c) => c.id === channel?.id);
   const key = keys.find((k) => k.id === keyId) ?? keys[0];
-  const token = key ? (secrets[key.id] ?? `${key.prefix}…`) : 'pcg_…';
+  const token = key ? (secrets[key.id] ?? `${key.prefix}…`) : 'smv_…';
   const host = location.hostname;
   const origin = location.origin;
   const base = `${origin}/api/v1/${encodeURIComponent(channel?.id ?? 'main')}`;

@@ -3,7 +3,7 @@ import type { Motion, Prop } from './types';
 
 /**
  * Adds a layer's repeated movement (Layer.motion) to its values, at `ageSecs`
- * of its time on air (mirror of cg_core::anim::apply_motion).
+ * of its time on air (mirror of strata_mv_core::anim::apply_motion).
  */
 export function applyMotion(r: Resolved, m: Motion, frame: number, fps: number, ageSecs: number): Resolved {
   if (frame < m.from || m.period <= 0) return r;

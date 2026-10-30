@@ -1,4 +1,4 @@
-// Load of the server (crates/cg-server/src/perf.rs): the machine, each
+// Load of the server (crates/strata-mv-server/src/perf.rs): the machine, each
 // channel's pictures and outputs, the live inputs, what more the machine can
 // take, and what goes wrong. One poll per page, shared by every meter.
 import { useEffect, useSyncExternalStore } from 'react';

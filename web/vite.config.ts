@@ -1,7 +1,7 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
-const server = process.env.CG_SERVER ?? 'http://localhost:8080';
+const server = process.env.STRATA_MV_SERVER ?? 'http://localhost:8090';
 
 export default defineConfig({
   plugins: [react()],

@@ -1,4 +1,4 @@
-// Animation evaluation — mirror of crates/cg-core/src/{easing,anim}.rs.
+// Animation evaluation — mirror of crates/strata-mv-core/src/{easing,anim}.rs.
 import { COLOR_PROPS, PROPS, type Color, type Data, type Easing, type Keyframe, type Layer, type Prop, type Template, type TextTransform, type Value } from './types';
 
 export function cubicBezier(x1: number, y1: number, x2: number, y2: number, x: number): number {

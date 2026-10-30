@@ -1,4 +1,4 @@
-// Timer logic and formatting — mirror of crates/cg-core/src/wid/timer.rs and
+// Timer logic and formatting — mirror of crates/strata-mv-core/src/wid/timer.rs and
 // timer_fmt.rs (keep in sync): tokens, duration and wall-clock segments,
 // day / month names (same tables as Rust), zones (Intl), timestamp-based
 // values. Everything is a pure function of (settings, state, time).

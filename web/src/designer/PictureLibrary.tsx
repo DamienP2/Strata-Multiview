@@ -7,7 +7,7 @@ import { t } from '../i18n';
 /*
  * The picture library of the « Choose a picture » window: icons, emojis and
  * flags of the Iconify catalogue, free illustrations, shipped with the app
- * and read by the server (cg-server iconlib.rs) with no Internet. The one
+ * and read by the server (strata-mv-server iconlib.rs) with no Internet. The one
  * used is copied into the project's media.
  */
 

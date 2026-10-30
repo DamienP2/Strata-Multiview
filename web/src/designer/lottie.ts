@@ -1,5 +1,5 @@
 // The Lottie widget: a group (`lottie` set) that receives the layers of a
-// Lottie / Bodymovin file, converted by the server (cg-core lottie.rs). The
+// Lottie / Bodymovin file, converted by the server (strata-mv-core lottie.rs). The
 // animation is laid out in the project's frame; the group scales that frame
 // into the box the placeholder had.
 import type { Layer } from '../engine/types';

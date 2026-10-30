@@ -2,8 +2,8 @@ import { RichInput } from '../ui/RichText';
 import { useTextTokens } from './textVars';
 import { plain as plainText } from '../engine/rich';
 // The widgets of the spec, one file each (web/src/widgets/<id>.tsx), with
-// their Rust twins in crates/cg-core/src/wid/<id>.rs (settings, operator
-// state and actions) and crates/cg-render/src/wid/<id>.rs (drawing). This
+// their Rust twins in crates/strata-mv-core/src/wid/<id>.rs (settings, operator
+// state and actions) and crates/strata-mv-render/src/wid/<id>.rs (drawing). This
 // file is what they share: the definition of a widget and the controls of
 // the inspector and of the Operator, styled like the rest of the app.
 import { Dropdown } from '../ui/Dropdown';
