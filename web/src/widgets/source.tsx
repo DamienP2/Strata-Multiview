@@ -8,7 +8,7 @@ import { interpolateText } from '../engine/evaluate';
 import { useInputs, useLiveFrame, useSignal, type InputInfo, type SignalView, type Tally } from '../engine/liveInputs';
 import type { Data } from '../engine/types';
 import { FontPick } from '../ui/FontPick';
-import { t, tl } from '../i18n';
+import { t, tc, tl } from '../i18n';
 import { ColorPick, defineWidget, hex, Num, Row, Section, Seg, Select, Text, Toggle, withDefaults } from './kit';
 import { FitLine } from './text-fit';
 
@@ -323,7 +323,7 @@ export default defineWidget({
           <Num label={t('Frame')} value={c.border} min={0} max={60} unit=" px" onChange={(v) => set('border', v)} />
           <Toggle label={t('Frame colour')} text={t('Follows the tally')} value={c.tally.border} onChange={(v) => set('tally.border', v)} />
           <ColorPick label={t('On air')} value={c.tally.program} onChange={(v) => set('tally.program', v)} />
-          <ColorPick label={t('Next')} value={c.tally.preview} onChange={(v) => set('tally.preview', v)} />
+          <ColorPick label={tc('tally', 'Next')} value={c.tally.preview} onChange={(v) => set('tally.preview', v)} />
           <ColorPick label={t('Aux')} value={c.tally.aux} onChange={(v) => set('tally.aux', v)} />
           <ColorPick label={t('No tally')} value={c.tally.off} onChange={(v) => set('tally.off', v)} />
         </Section>

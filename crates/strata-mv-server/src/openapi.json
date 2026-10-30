@@ -32,6 +32,10 @@
       "name": "Channels & playout"
     },
     {
+      "name": "Tally & UMD",
+      "description": "What the switchers say of each source (TSL UMD 3.1 / 5.0, Blackmagic ATEM, GPI), routed to the inputs: their frame, lamps and name bar in the multiview."
+    },
+    {
       "name": "Assets"
     },
     {
@@ -1051,7 +1055,7 @@
           "Channels & playout"
         ],
         "summary": "Load a project on the channel",
-        "description": "Clears what is on air. `null` unloads.\n\n**Rights:** admin, designer, operator.",
+        "description": "Clears what is on air, then puts the project's first published multiview on air. `null` unloads.\n\n**Rights:** admin, designer, operator.",
         "requestBody": {
           "required": true,
           "content": {
@@ -3672,6 +3676,238 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/api/channels/{id}/multiview": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          },
+          "description": "Channel id"
+        }
+      ],
+      "put": {
+        "tags": [
+          "Channels & playout"
+        ],
+        "summary": "Show another multiview",
+        "description": "Puts a published multiview of the loaded project on air, alone, at once.\n\n**Rights:** admin, designer, operator.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "templateId"
+                ],
+                "properties": {
+                  "templateId": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Done"
+          }
+        }
+      }
+    },
+    "/api/tally": {
+      "get": {
+        "tags": [
+          "Tally & UMD"
+        ],
+        "summary": "Tally settings and state",
+        "description": "The settings (sources and routes), how each source is doing with its displays, the tally of each input now and what the API set.\n\n**Rights:** signed in.",
+        "responses": {
+          "200": {
+            "description": "The tally"
+          }
+        }
+      }
+    },
+    "/api/tally/config": {
+      "put": {
+        "tags": [
+          "Tally & UMD"
+        ],
+        "summary": "Save the tally settings",
+        "description": "Sources (`tsl31`, `tsl5` over `udp`, `tcpListen` or `tcpConnect`; `atem` at `host`; `gpi`) and routes (an input, a source, the display's index: TSL address, ATEM input number, GPI pin). Applied at once: the outputs go on.\n\n**Rights:** admin.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "sources": {
+                    "type": "array",
+                    "items": {
+                      "type": "object"
+                    }
+                  },
+                  "routes": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "input": {
+                          "type": "string"
+                        },
+                        "source": {
+                          "type": "string"
+                        },
+                        "index": {
+                          "type": "integer"
+                        },
+                        "lamp": {
+                          "type": "string",
+                          "enum": [
+                            "program",
+                            "preview",
+                            "aux"
+                          ]
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Applied"
+          }
+        }
+      }
+    },
+    "/api/tally/inputs/{input}": {
+      "parameters": [
+        {
+          "name": "input",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          },
+          "description": "Input id"
+        }
+      ],
+      "put": {
+        "tags": [
+          "Tally & UMD"
+        ],
+        "summary": "Set an input's tally and UMD",
+        "description": "Lamps and UMD text set directly (automation); fields left out follow the routes.\n\n**Rights:** admin, designer, operator.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "program": {
+                    "type": "boolean"
+                  },
+                  "preview": {
+                    "type": "boolean"
+                  },
+                  "aux": {
+                    "type": "boolean"
+                  },
+                  "umd": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Done"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Tally & UMD"
+        ],
+        "summary": "Back to the routes",
+        "description": "The input's tally follows its routes again.\n\n**Rights:** admin, designer, operator.",
+        "responses": {
+          "204": {
+            "description": "Done"
+          }
+        }
+      }
+    },
+    "/api/tally/gpi/{source}/{pin}/{state}": {
+      "parameters": [
+        {
+          "name": "source",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          },
+          "description": "GPI source id"
+        },
+        {
+          "name": "pin",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer"
+          }
+        },
+        {
+          "name": "state",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "enum": [
+              "on",
+              "off"
+            ]
+          }
+        }
+      ],
+      "get": {
+        "tags": [
+          "Tally & UMD"
+        ],
+        "summary": "A GPI contact closed or opened",
+        "description": "For GPI boxes that call a URL: `GET /api/tally/gpi/<source>/<pin>/on?key=smv_…`. The pin lights the lamp of its route.\n\n**Rights:** admin, designer, operator (an API key).",
+        "responses": {
+          "204": {
+            "description": "Done"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Tally & UMD"
+        ],
+        "summary": "A GPI contact closed or opened",
+        "description": "Same as GET.",
+        "responses": {
+          "204": {
+            "description": "Done"
           }
         }
       }

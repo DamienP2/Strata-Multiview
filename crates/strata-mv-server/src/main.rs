@@ -24,6 +24,7 @@ mod service;
 mod state;
 mod signals;
 mod sync;
+mod tally;
 mod thumbs;
 mod timectl;
 mod update;
@@ -423,6 +424,9 @@ pub async fn serve(
     let inputs = Arc::new(inputs::Inputs::default());
     let perf = Arc::new(perf::Perf::default());
     perf::spawn_sampler(perf.clone(), inputs.clone());
+    // Tally and UMD from the switchers, kept across engine restarts.
+    let tally = tally::Tally::load(&data_dir, inputs.clone());
+    tally.start();
     if auth.needs_setup() {
         tracing::warn!("no user yet: open http://localhost:<port>/ on this machine to create the admin account, or run `strata-mv-server user add <name>`");
     }
@@ -540,6 +544,7 @@ pub async fn serve(
             edits: Default::default(),
             output_status: output_status.clone(),
             inputs: inputs.clone(),
+            tally: tally.clone(),
             perf: perf.clone(),
             config,
             bind,
@@ -638,6 +643,7 @@ pub async fn serve(
     }
     // Their ffmpeg stops with them (the load sampler still holds them).
     inputs.stop();
+    tally.stop();
     tracing::info!("stopped");
     health::stopped();
     Ok(())

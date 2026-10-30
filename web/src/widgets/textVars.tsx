@@ -161,9 +161,9 @@ export function useTextTokens(layerId: string | undefined, markup: string, setMa
           </label>
         )}
         <div className="tv-row">
-          <span>{t('Operator')}</span>
+          <span>{t('Field')}</span>
           <button className={`wk-chip op ${f ? 'on' : ''}`} onClick={toggleOp}>
-            <Radio size={12} /> {f ? t('Exposed to the Operator') : t('Expose to the Operator')}
+            <Radio size={12} /> {f ? t('Exposed as a field') : t('Expose as a field')}
           </button>
         </div>
       </div>

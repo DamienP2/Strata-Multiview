@@ -157,7 +157,7 @@ async function confirmPublish(project: Project, ids: string[]): Promise<boolean>
     title: ids.length > 1 ? t('Publish {n} templates?', { n: ids.length }) : t('Publish “{name}”?', { name: names[0] }),
     message: (
       <div className="publish-confirm">
-        <p>{t('The Operator uses the new version immediately.')}</p>
+        <p>{t('The outputs use the new version immediately.')}</p>
         {ids.length > 1 && (
           <ul className="publish-list">
             {names.map((n) => (
@@ -192,7 +192,7 @@ export function TemplatePublish({ project, id }: { project: Project; id: string 
   if (published && !draft) return null;
   return (
     <div className="publish publish-line">
-      <span className="publish-draft">{published ? t('Changes not in the Operator') : t('New · not in the Operator')}</span>
+      <span className="publish-draft">{published ? t('Changes not on the outputs') : t('New · not on the outputs')}</span>
     </div>
   );
 }
@@ -234,7 +234,7 @@ export function TopPublish({ project, saving, readOnly }: { project: Project; sa
     <>
       {state}
       {/* Changes waiting: Publish pulses lightly. */}
-      <button className={`btn small primary ux2-publish ${changed.length && !readOnly && !busy ? 'pending' : ''}`} disabled={busy || readOnly || !changed.length} title={changed.length ? t('Not yet in the Operator: {list}', { list: changed.map((d) => (isNew(d.id) ? t('{name} (new)', { name: d.name }) : d.name)).join(', ') }) : t('Publish to the Operator')} onClick={publish}>
+      <button className={`btn small primary ux2-publish ${changed.length && !readOnly && !busy ? 'pending' : ''}`} disabled={busy || readOnly || !changed.length} title={changed.length ? t('Not on the outputs yet: {list}', { list: changed.map((d) => (isNew(d.id) ? t('{name} (new)', { name: d.name }) : d.name)).join(', ') }) : t('Publish to the outputs')} onClick={publish}>
         <Upload size={13} /> {busy ? t('Publishing…') : t('Publish')}
       </button>
     </>
@@ -257,7 +257,7 @@ export function PublishButton({ project, readOnly }: { project: Project; readOnl
       // The latest edits first (autosave may still be pending).
       if (!(await saveTemplate(useDesigner.getState().base!))) return;
       const r = await api<{ revision: number }>('POST', `${url}/publish`);
-      toast(t('“{name}” v{rev} is live in the Operator', { name: base.name, rev: r.revision }), 'info');
+      toast(t('“{name}” v{rev} is live on the outputs', { name: base.name, rev: r.revision }), 'info');
     } catch (e) {
       toast((e as Error).message, 'error');
     } finally {
@@ -265,14 +265,14 @@ export function PublishButton({ project, readOnly }: { project: Project; readOnl
     }
   };
   const discard = async () => {
-    if (!published || !(await confirmDialog({ title: t('Discard the unpublished changes?'), message: t('“{name}” goes back to v{rev}, the version the Operator uses.', { name: base.name, rev: published.revision ?? 1 }), confirm: t('Discard'), danger: true }))) return;
+    if (!published || !(await confirmDialog({ title: t('Discard the unpublished changes?'), message: t('“{name}” goes back to v{rev}, the version the outputs use.', { name: base.name, rev: published.revision ?? 1 }), confirm: t('Discard'), danger: true }))) return;
     await api('DELETE', `${url}/draft`).catch((e) => toast((e as Error).message, 'error'));
     useDesigner.getState().load(published);
   };
   if (!changed)
     return (
-      <span className="publish-state" title={t('The Operator uses this version')}>
-        <Check size={13} /> {t('Live in Operator')}
+      <span className="publish-state" title={t('The outputs use this version')}>
+        <Check size={13} /> {t('Live on the outputs')}
         {published?.revision ? ` · v${published.revision}` : ''}
       </span>
     );
@@ -283,8 +283,8 @@ export function PublishButton({ project, readOnly }: { project: Project; readOnl
           <RotateCcw size={13} />
         </button>
       )}
-      <button className="btn small primary" disabled={busy || readOnly} title={published ? t('The Operator uses v{rev} until you publish', { rev: published.revision || 1 }) : t('New template: the Operator does not see it until you publish')} onClick={publish}>
-        <Upload size={13} /> {published ? t('Publish to Operator') : t('Publish (new)')}
+      <button className="btn small primary" disabled={busy || readOnly} title={published ? t('The outputs use v{rev} until you publish', { rev: published.revision || 1 }) : t('New multiview: the outputs do not get it until you publish')} onClick={publish}>
+        <Upload size={13} /> {published ? t('Publish to the outputs') : t('Publish (new)')}
       </button>
     </div>
   );

@@ -1,4 +1,4 @@
-import { ArrowRightToLine, Braces, CircuitBoard, FolderOpen, Gauge, HeartPulse, Library as LibraryIcon, MonitorPlay, PenTool, Radio, Server, Settings as SettingsIcon, TriangleAlert, Users as UsersIcon } from 'lucide-react';
+import { ArrowRightToLine, Braces, Cable, CircuitBoard, FolderOpen, Gauge, HeartPulse, Library as LibraryIcon, MonitorPlay, PenTool, Radio, Server, Settings as SettingsIcon, TriangleAlert, Users as UsersIcon } from 'lucide-react';
 import { needsLook, useHealth, useHealthStore } from './perf/health';
 import { Brand } from './ui/Brand';
 import { DialogHost } from './ui/dialogs';
@@ -19,6 +19,7 @@ import { loadDisplayPrefs, useDisplayPrefs } from './displayPrefs';
 const Designer = lazy(() => import('./designer/Designer').then((m) => ({ default: m.Designer })));
 const ApiPage = lazy(() => import('./pages/ApiPage').then((m) => ({ default: m.ApiPage })));
 const MediaLibrary = lazy(() => import('./pages/Media').then((m) => ({ default: m.MediaLibrary })));
+const TallyPage = lazy(() => import('./tally/TallyPage').then((m) => ({ default: m.TallyPage })));
 const Outputs = lazy(() => import('./outputs/Outputs').then((m) => ({ default: m.Outputs })));
 const Performance = lazy(() => import('./perf/Performance').then((m) => ({ default: m.Performance })));
 const Health = lazy(() => import('./perf/Health').then((m) => ({ default: m.Health })));
@@ -74,7 +75,7 @@ function Studio({ route }: { route: Exclude<Route, { page: 'output' }> }) {
   // Pages a role cannot see.
   useEffect(() => {
     if (!user) return;
-    if ((route.page === 'users' || route.page === 'outputs' || route.page === 'inputs' || route.page === 'hardware' || route.page === 'performance' || route.page === 'health') && !can.admin(user)) return navigate('/projects', true);
+    if ((route.page === 'users' || route.page === 'outputs' || route.page === 'inputs' || route.page === 'tally' || route.page === 'hardware' || route.page === 'performance' || route.page === 'health') && !can.admin(user)) return navigate('/projects', true);
   }, [route, user]);
 
   if (!auth) return <div className="loading">{t('Connecting…')}</div>;
@@ -107,7 +108,7 @@ function Toasts({ quiet }: { quiet: boolean }) {
 }
 
 /** Projects, users and server settings. A project opens in its own browser tab. */
-function Home({ route }: { route: Extract<Route, { page: 'projects' | 'media' | 'outputs' | 'inputs' | 'hardware' | 'performance' | 'health' | 'users' | 'api' | 'settings' }> }) {
+function Home({ route }: { route: Extract<Route, { page: 'projects' | 'media' | 'outputs' | 'inputs' | 'tally' | 'hardware' | 'performance' | 'health' | 'users' | 'api' | 'settings' }> }) {
   const user = useApp((s) => s.auth?.user);
   useEffect(() => {
     document.title = 'Strata Multiview';
@@ -120,7 +121,7 @@ function Home({ route }: { route: Extract<Route, { page: 'projects' | 'media' | 
   const entry = (id: Route['page'], path: string, icon: React.ReactNode, label: string): NavEntry => ({ id, path, icon, label });
   const admin = can.admin(user);
   const health = useHealthStore((x) => x.health);
-  const broadcast = admin ? [entry('outputs', '/outputs', <MonitorPlay size={14} />, t('Output streams')), entry('inputs', '/inputs', <ArrowRightToLine size={14} />, t('Video inputs'))] : [];
+  const broadcast = admin ? [entry('outputs', '/outputs', <MonitorPlay size={14} />, t('Output streams')), entry('inputs', '/inputs', <ArrowRightToLine size={14} />, t('Video inputs')), entry('tally', '/tally', <Cable size={14} />, t('Tally & UMD'))] : [];
   const system = [
     ...(admin ? [entry('hardware', '/hardware', <CircuitBoard size={14} />, t('Hardware')), entry('performance', '/performance', <Gauge size={14} />, t('Performance')), entry('health', '/health', <HeartPulse size={14} />, t('Health'))] : []),
     ...(admin ? [entry('users', '/users', <UsersIcon size={14} />, t('Users'))] : []),
@@ -146,6 +147,7 @@ function Home({ route }: { route: Extract<Route, { page: 'projects' | 'media' | 
           {route.page === 'projects' && <Projects />}
           {route.page === 'media' && <MediaLibrary />}
           {(route.page === 'outputs' || route.page === 'inputs') && <Outputs mode={route.page} />}
+          {route.page === 'tally' && <TallyPage />}
           {route.page === 'hardware' && <Hardware />}
           {route.page === 'performance' && <Performance />}
           {route.page === 'health' && <Health />}

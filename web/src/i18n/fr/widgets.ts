@@ -17,9 +17,6 @@ export const widgets: Record<string, string> = {
   // A phone number, not a quantity (see tc()).
   'phone|Number': 'Numéro',
   // Shared controls (kit.tsx) and the widget registry (names and groups of the Designer menus)
-  'Exposed to the Operator ({fields}) · click to stop': 'Exposé à l’Opérateur ({fields}) · cliquez pour arrêter',
-  'Expose to the Operator': 'Exposer à l’Opérateur',
-  'Exposed to the Operator': 'Exposé à l’Opérateur',
   'Comes from data: change it in the Data canvas': 'Vient des données : modifiez-la dans le canevas Données',
   'From data: set in the Data canvas': 'Depuis les données : réglée dans le canevas Données',
   'Yes': 'Oui',
@@ -568,10 +565,8 @@ export const widgets: Record<string, string> = {
   'the video is played as pictures (alpha kept), at most a minute': 'la vidéo est jouée en images (alpha conservé), une minute au plus',
   'Choose a video': 'Choisir une vidéo',
   // Text: variables and pictures in its content.
-  'Make the selection a variable the Operator fills in': 'Rend la sélection variable : l’Opérateur la remplit',
   'Insert a picture in the text': 'Insère une image dans le texte',
   'Variable {n}': 'Variable {n}',
-  'Expose the selection to the Operator': 'Exposer la sélection à l\'opérateur',
   'Insert a picture…': 'Insérer une image…',
   'Common · the whole text': 'Commun · tout le texte',
   'As the common': 'Comme le commun',

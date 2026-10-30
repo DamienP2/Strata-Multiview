@@ -312,7 +312,7 @@ export function ExposeSetting({ paths, label, value, options, range }: { paths: 
     });
   const names = fields.filter(Boolean).map((f) => f!.label);
   return (
-    <button className={`pp-op ${on ? 'on' : ''}`} title={on ? t('Exposed to the Operator ({fields}) · click to stop', { fields: names.join(', ') }) : t('Expose to the Operator')} onClick={toggle}>
+    <button className={`pp-op ${on ? 'on' : ''}`} title={on ? t('Exposed as fields ({fields}) · click to stop', { fields: names.join(', ') }) : t('Expose as a field')} onClick={toggle}>
       <Radio size={13} />
     </button>
   );
@@ -537,7 +537,7 @@ export function useExposable(path: string | undefined, value: string | undefined
 /** The radio button of a row: exposes the content to the Operator. */
 export function ExposeToggle({ on, onClick }: { on: boolean; onClick: () => void }) {
   return (
-    <button className={`pp-op ${on ? 'on' : ''}`} title={on ? t('Exposed to the Operator · click to stop') : t('Expose to the Operator')} onClick={onClick}>
+    <button className={`pp-op ${on ? 'on' : ''}`} title={on ? t('Exposed as a field · click to stop') : t('Expose as a field')} onClick={onClick}>
       <Radio size={13} />
     </button>
   );
@@ -603,13 +603,13 @@ export function Content(p: {
               </button>
             )}
             {canExpose && inline ? (
-              <button className={`wk-chip op ${exposed ? 'on' : ''}`} title={exposed ? t('Exposed to the Operator as “{name}” · click to stop', { name: field!.label }) : t('Expose to the Operator')} onClick={() => void expose()}>
-                <Radio size={12} /> {exposed ? t('Exposed to the Operator') : p.vars ? t('Expose the whole text') : t('Expose to the Operator')}
+              <button className={`wk-chip op ${exposed ? 'on' : ''}`} title={exposed ? t('Exposed as the field “{name}” · click to stop', { name: field!.label }) : t('Expose as a field')} onClick={() => void expose()}>
+                <Radio size={12} /> {exposed ? t('Exposed as a field') : p.vars ? t('Expose the whole text') : t('Expose as a field')}
               </button>
             ) : (
               exposed && (
                 <span className="wk-exposed">
-                  <Radio size={12} /> {t('Exposed to the Operator')}
+                  <Radio size={12} /> {t('Exposed as a field')}
                 </span>
               )
             )}

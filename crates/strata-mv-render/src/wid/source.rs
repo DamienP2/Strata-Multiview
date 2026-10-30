@@ -3,8 +3,7 @@
 
 use strata_mv_core::signal::SourceView;
 use strata_mv_core::wid::source::{
-    border_color, layout, no_signal_text, scale, segments, umd_text, Area, Config, Fit,
-    UmdAlign,
+    border_color, layout, no_signal_text, scale, segments, umd_text, Area, Config, Fit, UmdAlign,
 };
 use strata_mv_core::{Color, LayerKind, TextAlign, VerticalAlign};
 use tiny_skia::{FillRule, Mask, PixmapPaint, Transform};
@@ -47,7 +46,13 @@ pub(crate) fn draw(d: &mut Draw) -> bool {
     let bm = boxed.as_ref();
 
     // The frame, in the tally's colour, and the picture's background.
-    fill_area(d, [0.0, 0.0, d.w, d.h], 0.0, Draw::hex(border_color(c, &tally)), bm);
+    fill_area(
+        d,
+        [0.0, 0.0, d.w, d.h],
+        0.0,
+        Draw::hex(border_color(c, &tally)),
+        bm,
+    );
     fill_area(d, l.inner, 0.0, Draw::hex(&c.background), bm);
 
     // The picture, in its area.
@@ -106,7 +111,11 @@ pub(crate) fn draw(d: &mut Draw) -> bool {
 
     // The format, top left.
     if c.badge {
-        if let Some(fmt) = view.as_ref().map(|v| v.format.clone()).filter(|f| !f.is_empty()) {
+        if let Some(fmt) = view
+            .as_ref()
+            .map(|v| v.format.clone())
+            .filter(|f| !f.is_empty())
+        {
             let size = (d.h * 0.045).clamp(9.0, 28.0);
             if let Some(f) = d.font("Inter", 700) {
                 let tw = Draw::text_width(&f, &fmt, size, 0.0);
@@ -136,7 +145,13 @@ pub(crate) fn draw(d: &mut Draw) -> bool {
             for (from, to, k) in segments(&c.vu, level) {
                 let y = a[1] + a[3] * (1.0 - to);
                 let hgt = a[3] * (to - from);
-                fill_area(d, [a[0], y, a[2], hgt], 0.0, Draw::hex(METER[k as usize]), bm);
+                fill_area(
+                    d,
+                    [a[0], y, a[2], hgt],
+                    0.0,
+                    Draw::hex(METER[k as usize]),
+                    bm,
+                );
             }
             if c.vu.hold && level.hold > c.vu.min {
                 let k = scale(&c.vu, level.hold);
@@ -186,7 +201,12 @@ pub(crate) fn draw(d: &mut Draw) -> bool {
                 );
                 let clip = d.clip(t[0], t[1], t[2], t[3]);
                 if let Some(p) = p {
-                    d.fill(&p, Draw::hex(&c.umd.color), FillRule::Winding, clip.as_ref().or(bm));
+                    d.fill(
+                        &p,
+                        Draw::hex(&c.umd.color),
+                        FillRule::Winding,
+                        clip.as_ref().or(bm),
+                    );
                 }
             }
         }
@@ -268,16 +288,25 @@ mod tests {
         // The first meter lit near the top (-3 dBFS: red), the second dark.
         let x1 = 640 - 6 - 6 - 6 - 2 - 6 + 3;
         let top = px(&f, x1, 40);
-        assert!(top[0] > 200 && top[1] < 100, "red top of the loud meter: {top:?}");
+        assert!(
+            top[0] > 200 && top[1] < 100,
+            "red top of the loud meter: {top:?}"
+        );
         let quiet = px(&f, 640 - 6 - 6 - 3, 200);
-        assert!(quiet[1] < 120 && quiet[2] > 60, "quiet meter shows its track over the picture: {quiet:?}");
+        assert!(
+            quiet[1] < 120 && quiet[2] > 60,
+            "quiet meter shows its track over the picture: {quiet:?}"
+        );
     }
 
     #[test]
     fn a_tile_without_signal_keeps_its_frame() {
         let f = render("other");
         let edge = px(&f, 2, 100);
-        assert!(edge[0] < 80 && edge[3] == 255, "frame without tally: {edge:?}");
+        assert!(
+            edge[0] < 80 && edge[3] == 255,
+            "frame without tally: {edge:?}"
+        );
         let mid = px(&f, 100, 60);
         assert!(mid[2] < 60, "no picture: {mid:?}");
     }

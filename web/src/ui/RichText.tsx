@@ -302,7 +302,7 @@ export function RichInput({
           <button
             type="button"
             className="rt-new v"
-            title={t('Make the selection a variable the Operator fills in')}
+            title={t('Make the selection a field the API fills in')}
             onMouseDown={keep}
             onClick={() => {
               const sel = selectionIn();
@@ -392,7 +392,7 @@ export function RichInput({
                     makeVariable(menu.text);
                   }}
                 >
-                  <Braces size={13} /> {t('Expose the selection to the Operator')}
+                  <Braces size={13} /> {t('Expose the selection as a field')}
                 </button>
               </>
             ) : (

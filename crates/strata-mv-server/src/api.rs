@@ -28,6 +28,7 @@ pub fn router() -> Router<Shared> {
         .merge(crate::iconlib::router())
         .merge(crate::health::router())
         .merge(crate::apiv1::router())
+        .merge(crate::tally::api::router())
         .route("/api/auth/state", get(auth_state))
         .route("/api/auth/setup", post(auth_setup))
         .route("/api/auth/login", post(auth_login))
@@ -612,17 +613,11 @@ async fn create_project(
     }
     check_format(p.width, p.height, p.frame_rate)?;
     if n.from.is_none() {
-        // A new project starts with one template to design, already
-        // published: the operator sees it right away.
+        // A new project starts with one multiview to design, already
+        // published: a channel can show it right away.
         let zone = p.zones.first().map(|z| z.id.clone()).unwrap_or_default();
-        // Named in the user's language (French by default).
-        let first = if me.lang.starts_with("en") {
-            "Template 1"
-        } else {
-            "Modèle 1"
-        };
         let blank = strata_mv_core::Template::blank_secs(
-            first,
+            "Multiview 1",
             &zone,
             p.frame_rate.as_f64(),
             p.template_secs.unwrap_or(1.0),

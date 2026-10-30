@@ -12,7 +12,6 @@ export const ux2: Record<string, string> = {
   'Published · {name}': 'Publié · {name}',
   'Published · {n} template': 'Publié · {n} modèle',
   'Published · {n} templates': 'Publié · {n} modèles',
-  'Publish to the Operator': 'Publier dans l’Opérateur',
   // Right-click menu of a layer
   'Animation…': 'Animation…',
   'Bring to front': 'Premier plan',

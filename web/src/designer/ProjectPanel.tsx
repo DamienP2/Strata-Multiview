@@ -277,7 +277,7 @@ export function ProjectHistory({ project, readOnly }: { project: Project; readOn
 
   return (
     <div className="history-menu" ref={ref}>
-      <button className={`top-tool ${open ? 'on' : ''}`} title={live ? t('History of the versions · the Operator uses v{rev}', { rev: live.revision || 1 }) : t('History of the versions')} onClick={() => setOpen(!open)}>
+      <button className={`top-tool ${open ? 'on' : ''}`} title={live ? t('History of the versions · the outputs use v{rev}', { rev: live.revision || 1 }) : t('History of the versions')} onClick={() => setOpen(!open)}>
         <History size={15} />
         {live && <span className="pjp-count">v{live.revision || 1}</span>}
       </button>

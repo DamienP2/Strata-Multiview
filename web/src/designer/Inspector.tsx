@@ -251,7 +251,7 @@ export function ExposeButton({ layer, props }: { layer: Layer; props: Prop[] }) 
   return (
     <button
       className={`pp-op ${on ? 'on' : ''}`}
-      title={on ? (fromSource ? t('Exposed to the Operator ({fields}) · fed by a data source · click to stop', { fields: fields.map((f) => f.label).join(', ') || bound.join(', ') }) : t('Exposed to the Operator ({fields}) · click to stop', { fields: fields.map((f) => f.label).join(', ') || bound.join(', ') })) : t('Expose to the Operator')}
+      title={on ? (fromSource ? t('Exposed as fields ({fields}) · fed by a data source · click to stop', { fields: fields.map((f) => f.label).join(', ') || bound.join(', ') }) : t('Exposed as fields ({fields}) · click to stop', { fields: fields.map((f) => f.label).join(', ') || bound.join(', ') })) : t('Expose as a field')}
       onClick={() => (on ? unbind() : expose())}
     >
       <Radio size={13} />
@@ -1236,7 +1236,7 @@ function TextFitControls({ layer, edit }: { layer: Layer & { type: 'text' }; edi
             <span className="fit-val">{pct(layer.minSize ?? 0.6)}</span>
           </div>
           <div className="row">
-            <span className="prop-label" title={t('The Operator warns when the text gets smaller than this')}>
+            <span className="prop-label" title={t('A warning shows when the text gets smaller than this')}>
               {t('Warn under')}
             </span>
             <input type="range" min={20} max={100} value={Math.round((layer.warnBelow ?? 0.8) * 100)} onChange={(e) => setT((l) => (l.warnBelow = +e.target.value / 100), `warn-${layer.id}`)} />

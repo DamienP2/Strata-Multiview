@@ -42,7 +42,11 @@ impl Level {
                 n += 1;
             }
         }
-        let rms = if n > 0 { (sum / n as f64).sqrt() as f32 } else { 0.0 };
+        let rms = if n > 0 {
+            (sum / n as f64).sqrt() as f32
+        } else {
+            0.0
+        };
         let peak = db(peak);
         Self {
             peak,
