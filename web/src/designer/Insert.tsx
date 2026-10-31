@@ -42,12 +42,11 @@ export function InsertTools({ onAdd }: { onAdd: AddLayer }) {
           return (
             <button
               key={b.widget}
-              className={`tool ${b.widget === 'source' ? 'tool-source' : ''}`}
+              className="tool"
               title={`${label} — ${t(b.hint)}`}
               onClick={() => onAdd(w.type, b.widget === 'source' ? undefined : (w.create() as Record<string, unknown>), label)}
             >
               <Icon size={15} />
-              {b.widget === 'source' && <span>{label}</span>}
             </button>
           );
         })}

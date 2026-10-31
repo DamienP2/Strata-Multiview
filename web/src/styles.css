@@ -21275,22 +21275,6 @@ textarea.tx-grow {
   background: var(--line-2);
   flex: none;
 }
-.mv-insert .tl-insert .tool-source {
-  width: auto;
-  gap: 5px;
-  padding: 0 9px;
-  margin-right: 3px;
-  display: inline-flex;
-  align-items: center;
-  border-radius: 7px;
-  background: var(--accent-soft);
-  color: var(--accent-2);
-  font-weight: 600;
-  font-size: 12px;
-}
-.mv-insert .tl-insert .tool-source:hover {
-  background: color-mix(in srgb, var(--accent) 30%, transparent);
-}
 
 /* Nothing selected: the multiview and its tiles (designer/Inspector.tsx). */
 .mv-insp-name {
