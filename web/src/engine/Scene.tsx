@@ -19,7 +19,7 @@ import { widgetOf } from '../widgets';
 export { TimeContext } from './LiveTime';
 
 /** Layers whose look depends on the clock: they alone are redrawn on each frame (useLayerTime). */
-export const LIVE_TYPES: ReadonlySet<LayerType> = new Set(['clock', 'ticker']);
+export const LIVE_TYPES: ReadonlySet<LayerType> = new Set(['clock']);
 
 interface SceneProps {
   template: Template;
@@ -225,26 +225,10 @@ function WidgetContent({ layer, frame, data, hold }: { layer: Layer; frame: numb
   const r = resolved;
   const w = num(r.width);
   const h = num(r.height);
-  const age = time.ageSecs;
   const up = (s: string, font: FontStyle) => (font.uppercase ? s.toUpperCase() : s);
-  const clip: CSSProperties = { position: 'absolute', inset: 0, overflow: 'hidden' };
   switch (layer.type) {
     case 'clock':
       return <TextBox text={up(W.clockText(layer.mode, layer.format, layer.timezone, layer.target, data, time), layer)} font={layer} r={r} align={layer.align} valign={layer.verticalAlign} box={[0, 0, w, h]} />;
-    case 'ticker': {
-      const items = W.lines(layer.text, data);
-      if (!items.length) return null;
-      const strip = up(items.join(layer.separator) + layer.separator, layer);
-      const ls = num(r.letterSpacing);
-      const cycle = W.textWidth(strip, layer.fontFamily, layer.fontWeight, num(r.fontSize), ls) + ls;
-      return (
-        <div style={clip}>
-          {W.scrollPositions(w, cycle, layer.speed * age, true).map((x, i) => (
-            <TextBox key={i} text={strip} font={layer} r={r} align="left" valign={layer.verticalAlign} box={[x, 0, cycle, h]} />
-          ))}
-        </div>
-      );
-    }
     default:
       return null;
   }
@@ -339,7 +323,7 @@ function LottiePlaceholder() {
   );
 }
 
-/** The layers whose look changes with the playhead: animated properties, a pen drawing in, a Lottie, or one of these inside. */
+/** The layers whose look changes with the playhead: animated properties, a Lottie, or one of these inside. */
 const FramedContext = createContext<ReadonlySet<string>>(new Set());
 
 function framedLayers(layers: Layer[], childrenOf: Map<string | null, Layer[]>): Set<string> {
@@ -348,7 +332,7 @@ function framedLayers(layers: Layer[], childrenOf: Map<string | null, Layer[]>):
   const visit = (l: Layer): boolean => {
     if (seen.has(l.id)) return out.has(l.id);
     seen.add(l.id);
-    let on = l.type === 'pen' || (l.type === 'group' && l.lottie !== undefined) || !!l.span || Object.values(l.tracks ?? {}).some((t) => (t?.length ?? 0) > 0);
+    let on = (l.type === 'group' && l.lottie !== undefined) || !!l.span || Object.values(l.tracks ?? {}).some((t) => (t?.length ?? 0) > 0);
     for (const k of childrenOf.get(l.id) ?? []) on = visit(k) || on;
     if (on) out.add(l.id);
     return on;

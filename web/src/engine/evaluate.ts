@@ -120,16 +120,11 @@ export function layerDefault(layer: Layer, p: Prop): Value {
     if (p === 'arcEnd') return layer.end ?? DEFAULTS.arcEnd;
     if (p === 'innerRadius') return layer.inner ?? DEFAULTS.innerRadius;
   }
-  // A pen's visible portion: its settings (older layers have it only there).
-  if (layer.type === 'pen') {
-    if (p === 'drawStart') return layer.vStart ?? DEFAULTS.drawStart;
-    if (p === 'drawEnd') return layer.vEnd ?? DEFAULTS.drawEnd;
-  }
   // A rectangle's corners and a gradient's second colour: their settings (older layers have them only there).
   const ci = ['cornerTl', 'cornerTr', 'cornerBr', 'cornerBl'].indexOf(p);
   if (ci >= 0 && layer.type === 'rect') return layer.corners?.[ci] ?? 0;
   if (p === 'fill2') {
-    const c2 = layer.type === 'text' ? layer.color2 ?? '#a594ff' : ['rect', 'ellipse', 'polygon', 'pen'].includes(layer.type) ? ((layer as { fillStyle?: { color2?: string } }).fillStyle?.color2 ?? '#ff3b5c') : undefined;
+    const c2 = layer.type === 'text' ? layer.color2 ?? '#a594ff' : ['rect', 'ellipse', 'polygon'].includes(layer.type) ? ((layer as { fillStyle?: { color2?: string } }).fillStyle?.color2 ?? '#ff3b5c') : undefined;
     if (c2 !== undefined) return parseHex(c2) ?? DEFAULTS.fill2;
   }
   return DEFAULTS[p];

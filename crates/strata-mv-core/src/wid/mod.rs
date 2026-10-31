@@ -9,7 +9,6 @@
 pub mod broadcast;
 pub mod ellipse;
 pub mod image;
-pub mod pen;
 pub mod polygon;
 pub mod quad;
 pub mod shape;
@@ -45,7 +44,6 @@ pub fn widget_id(kind: &LayerKind) -> Option<&'static str> {
         LayerKind::Ellipse { .. } => "ellipse",
         LayerKind::Text { .. } => "text",
         LayerKind::Image { .. } => "image",
-        LayerKind::Pen { .. } => "pen",
         LayerKind::Clock { .. } => "timer",
         LayerKind::Ticker { .. } => "ticker",
         LayerKind::Source { .. } => "source",
@@ -80,7 +78,6 @@ pub fn act(
         LayerKind::Ellipse { .. } => go!(ellipse),
         LayerKind::Text { .. } => go!(text),
         LayerKind::Image { .. } => go!(image),
-        LayerKind::Pen { .. } => go!(pen),
         LayerKind::Clock { .. } => go!(timer),
         LayerKind::Ticker { .. } => go!(ticker),
         _ => Err("this layer has no operator actions".into()),

@@ -1,4 +1,4 @@
-import { Activity, AudioLines, BellRing, Circle, Clock, Folder, Gauge, Image, MonitorPlay, MoveHorizontal, PenTool, Pentagon, Pilcrow, Sparkles, Square, Timer, Type, Video } from 'lucide-react';
+import { Activity, AudioLines, BellRing, Circle, Clock, Folder, Gauge, Image, MonitorPlay, Pentagon, Pilcrow, Sparkles, Square, Timer, Type, Video } from 'lucide-react';
 import type { Layer, LayerType, Template } from '../engine/types';
 import { descendants, findLayer } from './designerStore';
 import { num, propValue } from '../engine/evaluate';
@@ -18,9 +18,7 @@ export const ICONS: Record<LayerType, typeof Square> = {
   text: Type,
   image: Image,
   clock: Clock,
-  ticker: MoveHorizontal,
   polygon: Pentagon,
-  pen: PenTool,
 };
 
 /** A layer's icon: Video and Lottie layers are an image and a group underneath; a clock layer is a Clock or, stopwatch or countdown, a Time. */

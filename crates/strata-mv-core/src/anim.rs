@@ -45,14 +45,6 @@ pub fn layer_default(layer: &Layer, prop: Prop) -> Value {
             _ => {}
         }
     }
-    // A pen's visible portion: its settings (older layers have it only there).
-    if let LayerKind::Pen { x: c } = &layer.kind {
-        match prop {
-            Prop::DrawStart => return Value::Number(f64::from(c.v_start)),
-            Prop::DrawEnd => return Value::Number(f64::from(c.v_end)),
-            _ => {}
-        }
-    }
     // A rectangle's corners and a gradient's second colour: their settings
     // (older layers have them only there).
     let corner = match prop {
@@ -71,7 +63,6 @@ pub fn layer_default(layer: &Layer, prop: Prop) -> Value {
             LayerKind::Rect { x } => Some(x.fill_style.color2.as_str()),
             LayerKind::Ellipse { x } => Some(x.fill_style.color2.as_str()),
             LayerKind::Polygon { x } => Some(x.fill_style.color2.as_str()),
-            LayerKind::Pen { x } => Some(x.fill_style.color2.as_str()),
             _ => None,
         };
         if let Some(c) = c2.and_then(Color::from_hex) {

@@ -73,11 +73,9 @@ export function layerHasProp(l: Layer, p: Prop): boolean {
   if (p === 'stroke' || p === 'strokeWidth') return look;
   // The arcs of a circle (Ellipse widget).
   if (p === 'arcStart' || p === 'arcEnd' || p === 'innerRadius') return l.type === 'ellipse';
-  // The drawn portion of a pen.
-  if (p === 'drawStart' || p === 'drawEnd') return l.type === 'pen';
   // A rectangle's corners, the second colour of a gradient.
   if (p === 'cornerTl' || p === 'cornerTr' || p === 'cornerBr' || p === 'cornerBl') return l.type === 'rect';
-  if (p === 'fill2') return ['rect', 'ellipse', 'polygon', 'pen', 'text'].includes(l.type);
+  if (p === 'fill2') return ['rect', 'ellipse', 'polygon', 'text'].includes(l.type);
   return false;
 }
 

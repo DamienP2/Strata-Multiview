@@ -65,9 +65,7 @@ export type LayerKind =
       import('../widgets/text').Config)
   | ({ type: 'image'; src: string; fit: ImageFit } & import('../widgets/image').Config)
   | (({ type: 'clock'; mode: ClockMode; format: string; timezone: string; target: string } & FontStyle) & import('../widgets/timer').Config)
-  | (({ type: 'ticker'; text: string; separator: string; speed: number } & FontStyle) & import('../widgets/ticker').Config)
   | ({ type: 'polygon' } & import('../widgets/polygon').Config)
-  | ({ type: 'pen' } & import('../widgets/pen').Config)
   | ({ type: 'source' } & import('../widgets/source').Config)
   | ({ type: 'audioMeter' } & import('../widgets/broadcast').MeterConfig)
   | ({ type: 'loudness' } & import('../widgets/broadcast').LoudnessConfig)
@@ -355,7 +353,7 @@ export interface User {
 }
 
 /** Layer types whose text is styled with a FontStyle. */
-export const TEXT_LIKE = new Set<LayerType>(['text', 'clock', 'ticker']);
+export const TEXT_LIKE = new Set<LayerType>(['text', 'clock']);
 
 /** A colour of a palette: the layers using its value follow it when it changes. */
 export interface NamedColor {

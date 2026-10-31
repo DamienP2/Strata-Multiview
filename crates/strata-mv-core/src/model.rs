@@ -520,13 +520,6 @@ pub enum LayerKind {
         #[serde(flatten)]
         x: Box<crate::wid::broadcast::AlarmLogConfig>,
     },
-    /// Bézier path drawn with the pen tool.
-    #[serde(rename_all = "camelCase")]
-    Pen {
-        /// Settings of the spec widget (`wid::pen`).
-        #[serde(flatten)]
-        x: crate::wid::pen::Config,
-    },
 }
 
 /// Font settings shared by the text-based widgets.

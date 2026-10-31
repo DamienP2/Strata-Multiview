@@ -286,9 +286,7 @@ export const LABELS: Record<LayerType, string> = {
   text: 'Text',
   image: 'Image',
   clock: 'Clock',
-  ticker: 'Ticker',
   polygon: 'Polygon',
-  pen: 'Pen',
 };
 
 /** Widget presets offered in the toolbar menu (a type plus overrides). */
@@ -348,16 +346,6 @@ export function makeLayer(type: LayerType, width: number, height: number, parent
       return { ...base, type, src: '', fit: 'contain', props: centered(400, 300) };
     case 'clock':
       return { ...base, type, mode: 'time', format: 'HH:mm:ss', timezone: '', target: '', ...font('center'), props: { ...centered(300, 90), fontSize: 64, fill: DEFAULTS.fill } };
-    case 'ticker':
-      return {
-        ...base,
-        type,
-        text: 'First headline of the ticker\nSecond headline\nThird headline',
-        separator: '   •   ',
-        speed: 180,
-        ...font('left', 600),
-        props: { x: 0, y: parent ? 0 : height - 140, width: parent ? 1000 : width, height: 64, fontSize: 36, fill: DEFAULTS.fill },
-      };
     default:
       return { ...base, type, props: centered(600, 400) } as Layer;
   }

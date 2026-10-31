@@ -6,7 +6,6 @@ mod broadcast;
 mod ellipse;
 mod fit;
 mod image;
-mod pen;
 mod polygon;
 mod quad;
 mod shape;
@@ -43,9 +42,6 @@ pub(crate) struct Draw<'a, 'b> {
     /// Wall clock and time on air of this layer.
     pub time: TimeCtx<'a>,
     pub data: &'a Data,
-    /// Template frame (animation playhead) and the On air frame.
-    pub frame: f64,
-    pub hold: f64,
     pub fps: f64,
     /// The operator's state of this widget (`Null` = default).
     pub state: &'a serde_json::Value,
@@ -221,7 +217,6 @@ pub(crate) fn draw(d: &mut Draw) -> bool {
         "ellipse" => ellipse::draw(d, &state(&raw)),
         "text" => text::draw(d, &state(&raw)),
         "image" => image::draw(d, &state(&raw)),
-        "pen" => pen::draw(d, &state(&raw)),
         "timer" => timer::draw(d, &state(&raw)),
         "ticker" => ticker::draw(d, &state(&raw)),
         "source" => source::draw(d),
@@ -246,7 +241,6 @@ pub(crate) fn motion(d: &mut Draw) -> Option<Motion> {
         "quad" | "polygon" | "ellipse" => Some(Motion::Still),
         "text" => text::motion(d),
         "image" => image::motion(d, &state(raw)),
-        "pen" => pen::motion(d),
         "source" => source::motion(d),
         "audioMeter" | "loudness" | "timecode" | "status" | "alarmLog" => broadcast::motion(d),
         "timer" => timer::motion(d, &state(raw)),

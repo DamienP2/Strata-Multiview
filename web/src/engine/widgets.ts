@@ -33,8 +33,6 @@ export function isTimed(l: Layer): boolean {
       return !!l.scroll && l.scroll !== 'none';
     case 'clock':
       return l.mode === 'elapsed' || l.mode === 'timer';
-    case 'ticker':
-      return true;
     case 'group':
       return l.lottie !== undefined;
     default:

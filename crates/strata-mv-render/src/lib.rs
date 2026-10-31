@@ -1332,8 +1332,7 @@ impl Renderer {
             | LayerKind::Ellipse { .. }
             | LayerKind::Text { .. }
             | LayerKind::Image { .. }
-            | LayerKind::Polygon { .. }
-            | LayerKind::Pen { .. } => Motion::Still,
+            | LayerKind::Polygon { .. } => Motion::Still,
             // Clocks, tickers, rolls, counters… (by the time on air).
             _ => Motion::Moving,
         };
@@ -1416,8 +1415,7 @@ impl Renderer {
         fn frame_sensitive(kind: &LayerKind) -> bool {
             matches!(
                 kind,
-                LayerKind::Pen { .. }
-                    | LayerKind::Ticker { .. }
+                LayerKind::Ticker { .. }
                     | LayerKind::Group {
                         lottie: Some(_),
                         ..
@@ -1772,8 +1770,6 @@ impl Renderer {
             h,
             time,
             data: ctx.data,
-            frame: ctx.frame,
-            hold: ctx.template.hold_frame(),
             fps: ctx.fps,
             state,
             lang: ctx.lang,
@@ -2005,7 +2001,6 @@ impl Renderer {
                 }
             }
             LayerKind::Polygon { .. }
-            | LayerKind::Pen { .. }
             | LayerKind::Source { .. }
             | LayerKind::AudioMeter { .. }
             | LayerKind::Loudness { .. }

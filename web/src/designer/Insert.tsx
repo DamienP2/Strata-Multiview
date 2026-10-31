@@ -1,6 +1,6 @@
 // The tools of the Designer's toolbar that add to the multiview: a Source tile first, then the
 // shapes and texts on hand, the other widgets behind « + ».
-import { Circle, Image, Minus, MonitorPlay, PenTool, Pentagon, Pilcrow, Plus, Square, Type, Video } from 'lucide-react';
+import { Circle, Image, MonitorPlay, Pentagon, Pilcrow, Plus, Square, Type, Video } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import type { LayerType } from '../engine/types';
 import { WIDGET_LIST } from '../widgets';
@@ -38,35 +38,6 @@ function InsertBar({ onAdd }: { onAdd: AddLayer }) {
       <button className="tool" title={t('Polygon')} onClick={() => onAdd('polygon', { sides: 5 })}>
         <Pentagon size={15} />
       </button>
-      <button
-        className="tool"
-        title={tc('stroke', 'Line')}
-        // A straight Pen stroke: round ends, dashes along the line (a thin rectangle had neither).
-        onClick={() =>
-          onAdd(
-            'pen',
-            {
-              points: [
-                { x: 0, y: 0.5 },
-                { x: 1, y: 0.5 },
-              ],
-              arrowEnd: 'none',
-              drawIn: false,
-              props: {
-                x: 160,
-                y: 520,
-                width: 600,
-                height: 40,
-                stroke: [1, 1, 1, 1],
-                strokeWidth: 4,
-              },
-            },
-            tc('stroke', 'Line'),
-          )
-        }
-      >
-        <Minus size={15} />
-      </button>
       <button className="tool" title={tc('text', 'Line')} onClick={() => onAdd('text', undefined, tc('text', 'Line'))}>
         <Type size={15} />
       </button>
@@ -79,9 +50,6 @@ function InsertBar({ onAdd }: { onAdd: AddLayer }) {
       </button>
       <button className="tool" title={t('Image')} onClick={() => onAdd('image')}>
         <Image size={15} />
-      </button>
-      <button className="tool" title={t('Pen')} onClick={() => onAdd('pen')}>
-        <PenTool size={15} />
       </button>
     </div>
   );
@@ -105,7 +73,6 @@ const MENU: { type?: LayerType; widget?: string; label: string; soon?: typeof Vi
   { widget: 'timecode', label: 'Timecode', hint: 'The station’s or an input’s' },
   { widget: 'status', label: 'Status', hint: 'PTP, NTP and the faults on now' },
   { widget: 'alarmLog', label: 'Alarm log', hint: 'The faults of the inputs, the newest first' },
-  { type: 'ticker', label: 'Ticker' },
   { widget: 'clock', label: 'Clock' },
   { widget: 'time', label: 'Time' },
 ];
