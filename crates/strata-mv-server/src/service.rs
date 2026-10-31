@@ -306,7 +306,19 @@ mod imp {
 
     const DISPLAY_NAME: &str = "Strata Multiview Server";
     const FIREWALL_RULE: &str = "Strata Multiview Server";
-    /// Rules an older install added under its former name.
+
+    /// Removes the server's Windows Firewall rule (none: nothing to do).
+    fn delete_firewall_rule() {
+        let _ = Command::new("netsh")
+            .args([
+                "advfirewall",
+                "firewall",
+                "delete",
+                "rule",
+                &format!("name={FIREWALL_RULE}"),
+            ])
+            .output();
+    }
 
     fn manager(access: ServiceManagerAccess) -> Result<ServiceManager> {
         ServiceManager::local_computer(None::<&str>, access).context(
@@ -359,17 +371,7 @@ mod imp {
             actions: Some(vec![restart.clone(), restart.clone(), restart]),
         })?;
         // Let operators reach the web UI and outputs through Windows Firewall.
-        for rule in [FIREWALL_RULE] {
-            let _ = Command::new("netsh")
-                .args([
-                    "advfirewall",
-                    "firewall",
-                    "delete",
-                    "rule",
-                    &format!("name={rule}"),
-                ])
-                .output();
-        }
+        delete_firewall_rule();
         if let Err(e) = run(
             "netsh",
             &[
@@ -410,17 +412,7 @@ mod imp {
             }
         }
         svc.delete()?;
-        for rule in [FIREWALL_RULE] {
-            let _ = Command::new("netsh")
-                .args([
-                    "advfirewall",
-                    "firewall",
-                    "delete",
-                    "rule",
-                    &format!("name={rule}"),
-                ])
-                .output();
-        }
+        delete_firewall_rule();
         Ok(())
     }
 
