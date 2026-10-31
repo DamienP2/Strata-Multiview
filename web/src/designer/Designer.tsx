@@ -15,6 +15,7 @@ import { copyLayers, cutLayers, pasteClipboard } from './clipboard';
 import { useGuidesView } from './Guides';
 import { DisplayMenu, type StageBackground } from './DisplayMenu';
 import { ProjectHistory } from './MultiviewSettings';
+import { OutputSelect } from './OutputSelect';
 import { Splitter, useLayout } from '../ui/Splitter';
 import { designTemplates } from '../engine/drafts';
 import { t } from '../i18n';
@@ -225,6 +226,7 @@ export const Designer = memo(function Designer() {
           {topSlot &&
             createPortal(
               <>
+                <OutputSelect project={project} />
                 <button className="top-tool" title={t('Undo (Ctrl+Z)')} disabled={!past.length} onClick={undo}>
                   <Undo2 size={15} />
                 </button>

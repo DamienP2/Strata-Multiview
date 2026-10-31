@@ -18647,6 +18647,19 @@ a.opx-html5 {
   height: 30px;
   text-decoration: none;
 }
+/* The Designer: the channel showing the multiview, in green (no « on air »). */
+.opx-dot.shown {
+  background: var(--pvw);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--pvw) 25%, transparent);
+}
+.opx-top a.opx-html5 {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0 10px;
+  font-size: var(--fs-12);
+  font-weight: 600;
+}
 /* The bottom bar: Fade / Cut and Update, after Out. */
 .opx-tsep {
   width: 1px;
