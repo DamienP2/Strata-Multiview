@@ -1,5 +1,5 @@
 import { FormatButtons } from '../designer/MultiviewSettings';
-import { ArrowLeft, Check, CheckSquare, ChevronRight, Clock, Copy, Download, Folder, FolderInput, FolderOpen, FolderPlus, GraduationCap, Inbox, LayoutGrid, MonitorPlay, MoreHorizontal, PenTool, Pencil, Plus, Radio, Search, Trash2, Upload, X } from 'lucide-react';
+import { ArrowLeft, Check, CheckSquare, ChevronRight, Clock, Copy, Download, Folder, FolderInput, FolderOpen, FolderPlus, GraduationCap, Inbox, LayoutGrid, MonitorPlay, MoreHorizontal, Pencil, Plus, Radio, Search, Trash2, Upload, X } from 'lucide-react';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { FrameRate, Project, ProjectSummary } from '../engine/types';
 import { applyLayout, LayoutPicker, PRESETS } from '../designer/Layouts';
@@ -10,9 +10,6 @@ import { navigate, projectPath } from '../router';
 import { confirmDialog, promptDialog } from '../ui/dialogs';
 import { lang, locale, t, tn } from '../i18n';
 import { NavItem, NavSection } from './SidePage';
-import { useMetrics, type ChannelMetrics } from '../engine/metrics';
-import { Bar } from '../perf/bits';
-import { fps as fpsText, fpsTone, pct, slowest, worstTone } from '../perf/format';
 
 const fps = (r: FrameRate) => +(r.num / r.den).toFixed(2);
 
@@ -226,10 +223,8 @@ function Thumb({ src, style }: { src: string; style?: React.CSSProperties }) {
   );
 }
 
-/** A project opens in its own tab: the list stays open in this one. */
-function openInTab(path: string) {
-  if (!window.open(path, '_blank')) navigate(path);
-}
+/** A multiview opens in this page (the logo goes back to the list). */
+const openInTab = (path: string) => navigate(path);
 
 /** A card's "…" menu: opens upward when there is no room below. */
 function CardMenu({ children, page }: { children: React.ReactNode; page: number }) {
@@ -252,7 +247,6 @@ function CardMenu({ children, page }: { children: React.ReactNode; page: number 
 export function Projects() {
   // Not the channels' live state: the list is not drawn again on each frame on air.
   const { projects, channels, auth, toast, folders, saveFolders } = useApp(useShallow((s) => ({ projects: s.projects, channels: s.channels, auth: s.auth, toast: s.toast, folders: s.folders, saveFolders: s.saveFolders })));
-  const metrics = useMetrics();
   const user = auth?.user;
   const design = can.design(user);
   const [dialog, setDialog] = useState<{ from?: ProjectSummary } | null>(null);
@@ -664,15 +658,19 @@ export function Projects() {
                   <a
                     className="project-cover"
                     href={projectPath(p.id)}
-                    target="_blank"
-                    rel="noopener"
                     draggable={false}
                     style={{ aspectRatio: String(Math.max(16 / 9, ratio)) }}
                     onClick={(e) => {
                       // While picking, a click on a project picks it.
-                      if (!selecting) return;
+                      if (selecting) {
+                        e.preventDefault();
+                        toggle(p.id, e.shiftKey);
+                        return;
+                      }
+                      // Opened in this page (Ctrl / ⌘: a new tab, as any link).
+                      if (e.ctrlKey || e.metaKey || e.shiftKey || e.button !== 0) return;
                       e.preventDefault();
-                      toggle(p.id, e.shiftKey);
+                      navigate(projectPath(p.id));
                     }}
                   >
                     {p.cover ? (
@@ -684,14 +682,10 @@ export function Projects() {
                       <span className="ratio" style={ratio >= 1 ? { width: 14, height: 14 / ratio } : { width: 14 * ratio, height: 14 }} />
                       {p.width}×{p.height} · {fps(p.frameRate)}p
                     </span>
-                    {metrics && metrics.channels.some((c) => c.projectId === p.id) ? (
-                      <ProjectAir chans={metrics.channels.filter((c) => c.projectId === p.id)} />
-                    ) : (
-                      on.length > 0 && (
-                        <span className="project-channel" title={t('Loaded on')}>
-                          <MonitorPlay size={11} /> {on.map((c) => c.name).join(', ')}
-                        </span>
-                      )
+                    {on.length > 0 && (
+                      <span className="project-channel" title={t('Shown on')}>
+                        <MonitorPlay size={11} /> {on.map((c) => c.name).join(', ')}
+                      </span>
                     )}
                   </a>
                   {design && (
@@ -768,12 +762,6 @@ export function Projects() {
                       )}
                     </div>
                   </div>
-                  {design && (
-                    <a className="project-links project-link" href={projectPath(p.id)} target="_blank" rel="noopener">
-                      <PenTool size={15} />
-                      <span>{t('Edit')}</span>
-                    </a>
-                  )}
                 </div>
               );
             })}
@@ -792,35 +780,3 @@ export function Projects() {
   );
 }
 
-/**
- * The channels showing a multiview, over its cover: the frame rate of its
- * slowest picture and the highest render load.
- */
-function ProjectAir({ chans }: { chans: ChannelMetrics[] }) {
-  const load = Math.max(0, ...chans.map((c) => c.load));
-  const slow = slowest(chans);
-  const loadTone = load >= 85 ? 'bad' : load >= 60 ? 'warn' : 'ok';
-  const rateTone = slow ? fpsTone(slow.fps, slow.rate) : 'idle';
-  const tone = worstTone(loadTone, rateTone);
-  return (
-    <span
-      className={`project-air tone-${tone}`}
-      style={{ ['--load-k' as string]: Math.min(100, load) / 100 }}
-      title={t('Frame rate of the slowest picture · render time, % of the frame time')}
-    >
-      <span className="project-air-names">
-        <MonitorPlay size={11} />
-        <span>{chans.map((c) => c.name).join(', ')}</span>
-      </span>
-      {slow && (
-        <span className={`project-air-fps tone-${rateTone}`}>
-          {fpsText(slow.fps)}/{fpsText(slow.rate)} fps
-        </span>
-      )}
-      <span className={`project-air-load tone-${loadTone}`}>
-        <Bar value={load} tone={loadTone} />
-        {pct(load)}
-      </span>
-    </span>
-  );
-}

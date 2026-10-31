@@ -1,11 +1,11 @@
-import { Lock, Upload } from 'lucide-react';
+import { Lock, Save } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { draftOf } from '../engine/drafts';
 import type { ChannelState, Project } from '../engine/types';
 import { api, clientId, lockEvents, useApp, type EditLock } from '../store';
 import { useDesigner } from './designerStore';
 import { confirmDialog } from '../ui/dialogs';
-import { t, tn } from '../i18n';
+import { t } from '../i18n';
 
 /*
  * One designer at a time per template (edit lock, renewed while the template
@@ -154,7 +154,7 @@ async function confirmPublish(project: Project, ids: string[]): Promise<boolean>
   if (!live.length) return true;
   const names = ids.map((id) => project.drafts?.find((t) => t.id === id)?.name ?? project.templates.find((t) => t.id === id)?.name ?? id);
   return confirmDialog({
-    title: ids.length > 1 ? t('Publish {n} templates?', { n: ids.length }) : t('Publish “{name}”?', { name: names[0] }),
+    title: t('Save “{name}”?', { name: names[0] }),
     message: (
       <div className="publish-confirm">
         <p>{t('The outputs use the new version immediately.')}</p>
@@ -181,7 +181,7 @@ async function confirmPublish(project: Project, ids: string[]): Promise<boolean>
         )}
       </div>
     ),
-    confirm: t('Publish'),
+    confirm: t('Save'),
     danger: live.length > 0,
   });
 }
@@ -195,7 +195,6 @@ export function TopPublish({ project, saving, readOnly }: { project: Project; sa
   const toast = useApp((s) => s.toast);
   const [busy, setBusy] = useState(false);
   const changed = project.drafts ?? [];
-  const isNew = (id: string) => !project.templates.some((t) => t.id === id);
   const publish = async () => {
     setBusy(true);
     try {
@@ -203,8 +202,7 @@ export function TopPublish({ project, saving, readOnly }: { project: Project; sa
       const st = useDesigner.getState();
       if (st.base && !(await saveTemplate(st.base))) return;
       const r = await api<{ name: string; revision: number }[]>('POST', `/api/projects/${encodeURIComponent(project.id)}/publish`);
-      if (r.length === 1) toast(t('Published · {name}', { name: r[0].name }), 'info');
-      else toast(tn(r.length, 'Published · {n} template', 'Published · {n} templates'), 'info');
+      toast(t('Saved · {name}', { name: r[0]?.name ?? project.name }), 'info');
     } catch (e) {
       toast((e as Error).message, 'error');
     } finally {
@@ -222,9 +220,9 @@ export function TopPublish({ project, saving, readOnly }: { project: Project; sa
   return (
     <>
       {state}
-      {/* Changes waiting: Publish pulses lightly. */}
-      <button className={`btn small primary ux2-publish ${changed.length && !readOnly && !busy ? 'pending' : ''}`} disabled={busy || readOnly || !changed.length} title={changed.length ? t('Not on the outputs yet: {list}', { list: changed.map((d) => (isNew(d.id) ? t('{name} (new)', { name: d.name }) : d.name)).join(', ') }) : t('Publish to the outputs')} onClick={publish}>
-        <Upload size={13} /> {busy ? t('Publishing…') : t('Publish')}
+      {/* Changes not saved yet: Save pulses lightly. */}
+      <button className={`btn small primary ux2-publish ${changed.length && !readOnly && !busy ? 'pending' : ''}`} disabled={busy || readOnly || !changed.length} title={changed.length ? t('Changes not saved yet: the outputs show the multiview as last saved') : t('Saved: the outputs show this version')} onClick={publish}>
+        <Save size={13} /> {busy ? t('Saving…') : t('Save')}
       </button>
     </>
   );

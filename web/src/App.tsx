@@ -15,6 +15,24 @@ import { UserMenu } from './ui/UserMenu';
 import { NavGroup, type NavEntry } from './ui/NavMenu';
 import { loadDisplayPrefs, useDisplayPrefs } from './displayPrefs';
 
+/** The logo, a link back to the multiviews. */
+function HomeBrand() {
+  return (
+    <a
+      className="brand-home"
+      href="/projects"
+      title={t('Multiviews')}
+      onClick={(e) => {
+        if (e.ctrlKey || e.metaKey || e.shiftKey || e.button !== 0) return;
+        e.preventDefault();
+        navigate('/projects');
+      }}
+    >
+      <Brand />
+    </a>
+  );
+}
+
 // The heavy pages load when opened: the project list and the outputs do not carry the Designer.
 const Designer = lazy(() => import('./designer/Designer').then((m) => ({ default: m.Designer })));
 const ApiPage = lazy(() => import('./pages/ApiPage').then((m) => ({ default: m.ApiPage })));
@@ -131,7 +149,7 @@ function Home({ route }: { route: Extract<Route, { page: 'projects' | 'media' | 
   return (
     <>
       <nav className="topbar">
-        <Brand />
+        <HomeBrand />
         <div className="tabs home-tabs ux1-home-tabs">
           {tab('projects', '/projects', <FolderOpen size={14} />, t('Multiviews'))}
           {tab('media', '/media', <LibraryIcon size={14} />, t('Library'))}
@@ -191,7 +209,7 @@ function ProjectShell({ route }: { route: Extract<Route, { page: 'project' }> })
   return (
     <>
       <nav className="topbar">
-        <Brand />
+        <HomeBrand />
         <span className="topbar-sep" aria-hidden />
         <span className="project-title" title={summary?.description ? `${projectName}\n${summary.description}` : projectName}>
           <small>{t('Multiview')}</small>

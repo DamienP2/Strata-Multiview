@@ -395,6 +395,12 @@ code {
   border-bottom: 1px solid var(--line);
   background: linear-gradient(180deg, #141623, #10121a);
 }
+.brand-home {
+  display: flex;
+  align-items: center;
+  color: inherit;
+  text-decoration: none;
+}
 .brand {
   display: flex;
   flex-direction: column;
