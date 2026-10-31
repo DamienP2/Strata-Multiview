@@ -879,7 +879,7 @@ export function Outputs({ mode }: { mode: Mode }) {
                         </select>
                       </Field>
                       {liveCh && (
-                        <Field label={t('Multiview on air')} hint={t('Takes effect at once (not with Apply).')}>
+                        <Field label={t('Multiview shown')} hint={t('Takes effect at once (not with Apply).')}>
                           <select
                             value={liveCh.projectId ?? ''}
                             onChange={async (e) => {

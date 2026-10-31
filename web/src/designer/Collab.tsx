@@ -167,7 +167,7 @@ async function confirmPublish(project: Project, ids: string[]): Promise<boolean>
         )}
         {live.length ? (
           <div className="publish-onair">
-            <b>{live.length > 1 ? t('On air now: they change on screen at once') : t('On air now: it changes on screen at once')}</b>
+            <b>{live.length > 1 ? t('Shown on an output: they change on screen at once') : t('Shown on an output: it changes on screen at once')}</b>
             <ul>
               {live.map((n) => (
                 <li key={n}>
@@ -177,7 +177,7 @@ async function confirmPublish(project: Project, ids: string[]): Promise<boolean>
             </ul>
           </div>
         ) : (
-          <p className="muted">{ids.length > 1 ? t('None of them is on air.') : t('It is not on air.')}</p>
+          <p className="muted">{ids.length > 1 ? t('None of them is shown on an output.') : t('It is not shown on any output.')}</p>
         )}
       </div>
     ),

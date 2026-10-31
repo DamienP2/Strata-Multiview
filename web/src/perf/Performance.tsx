@@ -158,7 +158,6 @@ function ChannelCard({ c }: { c: ChannelMetrics }) {
         <span className={`perf-chip tone-${jitterTone}`} title={t('How late the clock ticked at most (last 10 s)')}>
           {t('Clock: {ms} ms late at most', { ms: num(c.jitterMs, 1) })}
         </span>
-        <span className={`perf-chip ${c.onAir ? 'live' : ''}`}>{c.onAir ? t('{n} on air', { n: c.onAir }) : t('Off air')}</span>
         <Dot tone={channelTone(c)} />
       </header>
       <div className="set-body">

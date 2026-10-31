@@ -793,11 +793,10 @@ export function Projects() {
 }
 
 /**
- * The channels playing a project, over its cover: on air (or only loaded),
- * the frame rate of its slowest picture and the highest render load.
+ * The channels showing a multiview, over its cover: the frame rate of its
+ * slowest picture and the highest render load.
  */
 function ProjectAir({ chans }: { chans: ChannelMetrics[] }) {
-  const onAir = chans.reduce((n, c) => n + c.onAir, 0);
   const load = Math.max(0, ...chans.map((c) => c.load));
   const slow = slowest(chans);
   const loadTone = load >= 85 ? 'bad' : load >= 60 ? 'warn' : 'ok';
@@ -805,11 +804,10 @@ function ProjectAir({ chans }: { chans: ChannelMetrics[] }) {
   const tone = worstTone(loadTone, rateTone);
   return (
     <span
-      className={`project-air tone-${tone} ${onAir ? 'live' : ''}`}
+      className={`project-air tone-${tone}`}
       style={{ ['--load-k' as string]: Math.min(100, load) / 100 }}
       title={t('Frame rate of the slowest picture · render time, % of the frame time')}
     >
-      <span className="project-air-state">{onAir ? t('On air') : t('Loaded')}</span>
       <span className="project-air-names">
         <MonitorPlay size={11} />
         <span>{chans.map((c) => c.name).join(', ')}</span>
