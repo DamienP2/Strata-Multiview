@@ -17733,6 +17733,47 @@ button.ux1-pill.lost:hover {
   left: auto;
   right: calc(100% + 4px);
 }
+/* Right-click menu: the input of a tile. */
+.clip-menu .clip-menu-value {
+  margin-left: auto;
+  max-width: 110px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-3);
+  font-size: var(--fs-11);
+}
+.clip-menu .clip-menu-value + .ux2-chev {
+  margin-left: 4px;
+}
+.clip-menu.clip-inputs {
+  max-height: min(420px, 70vh);
+  overflow-y: auto;
+}
+.clip-inputs .clip-check {
+  display: inline-block;
+  width: 13px;
+  flex: none;
+}
+.clip-inputs .clip-live {
+  width: 7px;
+  height: 7px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--text-3);
+  opacity: 0.6;
+}
+.clip-inputs .clip-live.on {
+  background: var(--ok, #2bd96b);
+  opacity: 1;
+}
+.clip-inputs .clip-empty {
+  display: block;
+  max-width: 240px;
+  padding: 6px 10px;
+  color: var(--text-3);
+  font-size: var(--fs-11);
+}
 /* Data canvas: a source already there, shown. */
 .logic-node.ux2-flash {
   animation: ux2-flash 1.2s ease-out;
@@ -21249,43 +21290,3 @@ textarea.tx-grow {
   color: var(--text);
 }
 
-/* New multiview: the ready-made models (designer/Models.tsx). */
-.modal.new-mv {
-  width: min(860px, calc(100vw - 32px));
-}
-.mv-models {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-  gap: 8px;
-}
-.mv-model {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 6px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: var(--panel-2);
-  color: var(--text-2);
-  font-size: var(--fs-11);
-  line-height: 1.25;
-  text-align: center;
-}
-.mv-model:hover {
-  border-color: var(--text-3);
-  color: var(--text);
-}
-.mv-model.on {
-  border-color: var(--accent);
-  background: color-mix(in srgb, var(--accent) 14%, var(--panel-2));
-  color: var(--text);
-}
-.mv-model-none {
-  width: 96px;
-  height: 54px;
-  display: grid;
-  place-items: center;
-  border: 1px dashed var(--line-2);
-  border-radius: 2px;
-}

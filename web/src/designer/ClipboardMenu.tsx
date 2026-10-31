@@ -1,6 +1,7 @@
-// Right-click menu of the layers (the Layers list and the stage): copy, cut,
-// paste and duplicate (clipboard.ts), their order, delete.
-import { ArrowDown, ArrowDownToLine, ArrowUp, ArrowUpToLine, BringToFront, ChevronRight, ClipboardPaste, Copy, Scissors, Trash2 } from 'lucide-react';
+// Right-click menu of the layers (the Layers list and the stage): the input
+// of a tile or of a widget that shows one, copy, cut, paste and duplicate
+// (clipboard.ts), their order, delete.
+import { ArrowDown, ArrowDownToLine, ArrowUp, ArrowUpToLine, BringToFront, Check, ChevronRight, ClipboardPaste, Copy, MonitorPlay, Scissors, Trash2 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import type {} from '../engine/types';
@@ -9,6 +10,21 @@ import { confirmDialog } from '../ui/dialogs';
 import { copyLayers, cutLayers, pasteLayers, useClipboard } from './clipboard';
 import { descendants, duplicateLayers, findLayer, useDesigner } from './designerStore';
 import { moveLayer } from './LayersPanel';
+import { useInputs } from '../engine/liveInputs';
+
+/** The layers that show an input: a tile, and the meters, loudness and timecode of one. */
+const WITH_INPUT = new Set(['source', 'audioMeter', 'loudness', 'timecode']);
+
+/** Puts a layer on an input; a tile named after its input (or "Source n") takes the new one's name. */
+function setInput(id: string, input: string, names: Map<string, string>) {
+  useDesigner.getState().update((tpl) => {
+    const l = findLayer(tpl, id) as (ReturnType<typeof findLayer> & { input?: string }) | undefined;
+    if (!l) return;
+    const before = l.input ?? '';
+    l.input = input;
+    if (l.type === 'source' && (!l.name || /^Source \d+$/.test(l.name) || l.name === names.get(before))) l.name = names.get(input) ?? l.name;
+  });
+}
 
 export interface ClipMenuAt {
   x: number;
@@ -43,6 +59,8 @@ const key = (k: string) => (mac ? `⌘${k}` : `Ctrl+${k}`);
 export function ClipboardMenu({ at, onClose }: { at: ClipMenuAt; onClose: () => void }) {
   const ref = useRef<HTMLDivElement>(null);
   const [orderOpen, setOrderOpen] = useState(false);
+  const [inputOpen, setInputOpen] = useState(false);
+  const inputs = useInputs();
   const clip = useClipboard();
   const st = useDesigner();
   useEffect(() => {
@@ -63,9 +81,38 @@ export function ClipboardMenu({ at, onClose }: { at: ClipMenuAt; onClose: () => 
   const targets = st.selected.includes(layer.id) ? st.selected : [layer.id];
   const run = (fn: () => unknown) => () => (onClose(), void fn());
   const ro = st.readOnly;
+  const current = (layer as { input?: string }).input ?? '';
+  const names = new Map(inputs.map((i) => [i.id, i.name]));
   return createPortal(
-    <div ref={ref} className="menu project-menu clip-menu" style={{ position: 'fixed', left: Math.min(at.x, window.innerWidth - 250), top: Math.max(8, Math.min(at.y, window.innerHeight - 340)), right: 'auto' }} onContextMenu={(e) => e.preventDefault()}>
+    <div ref={ref} className="menu project-menu clip-menu" style={{ position: 'fixed', left: Math.min(at.x, window.innerWidth - 250), top: Math.max(8, Math.min(at.y, window.innerHeight - 380)), right: 'auto' }} onContextMenu={(e) => e.preventDefault()}>
       <>
+          {WITH_INPUT.has(layer.type) && (
+            <>
+              <div className="ux2-sub-wrap" onMouseEnter={() => setInputOpen(true)} onMouseLeave={() => setInputOpen(false)}>
+                <button disabled={ro} aria-haspopup="menu" aria-expanded={inputOpen} onClick={() => setInputOpen(!inputOpen)}>
+                  <MonitorPlay size={13} /> {t('Input')}
+                  <span className="clip-menu-value">{current ? (names.get(current) ?? t('(removed input)')) : layer.type === 'timecode' ? t('Station') : t('None')}</span>
+                  <ChevronRight size={12} className="ux2-chev" />
+                </button>
+                {inputOpen && !ro && (
+                  <div className={`menu project-menu clip-menu ux2-submenu clip-inputs ${at.x > window.innerWidth - 480 ? 'left' : ''}`}>
+                    <button onClick={run(() => setInput(layer.id, '', names))}>
+                      {current === '' ? <Check size={13} /> : <span className="clip-check" />} {layer.type === 'timecode' ? t('Station') : t('None')}
+                    </button>
+                    {inputs.map((i) => (
+                      <button key={i.id} onClick={run(() => setInput(layer.id, i.id, names))}>
+                        {current === i.id ? <Check size={13} /> : <span className="clip-check" />}
+                        <span className={`clip-live ${i.live ? 'on' : ''}`} />
+                        {i.name}
+                      </button>
+                    ))}
+                    {!inputs.length && <span className="clip-empty">{t('No input yet: add them in Broadcast › Video inputs.')}</span>}
+                  </div>
+                )}
+              </div>
+              <div className="menu-sep" />
+            </>
+          )}
           <button onClick={run(() => copyLayers(targets))}>
             <Copy size={13} /> {t('Copy')}
             <kbd>{key('C')}</kbd>

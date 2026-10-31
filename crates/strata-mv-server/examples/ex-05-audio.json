@@ -1,0 +1,369 @@
+{
+ "meta": {
+  "id": "ex-05-audio",
+  "name": "Audio, 16 canaux",
+  "category": "Audio",
+  "tags": [
+   "Audio seul"
+  ],
+  "summary": "Les 16 canaux et le loudness d’une entrée, quatre autres entrées, avec ou sans image.",
+  "description": "Le contrôle audio : les 16 canaux d’une entrée avec leurs valeurs, son loudness EBU R128 et sa courbe, et les vu-mètres de quatre autres entrées, sans image.",
+  "en": {
+   "name": "Audio, 16 channels",
+   "summary": "An input’s 16 channels and loudness, four more inputs, with or without picture.",
+   "description": "Audio control: an input’s 16 channels with their values, its EBU R128 loudness and its curve, and the meters of four more inputs, without picture.",
+   "category": "Audio",
+   "tags": [
+    "Audio only"
+   ]
+  }
+ },
+ "project": {
+  "id": "",
+  "name": "Audio, 16 canaux",
+  "description": "",
+  "width": 1920,
+  "height": 1080,
+  "frameRate": {
+   "num": 50,
+   "den": 1
+  },
+  "templates": [
+   {
+    "id": "12595606fac0",
+    "name": "Audio, 16 canaux",
+    "duration": 50.0,
+    "markers": [
+     {
+      "id": "deac89470196",
+      "frame": 25.0,
+      "name": "On air",
+      "kind": "out"
+     }
+    ],
+    "fields": [],
+    "layers": [
+     {
+      "id": "39bhgckhvgr0",
+      "name": "Bandeau",
+      "parent": null,
+      "type": "rect",
+      "shape": "rect",
+      "perCorner": false,
+      "corners": [
+       0.0,
+       0.0,
+       0.0,
+       0.0
+      ],
+      "skewUnit": "px",
+      "skewPx": 120.0,
+      "skewDeg": 15.0,
+      "trapMode": "percent",
+      "trapTop": 70.0,
+      "trapLeft": 80.0,
+      "trapRight": 200.0,
+      "vertexRound": 0.0,
+      "fillStyle": {
+       "kind": "solid",
+       "color2": "#ff3b5c",
+       "angle": 90.0,
+       "image": "",
+       "fit": "cover"
+      },
+      "strokeStyle": {
+       "position": "inside",
+       "dash": "solid",
+       "join": "miter",
+       "cap": "butt"
+      },
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 1920.0,
+       "height": 60.0,
+       "fill": [
+        0.0627451,
+        0.078431375,
+        0.105882354,
+        1.0
+       ]
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "v4tdnkbuvgr0",
+      "name": "Contrôle audio · 16 canaux",
+      "parent": null,
+      "type": "text",
+      "text": "Contrôle audio · 16 canaux",
+      "fontFamily": "Inter",
+      "fontWeight": 700,
+      "align": "left",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "speed": 120.0,
+      "separator": "   •   ",
+      "overflow": "fit",
+      "squeeze": 0.8,
+      "minSize": 0.6,
+      "warnBelow": 0.8,
+      "maxLines": 0,
+      "breakMode": "word",
+      "lang": "",
+      "fitEnd": "clip",
+      "italic": false,
+      "fillType": "solid",
+      "color2": "#a594ff",
+      "gradAngle": 90.0,
+      "strokeOutside": false,
+      "shadow": false,
+      "shadowColor": "#000000aa",
+      "shadowX": 0.0,
+      "shadowY": 4.0,
+      "shadowBlur": 12.0,
+      "band": false,
+      "bandColor": "#24164f",
+      "bandPadX": 26.0,
+      "bandGap": 10.0,
+      "bandRadius": 0.0,
+      "bandAccent": true,
+      "bandAccentColor": "#ff3b5c",
+      "justify": false,
+      "dir": "ltr",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 20.0,
+       "y": 6.0,
+       "width": 1000.0,
+       "height": 48.0,
+       "fill": [
+        0.9607843,
+        0.96862745,
+        0.98039216,
+        1.0
+       ],
+       "fontSize": 30.0
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "wxv26pc8vgr0",
+      "name": "État",
+      "parent": null,
+      "type": "status",
+      "ptp": false,
+      "ntp": false,
+      "alarms": true,
+      "background": "#00000000",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 1060.0,
+       "y": 6.0,
+       "width": 420.0,
+       "height": 48.0
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "ffk2cz88vgr0",
+      "name": "Timecode",
+      "parent": null,
+      "type": "timecode",
+      "input": "",
+      "label": "",
+      "color": "#fbbf24",
+      "background": "#00000000",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 1496.0,
+       "y": 6.0,
+       "width": 408.0,
+       "height": 48.0
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "n54msgl3vgr0",
+      "name": "Vu-mètres",
+      "parent": null,
+      "type": "audioMeter",
+      "input": "{{input:1}}",
+      "channels": 16,
+      "labels": "L, R, C, LFE, Ls, Rs, L, R, AD, AD, VO, VO, 13, 14, 15, 16",
+      "scale": true,
+      "values": true,
+      "hold": true,
+      "loudness": true,
+      "min": -60.0,
+      "yellow": -18.0,
+      "red": -9.0,
+      "background": "#0b0d12d9",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 16.0,
+       "y": 72.0,
+       "width": 1200.0,
+       "height": 640.0
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "is8ypnguvgr0",
+      "name": "Loudness",
+      "parent": null,
+      "type": "loudness",
+      "input": "{{input:1}}",
+      "target": -23.0,
+      "tolerance": 1.0,
+      "history": true,
+      "background": "#0b0d12d9",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 1228.0,
+       "y": 72.0,
+       "width": 676.0,
+       "height": 640.0
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "z9prfjyovgr0",
+      "name": "Vu-mètres",
+      "parent": null,
+      "type": "audioMeter",
+      "input": "{{input:2}}",
+      "channels": 0,
+      "labels": "L, R",
+      "scale": true,
+      "values": true,
+      "hold": true,
+      "loudness": true,
+      "min": -60.0,
+      "yellow": -18.0,
+      "red": -9.0,
+      "background": "#0b0d12d9",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 16.0,
+       "y": 724.0,
+       "width": 462.0,
+       "height": 348.0
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "bof3fom1vgr0",
+      "name": "Vu-mètres",
+      "parent": null,
+      "type": "audioMeter",
+      "input": "{{input:3}}",
+      "channels": 0,
+      "labels": "L, R",
+      "scale": true,
+      "values": true,
+      "hold": true,
+      "loudness": true,
+      "min": -60.0,
+      "yellow": -18.0,
+      "red": -9.0,
+      "background": "#0b0d12d9",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 490.0,
+       "y": 724.0,
+       "width": 462.0,
+       "height": 348.0
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "41dwqsrnvgr0",
+      "name": "Vu-mètres",
+      "parent": null,
+      "type": "audioMeter",
+      "input": "{{input:4}}",
+      "channels": 0,
+      "labels": "L, R",
+      "scale": true,
+      "values": true,
+      "hold": true,
+      "loudness": true,
+      "min": -60.0,
+      "yellow": -18.0,
+      "red": -9.0,
+      "background": "#0b0d12d9",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 964.0,
+       "y": 724.0,
+       "width": 462.0,
+       "height": 348.0
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "58cl56u2vgr0",
+      "name": "Vu-mètres",
+      "parent": null,
+      "type": "audioMeter",
+      "input": "{{input:5}}",
+      "channels": 0,
+      "labels": "L, R",
+      "scale": true,
+      "values": true,
+      "hold": true,
+      "loudness": true,
+      "min": -60.0,
+      "yellow": -18.0,
+      "red": -9.0,
+      "background": "#0b0d12d9",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 1438.0,
+       "y": 724.0,
+       "width": 462.0,
+       "height": 348.0
+      },
+      "tracks": {},
+      "bindings": {}
+     }
+    ],
+    "zone": "full-screen",
+    "revision": 2,
+    "markerModel": 2
+   }
+  ],
+  "zones": [
+   {
+    "id": "full-screen",
+    "name": "Full screen",
+    "layer": 10,
+    "color": "#8fa3ff",
+    "transition": "sequential"
+   }
+  ],
+  "formats": [],
+  "language": "fr"
+ }
+}

@@ -4,6 +4,7 @@ mod colors;
 mod config;
 mod decklink;
 mod engine;
+mod examples;
 mod firewall;
 mod hardware;
 mod health;

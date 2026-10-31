@@ -1,0 +1,748 @@
+{
+ "meta": {
+  "id": "ex-01-final",
+  "name": "Régie finale d’une chaîne",
+  "category": "Régie finale",
+  "tags": [
+   "8 tuiles"
+  ],
+  "summary": "PGM, PVW, playout A et B, quatre retours, 16 canaux audio, loudness, alarmes.",
+  "description": "Le contrôle final d’une chaîne : le programme en grand avec son timecode, son loudness et ses alarmes ; la préparation, les deux playouts et quatre retours ; les 16 canaux audio du programme, son loudness EBU R128, l’état de la synchro et le journal des alarmes.",
+  "en": {
+   "name": "Final control of a channel",
+   "summary": "PGM, PVW, playout A and B, four returns, 16 audio channels, loudness, alarms.",
+   "description": "The final control of a channel: the programme large with its timecode, loudness and alarms; preview, both playouts and four returns; the programme’s 16 audio channels, its EBU R128 loudness, the state of sync and the alarm log.",
+   "category": "Final control",
+   "tags": [
+    "8 tiles"
+   ]
+  }
+ },
+ "project": {
+  "id": "",
+  "name": "Régie finale d’une chaîne",
+  "description": "",
+  "width": 1920,
+  "height": 1080,
+  "frameRate": {
+   "num": 50,
+   "den": 1
+  },
+  "templates": [
+   {
+    "id": "6b1d2514f040",
+    "name": "Régie finale d’une chaîne",
+    "duration": 50.0,
+    "markers": [
+     {
+      "id": "27f4962693d6",
+      "frame": 25.0,
+      "name": "On air",
+      "kind": "out"
+     }
+    ],
+    "fields": [],
+    "layers": [
+     {
+      "id": "hj4lfytyv9j5",
+      "name": "Bandeau",
+      "parent": null,
+      "type": "rect",
+      "shape": "rect",
+      "perCorner": false,
+      "corners": [
+       0.0,
+       0.0,
+       0.0,
+       0.0
+      ],
+      "skewUnit": "px",
+      "skewPx": 120.0,
+      "skewDeg": 15.0,
+      "trapMode": "percent",
+      "trapTop": 70.0,
+      "trapLeft": 80.0,
+      "trapRight": 200.0,
+      "vertexRound": 0.0,
+      "fillStyle": {
+       "kind": "solid",
+       "color2": "#ff3b5c",
+       "angle": 90.0,
+       "image": "",
+       "fit": "cover"
+      },
+      "strokeStyle": {
+       "position": "inside",
+       "dash": "solid",
+       "join": "miter",
+       "cap": "butt"
+      },
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 1920.0,
+       "height": 60.0,
+       "fill": [
+        0.0627451,
+        0.078431375,
+        0.105882354,
+        1.0
+       ]
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "tpqkszxwv9j6",
+      "name": "Régie finale · Canal 1",
+      "parent": null,
+      "type": "text",
+      "text": "Régie finale · Canal 1",
+      "fontFamily": "Inter",
+      "fontWeight": 700,
+      "align": "left",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "speed": 120.0,
+      "separator": "   •   ",
+      "overflow": "fit",
+      "squeeze": 0.8,
+      "minSize": 0.6,
+      "warnBelow": 0.8,
+      "maxLines": 0,
+      "breakMode": "word",
+      "lang": "",
+      "fitEnd": "clip",
+      "italic": false,
+      "fillType": "solid",
+      "color2": "#a594ff",
+      "gradAngle": 90.0,
+      "strokeOutside": false,
+      "shadow": false,
+      "shadowColor": "#000000aa",
+      "shadowX": 0.0,
+      "shadowY": 4.0,
+      "shadowBlur": 12.0,
+      "band": false,
+      "bandColor": "#24164f",
+      "bandPadX": 26.0,
+      "bandGap": 10.0,
+      "bandRadius": 0.0,
+      "bandAccent": true,
+      "bandAccentColor": "#ff3b5c",
+      "justify": false,
+      "dir": "ltr",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 20.0,
+       "y": 6.0,
+       "width": 1000.0,
+       "height": 48.0,
+       "fill": [
+        0.9607843,
+        0.96862745,
+        0.98039216,
+        1.0
+       ],
+       "fontSize": 30.0
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "vb8pmpp8v9j6",
+      "name": "État",
+      "parent": null,
+      "type": "status",
+      "ptp": false,
+      "ntp": false,
+      "alarms": true,
+      "background": "#00000000",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 1060.0,
+       "y": 6.0,
+       "width": 420.0,
+       "height": 48.0
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "ln2g2kl2v9j6",
+      "name": "Timecode",
+      "parent": null,
+      "type": "timecode",
+      "input": "",
+      "label": "",
+      "color": "#fbbf24",
+      "background": "#00000000",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 1496.0,
+       "y": 6.0,
+       "width": 408.0,
+       "height": 48.0
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "5hspyjn1v9j6",
+      "name": "Source 1",
+      "parent": null,
+      "type": "source",
+      "input": "{{input:1}}",
+      "fit": "contain",
+      "background": "#0b0d12",
+      "border": 4.0,
+      "tally": {
+       "border": true,
+       "program": "#e5212b",
+       "preview": "#17b14a",
+       "aux": "#f2b705",
+       "off": "#262a33"
+      },
+      "umd": {
+       "position": "bottom",
+       "size": 11.0,
+       "outside": false,
+       "text": "PGM",
+       "font": "Inter",
+       "weight": 600,
+       "align": "center",
+       "color": "#ffffff",
+       "background": "#000000b3",
+       "lamps": true
+      },
+      "vu": {
+       "position": "right",
+       "width": 6.0,
+       "gap": 2.0,
+       "margin": 6.0,
+       "min": -60.0,
+       "yellow": -18.0,
+       "red": -9.0,
+       "hold": true,
+       "max": 0
+      },
+      "badge": false,
+      "noSignal": "",
+      "noSignalLook": "bars",
+      "timecode": "station",
+      "loudness": true,
+      "alarms": true,
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 16.0,
+       "y": 72.0,
+       "width": 960.0,
+       "height": 540.0
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "89ljdvouv9j6",
+      "name": "Source 2",
+      "parent": null,
+      "type": "source",
+      "input": "{{input:2}}",
+      "fit": "contain",
+      "background": "#0b0d12",
+      "border": 4.0,
+      "tally": {
+       "border": true,
+       "program": "#e5212b",
+       "preview": "#17b14a",
+       "aux": "#f2b705",
+       "off": "#262a33"
+      },
+      "umd": {
+       "position": "bottom",
+       "size": 11.0,
+       "outside": false,
+       "text": "PVW",
+       "font": "Inter",
+       "weight": 600,
+       "align": "center",
+       "color": "#ffffff",
+       "background": "#000000b3",
+       "lamps": true
+      },
+      "vu": {
+       "position": "right",
+       "width": 6.0,
+       "gap": 2.0,
+       "margin": 6.0,
+       "min": -60.0,
+       "yellow": -18.0,
+       "red": -9.0,
+       "hold": true,
+       "max": 0
+      },
+      "badge": false,
+      "noSignal": "",
+      "noSignalLook": "bars",
+      "timecode": "off",
+      "loudness": false,
+      "alarms": true,
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 988.0,
+       "y": 72.0,
+       "width": 448.0,
+       "height": 252.0
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "fnqx5af7v9j6",
+      "name": "Source 3",
+      "parent": null,
+      "type": "source",
+      "input": "{{input:3}}",
+      "fit": "contain",
+      "background": "#0b0d12",
+      "border": 4.0,
+      "tally": {
+       "border": true,
+       "program": "#e5212b",
+       "preview": "#17b14a",
+       "aux": "#f2b705",
+       "off": "#262a33"
+      },
+      "umd": {
+       "position": "bottom",
+       "size": 11.0,
+       "outside": false,
+       "text": "PLAYOUT A",
+       "font": "Inter",
+       "weight": 600,
+       "align": "center",
+       "color": "#ffffff",
+       "background": "#000000b3",
+       "lamps": true
+      },
+      "vu": {
+       "position": "right",
+       "width": 6.0,
+       "gap": 2.0,
+       "margin": 6.0,
+       "min": -60.0,
+       "yellow": -18.0,
+       "red": -9.0,
+       "hold": true,
+       "max": 0
+      },
+      "badge": false,
+      "noSignal": "",
+      "noSignalLook": "bars",
+      "timecode": "off",
+      "loudness": false,
+      "alarms": true,
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 988.0,
+       "y": 336.0,
+       "width": 448.0,
+       "height": 252.0
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "28djluvwv9j6",
+      "name": "Source 4",
+      "parent": null,
+      "type": "source",
+      "input": "{{input:4}}",
+      "fit": "contain",
+      "background": "#0b0d12",
+      "border": 4.0,
+      "tally": {
+       "border": true,
+       "program": "#e5212b",
+       "preview": "#17b14a",
+       "aux": "#f2b705",
+       "off": "#262a33"
+      },
+      "umd": {
+       "position": "bottom",
+       "size": 11.0,
+       "outside": false,
+       "text": "PLAYOUT B",
+       "font": "Inter",
+       "weight": 600,
+       "align": "center",
+       "color": "#ffffff",
+       "background": "#000000b3",
+       "lamps": true
+      },
+      "vu": {
+       "position": "right",
+       "width": 6.0,
+       "gap": 2.0,
+       "margin": 6.0,
+       "min": -60.0,
+       "yellow": -18.0,
+       "red": -9.0,
+       "hold": true,
+       "max": 0
+      },
+      "badge": false,
+      "noSignal": "",
+      "noSignalLook": "bars",
+      "timecode": "off",
+      "loudness": false,
+      "alarms": true,
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 988.0,
+       "y": 600.0,
+       "width": 448.0,
+       "height": 252.0
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "4fmednpqv9j6",
+      "name": "Source 5",
+      "parent": null,
+      "type": "source",
+      "input": "{{input:5}}",
+      "fit": "contain",
+      "background": "#0b0d12",
+      "border": 4.0,
+      "tally": {
+       "border": true,
+       "program": "#e5212b",
+       "preview": "#17b14a",
+       "aux": "#f2b705",
+       "off": "#262a33"
+      },
+      "umd": {
+       "position": "bottom",
+       "size": 11.0,
+       "outside": false,
+       "text": "",
+       "font": "Inter",
+       "weight": 600,
+       "align": "center",
+       "color": "#ffffff",
+       "background": "#000000b3",
+       "lamps": true
+      },
+      "vu": {
+       "position": "right",
+       "width": 6.0,
+       "gap": 2.0,
+       "margin": 6.0,
+       "min": -60.0,
+       "yellow": -18.0,
+       "red": -9.0,
+       "hold": true,
+       "max": 2
+      },
+      "badge": false,
+      "noSignal": "",
+      "noSignalLook": "bars",
+      "timecode": "off",
+      "loudness": false,
+      "alarms": true,
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 16.0,
+       "y": 624.0,
+       "width": 230.0,
+       "height": 130.0
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "pxmkrrv9v9j6",
+      "name": "Source 6",
+      "parent": null,
+      "type": "source",
+      "input": "{{input:6}}",
+      "fit": "contain",
+      "background": "#0b0d12",
+      "border": 4.0,
+      "tally": {
+       "border": true,
+       "program": "#e5212b",
+       "preview": "#17b14a",
+       "aux": "#f2b705",
+       "off": "#262a33"
+      },
+      "umd": {
+       "position": "bottom",
+       "size": 11.0,
+       "outside": false,
+       "text": "",
+       "font": "Inter",
+       "weight": 600,
+       "align": "center",
+       "color": "#ffffff",
+       "background": "#000000b3",
+       "lamps": true
+      },
+      "vu": {
+       "position": "right",
+       "width": 6.0,
+       "gap": 2.0,
+       "margin": 6.0,
+       "min": -60.0,
+       "yellow": -18.0,
+       "red": -9.0,
+       "hold": true,
+       "max": 2
+      },
+      "badge": false,
+      "noSignal": "",
+      "noSignalLook": "bars",
+      "timecode": "off",
+      "loudness": false,
+      "alarms": true,
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 258.0,
+       "y": 624.0,
+       "width": 230.0,
+       "height": 130.0
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "vu5duhhrv9j6",
+      "name": "Source 7",
+      "parent": null,
+      "type": "source",
+      "input": "{{input:7}}",
+      "fit": "contain",
+      "background": "#0b0d12",
+      "border": 4.0,
+      "tally": {
+       "border": true,
+       "program": "#e5212b",
+       "preview": "#17b14a",
+       "aux": "#f2b705",
+       "off": "#262a33"
+      },
+      "umd": {
+       "position": "bottom",
+       "size": 11.0,
+       "outside": false,
+       "text": "",
+       "font": "Inter",
+       "weight": 600,
+       "align": "center",
+       "color": "#ffffff",
+       "background": "#000000b3",
+       "lamps": true
+      },
+      "vu": {
+       "position": "right",
+       "width": 6.0,
+       "gap": 2.0,
+       "margin": 6.0,
+       "min": -60.0,
+       "yellow": -18.0,
+       "red": -9.0,
+       "hold": true,
+       "max": 2
+      },
+      "badge": false,
+      "noSignal": "",
+      "noSignalLook": "bars",
+      "timecode": "off",
+      "loudness": false,
+      "alarms": true,
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 500.0,
+       "y": 624.0,
+       "width": 230.0,
+       "height": 130.0
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "cqs9wig0v9j6",
+      "name": "Source 8",
+      "parent": null,
+      "type": "source",
+      "input": "{{input:8}}",
+      "fit": "contain",
+      "background": "#0b0d12",
+      "border": 4.0,
+      "tally": {
+       "border": true,
+       "program": "#e5212b",
+       "preview": "#17b14a",
+       "aux": "#f2b705",
+       "off": "#262a33"
+      },
+      "umd": {
+       "position": "bottom",
+       "size": 11.0,
+       "outside": false,
+       "text": "",
+       "font": "Inter",
+       "weight": 600,
+       "align": "center",
+       "color": "#ffffff",
+       "background": "#000000b3",
+       "lamps": true
+      },
+      "vu": {
+       "position": "right",
+       "width": 6.0,
+       "gap": 2.0,
+       "margin": 6.0,
+       "min": -60.0,
+       "yellow": -18.0,
+       "red": -9.0,
+       "hold": true,
+       "max": 2
+      },
+      "badge": false,
+      "noSignal": "",
+      "noSignalLook": "bars",
+      "timecode": "off",
+      "loudness": false,
+      "alarms": true,
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 742.0,
+       "y": 624.0,
+       "width": 230.0,
+       "height": 130.0
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "wp7qn3bbv9j6",
+      "name": "Vu-mètres",
+      "parent": null,
+      "type": "audioMeter",
+      "input": "{{input:1}}",
+      "channels": 16,
+      "labels": "L, R, C, LFE, Ls, Rs, L, R, AD, AD, VO, VO, 13, 14, 15, 16",
+      "scale": true,
+      "values": false,
+      "hold": true,
+      "loudness": true,
+      "min": -60.0,
+      "yellow": -18.0,
+      "red": -9.0,
+      "background": "#0b0d12d9",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 1448.0,
+       "y": 72.0,
+       "width": 456.0,
+       "height": 700.0
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "w8ge8o4yv9j6",
+      "name": "Loudness",
+      "parent": null,
+      "type": "loudness",
+      "input": "{{input:1}}",
+      "target": -23.0,
+      "tolerance": 1.0,
+      "history": true,
+      "background": "#0b0d12d9",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 1448.0,
+       "y": 784.0,
+       "width": 456.0,
+       "height": 288.0
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "ci9bg253v9j6",
+      "name": "Journal des alarmes",
+      "parent": null,
+      "type": "alarmLog",
+      "rows": 6,
+      "ended": true,
+      "background": "#0b0d12d9",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 16.0,
+       "y": 766.0,
+       "width": 960.0,
+       "height": 306.0
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "ewmwcxu2v9j6",
+      "name": "État",
+      "parent": null,
+      "type": "status",
+      "ptp": true,
+      "ntp": true,
+      "alarms": true,
+      "background": "#0b0d12d9",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 988.0,
+       "y": 864.0,
+       "width": 448.0,
+       "height": 208.0
+      },
+      "tracks": {},
+      "bindings": {}
+     }
+    ],
+    "zone": "full-screen",
+    "revision": 2,
+    "markerModel": 2
+   }
+  ],
+  "zones": [
+   {
+    "id": "full-screen",
+    "name": "Full screen",
+    "layer": 10,
+    "color": "#8fa3ff",
+    "transition": "sequential"
+   }
+  ],
+  "formats": [],
+  "language": "fr"
+ }
+}

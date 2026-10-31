@@ -58,6 +58,9 @@ pub fn router() -> Router<Shared> {
         .route("/api/openapi.json", get(openapi))
         .route("/api/projects", get(list_projects).post(create_project))
         .route("/api/projects/import", post(import_project))
+        .route("/api/examples", get(list_examples))
+        .route("/api/examples/{id}", post(create_from_example))
+        .route("/api/examples/{id}/cover.png", get(example_cover))
         .route(
             "/api/projects/{id}",
             get(get_project)
@@ -600,6 +603,88 @@ async fn create_project(
     }
     let p = s.save_project(p).await.map_err(internal)?;
     Ok(Json(ProjectSummary::from(p.as_ref())))
+}
+
+/// The example multiviews.
+async fn list_examples(CurrentUser(_me): CurrentUser) -> Json<Vec<crate::examples::ExampleInfo>> {
+    Json(crate::examples::list())
+}
+
+/// A new multiview made from an example, its tiles on this server's inputs
+/// in order.
+async fn create_from_example(
+    State(s): State<Shared>,
+    CurrentUser(me): CurrentUser,
+    Path(id): Path<String>,
+) -> ApiResult<Json<ProjectSummary>> {
+    let _edit = s.edits.lock().await;
+    require(me.can_create_projects())?;
+    let inputs: Vec<(String, String)> = s
+        .config
+        .inputs
+        .iter()
+        .filter(|c| c.enabled)
+        .map(|c| (c.id.clone(), c.name.clone()))
+        .collect();
+    let mut p = crate::examples::project(&id, &inputs).ok_or_else(|| not_found("example"))?;
+    p.id = strata_mv_core::new_id();
+    let p = s.save_project(p).await.map_err(internal)?;
+    Ok(Json(ProjectSummary::from(p.as_ref())))
+}
+
+#[derive(Deserialize)]
+struct CoverQuery {
+    /// At most this wide (pixels).
+    w: Option<u32>,
+}
+
+/// The picture of an example's card: its page, its tiles on no input.
+async fn example_cover(
+    State(s): State<Shared>,
+    CurrentUser(_me): CurrentUser,
+    Path(id): Path<String>,
+    Query(q): Query<CoverQuery>,
+) -> ApiResult<Response> {
+    let p = crate::examples::cover(&id).ok_or_else(|| not_found("example"))?;
+    let template = p
+        .templates
+        .first()
+        .cloned()
+        .ok_or_else(|| not_found("example"))?;
+    // The examples are in the program: the same picture until an update
+    // (but their bars and clocks move: a day at most).
+    const CACHE: &str = "private, max-age=86400";
+    let width = q.w.unwrap_or(u32::MAX).clamp(16, 7680);
+    let key = crate::thumbs::Key::default()
+        .part("example")
+        .template(&p, &template)
+        .part(&width)
+        .finish();
+    if let Some(bytes) = s.thumbs.get(key) {
+        return Ok(png_cached(bytes, CACHE));
+    }
+    let st = s.clone();
+    let bytes = tokio::task::spawn_blocking(move || {
+        let data = template.default_data();
+        let frame = {
+            let mut r = st.renderer.lock().unwrap_or_else(|e| e.into_inner());
+            r.render_template_scaled(
+                &p,
+                &template,
+                strata_mv_core::MAIN_FORMAT,
+                template.hold_frame(),
+                &data,
+                width,
+            )
+        };
+        strata_mv_render::pool::busy();
+        frame.to_png()
+    })
+    .await
+    .map_err(internal)?;
+    let bytes = Bytes::from(bytes);
+    s.thumbs.put(key, bytes.clone());
+    Ok(png_cached(bytes, CACHE))
 }
 
 /// Copies the files of a directory (not recursive). A missing source is empty.

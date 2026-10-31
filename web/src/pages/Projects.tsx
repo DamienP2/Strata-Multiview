@@ -1,15 +1,14 @@
 import { FormatButtons } from '../designer/MultiviewSettings';
-import { ArrowLeft, Check, CheckSquare, ChevronRight, Clock, Copy, Download, Folder, FolderInput, FolderOpen, FolderPlus, Inbox, LayoutGrid, MonitorPlay, MoreHorizontal, PenTool, Pencil, Plus, Radio, Search, Trash2, Upload, X } from 'lucide-react';
+import { ArrowLeft, Check, CheckSquare, ChevronRight, Clock, Copy, Download, Folder, FolderInput, FolderOpen, FolderPlus, GraduationCap, Inbox, LayoutGrid, MonitorPlay, MoreHorizontal, PenTool, Pencil, Plus, Radio, Search, Trash2, Upload, X } from 'lucide-react';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { FrameRate, Project, ProjectSummary } from '../engine/types';
 import { applyLayout, LayoutPicker, PRESETS } from '../designer/Layouts';
-import { buildModel, ModelIcon, MODELS } from '../designer/Models';
 import { useInputs } from '../engine/liveInputs';
 import { api, can, useApp } from '../store';
 import { useShallow } from 'zustand/react/shallow';
 import { navigate, projectPath } from '../router';
 import { confirmDialog, promptDialog } from '../ui/dialogs';
-import { locale, t, tn } from '../i18n';
+import { lang, locale, t, tn } from '../i18n';
 import { NavItem, NavSection } from './SidePage';
 import { useMetrics, type ChannelMetrics } from '../engine/metrics';
 import { Bar } from '../perf/bits';
@@ -23,8 +22,8 @@ function NewProject({ from, folder, onClose }: { from?: ProjectSummary; folder?:
   const [description, setDescription] = useState(from?.description ?? '');
   const [size, setSize] = useState({ width: 1920, height: 1080 });
   const [rate, setRate] = useState<FrameRate>({ num: 50, den: 1 });
-  const [layout, setLayout] = useState('2x2');
-  const [model, setModel] = useState('');
+  // A multiview starts empty, or with its tiles on a layout.
+  const [layout, setLayout] = useState('');
   const [gap, setGap] = useState(4);
   const [margin, setMargin] = useState(0);
   const inputs = useInputs();
@@ -46,15 +45,13 @@ function NewProject({ from, folder, onClose }: { from?: ProjectSummary; folder?:
               frameRate: rate,
             },
       );
-      // The model chosen, or its tiles placed on the layout chosen, with the inputs in order, published at once.
+      // Its tiles placed on the layout chosen, with the inputs in order, published at once.
       const preset = PRESETS.find((x) => x.id === layout);
-      const m = MODELS.find((x) => x.id === model);
-      if (!from && (m || preset)) {
+      if (!from && preset) {
         const full = await api<Project>('GET', `/api/projects/${encodeURIComponent(p.id)}`);
         const page = full.templates[0];
         if (page) {
-          if (m) page.layers = buildModel(m, size, inputs);
-          else if (preset) applyLayout(page, preset, size, gap, margin, inputs);
+          applyLayout(page, preset, size, gap, margin, inputs);
           await api('PUT', `/api/projects/${encodeURIComponent(p.id)}/templates/${encodeURIComponent(page.id)}?publish=true`, page);
         }
       }
@@ -96,23 +93,6 @@ function NewProject({ from, folder, onClose }: { from?: ProjectSummary; folder?:
         )}
         {!from && (
           <div className="set-field">
-            <span className="set-label">{t('Model')}</span>
-            <div className="mv-models">
-              <button type="button" className={`mv-model ${model === '' ? 'on' : ''}`} onClick={() => setModel('')}>
-                <span className="mv-model-none">{t('None')}</span>
-                <span className="mv-model-name">{t('A layout only')}</span>
-              </button>
-              {MODELS.map((m) => (
-                <button type="button" key={m.id} className={`mv-model ${model === m.id ? 'on' : ''}`} title={t(m.hint)} onClick={() => setModel(m.id)}>
-                  <ModelIcon m={m} />
-                  <span className="mv-model-name">{t(m.name)}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-        {!from && !model && (
-          <div className="set-field">
             <span className="set-label">{t('Layout')}</span>
             <LayoutPicker value={layout} onChange={setLayout} gap={gap} margin={margin} onGap={setGap} onMargin={setMargin} none />
           </div>
@@ -126,6 +106,93 @@ function NewProject({ from, folder, onClose }: { from?: ProjectSummary; folder?:
           </button>
         </footer>
       </form>
+    </div>
+  );
+}
+
+interface ExampleInfo {
+  id: string;
+  name: string;
+  category: string;
+  tags: string[];
+  description: string;
+  summary?: string;
+  en?: { name: string; description: string; summary?: string; category?: string; tags?: string[] };
+}
+
+/** The example multiviews of a playout control room: a copy of one becomes a multiview of the user, its tiles on the inputs in order. */
+function ExampleBank({ onClose }: { onClose: () => void }) {
+  const toast = useApp((s) => s.toast);
+  const [examples, setExamples] = useState<ExampleInfo[] | null>(null);
+  const [busy, setBusy] = useState<string | null>(null);
+  const french = lang().startsWith('fr');
+  useEffect(() => {
+    api<ExampleInfo[]>('GET', '/api/examples')
+      .then(setExamples)
+      .catch((e) => toast((e as Error).message, 'error'));
+  }, []);
+  useEffect(() => {
+    const key = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
+    window.addEventListener('keydown', key);
+    return () => window.removeEventListener('keydown', key);
+  }, [onClose]);
+  const create = async (d: ExampleInfo) => {
+    setBusy(d.id);
+    try {
+      const p = await api<ProjectSummary>('POST', `/api/examples/${encodeURIComponent(d.id)}`);
+      toast(t('“{name}” added to your multiviews', { name: p.name }), 'info');
+      onClose();
+      openInTab(projectPath(p.id));
+    } catch (e) {
+      toast((e as Error).message, 'error');
+    } finally {
+      setBusy(null);
+    }
+  };
+  return (
+    <div className="modal-back" onPointerDown={onClose}>
+      <div className="modal wide example-bank" onPointerDown={(e) => e.stopPropagation()}>
+        <header>
+          <GraduationCap size={18} />
+          <h2>{t('Examples')}</h2>
+          <div className="spacer" />
+          <button className="icon-btn ghost" title={t('Close (Esc)')} onClick={onClose}>
+            <X size={16} />
+          </button>
+        </header>
+        <div className="example-grid ux3-examples">
+          {examples === null && <p className="muted">{t('Loading…')}</p>}
+          {examples?.map((d) => {
+            const name = (!french && d.en?.name) || d.name;
+            const description = (!french && d.en?.description) || d.description;
+            const summary = (!french && d.en?.summary) || d.summary || description;
+            const category = (!french && d.en?.category) || d.category;
+            return (
+              <div key={d.id} className="example-card">
+                <div className="example-cover">
+                  <Thumb src={`/api/examples/${encodeURIComponent(d.id)}/cover.png?w=640`} />
+                  <span className="example-num">{d.id.match(/^ex-(\d+)/)?.[1] ?? ''}</span>
+                </div>
+                <div className="example-body">
+                  <div className="example-top">
+                    <strong>{name}</strong>
+                    {category && <span className="example-cat">{category}</span>}
+                  </div>
+                  <p title={description}>{summary}</p>
+                  <div className="example-tags">
+                    {((!french && d.en?.tags) || d.tags).map((x) => (
+                      <span key={x}>{x}</span>
+                    ))}
+                  </div>
+                  <button className="btn primary small" disabled={busy !== null} onClick={() => create(d)}>
+                    <Plus size={13} /> {busy === d.id ? t('Adding…') : t('Add to my multiviews')}
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
     </div>
   );
 }
@@ -189,6 +256,7 @@ export function Projects() {
   const user = auth?.user;
   const design = can.design(user);
   const [dialog, setDialog] = useState<{ from?: ProjectSummary } | null>(null);
+  const [examples, setExamples] = useState(false);
   const [view, setView] = useState<View>({ kind: 'all' });
   const [query, setQuery] = useState('');
   const [sort, setSort] = useState<Sort>('recent');
@@ -480,6 +548,9 @@ export function Projects() {
             <div className="spacer" />
             {design && (
               <>
+                <button className="btn" title={t('Ready-made multiviews of a playout control room to start from')} onClick={() => setExamples(true)}>
+                  <GraduationCap size={14} /> {t('Examples')}
+                </button>
                 <button className="btn" title={t('A multiview exported from Strata Multiview (.json)')} onClick={() => importRef.current?.click()}>
                   <Upload size={14} /> {t('Import')}
                 </button>
@@ -715,6 +786,7 @@ export function Projects() {
           </div>
         </div>
       </main>
+      {examples && <ExampleBank onClose={() => setExamples(false)} />}
       {dialog && <NewProject from={dialog.from} folder={view.kind === 'folder' ? view.name : undefined} onClose={() => setDialog(null)} />}
     </div>
   );
