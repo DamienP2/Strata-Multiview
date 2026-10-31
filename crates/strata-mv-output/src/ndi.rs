@@ -75,6 +75,14 @@ struct AudioFrameV2 {
     timestamp: i64,
 }
 
+/// `NDIlib_metadata_frame_t`: an XML string.
+#[repr(C)]
+struct MetadataFrame {
+    length: i32,
+    timecode: i64,
+    p_data: *const c_char,
+}
+
 const fn fourcc(s: &[u8; 4]) -> u32 {
     s[0] as u32 | (s[1] as u32) << 8 | (s[2] as u32) << 16 | (s[3] as u32) << 24
 }
@@ -420,6 +428,7 @@ const RECV_COLOR_RGBX_RGBA: i32 = 2;
 const RECV_BANDWIDTH_HIGHEST: i32 = 100;
 const FRAME_TYPE_VIDEO: i32 = 1;
 const FRAME_TYPE_AUDIO: i32 = 2;
+const FRAME_TYPE_METADATA: i32 = 3;
 const FRAME_TYPE_ERROR: i32 = 4;
 
 /// The receiving side of the runtime (looked up once the runtime is loaded).
@@ -438,6 +447,8 @@ struct RecvLib {
     recv_free_video: unsafe extern "C" fn(Instance, *const VideoFrameV2),
     recv_free_audio: unsafe extern "C" fn(Instance, *const AudioFrameV2),
     recv_destroy: unsafe extern "C" fn(Instance),
+    /// Older runtimes may not have it: metadata frames are then not asked for.
+    recv_free_metadata: Option<unsafe extern "C" fn(Instance, *const MetadataFrame)>,
 }
 
 unsafe impl Send for RecvLib {}
@@ -458,6 +469,7 @@ fn recv_lib() -> Result<&'static RecvLib, String> {
             recv_free_video: *l.get(b"NDIlib_recv_free_video_v2\0").map_err(why)?,
             recv_free_audio: *l.get(b"NDIlib_recv_free_audio_v2\0").map_err(why)?,
             recv_destroy: *l.get(b"NDIlib_recv_destroy\0").map_err(why)?,
+            recv_free_metadata: l.get(b"NDIlib_recv_free_metadata\0").ok().map(|f| *f),
         })
     })
     .as_ref()
@@ -544,11 +556,19 @@ pub struct Received<'a> {
     pub interlaced: bool,
     /// Its timecode, 100 ns units (the sender's, or its clock's time of day).
     pub timecode: i64,
+    /// Width over height of the picture as shown (0: square pixels).
+    pub aspect: f32,
+    /// 0 interleaved, 1 progressive, 2 field 0, 3 field 1.
+    pub format: i32,
+    /// The XML the sender attached to this frame.
+    pub metadata: Option<&'a str>,
 }
 
 /// Audio received from an NDI source: `channels` planes of `samples`
 /// 32-bit float samples (-1…1).
 pub struct ReceivedAudio<'a> {
+    /// Its timecode, 100 ns units.
+    pub timecode: i64,
     pub channels: usize,
     pub samples: usize,
     pub sample_rate: u32,
@@ -566,6 +586,8 @@ impl ReceivedAudio<'_> {
 pub struct NdiReceiver {
     lib: &'static RecvLib,
     instance: Instance,
+    /// The last metadata frame of the source (its product, its settings…).
+    pub metadata: Option<String>,
 }
 
 // Used by the input thread that owns it only.
@@ -591,7 +613,11 @@ impl NdiReceiver {
         if instance.is_null() {
             return Err("NDI could not create the receiver".into());
         }
-        Ok(Self { lib, instance })
+        Ok(Self {
+            lib,
+            instance,
+            metadata: None,
+        })
     }
 
     /// Waits up to `timeout_ms` for a picture and hands it to `f`. Ok(false):
@@ -628,17 +654,32 @@ impl NdiReceiver {
             p_metadata: std::ptr::null(),
             timestamp: 0,
         };
+        let mut m = MetadataFrame {
+            length: 0,
+            timecode: 0,
+            p_data: std::ptr::null(),
+        };
+        // Metadata frames only when they can be given back.
+        let meta: *mut c_void = if self.lib.recv_free_metadata.is_some() {
+            (&mut m as *mut MetadataFrame).cast()
+        } else {
+            std::ptr::null_mut()
+        };
         // SAFETY: the frame is freed with the runtime's own function after use.
         unsafe {
-            let kind = (self.lib.recv_capture)(
-                self.instance,
-                &mut v,
-                &mut a,
-                std::ptr::null_mut(),
-                timeout_ms,
-            );
+            let kind = (self.lib.recv_capture)(self.instance, &mut v, &mut a, meta, timeout_ms);
             if kind == FRAME_TYPE_ERROR {
                 return Err("the NDI connection was lost".into());
+            }
+            if kind == FRAME_TYPE_METADATA {
+                if let Some(free) = self.lib.recv_free_metadata {
+                    if !m.p_data.is_null() {
+                        let text = std::ffi::CStr::from_ptr(m.p_data).to_string_lossy();
+                        self.metadata = Some(text.chars().take(4096).collect());
+                    }
+                    free(self.instance, &m);
+                }
+                return Ok(false);
             }
             if kind == FRAME_TYPE_AUDIO {
                 let (n, len) = (a.no_channels.max(0) as usize, a.no_samples.max(0) as usize);
@@ -648,6 +689,7 @@ impl NdiReceiver {
                         .map(|c| std::slice::from_raw_parts(a.p_data.add(c * stride), len))
                         .collect();
                     sound(ReceivedAudio {
+                        timecode: a.timecode,
                         channels: n,
                         samples: len,
                         sample_rate: a.sample_rate.max(0) as u32,
@@ -676,6 +718,11 @@ impl NdiReceiver {
                     rate: (v.frame_rate_n.max(0) as u32, v.frame_rate_d.max(0) as u32),
                     interlaced: v.frame_format_type != PROGRESSIVE,
                     timecode: v.timecode,
+                    aspect: v.picture_aspect_ratio,
+                    format: v.frame_format_type,
+                    metadata: (!v.p_metadata.is_null())
+                        .then(|| std::ffi::CStr::from_ptr(v.p_metadata).to_str().ok())
+                        .flatten(),
                 });
             }
             (self.lib.recv_free_video)(self.instance, &v);

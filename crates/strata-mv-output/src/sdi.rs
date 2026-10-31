@@ -437,6 +437,12 @@ impl DeckLinkInput {
         self.card.audio()
     }
 
+    /// What the signal carries besides its picture: timecode, ancillary
+    /// packets, detected format, HDR.
+    pub fn info(&self) -> crate::decklink::SignalInfo {
+        self.card.info()
+    }
+
     /// Waits up to `timeout_ms` for a frame newer than `seq` (woken as soon
     /// as the card hands one over).
     pub fn wait(&self, seq: u64, timeout_ms: u32) -> bool {

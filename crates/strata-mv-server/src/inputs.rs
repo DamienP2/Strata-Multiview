@@ -7,6 +7,11 @@
 //!   outputs use).
 //! - SDI inputs need DeckLink support, which this server is built without.
 //!
+//! Streams that come as bytes (SRT, UDP, TCP) are relayed: a first ffmpeg
+//! receives them, Strata reads their transport stream on the way (tables,
+//! EPG, SCTE-35, TR 101 290: `probe::ts`) and hands it to the ffmpeg that
+//! decodes. What every input carries is kept in `probe::Facts`.
+//!
 //! Pictures off a network come unevenly (bursts, gaps). Each one is given a
 //! time to be shown, `buffer` frames after it came and at least one frame
 //! after the previous one: the renderers, drawing at their own pace, get an
@@ -16,7 +21,7 @@
 //! restarts the ones that changed.
 
 use std::collections::{BTreeMap, VecDeque};
-use std::io::{BufRead, Read};
+use std::io::{BufRead, Read, Write};
 use std::process::{Child, Stdio};
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::{Arc, Mutex, RwLock};
@@ -112,10 +117,34 @@ fn default_fps() -> u32 {
 /// written to its log (read by [`MeterLog`]).
 const METER_FILTER: &str = "ebur128=metadata=1:peak=true,asetnsamples=n=1920:p=0,astats=metadata=1:reset=1:measure_overall=none:measure_perchannel=Peak_level+RMS_level,ametadata=mode=print";
 
+/// The ffmpeg commands of a stream input.
+#[derive(Debug, Default)]
+pub struct StreamArgs {
+    /// Decodes to raw RGBA on stdout (from stdin when relayed).
+    pub decode: Vec<String>,
+    /// Receives the source and writes its bytes as they come on stdout.
+    pub relay: Option<Vec<String>>,
+}
+
 impl InputConfig {
+    /// The stream comes as bytes of a transport stream (SRT, UDP, TCP):
+    /// relayed through Strata, which reads it on the way.
+    pub fn relayed(&self) -> bool {
+        let u = self.url.trim().to_ascii_lowercase();
+        match self.kind {
+            InputKind::Srt => true,
+            InputKind::Udp => u.starts_with("udp://"),
+            InputKind::Url => ["srt://", "udp://", "tcp://"]
+                .iter()
+                .any(|s| u.starts_with(s)),
+            _ => false,
+        }
+    }
+
     /// The ffmpeg arguments that decode this stream to raw RGBA on stdout,
-    /// and measure its first audio track (`audio`).
-    pub fn ffmpeg_args(&self, audio: bool) -> Result<Vec<String>, String> {
+    /// measure its first audio track (`audio`) and tell each picture in the
+    /// log (`info`: the `showinfo` filter).
+    pub fn ffmpeg_args(&self, audio: bool, info: bool) -> Result<StreamArgs, String> {
         // An SRT listener needs only its port.
         let own;
         let url = if self.kind == InputKind::Srt && self.listen && self.port > 0 {
@@ -157,6 +186,7 @@ impl InputConfig {
         ]
         .map(String::from)
         .to_vec();
+        let common = a.len();
         let mut url = url.to_string();
         match self.kind {
             InputKind::Srt => {
@@ -191,21 +221,51 @@ impl InputConfig {
                 return Err("not a stream".into())
             }
         }
+        let relay = self.relayed().then(|| {
+            // The bytes as they come (the data demuxer and muxer copy them
+            // whole, tables included), each packet passed on at once.
+            let mut r: Vec<String> = ["-loglevel", "error", "-nostats"]
+                .map(String::from)
+                .to_vec();
+            r.extend(["-f".into(), "data".into(), "-i".into(), url.clone()]);
+            r.extend(
+                [
+                    "-map",
+                    "0",
+                    "-c",
+                    "copy",
+                    "-flush_packets",
+                    "1",
+                    "-f",
+                    "data",
+                    "pipe:1",
+                ]
+                .map(String::from),
+            );
+            r
+        });
+        if relay.is_some() {
+            // Its options went to the relay: the decoder reads a pipe.
+            a.truncate(common);
+        }
         if self.hw_decode {
             a.extend(["-hwaccel", "auto"].map(String::from));
         }
         // The source's own size and rate.
-        a.extend(["-i".into(), url]);
-        a.extend(
-            [
-                "-map", "0:v:0", "-pix_fmt", "rgba", "-f", "rawvideo", "pipe:1",
-            ]
-            .map(String::from),
-        );
+        if relay.is_some() {
+            a.extend(["-f", "mpegts", "-i", "pipe:0"].map(String::from));
+        } else {
+            a.extend(["-i".into(), url]);
+        }
+        a.extend(["-map", "0:v:0"].map(String::from));
+        if info {
+            a.extend(["-vf", "showinfo=checksum=0"].map(String::from));
+        }
+        a.extend(["-pix_fmt", "rgba", "-f", "rawvideo", "pipe:1"].map(String::from));
         if audio {
             a.extend(["-map", "0:a:0", "-af", METER_FILTER, "-f", "null", "-"].map(String::from));
         }
-        Ok(a)
+        Ok(StreamArgs { decode: a, relay })
     }
 }
 
@@ -261,6 +321,12 @@ struct Live {
     signals: Arc<crate::signals::Signals>,
     /// The stream has no audio: ffmpeg is started without the meters.
     no_audio: AtomicBool,
+    /// This ffmpeg has no `showinfo` (or not its options): without it.
+    no_info: AtomicBool,
+    /// The ffmpeg receiving a relayed stream.
+    relay: Mutex<Option<Child>>,
+    /// What it carries (`probe`).
+    facts: Arc<Mutex<crate::probe::Facts>>,
 }
 
 impl Live {
@@ -377,14 +443,14 @@ impl Live {
     }
     fn halt(&self) {
         self.stop.store(true, Ordering::Relaxed);
-        if let Some(c) = self
-            .child
-            .lock()
-            .unwrap_or_else(|p| p.into_inner())
-            .as_mut()
-        {
-            let _ = c.kill();
+        for child in [&self.child, &self.relay] {
+            if let Some(c) = child.lock().unwrap_or_else(|p| p.into_inner()).as_mut() {
+                let _ = c.kill();
+            }
         }
+    }
+    fn facts(&self) -> std::sync::MutexGuard<'_, crate::probe::Facts> {
+        self.facts.lock().unwrap_or_else(|p| p.into_inner())
     }
 }
 
@@ -429,6 +495,9 @@ impl Inputs {
                 interlaced: AtomicBool::new(false),
                 signals: self.signals.clone(),
                 no_audio: AtomicBool::new(false),
+                no_info: AtomicBool::new(false),
+                relay: Mutex::new(None),
+                facts: Arc::new(Mutex::new(crate::probe::Facts::default())),
             });
             let l = live.clone();
             let spawned = std::thread::Builder::new()
@@ -504,6 +573,81 @@ impl Inputs {
             .unwrap_or_else(|p| p.into_inner())
             .clone()?;
         Some((l.received.load(Ordering::Relaxed), pic))
+    }
+
+    /// Everything known of what an input carries. An HLS input's playlists
+    /// are read again when older than half a minute, or a few seconds when
+    /// `refresh` (blocking: over the network).
+    pub fn analysis(&self, id: &str, refresh: bool) -> Option<crate::probe::Report> {
+        let l = self
+            .live
+            .read()
+            .unwrap_or_else(|p| p.into_inner())
+            .get(id)?
+            .clone();
+        let c = &l.config;
+        let url = c.url.trim();
+        let hls = c.kind == InputKind::Hls || (c.kind == InputKind::Url && url.contains(".m3u8"));
+        if hls {
+            let age = l.facts().hls.as_ref().map(|(at, ..)| at.elapsed());
+            let stale = age.is_none_or(|a| a > Duration::from_secs(if refresh { 3 } else { 30 }));
+            if stale {
+                let (view, ts) = crate::probe::hls::analyse(url);
+                l.facts().hls = Some((Instant::now(), view, ts));
+            }
+        }
+        let mut r = l.facts().report(Instant::now());
+        r.id = c.id.clone();
+        r.name = c.name.clone();
+        r.kind = match c.kind {
+            InputKind::Srt if c.listen => "SRT (en écoute)",
+            InputKind::Srt => "SRT (appel)",
+            InputKind::Udp if url.starts_with("rtp") => "RTP",
+            InputKind::Udp => "UDP",
+            InputKind::Rtmp if c.listen => "RTMP (en écoute)",
+            InputKind::Rtmp => "RTMP",
+            InputKind::Hls => "HLS",
+            InputKind::Rtsp => "RTSP",
+            InputKind::Url => "Adresse",
+            InputKind::Ndi => "NDI",
+            InputKind::Sdi => "SDI (DeckLink)",
+            InputKind::St2110 => "SMPTE ST 2110",
+        }
+        .to_string();
+        r.source = match c.kind {
+            InputKind::Ndi => c.ndi_source.clone(),
+            InputKind::Sdi => format!("DeckLink {}", c.device + 1),
+            InputKind::Srt if c.listen && c.port > 0 => format!("srt://0.0.0.0:{}", c.port),
+            _ => url.to_string(),
+        };
+        r.live = l
+            .last_at
+            .lock()
+            .unwrap_or_else(|p| p.into_inner())
+            .is_some_and(|t| t.elapsed() < Duration::from_secs(2));
+        r.status = l.message.lock().unwrap_or_else(|p| p.into_inner()).clone();
+        // What cannot be known by this way in.
+        match c.kind {
+            InputKind::Rtmp | InputKind::Rtsp => r.notes.push(
+                "Pas de flux de transport (MPEG-TS) dans ce protocole : ni tables, ni EPG, ni SCTE-35 en clair.".into(),
+            ),
+            InputKind::Udp if !c.relayed() => r.notes.push(
+                "RTP : le flux de transport est lu par le décodeur seulement (pas de tables ni d’EPG).".into(),
+            ),
+            InputKind::Hls => r.notes.push(
+                "HLS : les tables MPEG-TS viennent du dernier segment de la première variante, relu à la demande.".into(),
+            ),
+            InputKind::Sdi if !strata_mv_output::decklink::BUILT => {
+                r.notes.push("Ce serveur est construit sans DeckLink.".into())
+            }
+            _ => {}
+        }
+        if l.no_info.load(Ordering::Relaxed) {
+            r.notes.push(
+                "Cet ffmpeg n’a pas le filtre showinfo : pas d’analyse image par image.".into(),
+            );
+        }
+        Some(r)
     }
 
     /// The tally, UMD and audio levels of the inputs.
@@ -664,6 +808,27 @@ pub async fn list(
 }
 
 /// `GET /api/inputs/ndi-sources`: the NDI sources seen on the network.
+#[derive(Deserialize)]
+pub struct AnalysisQuery {
+    #[serde(default)]
+    refresh: bool,
+}
+
+/// What an input carries (Video inputs page).
+pub async fn analysis(
+    State(s): State<Shared>,
+    CurrentUser(_me): CurrentUser,
+    UrlPath(id): UrlPath<String>,
+    Query(q): Query<AnalysisQuery>,
+) -> ApiResult<Json<crate::probe::Report>> {
+    let st = s.clone();
+    tokio::task::spawn_blocking(move || st.inputs.analysis(&id, q.refresh))
+        .await
+        .map_err(crate::api::internal)?
+        .map(Json)
+        .ok_or_else(|| not_found("input"))
+}
+
 pub async fn ndi_sources(CurrentUser(me): CurrentUser) -> ApiResult<Json<Vec<String>>> {
     require(me.is_admin())?;
     tokio::task::spawn_blocking(|| strata_mv_output::ndi::sources(6000))
@@ -997,21 +1162,61 @@ impl R128 {
 /// A stream through ffmpeg, started again 2 s after it stops.
 fn run_stream(l: &Live) {
     let c = &l.config;
-    if let Err(e) = c.ffmpeg_args(false) {
+    if let Err(e) = c.ffmpeg_args(false, false) {
         return l.say(e);
     }
     while !l.stopped() {
         let audio = !l.no_audio.load(Ordering::Relaxed);
-        let args = c.ffmpeg_args(audio).unwrap_or_default();
+        let info = !l.no_info.load(Ordering::Relaxed);
+        let args = c.ffmpeg_args(audio, info).unwrap_or_default();
+        let log = Arc::new(Mutex::new(String::new()));
+        // The relay first: the decoder reads what it writes.
+        let mut relay = None;
+        if let Some(ra) = &args.relay {
+            match strata_mv_output::ffmpeg::command()
+                .args(ra)
+                .stdin(Stdio::null())
+                .stdout(Stdio::piped())
+                .stderr(Stdio::piped())
+                .spawn()
+            {
+                Ok(mut child) => {
+                    if let Some(err) = child.stderr.take() {
+                        let log = log.clone();
+                        std::thread::spawn(move || {
+                            for line in log_lines(err) {
+                                keep_log(&log, &line);
+                            }
+                        });
+                    }
+                    relay = Some(child);
+                }
+                Err(e) => {
+                    l.say(format!("ffmpeg is needed for stream inputs ({e})"));
+                    if !l.pause(Duration::from_secs(5)) {
+                        return;
+                    }
+                    continue;
+                }
+            }
+        }
         let spawned = strata_mv_output::ffmpeg::command()
-            .args(&args)
-            .stdin(Stdio::null())
+            .args(&args.decode)
+            .stdin(if relay.is_some() {
+                Stdio::piped()
+            } else {
+                Stdio::null()
+            })
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
             .spawn();
         let mut child = match spawned {
             Ok(c) => c,
             Err(e) => {
+                if let Some(mut r) = relay {
+                    let _ = r.kill();
+                    let _ = r.wait();
+                }
                 l.say(format!("ffmpeg is needed for stream inputs ({e})"));
                 if !l.pause(Duration::from_secs(5)) {
                     return;
@@ -1024,13 +1229,15 @@ fn run_stream(l: &Live) {
         } else {
             "Connecting…"
         });
+        l.facts().reset(relay.is_some());
         let mut out = child.stdout.take();
-        let log = Arc::new(Mutex::new(String::new()));
+        let into_decoder = child.stdin.take();
+        let from_relay = relay.as_mut().and_then(|r| r.stdout.take());
         // The picture ffmpeg sends: told in its log before the first one.
         let (format_tx, format_rx) = std::sync::mpsc::channel::<(u32, u32, Option<f64>)>();
         if let Some(err) = child.stderr.take() {
             let log = log.clone();
-            let (signals, id) = (l.signals.clone(), c.id.clone());
+            let (signals, id, facts) = (l.signals.clone(), c.id.clone(), l.facts.clone());
             std::thread::spawn(move || {
                 let mut sent = false;
                 let mut in_output = false;
@@ -1046,6 +1253,15 @@ fn run_stream(l: &Live) {
                         }
                         continue;
                     }
+                    // Each picture and the opening of the input: what it carries.
+                    let taken = facts.lock().unwrap_or_else(|p| p.into_inner()).line(
+                        &line,
+                        Instant::now(),
+                        |tc| signals.timecode(&id, tc),
+                    );
+                    if taken {
+                        continue;
+                    }
                     if line.starts_with("Output #") {
                         in_output = true;
                     }
@@ -1055,66 +1271,96 @@ fn run_stream(l: &Live) {
                             sent = true;
                         }
                     }
-                    let mut s = log.lock().unwrap_or_else(|p| p.into_inner());
-                    s.push_str(&line);
-                    s.push('\n');
-                    if s.len() > 8192 {
-                        let cut = s.len() - 4096;
-                        *s = s[s.ceil_char_boundary(cut)..].to_string();
-                    }
+                    keep_log(&log, &line);
                 }
             });
         }
         *l.child.lock().unwrap_or_else(|p| p.into_inner()) = Some(child);
-        // Until the sender comes (a listener can wait long), or ffmpeg stops.
-        let format = loop {
-            match format_rx.recv_timeout(Duration::from_millis(300)) {
-                Ok(f) => break Some(f),
-                Err(std::sync::mpsc::RecvTimeoutError::Timeout) if !l.stopped() => {}
-                Err(_) => break None,
+        *l.relay.lock().unwrap_or_else(|p| p.into_inner()) = relay;
+        std::thread::scope(|scope| {
+            // The relayed bytes: read, then on to the decoder.
+            if let (Some(mut from), Some(mut to)) = (from_relay, into_decoder) {
+                scope.spawn(move || {
+                    let mut buf = vec![0u8; 64 * 1024];
+                    while let Ok(n) = from.read(&mut buf) {
+                        if n == 0 || l.stopped() {
+                            break;
+                        }
+                        if let Some(ts) = l.facts().ts.as_mut() {
+                            ts.feed(&buf[..n], Instant::now());
+                        }
+                        if to.write_all(&buf[..n]).is_err() {
+                            break;
+                        }
+                    }
+                });
             }
-        };
-        if let (Some((w, h, fps)), Some(out)) = (format, out.as_mut()) {
-            *l.rate.lock().unwrap_or_else(|p| p.into_inner()) = fps;
-            let size = (w as usize) * (h as usize) * 4;
-            let mut first = true;
-            loop {
-                let mut buf = l.buffer(size);
-                if out.read_exact(&mut buf).is_err() || l.stopped() {
-                    break;
+            // Until the sender comes (a listener can wait long), or ffmpeg stops.
+            let format = loop {
+                match format_rx.recv_timeout(Duration::from_millis(300)) {
+                    Ok(f) => break Some(f),
+                    Err(std::sync::mpsc::RecvTimeoutError::Timeout) if !l.stopped() => {}
+                    Err(_) => break None,
                 }
-                // Opaque or transparent black: already premultiplied.
-                if let Some(pm) = IntSize::from_wh(w, h).and_then(|s| Pixmap::from_vec(buf, s)) {
-                    l.put(pm);
-                }
-                if first {
-                    first = false;
-                    l.say(format!("Receiving {w}×{h}"));
+            };
+            if let (Some((w, h, fps)), Some(out)) = (format, out.as_mut()) {
+                *l.rate.lock().unwrap_or_else(|p| p.into_inner()) = fps;
+                let size = (w as usize) * (h as usize) * 4;
+                let mut first = true;
+                loop {
+                    let mut buf = l.buffer(size);
+                    if out.read_exact(&mut buf).is_err() || l.stopped() {
+                        break;
+                    }
+                    // Opaque or transparent black: already premultiplied.
+                    if let Some(pm) = IntSize::from_wh(w, h).and_then(|s| Pixmap::from_vec(buf, s))
+                    {
+                        l.put(pm);
+                    }
+                    if first {
+                        first = false;
+                        l.say(format!("Receiving {w}×{h}"));
+                    }
                 }
             }
-        }
-        if let Some(mut c) = l.child.lock().unwrap_or_else(|p| p.into_inner()).take() {
-            let _ = c.kill();
-            let _ = c.wait();
-        }
+            // Both stopped: the relay's reader sees the end.
+            for child in [&l.child, &l.relay] {
+                if let Some(mut c) = child.lock().unwrap_or_else(|p| p.into_inner()).take() {
+                    let _ = c.kill();
+                    let _ = c.wait();
+                }
+            }
+        });
         if l.stopped() {
             return;
         }
+        let said = log.lock().unwrap_or_else(|p| p.into_inner()).clone();
         // No audio track: again at once, without the meters.
-        if audio
-            && log
-                .lock()
-                .unwrap_or_else(|p| p.into_inner())
-                .contains("matches no streams")
-        {
+        if audio && said.contains("matches no streams") {
             l.no_audio.store(true, Ordering::Relaxed);
             continue;
         }
-        let why = strata_mv_output::ffmpeg::tail(&log.lock().unwrap_or_else(|p| p.into_inner()));
+        // An ffmpeg without showinfo (or its options): again, without it.
+        if info && (said.contains("showinfo") || said.contains("'checksum'")) {
+            l.no_info.store(true, Ordering::Relaxed);
+            continue;
+        }
+        let why = strata_mv_output::ffmpeg::tail(&said);
         l.say(format!("Stopped: {why} — trying again"));
         if !l.pause(Duration::from_secs(2)) {
             return;
         }
+    }
+}
+
+/// Adds a line to the log of an input (its last few kilobytes).
+fn keep_log(log: &Mutex<String>, line: &str) {
+    let mut s = log.lock().unwrap_or_else(|p| p.into_inner());
+    s.push_str(line);
+    s.push('\n');
+    if s.len() > 8192 {
+        let cut = s.len() - 4096;
+        *s = s[s.ceil_char_boundary(cut)..].to_string();
     }
 }
 
@@ -1249,8 +1495,12 @@ fn run_ndi(l: &Live) {
         l.say(format!("Connecting to {source}…"));
         let mut shown = None;
         let mut loudness = R128::default();
+        l.facts().reset(false);
+        let (mut video_frames, mut audio_frames) = (0u64, 0u64);
         while !l.stopped() {
             let (mut pic, mut format, mut tc) = (None, ((0, 0), false), 0i64);
+            let mut about: Option<(f32, i32, Option<String>)> = None;
+            let mut sound_of: Option<(u32, usize, usize)> = None;
             let signals = &l.signals;
             match rx.capture(
                 500,
@@ -1258,8 +1508,14 @@ fn run_ndi(l: &Live) {
                     pic = premultiplied(&f);
                     format = (f.rate, f.interlaced);
                     tc = f.timecode;
+                    about = Some((
+                        f.aspect,
+                        f.format,
+                        f.metadata.map(|m| m.chars().take(2048).collect()),
+                    ));
                 },
                 |a| {
+                    sound_of = Some((a.sample_rate, a.channels, a.samples));
                     let levels: Vec<_> = (0..a.channels)
                         .map(|c| strata_mv_core::signal::Level::of(a.channel(c).iter().copied()))
                         .collect();
@@ -1275,10 +1531,50 @@ fn run_ndi(l: &Live) {
                     break;
                 }
             }
+            // What the source sends: for the analysis of the input.
+            if about.is_some() || sound_of.is_some() || rx.metadata.is_some() {
+                let mut facts = l.facts();
+                let n = facts.ndi.get_or_insert_with(|| crate::probe::NdiView {
+                    source: source.clone(),
+                    ..Default::default()
+                });
+                if let Some(m) = rx.metadata.take() {
+                    n.metadata = m;
+                }
+                if let Some((rate, channels, samples)) = sound_of {
+                    audio_frames += 1;
+                    n.audio_rate = rate;
+                    n.audio_channels = channels;
+                    n.audio_samples = samples;
+                    n.audio_frames = audio_frames;
+                }
+                if let (Some((aspect, kind, meta)), Some(pm)) = (&about, &pic) {
+                    video_frames += 1;
+                    n.width = pm.width();
+                    n.height = pm.height();
+                    n.rate = format.0;
+                    n.aspect = *aspect;
+                    n.format = match kind {
+                        0 => "entrelacé (deux trames)",
+                        1 => "progressif",
+                        2 => "trame 0",
+                        3 => "trame 1",
+                        _ => "?",
+                    }
+                    .to_string();
+                    if let Some(m) = meta {
+                        n.frame_metadata = m.clone();
+                    }
+                    n.video_frames = video_frames;
+                }
+            }
             if let Some(pm) = pic {
                 let ((n, d), fields) = format;
                 let fps = if d > 0 { n as f64 / d as f64 } else { 0.0 };
                 if let Some(s) = ndi_timecode(tc, fps) {
+                    if let Some(v) = l.facts().ndi.as_mut() {
+                        v.timecode = s.clone();
+                    }
                     signals.timecode(&l.config.id, s);
                 }
                 let now = (pm.width(), pm.height(), (n, d), fields);
@@ -1383,8 +1679,10 @@ fn run_sdi(l: &Live) {
             };
         failures = 0;
         l.say(format!("Waiting for a signal ({})…", card.mode().name));
+        l.facts().reset(false);
         let opened = Instant::now();
         let (mut seq, mut shown) = (0u64, None);
+        let mut described = Instant::now() - Duration::from_secs(10);
         while !l.stopped() {
             match card.take(&mut seq) {
                 Some((w, h, rgba)) => {
@@ -1410,6 +1708,16 @@ fn run_sdi(l: &Live) {
                         }
                     } else if let Some(pm) = Pixmap::from_vec(rgba, size) {
                         l.put(pm);
+                    }
+                    // What it carries: for the analysis, twice a second.
+                    if described.elapsed() >= Duration::from_millis(500) {
+                        described = Instant::now();
+                        let view =
+                            sdi_view(c.device, &mode, &card.info(), l.signals.levels(&c.id).len());
+                        if !view.timecode.is_empty() {
+                            l.signals.timecode(&c.id, view.timecode.clone());
+                        }
+                        l.facts().sdi = Some(view);
                     }
                     // Its embedded audio, measured since the last picture.
                     let audio = card.audio();
@@ -1443,6 +1751,84 @@ fn run_sdi(l: &Live) {
                 }
             }
         }
+    }
+}
+
+/// What an SDI signal carries, for the analysis.
+fn sdi_view(
+    device: u32,
+    mode: &strata_mv_output::decklink::DisplayMode,
+    i: &strata_mv_output::decklink::SignalInfo,
+    channels: usize,
+) -> crate::probe::SdiView {
+    let d = i.detected;
+    let mut signal = Vec::new();
+    if d & 1 != 0 {
+        signal.push("YCbCr 4:2:2");
+    }
+    if d & 2 != 0 {
+        signal.push("RGB 4:4:4");
+    }
+    if d & 8 != 0 {
+        signal.push("12 bits");
+    } else if d & 16 != 0 {
+        signal.push("10 bits");
+    } else if d & 32 != 0 {
+        signal.push("8 bits");
+    }
+    if d & 4 != 0 {
+        signal.push("3D (deux flux)");
+    }
+    let colorspace = match i.colorspace {
+        Some(0x7236_3031) => "Rec. 601",
+        Some(0x7237_3039) => "Rec. 709",
+        Some(0x3230_3230) => "Rec. 2020",
+        Some(0x5033_4436) => "DCI-P3 D65",
+        Some(_) => "autre",
+        None => "",
+    };
+    let hdr = match i.eotf {
+        Some(0) => "SDR",
+        Some(1) => "HDR (gamma)",
+        Some(2) => "HDR10 / PQ",
+        Some(3) => "HLG",
+        Some(_) => "HDR",
+        None => "",
+    };
+    crate::probe::SdiView {
+        device,
+        mode: mode.name.clone(),
+        signal: signal.join(", "),
+        field: if mode.interlaced() {
+            if mode.field == strata_mv_output::decklink::FIELD_LOWER {
+                "entrelacé, trame basse d’abord".into()
+            } else {
+                "entrelacé, trame haute d’abord".into()
+            }
+        } else {
+            "progressif".into()
+        },
+        timecode: i.timecode.clone(),
+        timecode_kind: match i.timecode_kind {
+            1 => "RP 188 (ATC)",
+            2 => "VITC",
+            _ => "",
+        }
+        .to_string(),
+        colorspace: colorspace.to_string(),
+        hdr: hdr.to_string(),
+        audio_channels: channels,
+        anc: i
+            .anc
+            .iter()
+            .map(|&(did, sdid, line, count)| crate::probe::Anc {
+                did,
+                sdid,
+                line,
+                name: crate::probe::anc_name(did, sdid).to_string(),
+                count,
+            })
+            .collect(),
     }
 }
 
@@ -1508,6 +1894,9 @@ mod tests {
             interlaced: AtomicBool::new(false),
             signals: Default::default(),
             no_audio: AtomicBool::new(false),
+            no_info: AtomicBool::new(false),
+            relay: Mutex::new(None),
+            facts: Arc::new(Mutex::new(crate::probe::Facts::default())),
         }
     }
 
@@ -1595,17 +1984,27 @@ mod tests {
     fn an_srt_listener_needs_only_its_port() {
         let mut c = input(InputKind::Srt, "", true);
         c.port = 10001;
-        let a = c.ffmpeg_args(true).unwrap();
+        let a = c.ffmpeg_args(true, true).unwrap();
+        // Received by the relay, which hands the bytes to the decoder.
+        let relay = a.relay.unwrap();
         assert!(
-            a.contains(&"srt://0.0.0.0:10001?mode=listener&latency=120000".to_string()),
-            "{a:?}"
+            relay.contains(&"srt://0.0.0.0:10001?mode=listener&latency=120000".to_string()),
+            "{relay:?}"
         );
+        assert!(relay.windows(2).any(|w| w == ["-f", "data"]));
+        assert!(a.decode.windows(2).any(|w| w == ["-i", "pipe:0"]));
+        assert!(a
+            .decode
+            .windows(2)
+            .any(|w| w == ["-vf", "showinfo=checksum=0"]));
         // No scaling: the source's own size.
-        assert!(!a.iter().any(|x| x.contains("scale=")));
+        assert!(!a.decode.iter().any(|x| x.contains("scale=")));
         let mut c = input(InputKind::Srt, "srt://cam:9000", false);
         c.latency = 300;
         assert!(c
-            .ffmpeg_args(true)
+            .ffmpeg_args(true, false)
+            .unwrap()
+            .relay
             .unwrap()
             .contains(&"srt://cam:9000?latency=300000".to_string()));
     }
@@ -1613,29 +2012,44 @@ mod tests {
     #[test]
     fn stream_addresses() {
         let a = input(InputKind::Srt, "srt://0.0.0.0:9000", true)
-            .ffmpeg_args(true)
+            .ffmpeg_args(true, false)
             .unwrap();
         // An old listener given by its address keeps it.
-        assert!(a.contains(&"srt://0.0.0.0:9000?mode=listener&latency=120000".to_string()));
-        let a = input(InputKind::Rtmp, "rtmp://0.0.0.0/live/cam", true)
-            .ffmpeg_args(true)
-            .unwrap();
-        assert!(a.windows(2).any(|w| w == ["-listen", "1"]));
-        assert!(input(InputKind::Hls, "srt://x", false)
-            .ffmpeg_args(true)
-            .is_err());
-        assert!(input(InputKind::Udp, "", false).ffmpeg_args(true).is_err());
-        let a = input(InputKind::Udp, "udp://@239.1.1.1:5000", false)
-            .ffmpeg_args(true)
-            .unwrap();
-        assert!(a.windows(2).any(|w| w == ["-f", "rawvideo"]));
-        // The audio measured on a second output, unless there is none.
-        assert!(a.windows(2).any(|w| w == ["-map", "0:a:0"]));
-        assert!(!input(InputKind::Udp, "udp://@239.1.1.1:5000", false)
-            .ffmpeg_args(false)
+        assert!(a
+            .relay
             .unwrap()
+            .contains(&"srt://0.0.0.0:9000?mode=listener&latency=120000".to_string()));
+        // RTMP, HLS, RTSP: decoded straight from the source.
+        let a = input(InputKind::Rtmp, "rtmp://0.0.0.0/live/cam", true)
+            .ffmpeg_args(true, false)
+            .unwrap();
+        assert!(a.relay.is_none());
+        assert!(a.decode.windows(2).any(|w| w == ["-listen", "1"]));
+        assert!(input(InputKind::Hls, "srt://x", false)
+            .ffmpeg_args(true, false)
+            .is_err());
+        assert!(input(InputKind::Udp, "", false)
+            .ffmpeg_args(true, false)
+            .is_err());
+        let a = input(InputKind::Udp, "udp://@239.1.1.1:5000", false)
+            .ffmpeg_args(true, false)
+            .unwrap();
+        assert!(a.relay.is_some());
+        assert!(a.decode.windows(2).any(|w| w == ["-f", "rawvideo"]));
+        // The audio measured on a second output, unless there is none.
+        assert!(a.decode.windows(2).any(|w| w == ["-map", "0:a:0"]));
+        assert!(!input(InputKind::Udp, "udp://@239.1.1.1:5000", false)
+            .ffmpeg_args(false, false)
+            .unwrap()
+            .decode
             .iter()
             .any(|x| x == "0:a:0"));
+        // RTP: its packets need its demuxer, not a relay.
+        assert!(input(InputKind::Udp, "rtp://239.1.1.1:5000", false)
+            .ffmpeg_args(true, false)
+            .unwrap()
+            .relay
+            .is_none());
     }
 
     #[test]
@@ -1690,6 +2104,9 @@ mod tests {
             rate: (25, 1),
             interlaced: false,
             timecode: 0,
+            aspect: 0.0,
+            format: 1,
+            metadata: None,
         };
         let pm = premultiplied(&f).unwrap();
         assert_eq!(pm.data(), &[100, 50, 0, 128, 10, 20, 30, 255]);

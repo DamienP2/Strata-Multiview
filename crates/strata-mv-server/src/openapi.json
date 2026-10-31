@@ -32,6 +32,10 @@
       "name": "Channels & playout"
     },
     {
+      "name": "Inputs",
+      "description": "The live inputs and what each one carries: container, programs and EPG, streams, pictures (GOP, timecode, captions, HDR), MPEG-TS tables and TR 101 290, HLS playlists, NDI and SDI details."
+    },
+    {
       "name": "Tally & UMD",
       "description": "What the switchers say of each source (TSL UMD 3.1 / 5.0, Blackmagic ATEM, GPI), routed to the inputs: their frame, lamps and name bar in the multiview."
     },
@@ -2523,6 +2527,142 @@
         "responses": {
           "204": {
             "description": "Done"
+          }
+        }
+      }
+    },
+    "/api/inputs/{id}/analysis": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          },
+          "description": "Input id"
+        },
+        {
+          "name": "refresh",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "boolean"
+          },
+          "description": "Read an HLS input's playlists again (else at most every 30 s)."
+        }
+      ],
+      "get": {
+        "tags": [
+          "Inputs"
+        ],
+        "summary": "What an input carries",
+        "description": "Container and programs (names, EPG present / following), every stream (codec, profile and level, picture, colours and HDR, scan, audio layout, languages, subtitles, closed captions, data: SCTE-35, KLV, ID3, ANC), its pictures (I / P / B, GOP, timecode, side data), and by transport: MPEG-TS tables, PIDs and TR 101 290 checks (SRT, UDP, TCP are relayed and read continuously; HLS: its last segment), HLS playlists (variants, renditions, segments, keys, ad markers), NDI (format, metadata) and SDI (format, timecode, ancillary packets).\n\n**Rights:** any signed-in user.",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No such input running"
+          }
+        }
+      }
+    },
+    "/api/examples": {
+      "get": {
+        "tags": [
+          "Projects"
+        ],
+        "summary": "List the example multiviews",
+        "description": "The ready-made multiviews of a playout control room, embedded in the server.\n\n**Rights:** any signed-in user.",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/examples/{id}": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          },
+          "description": "Example id (ex-01-final…)"
+        }
+      ],
+      "post": {
+        "tags": [
+          "Projects"
+        ],
+        "summary": "Add an example to the multiviews",
+        "description": "A new multiview made from the example, its tiles on this server's inputs in order.\n\n**Rights:** admin, designer.",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/examples/{id}/cover.png": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          },
+          "description": "Example id"
+        },
+        {
+          "name": "w",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "integer"
+          },
+          "description": "At most this wide (pixels)"
+        }
+      ],
+      "get": {
+        "tags": [
+          "Projects"
+        ],
+        "summary": "Picture of an example",
+        "responses": {
+          "200": {
+            "description": "PNG",
+            "content": {
+              "image/png": {}
+            }
           }
         }
       }

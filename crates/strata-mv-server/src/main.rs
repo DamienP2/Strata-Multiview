@@ -17,6 +17,7 @@ mod media;
 mod paths;
 mod perf;
 mod prefs;
+mod probe;
 mod rt;
 mod service;
 mod signals;

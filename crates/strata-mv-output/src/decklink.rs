@@ -245,6 +245,18 @@ mod ffi {
         pub fn dl_input_mode(h: *mut c_void) -> u32;
         pub fn dl_input_wait(h: *mut c_void, seq: u64, timeout_ms: c_int) -> c_int;
         pub fn dl_input_close(h: *mut c_void);
+        pub fn dl_input_info(
+            h: *mut c_void,
+            detected: *mut u32,
+            tc: *mut c_char,
+            tclen: c_int,
+            tc_kind: *mut c_int,
+            eotf: *mut i64,
+            colorspace: *mut i64,
+            anc: *mut u32,
+            counts: *mut u64,
+            cap: c_int,
+        ) -> c_int;
     }
 
     /// A NUL-terminated C buffer as text.
@@ -607,6 +619,23 @@ impl Drop for OutputHandle {
 }
 
 /// An open DeckLink input capturing 8-bit 4:2:2 (UYVY). Closed when dropped.
+/// What an SDI signal carries besides its picture.
+#[derive(Debug, Clone, Default)]
+pub struct SignalInfo {
+    /// BMDDetectedVideoInputFormatFlags: 1 YCbCr 4:2:2, 2 RGB 4:4:4, 4 dual
+    /// stream 3D, 8 12-bit, 16 10-bit, 32 8-bit.
+    pub detected: u32,
+    pub timecode: String,
+    /// 1 RP 188, 2 VITC, 0 none.
+    pub timecode_kind: u8,
+    /// HDR transfer function (CEA 861.3: 0 SDR, 2 PQ, 3 HLG).
+    pub eotf: Option<i64>,
+    /// BMDColorspace ('r601', 'r709', '2020', 'P3D6').
+    pub colorspace: Option<u32>,
+    /// (DID, SDID, line, count) of the ancillary packets seen.
+    pub anc: Vec<(u8, u8, u32, u64)>,
+}
+
 pub struct InputHandle {
     #[cfg(decklink_shim)]
     raw: *mut std::ffi::c_void,
@@ -756,6 +785,46 @@ impl InputHandle {
         }
         #[cfg(not(decklink_shim))]
         Vec::new()
+    }
+
+    /// What the signal carries besides its picture.
+    pub fn info(&self) -> SignalInfo {
+        #[cfg(decklink_shim)]
+        {
+            let mut i = SignalInfo::default();
+            let mut tc = [0 as std::ffi::c_char; 16];
+            let (mut kind, mut eotf, mut cs) = (0 as std::ffi::c_int, -1i64, -1i64);
+            let mut anc = [0u32; 64];
+            let mut counts = [0u64; 64];
+            // SAFETY: open handle, buffers of the sizes given.
+            let n = unsafe {
+                ffi::dl_input_info(
+                    self.raw,
+                    &mut i.detected,
+                    tc.as_mut_ptr(),
+                    16,
+                    &mut kind,
+                    &mut eotf,
+                    &mut cs,
+                    anc.as_mut_ptr(),
+                    counts.as_mut_ptr(),
+                    64,
+                )
+            };
+            i.timecode = ffi::text(&tc);
+            i.timecode_kind = kind as u8;
+            i.eotf = (eotf >= 0).then_some(eotf);
+            i.colorspace = (cs >= 0).then_some(cs as u32);
+            i.anc = (0..n.clamp(0, 64) as usize)
+                .map(|k| {
+                    let v = anc[k];
+                    ((v >> 24) as u8, (v >> 16) as u8, v & 0xFFFF, counts[k])
+                })
+                .collect();
+            i
+        }
+        #[cfg(not(decklink_shim))]
+        SignalInfo::default()
     }
 
     /// A signal is coming in (None: nothing received yet).

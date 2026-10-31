@@ -12,6 +12,7 @@ import { deviceOf, hardwareOf } from '../hardware/model';
 import { navigate } from '../router';
 import { OnSwitch } from './OnSwitch';
 import { NdiPicker } from './NdiPicker';
+import { InputAnalysis } from './InputAnalysis';
 
 /*
  * The INPUTS mode of the Video streams page: live video coming into the
@@ -290,6 +291,7 @@ export function InputsMode({ cfg, saved, edit }: { cfg: ServerConfig; saved: Ser
                 })}
               </div>
             )}
+            {current && current.enabled !== false && <InputAnalysis id={current.id} name={current.name || current.id} />}
           </div>
 
           <aside className="oc-inspector">

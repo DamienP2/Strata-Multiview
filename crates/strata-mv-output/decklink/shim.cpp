@@ -39,6 +39,7 @@ typedef const char *dl_string;
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <map>
 #include <mutex>
 #include <thread>
 #include <vector>
@@ -531,6 +532,15 @@ class Input final : public IDeckLinkInputCallback {
     std::vector<float> apeak;
     std::vector<double> asum;
     uint64_t asamples = 0;
+    // What the signal carries (dl_input_info): the detected format, the
+    // last timecode (kind 1 RP 188, 2 VITC), the HDR transfer function and
+    // colorspace (-1 unknown), and the ancillary packets seen, by
+    // DID << 24 | SDID << 16 | line.
+    uint32_t detected = 0;
+    char tc[16] = {0};
+    int tc_kind = 0;
+    int64_t eotf = -1, colorspace = -1;
+    std::map<uint32_t, uint64_t> anc;
 
     HRESULT STDMETHODCALLTYPE QueryInterface(REFIID iid, LPVOID *ppv) override {
         if (!ppv) {
@@ -556,7 +566,10 @@ class Input final : public IDeckLinkInputCallback {
     HRESULT STDMETHODCALLTYPE VideoInputFormatChanged(BMDVideoInputFormatChangedEvents events,
                                                       IDeckLinkDisplayMode *mode,
                                                       BMDDetectedVideoInputFormatFlags flags) override {
-        (void)flags;
+        {
+            std::lock_guard<std::mutex> lk(m);
+            detected = (uint32_t)flags;
+        }
         if (!mode || !(events & (bmdVideoInputDisplayModeChanged | bmdVideoInputFieldDominanceChanged))) {
             return S_OK;
         }
@@ -572,6 +585,67 @@ class Input final : public IDeckLinkInputCallback {
         in->FlushStreams();
         in->StartStreams();
         return S_OK;
+    }
+
+    // Reads what a frame carries besides its picture: timecode, ancillary
+    // packets, HDR metadata.
+    void describe(IDeckLinkVideoInputFrame *f) {
+        char tcbuf[16] = {0};
+        int kind = 0;
+        IDeckLinkTimecode *t = NULL;
+        if (f->GetTimecode(bmdTimecodeRP188Any, &t) == S_OK && t) {
+            kind = 1;
+        } else if (f->GetTimecode(bmdTimecodeVITC, &t) == S_OK && t) {
+            kind = 2;
+        }
+        if (t) {
+            uint8_t hh = 0, mm = 0, ss = 0, ff = 0;
+            if (t->GetComponents(&hh, &mm, &ss, &ff) == S_OK) {
+                std::snprintf(tcbuf, sizeof tcbuf, "%02u:%02u:%02u%c%02u", (unsigned)hh, (unsigned)mm, (unsigned)ss,
+                              (t->GetFlags() & bmdTimecodeIsDropFrame) ? ';' : ':', (unsigned)ff);
+            } else {
+                kind = 0;
+            }
+            release(t);
+        }
+        std::vector<uint32_t> keys;
+        IDeckLinkVideoFrameAncillaryPackets *packets = NULL;
+        if (f->QueryInterface(IID_IDeckLinkVideoFrameAncillaryPackets, (void **)&packets) == S_OK && packets) {
+            IDeckLinkAncillaryPacketIterator *it = NULL;
+            if (packets->GetPacketIterator(&it) == S_OK && it) {
+                IDeckLinkAncillaryPacket *p = NULL;
+                while (keys.size() < 256 && it->Next(&p) == S_OK && p) {
+                    keys.push_back(((uint32_t)p->GetDID() << 24) | ((uint32_t)p->GetSDID() << 16) |
+                                   (p->GetLineNumber() & 0xFFFF));
+                    release(p);
+                }
+                release(it);
+            }
+            release(packets);
+        }
+        int64_t e = -1, cs = -1;
+        IDeckLinkVideoFrameMetadataExtensions *meta = NULL;
+        if (f->QueryInterface(IID_IDeckLinkVideoFrameMetadataExtensions, (void **)&meta) == S_OK && meta) {
+            int64_t v = 0;
+            if ((f->GetFlags() & bmdFrameContainsHDRMetadata) &&
+                meta->GetInt(bmdDeckLinkFrameMetadataHDRElectroOpticalTransferFunc, &v) == S_OK) {
+                e = v;
+            }
+            if (meta->GetInt(bmdDeckLinkFrameMetadataColorspace, &v) == S_OK) {
+                cs = v;
+            }
+            release(meta);
+        }
+        std::lock_guard<std::mutex> lk(m);
+        std::memcpy(tc, tcbuf, sizeof tc);
+        tc_kind = kind;
+        eotf = e;
+        colorspace = cs;
+        for (uint32_t k : keys) {
+            if (anc.size() < 64 || anc.count(k)) {
+                anc[k]++;
+            }
+        }
     }
 
     HRESULT STDMETHODCALLTYPE VideoInputFrameArrived(IDeckLinkVideoInputFrame *f,
@@ -608,6 +682,7 @@ class Input final : public IDeckLinkInputCallback {
             arrived.notify_all();
             return S_OK;
         }
+        describe(f);
         if (f->GetPixelFormat() != bmdFormat8BitYUV) {
             return S_OK;
         }
@@ -1165,6 +1240,34 @@ int dl_input_audio(void *h, float *peak, float *rms, int cap) {
     std::fill(in->apeak.begin(), in->apeak.end(), 0.0f);
     std::fill(in->asum.begin(), in->asum.end(), 0.0);
     in->asamples = 0;
+    return n;
+}
+
+// What the signal carries: the format flags the card detected, the last
+// timecode (`tc_kind` 1 RP 188, 2 VITC, 0 none), the HDR transfer function
+// and colorspace (-1 unknown), and up to `cap` kinds of ancillary packets
+// seen since the input opened, as DID << 24 | SDID << 16 | line in `anc`
+// and their count in `counts`. Returns how many kinds.
+int dl_input_info(void *h, uint32_t *detected, char *tc, int tclen, int *tc_kind, int64_t *eotf,
+                  int64_t *colorspace, uint32_t *anc, uint64_t *counts, int cap) {
+    Input *in = (Input *)h;
+    std::lock_guard<std::mutex> lk(in->m);
+    *detected = in->detected;
+    if (tc && tclen > 0) {
+        std::snprintf(tc, (size_t)tclen, "%s", in->tc);
+    }
+    *tc_kind = in->tc_kind;
+    *eotf = in->eotf;
+    *colorspace = in->colorspace;
+    int n = 0;
+    for (const auto &kv : in->anc) {
+        if (n >= cap) {
+            break;
+        }
+        anc[n] = kv.first;
+        counts[n] = kv.second;
+        n++;
+    }
     return n;
 }
 

@@ -1,0 +1,379 @@
+/* What an input carries (InputAnalysis.tsx): below the inputs' tiles. */
+.ia {
+  margin-top: 18px;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: var(--panel);
+  overflow: hidden;
+}
+.ia-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--line);
+  flex-wrap: wrap;
+}
+.ia-head small {
+  display: block;
+  font-size: var(--fs-11);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+.ia-head h2 {
+  margin: 0;
+  font-size: var(--fs-15);
+}
+.ia-src {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  font-size: var(--fs-12);
+  color: var(--text-2);
+}
+.ia-src code {
+  font-family: var(--mono);
+  font-size: var(--fs-11);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 360px;
+}
+.ia-tabs {
+  display: flex;
+  gap: 2px;
+  padding: 6px 10px 0;
+  border-bottom: 1px solid var(--line);
+  overflow-x: auto;
+}
+.ia-tabs button {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 11px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: none;
+  color: var(--text-2);
+  font: inherit;
+  font-size: var(--fs-12);
+  white-space: nowrap;
+  cursor: pointer;
+}
+.ia-tabs button:hover {
+  color: var(--text);
+}
+.ia-tabs button.on {
+  color: var(--text);
+  border-bottom-color: var(--accent);
+}
+.ia-alert {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--live);
+}
+.ia-body {
+  padding: 14px 16px 16px;
+}
+.ia-error {
+  margin: 10px 16px;
+  color: var(--live);
+  font-size: var(--fs-12);
+}
+.ia-tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 8px;
+}
+.ia-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--panel-2);
+}
+.ia-tile small {
+  font-size: var(--fs-11);
+  color: var(--text-3);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.ia-tile strong {
+  font-size: var(--fs-13);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ia-tile strong.mono {
+  font-family: var(--mono);
+  font-size: var(--fs-15);
+  color: var(--key);
+}
+.ia-tile span {
+  font-size: var(--fs-11);
+  color: var(--text-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ia-tile.ok strong {
+  color: var(--pvw);
+}
+.ia-tile.warn strong {
+  color: var(--warn);
+}
+.ia-tile.bad strong {
+  color: var(--live);
+}
+.ia-notes {
+  margin: 12px 0 0;
+  padding-left: 18px;
+  font-size: var(--fs-12);
+  color: var(--text-2);
+}
+.ia-how {
+  margin: 10px 0 0;
+  font-size: var(--fs-11);
+  color: var(--text-3);
+}
+.ia-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 10px;
+  align-items: start;
+}
+.ia-card {
+  min-width: 0;
+  padding: 10px 12px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--panel-2);
+}
+.ia-card.wide {
+  grid-column: 1 / -1;
+}
+.ia-card h3 {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 8px;
+  font-size: var(--fs-12);
+  font-weight: 600;
+  color: var(--text);
+}
+.ia-card h4 {
+  margin: 10px 0 4px;
+  font-size: var(--fs-11);
+  color: var(--text-3);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.ia-facts {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 4px 14px;
+  margin: 0;
+  font-size: var(--fs-12);
+}
+.ia-facts > div {
+  display: contents;
+}
+.ia-facts dt {
+  color: var(--text-3);
+}
+.ia-facts dd {
+  margin: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.ia-facts code {
+  font-family: var(--mono);
+  font-size: var(--fs-11);
+}
+.ia-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 8px;
+}
+.ia-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 7px;
+  border-radius: 10px;
+  background: var(--accent-soft);
+  color: var(--accent-2);
+  font-size: var(--fs-11);
+  white-space: nowrap;
+}
+.ia-chip.warn {
+  background: color-mix(in srgb, var(--warn) 18%, transparent);
+  color: var(--warn);
+}
+.ia-list {
+  margin: 8px 0 0;
+  padding-left: 16px;
+  font-size: var(--fs-12);
+  color: var(--text-2);
+}
+.ia-list.mono {
+  font-family: var(--mono);
+  font-size: var(--fs-11);
+}
+.ia-epg {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 10px;
+}
+.ia-event {
+  padding: 8px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--line);
+  background: var(--panel);
+}
+.ia-event.now {
+  border-color: color-mix(in srgb, var(--live) 50%, var(--line));
+}
+.ia-event-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 4px;
+  font-size: var(--fs-11);
+  color: var(--text-3);
+}
+.ia-event-head small {
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 700;
+}
+.ia-event.now .ia-event-head small {
+  color: var(--live);
+}
+.ia-event strong {
+  font-size: var(--fs-13);
+}
+.ia-event p {
+  margin: 4px 0 0;
+  font-size: var(--fs-12);
+  color: var(--text-2);
+}
+.ia-progress {
+  height: 3px;
+  margin-top: 8px;
+  border-radius: 2px;
+  background: var(--line);
+  overflow: hidden;
+}
+.ia-progress span {
+  display: block;
+  height: 100%;
+  background: var(--live);
+}
+.ia-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-12);
+}
+.ia-table th {
+  text-align: left;
+  font-weight: 500;
+  font-size: var(--fs-11);
+  color: var(--text-3);
+  padding: 4px 8px 4px 0;
+  border-bottom: 1px solid var(--line);
+}
+.ia-table td {
+  padding: 4px 8px 4px 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--line) 50%, transparent);
+  vertical-align: middle;
+}
+.ia-table .num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.ia-table .mono,
+.ia .mono {
+  font-family: var(--mono);
+  font-size: var(--fs-11);
+}
+.ia-table .ellipsis {
+  max-width: 420px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ia-barcell {
+  width: 22%;
+}
+.ia-bar {
+  display: block;
+  height: 6px;
+  min-width: 1px;
+  border-radius: 3px;
+  background: var(--accent);
+}
+.ia .tone-warn {
+  color: var(--warn);
+}
+.ia .oc-dot.bad {
+  background: var(--live);
+}
+.ia .oc-dot.idle {
+  background: color-mix(in srgb, var(--warn) 45%, var(--text-3));
+}
+.ia-ipb {
+  display: flex;
+  height: 14px;
+  gap: 1px;
+  margin-bottom: 10px;
+  border-radius: 4px;
+  overflow: hidden;
+}
+.ia-ipb .i {
+  background: var(--live);
+}
+.ia-ipb .p {
+  background: var(--accent);
+}
+.ia-ipb .b {
+  background: var(--pvw);
+}
+.ia-ipb .o {
+  background: var(--text-3);
+}
+.ia-tc {
+  font-family: var(--mono);
+  font-size: 30px;
+  font-weight: 700;
+  color: var(--key);
+  letter-spacing: 0.02em;
+}
+.ia-pre {
+  margin: 0 0 8px;
+  padding: 8px;
+  max-height: 220px;
+  overflow: auto;
+  border-radius: 6px;
+  background: var(--panel);
+  font-family: var(--mono);
+  font-size: var(--fs-11);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+@media (max-width: 720px) {
+  .ia-epg {
+    grid-template-columns: 1fr;
+  }
+}
