@@ -398,8 +398,10 @@ export function Outputs({ mode }: { mode: Mode }) {
         (picOutputs.sdi ??= []).push(o);
       } else if (kind === 'ndi') {
         const names = new Set(all.channels.flatMap((x) => pictures(x).flatMap((pp) => (pp.outputs.ndi ?? []).map((o) => o.name.toLowerCase()))));
-        let name = `${c.name}${p.id === 'main' ? '' : ` ${p.name}`}`;
-        for (let k = 2; names.has(name.toLowerCase()); k++) name = `${c.name}${p.id === 'main' ? '' : ` ${p.name}`} ${k}`;
+        // « Multiview … »: a source of Strata Graphics on the same machine is often named after its channel too, and NDI refuses a second source of the same name.
+        const base = `Multiview ${c.name}${p.id === 'main' ? '' : ` ${p.name}`}`;
+        let name = base;
+        for (let k = 2; names.has(name.toLowerCase()); k++) name = `${base} ${k}`;
         (picOutputs.ndi ??= []).push({ id, name, groups: '', alpha: true });
       } else if (kind === 'stream') {
         // An SRT listener on a port no other stream (output or input) uses.

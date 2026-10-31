@@ -302,9 +302,12 @@ impl NdiSender {
         // SAFETY: the strings outlive the call; NDI copies them.
         let instance = unsafe { (lib.create)(&create) };
         if instance.is_null() {
-            return Err(OutputError::Unsupported(
-                "NDI could not create the source".into(),
-            ));
+            // Most often a source of that name already exists on this
+            // machine (another program, Strata Graphics…).
+            return Err(OutputError::Unsupported(format!(
+                "NDI could not create the source « {} »: a source of this name may already exist on this machine (another program such as Strata Graphics): give it another name",
+                config.name
+            )));
         }
         tracing::info!(name = config.name, "NDI source started");
         Ok(Self {

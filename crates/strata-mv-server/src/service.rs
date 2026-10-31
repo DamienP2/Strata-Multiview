@@ -128,13 +128,13 @@ mod imp {
             .map_err(|e| permission_hint(e.into(), Path::new(crate::timectl::HELPER)))?;
         run("systemctl", &["daemon-reload"])?;
         run("systemctl", &["enable", "--now", SERVICE_NAME])?;
-        let _ = run("systemctl", &["enable", "--now", "strata-time.path"]);
+        let _ = run("systemctl", &["enable", "--now", "strata-mv-time.path"]);
         Ok(())
     }
 
     pub fn uninstall() -> Result<()> {
         let _ = run("systemctl", &["disable", "--now", SERVICE_NAME]);
-        let _ = run("systemctl", &["disable", "--now", "strata-time.path"]);
+        let _ = run("systemctl", &["disable", "--now", "strata-mv-time.path"]);
         crate::timectl::uninstall_helper();
         match std::fs::remove_file(UNIT) {
             Ok(()) => {}

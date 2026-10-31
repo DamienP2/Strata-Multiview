@@ -4,10 +4,10 @@
 //! servers to use, whether to use NTP at all (not when PTP gives the time),
 //! and when to synchronise at once:
 //! - Linux: the service account may not change the system, so a small root
-//!   helper does it (`strata-time`, installed with the service). Strata
+//!   helper does it (`strata-mv-time`, installed with the service). Strata
 //!   writes its request to `<data>/time/request`; a systemd path unit runs
 //!   the helper, which sets chrony when it is installed, else
-//!   systemd-timesyncd, and answers in `/run/strata-time/result`.
+//!   systemd-timesyncd, and answers in `/run/strata-mv-time/result`.
 //! - macOS (the service runs as root): `systemsetup` and `sntp`.
 //! - Windows (the service runs as LocalSystem): `w32tm`.
 
@@ -152,13 +152,13 @@ fn run(program: &str, args: &[&str]) -> Result<(), String> {
 // ---------------------------------------------------------------- Linux ----
 
 /// The root helper and its systemd units.
-pub const HELPER: &str = "/usr/local/lib/strata/strata-time";
+pub const HELPER: &str = "/usr/local/lib/strata-multiview/strata-mv-time";
 #[cfg(target_os = "linux")]
-const RESULT: &str = "/run/strata-time/result";
+const RESULT: &str = "/run/strata-mv-time/result";
 #[cfg(target_os = "linux")]
-const PATH_UNIT: &str = "/etc/systemd/system/strata-time.path";
+const PATH_UNIT: &str = "/etc/systemd/system/strata-mv-time.path";
 #[cfg(target_os = "linux")]
-const SERVICE_UNIT: &str = "/etc/systemd/system/strata-time.service";
+const SERVICE_UNIT: &str = "/etc/systemd/system/strata-mv-time.service";
 
 /// The helper (run as root on Strata's request). It reads only `enabled`,
 /// `server` and `action` lines, checks every server name, and writes its
@@ -169,7 +169,7 @@ const HELPER_SCRIPT: &str = r##"#!/bin/sh
 # Request: one setting per line: action=apply|sync, enabled=0|1, server=<name>.
 set -u
 REQ=$1
-OUT=/run/strata-time
+OUT=/run/strata-mv-time
 mkdir -p "$OUT" && chmod 755 "$OUT"
 result() {
   printf 'ok=%s\nat=%s\nmessage=%s\n' "$1" "$(date +%s)" "$2" > "$OUT/result.tmp"

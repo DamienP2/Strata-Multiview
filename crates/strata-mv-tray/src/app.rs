@@ -11,7 +11,7 @@ use tray_icon::{Icon, TrayIcon, TrayIconBuilder};
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 /// Loopback port used only as a single-instance lock.
-const INSTANCE_LOCK: &str = "127.0.0.1:47819";
+const INSTANCE_LOCK: &str = "127.0.0.1:47829";
 const DEFAULT_PORT: u16 = 8090;
 
 #[derive(Debug, Clone, PartialEq, Default)]
