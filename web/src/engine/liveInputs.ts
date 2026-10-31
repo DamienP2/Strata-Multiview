@@ -219,6 +219,179 @@ function show(feed: Feed, blob: Blob) {
   img.src = url;
 }
 
+// ----------------------------------------------------------- live streams --
+// The HTML5 output: every picture of an input, at about the size of its tile, decoded off the main
+// thread (createImageBitmap) and played out evenly on a canvas, without React. Each part of the
+// server's stream (inputs.rs, mjpeg) says when its picture came: shown that long after, plus a
+// short delay that absorbs the irregular arrival over the network.
+
+interface Timed {
+  bmp: ImageBitmap;
+  /** When to show it (performance.now()). */
+  at: number;
+}
+
+export interface LiveStream {
+  size: [number, number] | null;
+  queue: Timed[];
+  /** The picture on show. */
+  current: ImageBitmap | null;
+  /** Smallest delay seen between a picture coming to the server and here (ms, both clocks). */
+  lag: number | null;
+  users: number;
+  abort: AbortController;
+  subs: Set<() => void>;
+}
+
+const streams = new Map<string, LiveStream>();
+const WIDTHS = [320, 480, 640, 960, 1280, 1920, 3840];
+/** The width asked of the server for a picture drawn `px` wide (a few sizes only: shared by the tiles alike). */
+export const streamWidth = (px: number) => WIDTHS.find((w) => w >= px) ?? 3840;
+/** How long after its time a picture is shown: room for the network's irregularity. */
+const PLAYOUT_MS = 80;
+
+function streamFor(id: string, width: number): LiveStream {
+  const key = `${id}@${width}`;
+  let s = streams.get(key);
+  if (!s) {
+    s = { size: null, queue: [], current: null, lag: null, users: 0, abort: new AbortController(), subs: new Set() };
+    streams.set(key, s);
+    void runStream(id, width, s);
+  }
+  return s;
+}
+
+async function runStream(id: string, width: number, s: LiveStream) {
+  const sep = enc.encode('\r\n\r\n');
+  while (!s.abort.signal.aborted) {
+    try {
+      const r = await fetch(`/api/inputs/${encodeURIComponent(id)}/live.mjpeg?w=${width}`, { credentials: 'same-origin', signal: s.abort.signal });
+      if (!r.ok || !r.body) throw new Error(String(r.status));
+      const reader = r.body.getReader();
+      let buf = new Uint8Array(0);
+      for (;;) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        const next = new Uint8Array(buf.length + value.length);
+        next.set(buf);
+        next.set(value, buf.length);
+        buf = next;
+        for (;;) {
+          const h = find(buf, sep);
+          if (h < 0) break;
+          const head = new TextDecoder().decode(buf.subarray(0, h));
+          const m = head.match(/Content-Length:\s*(\d+)/i);
+          if (!m) {
+            buf = buf.subarray(h + 4);
+            continue;
+          }
+          const n = +m[1];
+          if (buf.length < h + 4 + n) break;
+          const jpeg = buf.slice(h + 4, h + 4 + n);
+          buf = buf.subarray(h + 4 + n);
+          const came = Number(head.match(/X-Time:\s*(\d+)/i)?.[1] ?? 0);
+          await take(s, new Blob([jpeg], { type: 'image/jpeg' }), came);
+        }
+      }
+    } catch {
+      if (s.abort.signal.aborted) return;
+    }
+    await sleep(1500);
+  }
+}
+
+/** Decodes a picture and queues it for its time. */
+async function take(s: LiveStream, blob: Blob, came: number) {
+  let bmp: ImageBitmap;
+  try {
+    bmp = await createImageBitmap(blob);
+  } catch {
+    return;
+  }
+  if (s.abort.signal.aborted) return bmp.close();
+  const now = performance.now();
+  let at = now;
+  if (came > 0) {
+    // The smallest delay seen, rising slowly (the clocks drift apart).
+    const lag = performance.timeOrigin + now - came;
+    s.lag = s.lag == null ? lag : Math.min(lag, s.lag + 0.05);
+    at = came + s.lag + PLAYOUT_MS - performance.timeOrigin;
+  }
+  s.queue.push({ bmp, at });
+  // Too far behind (a tab in the background): only the newest ones.
+  while (s.queue.length > 8) s.queue.shift()!.bmp.close();
+  if (!s.size || s.size[0] !== bmp.width || s.size[1] !== bmp.height) {
+    s.size = [bmp.width, bmp.height];
+    s.subs.forEach((f) => f());
+  }
+  startTicks();
+}
+
+/** The canvases drawing the streams, redrawn at the display's rate. */
+const painters = new Set<() => void>();
+let ticking = 0;
+
+function startTicks() {
+  if (!ticking && painters.size) ticking = requestAnimationFrame(tick);
+}
+
+function tick() {
+  ticking = 0;
+  const now = performance.now();
+  const done: ImageBitmap[] = [];
+  for (const s of streams.values()) {
+    let next: Timed | undefined;
+    while (s.queue.length && s.queue[0].at <= now) {
+      if (next) done.push(next.bmp);
+      next = s.queue.shift();
+    }
+    if (next) {
+      if (s.current) done.push(s.current);
+      s.current = next.bmp;
+    }
+  }
+  painters.forEach((p) => p());
+  done.forEach((b) => b.close());
+  if (painters.size) ticking = requestAnimationFrame(tick);
+}
+
+/** Every picture of an input at `width` (0 or "": none), played out evenly; its size follows. */
+export function useLiveStream(id: string, width: number): LiveStream | null {
+  const key = id && width ? `${id}@${width}` : '';
+  useEffect(() => {
+    if (!key) return;
+    const s = streamFor(id, width);
+    s.users++;
+    return () => {
+      if (--s.users > 0) return;
+      setTimeout(() => {
+        if (s.users > 0 || streams.get(key) !== s) return;
+        s.abort.abort();
+        s.queue.forEach((f) => f.bmp.close());
+        s.current?.close();
+        streams.delete(key);
+      }, 2000);
+    };
+  }, [key]);
+  useSyncExternalStore(
+    (cb) => {
+      if (!key) return noop;
+      const s = streamFor(id, width);
+      s.subs.add(cb);
+      return () => s.subs.delete(cb);
+    },
+    () => (key ? streamFor(id, width).size : null),
+  );
+  return key ? streamFor(id, width) : null;
+}
+
+/** Calls `paint` at the display's rate while the streams play (until the returned function). */
+export function onPaint(paint: () => void): () => void {
+  painters.add(paint);
+  startTicks();
+  return () => void painters.delete(paint);
+}
+
 const none = { url: null as string | null, size: null as [number, number] | null };
 const noop = () => {};
 

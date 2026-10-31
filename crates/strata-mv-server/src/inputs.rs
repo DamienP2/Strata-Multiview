@@ -327,6 +327,12 @@ struct Live {
     relay: Mutex<Option<Child>>,
     /// What it carries (`probe`).
     facts: Arc<Mutex<crate::probe::Facts>>,
+    /// The number of the newest picture and when it came (ms since 1970):
+    /// the web streams wake on it.
+    frames: tokio::sync::watch::Sender<(u64, u64)>,
+    /// The newest pictures as JPEG, by width: the web pages showing this
+    /// input at the same size share them.
+    jpegs: Mutex<VecDeque<(u64, u32, axum::body::Bytes)>>,
 }
 
 impl Live {
@@ -346,8 +352,12 @@ impl Live {
         self.signals.picture(&self.config.id, &pm);
         let pm = Arc::new(pm);
         *self.picture.write().unwrap_or_else(|p| p.into_inner()) = Some(pm.clone());
-        self.received.fetch_add(1, Ordering::Relaxed);
+        let n = self.received.fetch_add(1, Ordering::Relaxed) + 1;
         *self.last_at.lock().unwrap_or_else(|p| p.into_inner()) = Some(now);
+        let ms = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map_or(0, |d| d.as_millis() as u64);
+        self.frames.send_replace((n, ms));
         // SDI comes off a clocked card, evenly: shown at once, no smoothing.
         let sdi = self.config.kind == InputKind::Sdi;
         let (period, frames) = (
@@ -498,6 +508,8 @@ impl Inputs {
                 no_info: AtomicBool::new(false),
                 relay: Mutex::new(None),
                 facts: Arc::new(Mutex::new(crate::probe::Facts::default())),
+                frames: tokio::sync::watch::channel((0, 0)).0,
+                jpegs: Mutex::new(VecDeque::new()),
             });
             let l = live.clone();
             let spawned = std::thread::Builder::new()
@@ -557,13 +569,48 @@ impl Inputs {
             .collect()
     }
 
+
+    /// The newest picture and its number (previews: not delayed by the smoothing).
     /// Pictures received so far (changes when a new one comes).
+    #[cfg(test)]
     pub fn received(&self, id: &str) -> Option<u64> {
         let map = self.live.read().unwrap_or_else(|p| p.into_inner());
         map.get(id).map(|l| l.received.load(Ordering::Relaxed))
     }
 
-    /// The newest picture and its number (previews: not delayed by the smoothing).
+    /// Wakes when an input has a new picture: (its number, when it came).
+    pub fn watch(&self, id: &str) -> Option<tokio::sync::watch::Receiver<(u64, u64)>> {
+        let map = self.live.read().unwrap_or_else(|p| p.into_inner());
+        map.get(id).map(|l| l.frames.subscribe())
+    }
+
+    /// The newest picture as JPEG at most `width` wide, made once for every
+    /// page asking for this width (None: no picture yet).
+    pub fn jpeg(&self, id: &str, width: u32) -> Option<(u64, axum::body::Bytes)> {
+        let l = self
+            .live
+            .read()
+            .unwrap_or_else(|p| p.into_inner())
+            .get(id)?
+            .clone();
+        let pic = l.picture.read().unwrap_or_else(|p| p.into_inner()).clone()?;
+        let n = l.received.load(Ordering::Relaxed);
+        {
+            let made = l.jpegs.lock().unwrap_or_else(|p| p.into_inner());
+            if let Some((_, _, b)) = made.iter().find(|(m, w, _)| *m == n && *w == width) {
+                return Some((n, b.clone()));
+            }
+        }
+        let b = axum::body::Bytes::from(strata_mv_render::jpeg(&pic, width, 78)?);
+        let mut made = l.jpegs.lock().unwrap_or_else(|p| p.into_inner());
+        made.retain(|(m, _, _)| *m + 2 >= n);
+        made.push_back((n, width, b.clone()));
+        while made.len() > 8 {
+            made.pop_front();
+        }
+        Some((n, b))
+    }
+
     pub fn latest(&self, id: &str) -> Option<(u64, Arc<Pixmap>)> {
         let map = self.live.read().unwrap_or_else(|p| p.into_inner());
         let l = map.get(id)?;
@@ -671,6 +718,16 @@ impl strata_mv_render::LiveInputs for Inputs {
             .unwrap_or_else(|p| p.into_inner())
             .get(id)?
             .clone();
+        // A source that stopped sending: no picture (its tile shows the
+        // bars), not its last one frozen.
+        let fresh = live
+            .last_at
+            .lock()
+            .unwrap_or_else(|p| p.into_inner())
+            .is_some_and(|t| t.elapsed() < Duration::from_secs(2));
+        if !fresh {
+            return None;
+        }
         live.current()
     }
 
@@ -1018,54 +1075,63 @@ pub async fn mjpeg(
     }
     let width = q.w.unwrap_or(1280).clamp(64, 3840);
     let hub = s.inputs.clone();
+    let Some(frames) = hub.watch(&id) else {
+        return not_found("input").into_response();
+    };
     let mut closing = s.closing.subscribe();
-    let stream = futures_util::stream::unfold((hub, id, None::<u64>), move |(hub, id, last)| {
-        let stop = *closing.borrow_and_update();
-        async move {
-            if stop {
-                return None;
-            }
-            // The next picture (one at least every 2 s, so the page knows it is alive).
-            let mut waited = 0;
-            loop {
-                let n = hub.received(&id)?;
-                if Some(n) != last || waited >= 2000 {
-                    // The newest picture: a preview is not delayed by the smoothing.
-                    let pic = hub.latest(&id).map(|(_, p)| p);
-                    let jpeg = match pic {
-                        Some(p) => tokio::task::spawn_blocking(move || {
-                            strata_mv_render::jpeg(&p, width, 78)
-                        })
-                        .await
-                        .ok()
-                        .flatten(),
-                        None => None,
-                    };
-                    let Some(jpeg) = jpeg else {
-                        tokio::time::sleep(std::time::Duration::from_millis(200)).await;
-                        waited += 200;
-                        if waited >= 2000 {
-                            waited = 0;
-                        }
-                        continue;
-                    };
-                    let mut part = format!(
-                        "--frame\r\nContent-Type: image/jpeg\r\nContent-Length: {}\r\n\r\n",
-                        jpeg.len()
-                    )
-                    .into_bytes();
-                    part.extend_from_slice(&jpeg);
-                    part.extend_from_slice(b"\r\n");
-                    return Some((
-                        Ok::<_, std::io::Error>(axum::body::Bytes::from(part)),
-                        (hub, id, Some(n)),
-                    ));
+    // Each picture as soon as it comes (woken by it, not polling), with
+    // when it came (X-Time, ms since 1970): the page plays them out evenly.
+    // One at least every 2 s, so the page knows the stream is alive.
+    let stream = futures_util::stream::unfold(
+        (hub, id, None::<u64>, frames),
+        move |(hub, id, last, mut frames)| {
+            let stop = *closing.borrow_and_update();
+            async move {
+                if stop {
+                    return None;
                 }
-                tokio::time::sleep(std::time::Duration::from_millis(20)).await;
-                waited += 20;
+                loop {
+                    let (n, at) = *frames.borrow_and_update();
+                    if Some(n) != last || last.is_none() {
+                        let (h2, id2) = (hub.clone(), id.clone());
+                        let made = tokio::task::spawn_blocking(move || h2.jpeg(&id2, width))
+                            .await
+                            .ok()
+                            .flatten();
+                        if let Some((n, jpeg)) = made {
+                            let mut part = format!(
+                                "--frame\r\nContent-Type: image/jpeg\r\nContent-Length: {}\r\nX-Frame: {n}\r\nX-Time: {at}\r\n\r\n",
+                                jpeg.len()
+                            )
+                            .into_bytes();
+                            part.extend_from_slice(&jpeg);
+                            part.extend_from_slice(b"\r\n");
+                            return Some((
+                                Ok::<_, std::io::Error>(axum::body::Bytes::from(part)),
+                                (hub, id, Some(n), frames),
+                            ));
+                        }
+                    }
+                    match tokio::time::timeout(std::time::Duration::from_secs(2), frames.changed()).await {
+                        // The input went away: the stream ends.
+                        Ok(Err(_)) => return None,
+                        Ok(Ok(())) => {}
+                        // Nothing new for 2 s: the same picture again.
+                        Err(_) if last.is_some() => {
+                            let (h2, id2) = (hub.clone(), id.clone());
+                            if let Some((_, jpeg)) = tokio::task::spawn_blocking(move || h2.jpeg(&id2, width)).await.ok().flatten() {
+                                let mut part = format!("--frame\r\nContent-Type: image/jpeg\r\nContent-Length: {}\r\n\r\n", jpeg.len()).into_bytes();
+                                part.extend_from_slice(&jpeg);
+                                part.extend_from_slice(b"\r\n");
+                                return Some((Ok(axum::body::Bytes::from(part)), (hub, id, last, frames)));
+                            }
+                        }
+                        Err(_) => {}
+                    }
+                }
             }
-        }
-    });
+        },
+    );
     (
         [
             (
@@ -1897,6 +1963,8 @@ mod tests {
             no_info: AtomicBool::new(false),
             relay: Mutex::new(None),
             facts: Arc::new(Mutex::new(crate::probe::Facts::default())),
+            frames: tokio::sync::watch::channel((0, 0)).0,
+            jpegs: Mutex::new(VecDeque::new()),
         }
     }
 

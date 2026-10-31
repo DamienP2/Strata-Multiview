@@ -114,12 +114,12 @@ La sortie HTML5 de la chaîne principale est sur `http://<serveur>:8090/output/m
 ### 4.1 L'espace de travail
 
 - **En haut** : le nom du multiview, annuler / rétablir, l'historique des versions et **Publier**.
-- **Au centre** : la **scène** (règles, repères, zones de sécurité, fond) avec la barre d'outils : **Disposition**, **Source** (une tuile), les formes et les textes, **+** (vu-mètres, loudness, timecode, état, journal des alarmes, bandeau, horloge, temps), **Affichage**, zoom. Les tuiles y montrent les entrées en direct, leur tally et leurs vu-mètres. Un clic sélectionne, un glisser déplace ; clic droit : **Entrée** (sur une tuile, des vu-mètres, un loudness ou un timecode : l'entrée à montrer, celles qui reçoivent marquées d'un point vert), copier, couper, coller, dupliquer, ordre, supprimer.
+- **Au centre** : la **scène** (règles, repères, zones de sécurité, fond) avec la barre d'outils : **Disposition**, **Source** (une tuile), les formes et les textes, **+** (vu-mètres, loudness, timecode, état, journal des alarmes, horloge, temps), **Affichage**, zoom. En haut, la **sortie** : le canal sur lequel le multiview s'affiche (ceux qui l'affichent, les libres, ceux qui en affichent un autre), et sa page web. Les tuiles y montrent les entrées en direct, leur tally et leurs vu-mètres. Un clic sélectionne, un glisser déplace ; clic droit : **Entrée** (sur une tuile, des vu-mètres, un loudness ou un timecode : l'entrée à montrer, celles qui reçoivent marquées d'un point vert), copier, couper, coller, dupliquer, ordre, supprimer.
 
 ![Clic droit sur une tuile : changer d'entrée](docs/screenshots/input-menu.png)
 - **À droite** : l'inspecteur de l'élément sélectionné ; sans sélection, le multiview lui-même (résolution, ses tuiles, ses réglages).
 
-Un multiview s'édite directement : une seule page, ni calques, ni timeline, ni animation. Ce qui bouge vient des sources (images, tally, vu-mètres, loudness, alarmes) et des widgets eux-mêmes (timecode, horloges, bandeau défilant).
+Un multiview s'édite directement : une seule page, ni calques, ni timeline, ni animation. Ce qui bouge vient des sources (images, tally, vu-mètres, loudness, alarmes) et des widgets eux-mêmes (timecode, horloges).
 
 ### 4.2 Exemples
 
@@ -171,8 +171,8 @@ Tous les widgets sont rendus à l'identique en HTML5 et par le moteur Rust (la g
 | **Loudness** | **Loudness** EBU R128 d'une entrée : intégré en grand, momentary, short-term, LRA, true peak ; courbe short-term des deux dernières minutes ; couleurs selon la cible (−23 LUFS ± 1, true peak −1 dBTP) |
 | **Temps** | **Timecode** : celui de la station (heure locale à la cadence de la chaîne) ou d'une entrée (NDI) ; Horloge (heure, date, fuseau, cadran analogique) ; Temps (chronomètre, compte à rebours) |
 | **Supervision** | **État** : PTP (verrouillage, domaine, écart), NTP, alarmes en cours ; **Journal des alarmes** : les défauts des entrées, les plus récents d'abord, avec leur début et leur fin |
-| **Labels et logos** | Texte, bandeau défilant (Ticker), Image (PNG, JPEG, SVG, GIF, vidéo en boucle) |
-| **Habillage** | rectangle, ellipse, polygone, plume, groupes, masques, dégradés |
+| **Labels et logos** | Texte, Image (PNG, JPEG, SVG, GIF, vidéo en boucle) |
+| **Habillage** | rectangle, ellipse, polygone, groupes, dégradés |
 
 La **publication** envoie les multiviews vers les sorties ; tant qu'un multiview n'est pas publié, les chaînes gardent la version précédente.
 
@@ -293,7 +293,7 @@ Le panneau de la chaîne choisit le **multiview à l'antenne** : il y passe auss
 
 | Destination | Détail |
 | --- | --- |
-| **HTML5** | lien `/output/<chaîne>` pour un écran, un navigateur, OBS ou vMix |
+| **HTML5** | lien `/output/<chaîne>` pour un écran, un navigateur, OBS ou vMix ; chaque entrée y arrive à la taille de sa tuile, décodée hors du fil principal et jouée régulièrement (une courte mise en mémoire absorbe l'irrégularité du réseau) |
 | **NDI** | nom de source, groupes ; runtime livré avec les installateurs |
 | **Stream** | SRT (appelant ou écoute), UDP (unicast, multicast), RTMP / RTMPS, HLS servi par Strata ; H.264 ou HEVC, débit, encodage matériel |
 | **SDI** | carte Blackmagic DeckLink, genlock |

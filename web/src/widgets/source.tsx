@@ -5,7 +5,8 @@
 // crates/strata-mv-core/src/wid/source.rs (keep in sync).
 import { MonitorPlay } from 'lucide-react';
 import { interpolateText, num } from '../engine/evaluate';
-import { alarmText, useInputs, useLiveFrame, useSignal, type Alarm, type InputInfo, type SignalView, type Tally } from '../engine/liveInputs';
+import { LiveCanvas } from '../engine/LiveCanvas';
+import { alarmText, streamWidth, useInputs, useLiveFrame, useLiveStream, useSignal, type Alarm, type InputInfo, type SignalView, type Tally } from '../engine/liveInputs';
 import { CRIT, loudColor, num1, stationTimecode, TARGET, WARN } from './broadcast';
 import type { Data } from '../engine/types';
 import { FontPick } from '../ui/FontPick';
@@ -291,7 +292,8 @@ const box = (a: Area, extra?: React.CSSProperties): React.CSSProperties => ({ po
 function SourceView({ layer, w, h, data, designer, lang, nowMs, tz, fps, seed }: { layer: Config & { name: string }; w: number; h: number; data: Data; designer?: boolean; lang?: string; nowMs: number; tz: string; fps: number; seed: number }) {
   const c = cfg(layer);
   const id = c.input.trim();
-  const live = useLiveFrame(id, designer ? 'preview' : 'stream');
+  // The Designer: a preview, ten a second. The outputs: every picture, played out evenly.
+  const live = useLiveFrame(designer ? id : '', 'preview');
   const inputs = useInputs();
   const signal = useSignal(id);
   const info = id ? inputs.find((i) => i.id === id) : undefined;
@@ -299,17 +301,26 @@ function SourceView({ layer, w, h, data, designer, lang, nowMs, tz, fps, seed }:
   const l = layout(c, w, h, levels.length);
   const tally: Tally = (info && signal.tally) || {};
   const v = l.video;
-  const picture = !!(id && live.url && live.size);
+  const dpr = typeof window === 'undefined' ? 1 : window.devicePixelRatio || 1;
+  const stream = useLiveStream(designer ? '' : id, v[2] > 0 ? streamWidth(v[2] * dpr) : 0);
+  const size = designer ? live.size : (stream?.size ?? null);
+  // Lost (no picture for 2 s): the bars, not its last picture frozen.
+  const lost = !!signal.alarms?.some((a) => a.kind === 'loss');
+  const picture = !!(id && size && !lost && (designer ? live.url : stream));
   let pic: React.ReactNode = null;
   if (picture && v[2] > 0 && v[3] > 0) {
-    const [iw, ih] = live.size!;
+    const [iw, ih] = size!;
     let [sx, sy] = [v[2] / iw, v[3] / ih];
     if (c.fit === 'contain') sx = sy = Math.min(sx, sy);
     else if (c.fit === 'cover') sx = sy = Math.max(sx, sy);
     const [pw, ph] = [iw * sx, ih * sy];
     pic = (
       <div style={box(v, { overflow: 'hidden' })}>
-        <img src={live.url!} alt="" draggable={false} style={{ position: 'absolute', left: (v[2] - pw) / 2, top: (v[3] - ph) / 2, width: pw, height: ph, maxWidth: 'none' }} />
+        {designer ? (
+          <img src={live.url!} alt="" draggable={false} style={{ position: 'absolute', left: (v[2] - pw) / 2, top: (v[3] - ph) / 2, width: pw, height: ph, maxWidth: 'none' }} />
+        ) : (
+          <LiveCanvas stream={stream!} style={{ position: 'absolute', left: (v[2] - pw) / 2, top: (v[3] - ph) / 2, width: pw, height: ph }} />
+        )}
       </div>
     );
   } else if (c.noSignalLook === 'bars' && v[2] > 0 && v[3] > 0) {
