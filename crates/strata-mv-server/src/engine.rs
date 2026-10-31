@@ -43,6 +43,7 @@ struct Opened {
 }
 
 fn open_outputs(
+    inputs: &Arc<crate::inputs::Inputs>,
     cfg: &ChannelConfig,
     outputs: &crate::config::OutputsConfig,
     size: (u32, u32),
@@ -104,7 +105,15 @@ fn open_outputs(
             off(&o.id);
             continue;
         }
-        let r = NdiSender::open(o.clone(), rate).map(|s| Box::new(s) as Box<dyn OutputSink>);
+        let audio = o.audio.trim().to_string();
+        let r = NdiSender::open(o.clone(), rate).map(|s| {
+            let s = if audio.is_empty() {
+                s
+            } else {
+                s.with_audio(crate::inputs::Inputs::sound_of(inputs.clone(), audio))
+            };
+            Box::new(s) as Box<dyn OutputSink>
+        });
         opened(&o.id, &o.name, "ndi", r);
     }
     for o in &outputs.streams {
@@ -391,6 +400,7 @@ fn start_pictures(state: &Shared, cfg: &ChannelConfig) -> Vec<Picture> {
     for (id, width, height, outputs) in cfg.pictures() {
         let hls = state.hls_dir().join(&cfg.id).join(id);
         let opened = open_outputs(
+            &state.inputs,
             cfg,
             outputs,
             (width, height),

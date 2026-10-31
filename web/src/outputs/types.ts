@@ -42,6 +42,8 @@ export interface NdiOutput {
   name: string;
   groups: string;
   quality?: NdiQuality;
+  /** The input whose sound goes with the picture ('' none). */
+  audio?: string;
 }
 
 export interface Html5Output {

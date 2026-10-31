@@ -1,0 +1,110 @@
+/* Listening on the web page output (output/Listen.tsx): shown while the mouse moves. */
+.lsn {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+}
+.lsn.shown {
+  cursor: pointer;
+}
+.lsn-tile {
+  position: absolute;
+  box-sizing: border-box;
+  border: 3px solid #2bd96b;
+  pointer-events: none;
+}
+.lsn-tile span {
+  position: absolute;
+  left: 8px;
+  top: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #2bd96b;
+  color: #04130a;
+  font: 700 12px Inter, system-ui, sans-serif;
+}
+.lsn-bar {
+  position: absolute;
+  right: 16px;
+  bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px 6px 6px;
+  border-radius: 999px;
+  background: rgba(12, 14, 20, 0.88);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #e8eaf2;
+  font: 500 13px Inter, system-ui, sans-serif;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45);
+  cursor: default;
+}
+.lsn-btn {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 0;
+  background: rgba(255, 255, 255, 0.1);
+  color: inherit;
+  cursor: pointer;
+}
+.lsn-btn.on {
+  background: #2bd96b;
+  color: #04130a;
+}
+.lsn-name {
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  max-width: 260px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.lsn-dim {
+  opacity: 0.6;
+}
+.lsn-bar input[type='range'] {
+  width: 110px;
+  accent-color: #2bd96b;
+}
+.lsn-menu {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 8px);
+  min-width: 220px;
+  max-height: 60vh;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  padding: 6px;
+  border-radius: 12px;
+  background: rgba(12, 14, 20, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+.lsn-menu button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.lsn-menu button:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+.lsn-menu button.on {
+  color: #2bd96b;
+}

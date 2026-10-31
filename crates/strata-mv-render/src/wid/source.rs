@@ -18,6 +18,10 @@ use super::fit::{fitted_path, rect, Fit as TextFit};
 use super::Draw;
 use crate::cache::Motion;
 
+/// Meters shown at rest when the input sends no audio (mirrors SILENT_CHANNELS
+/// of web/src/widgets/source.tsx): the tile looks the same with or without sound.
+const SILENT_CHANNELS: usize = 2;
+
 /// The meters' colours: green, yellow, red, and the track under them.
 pub(crate) const METER: [&str; 3] = ["#2bd96b", "#f2c12e", "#ff3b3b"];
 pub(crate) const TRACK: &str = "#000000a6";
@@ -160,7 +164,12 @@ pub(crate) fn draw(d: &mut Draw) -> bool {
     let picture = (!input.is_empty())
         .then(|| d.rd.live_picture(input))
         .flatten();
-    let channels = view.as_ref().map_or(0, |v| v.levels.len());
+    // The meters always show (two channels at rest without audio), the
+    // tile's layout the same with or without sound.
+    let channels = view
+        .as_ref()
+        .map_or(0, |v| v.levels.len())
+        .max(SILENT_CHANNELS);
     let l = layout(c, d.w, d.h, channels);
     let tally = view.as_ref().map(|v| v.tally.clone()).unwrap_or_default();
     let boxed = d.boxed();
@@ -263,10 +272,13 @@ pub(crate) fn draw(d: &mut Draw) -> bool {
     }
 
     // The meters.
-    if let Some(vw) = &view {
+    {
+        let none: &[strata_mv_core::signal::Level] = &[];
+        let levels = view.as_ref().map_or(none, |v| v.levels.as_slice());
         for (i, a) in l.meters.iter().enumerate() {
-            let Some(level) = vw.levels.get(i) else { break };
             fill_area(d, *a, 0.0, Draw::hex(TRACK), bm);
+            // A channel without sound: its track only.
+            let Some(level) = levels.get(i) else { continue };
             for (from, to, k) in segments(&c.vu, level) {
                 let y = a[1] + a[3] * (1.0 - to);
                 let hgt = a[3] * (to - from);

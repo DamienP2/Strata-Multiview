@@ -87,6 +87,8 @@ export const cfg = (c: Config): Full => ({ ...withDefaults(D, c), tally: withDef
 /** The meters' colours (green, yellow, red), their track, a lamp that is off (mirrors METER, TRACK, LAMP_OFF). */
 export const METER = ['#2bd96b', '#f2c12e', '#ff3b3b'];
 const TRACK = '#000000a6';
+/** Meters shown at rest when the input sends no audio (mirrors SILENT_CHANNELS of wid/source.rs). */
+const SILENT_CHANNELS = 2;
 const LAMP_OFF = '#ffffff26';
 
 type Area = [number, number, number, number];
@@ -298,7 +300,8 @@ function SourceView({ layer, w, h, data, designer, lang, nowMs, tz, fps, seed }:
   const signal = useSignal(id);
   const info = id ? inputs.find((i) => i.id === id) : undefined;
   const levels = info ? (signal.levels ?? []) : [];
-  const l = layout(c, w, h, levels.length);
+  // The meters always show (two channels at rest without audio): the tile looks the same with or without sound.
+  const l = layout(c, w, h, Math.max(levels.length, SILENT_CHANNELS));
   const tally: Tally = (info && signal.tally) || {};
   const v = l.video;
   const dpr = typeof window === 'undefined' ? 1 : window.devicePixelRatio || 1;
@@ -369,7 +372,8 @@ function SourceView({ layer, w, h, data, designer, lang, nowMs, tz, fps, seed }:
       )}
       {l.meters.map((a, i) => {
         const lv = levels[i];
-        if (!lv) return null;
+        // A channel without sound: its track only.
+        if (!lv) return <div key={i} style={box(a, { background: hex(TRACK) })} />;
         const [peak, , held] = lv;
         const k = scale(c.vu, held);
         const zone = held >= c.vu.red ? 2 : held >= c.vu.yellow ? 1 : 0;

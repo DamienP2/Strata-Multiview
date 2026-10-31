@@ -1203,6 +1203,16 @@ export function Outputs({ mode }: { mode: Mode }) {
                               ))}
                             </select>
                           </Field>
+                          <Field label={t('Sound')} hint={t('The sound of an input, sent with the picture (to listen to the multiview).')}>
+                            <select value={o.audio ?? ''} onChange={(e) => editDest<NdiOutput>((d) => void (d.audio = e.target.value || undefined))}>
+                              <option value="">{t('None')}</option>
+                              {(cfg.inputs ?? []).map((i) => (
+                                <option key={i.id} value={i.id}>
+                                  {i.name}
+                                </option>
+                              ))}
+                            </select>
+                          </Field>
                           {note(t('Seen by every NDI receiver on the network (TriCaster, vMix, OBS, Studio Monitor…).'))}
                         </>
                       );

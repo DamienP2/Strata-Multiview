@@ -129,7 +129,12 @@ pub struct Pull {
     pub input: Vec<String>,
     /// The variant of a master playlist (ffmpeg's program).
     pub program: Option<usize>,
+    /// Where ffmpeg sends the sound to be listened to (a local port).
+    pub pcm: Option<u16>,
 }
+
+/// The sound of an input as listened to: 16-bit stereo at 48 kHz.
+pub const PCM_RATE: u32 = 48_000;
 
 /// The ffmpeg commands of a stream input.
 #[derive(Debug, Default)]
@@ -295,6 +300,12 @@ impl InputConfig {
         if audio {
             a.extend(["-map".into(), format!("{from}:a:0")]);
             a.extend(["-af", METER_FILTER, "-f", "null", "-"].map(String::from));
+            // The sound, to be listened to (Strata reads it on that port).
+            if let Some(port) = pull.pcm {
+                a.extend(["-map".into(), format!("{from}:a:0")]);
+                a.extend(["-ac", "2", "-ar", "48000", "-f", "s16le"].map(String::from));
+                a.push(format!("tcp://127.0.0.1:{port}"));
+            }
         }
         Ok(StreamArgs { decode: a, relay })
     }
@@ -367,6 +378,9 @@ struct Live {
     /// The newest pictures as JPEG, by width: the web pages showing this
     /// input at the same size share them.
     jpegs: Mutex<VecDeque<(u64, u32, axum::body::Bytes)>>,
+    /// Its sound as it comes (`PCM_RATE`, stereo, 16-bit): to the people
+    /// listening to it.
+    audio: tokio::sync::broadcast::Sender<axum::body::Bytes>,
 }
 
 impl Live {
@@ -563,6 +577,7 @@ impl Inputs {
                 facts: Arc::new(Mutex::new(crate::probe::Facts::default())),
                 frames: tokio::sync::watch::channel((0, 0)).0,
                 jpegs: Mutex::new(VecDeque::new()),
+                audio: tokio::sync::broadcast::channel(64).0,
             });
             let l = live.clone();
             let spawned = std::thread::Builder::new()
@@ -627,6 +642,48 @@ impl Inputs {
     }
 
     /// Wakes when an input has a new picture: (its number, when it came).
+    /// The sound of input `id` for an output: each call, what came since
+    /// the one before (16-bit stereo at 48 kHz); followed again when the
+    /// input restarts. At most a second is kept.
+    pub fn sound_of(inputs: Arc<Inputs>, id: String) -> strata_mv_output::ndi::AudioSource {
+        let mut rx: Option<tokio::sync::broadcast::Receiver<axum::body::Bytes>> = None;
+        Box::new(move || {
+            use tokio::sync::broadcast::error::TryRecvError;
+            let mut out: Vec<i16> = Vec::new();
+            if rx.is_none() {
+                rx = inputs.audio(&id);
+            }
+            let Some(r) = rx.as_mut() else {
+                return out;
+            };
+            loop {
+                match r.try_recv() {
+                    Ok(b) => {
+                        out.extend(b.as_chunks::<2>().0.iter().map(|c| i16::from_le_bytes(*c)))
+                    }
+                    Err(TryRecvError::Lagged(_)) => continue,
+                    Err(TryRecvError::Empty) => break,
+                    Err(TryRecvError::Closed) => {
+                        rx = None;
+                        break;
+                    }
+                }
+            }
+            // Never more than a second behind.
+            let max = PCM_RATE as usize * 2;
+            if out.len() > max {
+                out.drain(..out.len() - max);
+            }
+            out
+        })
+    }
+
+    /// The sound of an input as it comes (see `Live::audio`).
+    pub fn audio(&self, id: &str) -> Option<tokio::sync::broadcast::Receiver<axum::body::Bytes>> {
+        let map = self.live.read().unwrap_or_else(|p| p.into_inner());
+        Some(map.get(id)?.audio.subscribe())
+    }
+
     pub fn watch(&self, id: &str) -> Option<tokio::sync::watch::Receiver<(u64, u64)>> {
         let map = self.live.read().unwrap_or_else(|p| p.into_inner());
         map.get(id).map(|l| l.frames.subscribe())
@@ -902,6 +959,44 @@ pub async fn list(
             })
             .collect(),
     ))
+}
+
+/// `GET /api/inputs/{id}/audio`: the sound of an input as it comes, to
+/// listen to it (16-bit stereo PCM at 48 kHz, little-endian, endless).
+pub async fn audio(
+    State(s): State<Shared>,
+    MaybeUser(me): MaybeUser,
+    UrlPath(id): UrlPath<String>,
+) -> Response {
+    if me.is_none() && !s.config.public_outputs {
+        return (StatusCode::UNAUTHORIZED, "sign in").into_response();
+    }
+    let Some(rx) = s.inputs.audio(&id) else {
+        return not_found("input").into_response();
+    };
+    let closing = s.closing.subscribe();
+    let stream = futures_util::stream::unfold((rx, closing), |(mut rx, closing)| async move {
+        loop {
+            if *closing.borrow() {
+                return None;
+            }
+            match rx.recv().await {
+                Ok(b) => return Some((Ok::<_, std::io::Error>(b), (rx, closing))),
+                // Too slow a listener: on from the newest.
+                Err(tokio::sync::broadcast::error::RecvError::Lagged(_)) => continue,
+                // The input went away (restarted): the page asks again.
+                Err(tokio::sync::broadcast::error::RecvError::Closed) => return None,
+            }
+        }
+    });
+    (
+        [
+            (header::CONTENT_TYPE, "audio/L16; rate=48000; channels=2"),
+            (header::CACHE_CONTROL, "no-store"),
+        ],
+        Body::from_stream(stream),
+    )
+        .into_response()
 }
 
 #[derive(Deserialize)]
@@ -1369,7 +1464,7 @@ fn run_stream(l: &Live) {
             tries = 0;
         }
         started = Some(Instant::now());
-        let pull = match prepare(l) {
+        let mut pull = match prepare(l) {
             Ok(p) => p,
             Err(e) => {
                 l.say(e);
@@ -1381,6 +1476,14 @@ fn run_stream(l: &Live) {
         };
         let audio = !l.no_audio.load(Ordering::Relaxed);
         let info = !l.no_info.load(Ordering::Relaxed);
+        // The sound to be listened to: ffmpeg sends it to this port.
+        let pcm = audio
+            .then(|| std::net::TcpListener::bind("127.0.0.1:0").ok())
+            .flatten();
+        pull.pcm = pcm
+            .as_ref()
+            .and_then(|t| t.local_addr().ok())
+            .map(|a| a.port());
         let args = c.ffmpeg_args_from(&pull, audio, info).unwrap_or_default();
         let log = Arc::new(Mutex::new(String::new()));
         // The relay first: the decoder reads what it writes.
@@ -1491,6 +1594,9 @@ fn run_stream(l: &Live) {
         *l.child.lock().unwrap_or_else(|p| p.into_inner()) = Some(child);
         *l.relay.lock().unwrap_or_else(|p| p.into_inner()) = relay;
         std::thread::scope(|scope| {
+            if let Some(listener) = pcm {
+                scope.spawn(move || read_pcm(l, listener));
+            }
             // The relayed bytes: read, then on to the decoder.
             if let (Some(mut from), Some(mut to)) = (from_relay, into_decoder) {
                 scope.spawn(move || {
@@ -1564,6 +1670,84 @@ fn run_stream(l: &Live) {
             return;
         }
     }
+}
+
+/// The sound ffmpeg sends to `listener`, to the people listening to it,
+/// until the decoder stops.
+fn read_pcm(l: &Live, listener: std::net::TcpListener) {
+    let _ = listener.set_nonblocking(true);
+    let gone = || l.stopped() || l.child.lock().unwrap_or_else(|p| p.into_inner()).is_none();
+    let mut conn = loop {
+        match listener.accept() {
+            Ok((c, _)) => break c,
+            Err(e) if e.kind() == std::io::ErrorKind::WouldBlock && !gone() => {
+                std::thread::sleep(Duration::from_millis(100));
+            }
+            Err(_) => return,
+        }
+    };
+    let _ = conn.set_nonblocking(false);
+    let _ = conn.set_read_timeout(Some(Duration::from_secs(1)));
+    // 20 ms at a time, whole stereo samples.
+    let mut buf = vec![0u8; 3840];
+    let mut have = 0;
+    loop {
+        match conn.read(&mut buf[have..]) {
+            Ok(0) => return,
+            Ok(n) => {
+                have += n;
+                let whole = have - have % 4;
+                if whole >= 1920 || have == buf.len() {
+                    if l.audio.receiver_count() > 0 {
+                        let _ = l
+                            .audio
+                            .send(axum::body::Bytes::copy_from_slice(&buf[..whole]));
+                    }
+                    buf.copy_within(whole..have, 0);
+                    have -= whole;
+                }
+            }
+            Err(e)
+                if matches!(
+                    e.kind(),
+                    std::io::ErrorKind::WouldBlock | std::io::ErrorKind::TimedOut
+                ) =>
+            {
+                if gone() {
+                    return;
+                }
+            }
+            Err(_) => return,
+        }
+    }
+}
+
+/// Sound of NDI (float planes at its rate) as listened to: stereo, 16-bit,
+/// at `PCM_RATE` (the first two channels; one is heard on both sides).
+fn ndi_pcm(a: &strata_mv_output::ndi::ReceivedAudio) -> Vec<u8> {
+    let (left, right) = (a.channel(0), a.channel(if a.channels > 1 { 1 } else { 0 }));
+    let n = left.len().min(right.len());
+    if n == 0 || a.sample_rate == 0 {
+        return Vec::new();
+    }
+    let step = a.sample_rate as f64 / PCM_RATE as f64;
+    let out_n = (n as f64 / step).floor() as usize;
+    let at = |s: &[f32], x: f64| {
+        let i = x.floor() as usize;
+        let k = (x - i as f64) as f32;
+        let a = s.get(i).copied().unwrap_or(0.0);
+        let b = s.get(i + 1).copied().unwrap_or(a);
+        a + (b - a) * k
+    };
+    let mut out = Vec::with_capacity(out_n * 4);
+    for j in 0..out_n {
+        let x = j as f64 * step;
+        for v in [at(left, x), at(right, x)] {
+            let s = (v.clamp(-1.0, 1.0) * 32767.0) as i16;
+            out.extend_from_slice(&s.to_le_bytes());
+        }
+    }
+    out
 }
 
 /// Adds a line to the log of an input (its last few kilobytes).
@@ -1729,6 +1913,13 @@ fn run_ndi(l: &Live) {
                 },
                 |a| {
                     sound_of = Some((a.sample_rate, a.channels, a.samples));
+                    // To the people listening to it.
+                    if l.audio.receiver_count() > 0 {
+                        let pcm = ndi_pcm(&a);
+                        if !pcm.is_empty() {
+                            let _ = l.audio.send(axum::body::Bytes::from(pcm));
+                        }
+                    }
                     let levels: Vec<_> = (0..a.channels)
                         .map(|c| strata_mv_core::signal::Level::of(a.channel(c).iter().copied()))
                         .collect();
@@ -2117,6 +2308,7 @@ mod tests {
             facts: Arc::new(Mutex::new(crate::probe::Facts::default())),
             frames: tokio::sync::watch::channel((0, 0)).0,
             jpegs: Mutex::new(VecDeque::new()),
+            audio: tokio::sync::broadcast::channel(64).0,
         }
     }
 

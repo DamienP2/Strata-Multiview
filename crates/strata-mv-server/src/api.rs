@@ -54,6 +54,7 @@ pub fn router() -> Router<Shared> {
             get(crate::inputs::snapshot),
         )
         .route("/api/inputs/{id}/live.mjpeg", get(crate::inputs::mjpeg))
+        .route("/api/inputs/{id}/audio", get(crate::inputs::audio))
         .route("/api/inputs/{id}/analysis", get(crate::inputs::analysis))
         .route("/api/users", get(list_users).post(create_user))
         .route("/api/users/{id}", put(update_user).delete(delete_user))

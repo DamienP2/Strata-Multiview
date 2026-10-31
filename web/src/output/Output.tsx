@@ -3,6 +3,7 @@ import { Viewport } from '../engine/Scene';
 import { useApp } from '../store';
 import { Program } from './Program';
 import { OutputDebug } from './OutputDebug';
+import { ListenControls } from './Listen';
 
 /**
  * HTML5 output of one channel picture: a transparent, chrome-less page meant
@@ -58,6 +59,8 @@ export function Output({ channelId: page }: { channelId: string }) {
         {/* Filling the frame, as on the other outputs. */}
         {slate && <img src={slate} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />}
       </Viewport>
+      {/* A click on a tile: its sound (controls while the mouse moves). */}
+      {project && <ListenControls project={project} live={live[channelId]} width={picture.width} height={picture.height} scale={scale} />}
       {debug && <OutputDebug fps={channel.frameRate.num / channel.frameRate.den || 25} />}
     </div>
   );

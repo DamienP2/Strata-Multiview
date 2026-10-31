@@ -33,7 +33,14 @@ pub struct NdiConfig {
     /// The picture sent: the channel's, or smaller (less bandwidth).
     #[serde(default)]
     pub quality: NdiQuality,
+    /// The input whose sound goes with the picture ("" none).
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub audio: String,
 }
+
+/// The sound sent with an NDI output's picture: what came since the last
+/// call, 16-bit stereo at 48 kHz, interleaved (the server's inputs).
+pub type AudioSource = Box<dyn FnMut() -> Vec<i16> + Send>;
 
 /// The size of an NDI output's picture: NDI's bandwidth follows it.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
@@ -126,6 +133,8 @@ struct Lib {
     create: unsafe extern "C" fn(*const SendCreate) -> Instance,
     send: unsafe extern "C" fn(Instance, *const VideoFrameV2),
     destroy: unsafe extern "C" fn(Instance),
+    /// Sends sound (absent from very old runtimes).
+    send_audio: Option<unsafe extern "C" fn(Instance, *const AudioFrameV2)>,
 }
 
 // The NDI functions are thread-safe; the library handle is only read.
@@ -251,6 +260,7 @@ fn load() -> Result<Lib, String> {
             let destroy = *lib
                 .get(b"NDIlib_send_destroy\0")
                 .map_err(|e| e.to_string())?;
+            let send_audio = lib.get(b"NDIlib_send_send_audio_v2\0").ok().map(|f| *f);
             tracing::info!(path, "NDI runtime loaded");
             *LOADED.lock().unwrap_or_else(|e| e.into_inner()) = Some(path.clone());
             return Ok(Lib {
@@ -258,6 +268,7 @@ fn load() -> Result<Lib, String> {
                 create,
                 send,
                 destroy,
+                send_audio,
             });
         }
     }
@@ -304,6 +315,9 @@ pub struct NdiSender {
     buf: Arc<Vec<u8>>,
     /// The picture `buf` was made from (the same again: not converted again).
     last: Option<Arc<Frame>>,
+    /// The sound sent with the picture.
+    audio: Option<AudioSource>,
+    planes: Vec<f32>,
 }
 
 // The instance is used from the render thread that owns the sender only.
@@ -345,7 +359,50 @@ impl NdiSender {
             rate: (rate.0 as i32, rate.1 as i32),
             buf: Arc::new(Vec::new()),
             last: None,
+            audio: None,
+            planes: Vec::new(),
         })
+    }
+
+    /// The sound sent with the picture from now on.
+    pub fn with_audio(mut self, source: AudioSource) -> Self {
+        self.audio = Some(source);
+        self
+    }
+
+    /// Sends the sound that came since the last picture.
+    fn send_sound(&mut self) {
+        let (Some(source), Some(send)) = (self.audio.as_mut(), self.lib.send_audio) else {
+            return;
+        };
+        let pcm = source();
+        let n = pcm.len() / 2;
+        if n == 0 {
+            return;
+        }
+        // NDI takes planes of floats: the left channel, then the right.
+        self.planes.clear();
+        self.planes.reserve(n * 2);
+        for side in 0..2 {
+            self.planes.extend(
+                pcm.iter()
+                    .skip(side)
+                    .step_by(2)
+                    .map(|v| *v as f32 / 32768.0),
+            );
+        }
+        let frame = AudioFrameV2 {
+            sample_rate: 48_000,
+            no_channels: 2,
+            no_samples: n as i32,
+            timecode: TIMECODE_SYNTHESIZE,
+            p_data: self.planes.as_ptr(),
+            channel_stride_in_bytes: (n * 4) as i32,
+            p_metadata: std::ptr::null(),
+            timestamp: 0,
+        };
+        // SAFETY: synchronous send: NDI has finished with the planes on return.
+        unsafe { send(self.instance, &frame) };
     }
 }
 
@@ -463,6 +520,7 @@ impl OutputSink for NdiSender {
         };
         // SAFETY: synchronous send: NDI has finished with the buffer on return.
         unsafe { (self.lib.send)(self.instance, &video) };
+        self.send_sound();
         Ok(())
     }
 }

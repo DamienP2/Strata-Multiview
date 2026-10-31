@@ -256,6 +256,8 @@ L'audio de chaque entrée est mesuré à la réception, canal par canal : **crê
 | **NDI** | l'audio de la source, tous ses canaux |
 | **SDI** (DeckLink) | l'audio embarqué : 16, 8 ou 2 canaux selon la carte, 48 kHz |
 
+**Écouter un multiview** : sur la page web d'une sortie, un clic sur une tuile fait entendre le son de son entrée (encore un clic : silence) ; la barre d'écoute (source entendue, volume, liste des sources) n'apparaît que lorsque la souris bouge. Une sortie **NDI** peut aussi emporter le son d'une entrée avec l'image (Diffusion › sortie NDI › Son). Le serveur tient le son de chaque entrée en PCM 16 bits stéréo 48 kHz (`GET /api/inputs/{id}/audio`). Les tuiles Source montrent toujours leurs vu-mètres (au repos sans son).
+
 Les niveaux arrivent au moteur et aux navigateurs (une douzaine de fois par seconde) avec le tally. Une entrée sans audio depuis trois secondes n'a plus de vu-mètres.
 
 ### 7.2 Loudness et timecode
