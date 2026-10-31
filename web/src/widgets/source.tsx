@@ -63,12 +63,14 @@ export interface Config {
   vu?: Partial<Vu>;
   badge?: boolean;
   noSignal?: string;
+  /** No picture: SMPTE bars and the bouncing card, or the background and the words. */
+  noSignalLook?: 'bars' | 'plain';
 }
 
 const D_TALLY: TallyLook = { border: true, program: '#e5212b', preview: '#17b14a', aux: '#f2b705', off: '#262a33' };
 const D_UMD: Umd = { position: 'bottom', size: 11, outside: false, text: '', font: 'Inter', weight: 600, align: 'center', color: '#ffffff', background: '#000000b3', lamps: true };
 const D_VU: Vu = { position: 'right', width: 6, gap: 2, margin: 6, min: -60, yellow: -18, red: -9, hold: true, max: 0 };
-const D = { input: '', fit: 'contain' as Fit, background: '#0b0d12', border: 4, badge: false, noSignal: '' };
+const D = { input: '', fit: 'contain' as Fit, background: '#0b0d12', border: 4, badge: false, noSignal: '', noSignalLook: 'bars' as 'bars' | 'plain' };
 
 export type Full = typeof D & { tally: TallyLook; umd: Umd; vu: Vu };
 
@@ -187,9 +189,65 @@ export function formatName(i: InputInfo | undefined): string {
   return `${i.height}${i.interlaced ? 'i' : 'p'}${rate}`;
 }
 
+/** SMPTE colour bars (mirrors wid::source::BARS): x, y, width, height in fractions of the picture, colour. */
+const [S, T, M, B, P] = [1 / 7, 2 / 3, 0.75, 5 / 28, 1 / 21];
+export const BARS: [number, number, number, number, string][] = [
+  [0, 0, S, T, '#c0c0c0'],
+  [S, 0, S, T, '#c0c000'],
+  [2 * S, 0, S, T, '#00c0c0'],
+  [3 * S, 0, S, T, '#00c000'],
+  [4 * S, 0, S, T, '#c000c0'],
+  [5 * S, 0, S, T, '#c00000'],
+  [6 * S, 0, S, T, '#0000c0'],
+  [0, T, S, M - T, '#0000c0'],
+  [S, T, S, M - T, '#131313'],
+  [2 * S, T, S, M - T, '#c000c0'],
+  [3 * S, T, S, M - T, '#131313'],
+  [4 * S, T, S, M - T, '#00c0c0'],
+  [5 * S, T, S, M - T, '#131313'],
+  [6 * S, T, S, M - T, '#c0c0c0'],
+  [0, M, B, 1 - M, '#00214c'],
+  [B, M, B, 1 - M, '#ffffff'],
+  [2 * B, M, B, 1 - M, '#32006a'],
+  [3 * B, M, B + P, 1 - M, '#131313'],
+  [4 * B + P, M, P, 1 - M, '#090909'],
+  [4 * B + 2 * P, M, P, 1 - M, '#1d1d1d'],
+  [6 * S, M, S, 1 - M, '#131313'],
+];
+
+/** Width over height of the F AudioVisuel signature, quill included (mirrors LOGO_RATIO); same file as crates/strata-mv-render/src/slate_signature.svg. */
+const LOGO_RATIO = 910 / 135.2;
+const SIGNATURE = new URL('./signature.svg', import.meta.url).href;
+
+const bounce = (travel: number, range: number) => {
+  if (range <= 0) return 0;
+  const p = (((travel / range) % 2) + 2) % 2;
+  return range * (p > 1 ? 2 - p : p);
+};
+
+/** The card bouncing over the bars at `nowMs` (mirrors no_signal_card). */
+export function noSignalCard(v: Area, nowMs: number): { plate: Area; logo: Area; text: Area; radius: number } | null {
+  const [vx, vy, vw, vh] = v;
+  let lh = clamp(vh * 0.1, 8, 110);
+  let lw = lh * LOGO_RATIO;
+  if (lw > vw * 0.55) {
+    const k = (vw * 0.55) / lw;
+    lw *= k;
+    lh *= k;
+  }
+  const pad = Math.round(lh * 0.4);
+  const [gap, th] = [lh * 0.25, lh * 0.55];
+  const [pw, ph] = [lw + 2 * pad, pad + lh + gap + th + pad];
+  if (lh < 6 || pw > vw || ph > vh) return null;
+  const t = nowMs / 1000;
+  const x = vx + bounce(t * vw * 0.1, vw - pw);
+  const y = vy + bounce(t * vh * 0.13, vh - ph);
+  return { plate: [x, y, pw, ph], logo: [x + pad, y + pad, lw, lh], text: [x + pad, y + pad + lh + gap, lw, th], radius: pad * 0.6 };
+}
+
 const box = (a: Area, extra?: React.CSSProperties): React.CSSProperties => ({ position: 'absolute', left: a[0], top: a[1], width: a[2], height: a[3], ...extra });
 
-function SourceView({ layer, w, h, data, designer, lang }: { layer: Config & { name: string }; w: number; h: number; data: Data; designer?: boolean; lang?: string }) {
+function SourceView({ layer, w, h, data, designer, lang, nowMs }: { layer: Config & { name: string }; w: number; h: number; data: Data; designer?: boolean; lang?: string; nowMs: number }) {
   const c = cfg(layer);
   const id = c.input.trim();
   const live = useLiveFrame(id, designer ? 'preview' : 'stream');
@@ -212,6 +270,23 @@ function SourceView({ layer, w, h, data, designer, lang }: { layer: Config & { n
       <div style={box(v, { overflow: 'hidden' })}>
         <img src={live.url!} alt="" draggable={false} style={{ position: 'absolute', left: (v[2] - pw) / 2, top: (v[3] - ph) / 2, width: pw, height: ph, maxWidth: 'none' }} />
       </div>
+    );
+  } else if (c.noSignalLook === 'bars' && v[2] > 0 && v[3] > 0) {
+    const s = c.noSignal.trim() || tl(lang, 'NO SIGNAL');
+    const card = noSignalCard(v, nowMs);
+    pic = (
+      <>
+        {BARS.map(([x, y, bw, bh, col], i) => (
+          <div key={i} style={box([v[0] + x * v[2], v[1] + y * v[3], bw * v[2], bh * v[3]], { background: col })} />
+        ))}
+        {card && (
+          <>
+            <div style={box(card.plate, { background: hex('#000000c7'), borderRadius: card.radius })} />
+            <img src={SIGNATURE} alt="" draggable={false} style={box(card.logo, { maxWidth: 'none' })} />
+            <FitLine text={s} size={card.text[3] * 0.82} weight={700} ls={card.text[3] * 0.82 * 0.06} align="center" box={card.text} color="#ffffff" fit={{ overflow: 'shrink', minSize: card.text[3] * 0.41, minSqueeze: 70 }} />
+          </>
+        )}
+      </>
     );
   } else {
     const s = c.noSignal.trim() || tl(lang, 'NO SIGNAL');
@@ -298,7 +373,7 @@ export default defineWidget({
   ownsLook: true,
   // Its picture, tally and meters change by themselves.
   live: () => true,
-  Render: ({ layer, w, h, data, designer, lang }) => <SourceView layer={layer as Config & { name: string }} w={w} h={h} data={data} designer={designer} lang={lang} />,
+  Render: ({ layer, w, h, data, designer, lang, time }) => <SourceView layer={layer as Config & { name: string }} w={w} h={h} data={data} designer={designer} lang={lang} nowMs={time.nowMs} />,
   Inspector: ({ layer, set }) => {
     const c = cfg(layer as Config);
     return (
@@ -317,7 +392,16 @@ export default defineWidget({
           />
           <ColorPick label={t('Background')} value={c.background} onChange={(v) => set('background', v)} />
           <Toggle label={t('Format')} text={t('The signal format, top left')} value={c.badge} onChange={(v) => set('badge', v)} />
-          <Text label={t('No signal')} value={c.noSignal} placeholder={t('NO SIGNAL')} onChange={(v) => set('noSignal', v)} />
+          <Seg
+            label={t('No signal')}
+            value={c.noSignalLook}
+            onChange={(v) => set('noSignalLook', v)}
+            options={[
+              ['bars', t('Colour bars')],
+              ['plain', t('Plain')],
+            ]}
+          />
+          <Text label={t('Words')} value={c.noSignal} placeholder={t('NO SIGNAL')} onChange={(v) => set('noSignal', v)} />
         </Section>
         <Section id="source-tally" title={t('Tally')}>
           <Num label={t('Frame')} value={c.border} min={0} max={60} unit=" px" onChange={(v) => set('border', v)} />

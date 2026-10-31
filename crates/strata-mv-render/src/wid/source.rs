@@ -1,12 +1,17 @@
 //! Source: a tile of a multiview (same picture as `web/src/widgets/source.tsx`;
 //! settings and geometry in `strata-mv-core/src/wid/source.rs`).
 
+use std::cell::RefCell;
+use std::collections::HashMap;
+use std::sync::Arc;
 use strata_mv_core::signal::SourceView;
+
 use strata_mv_core::wid::source::{
-    border_color, layout, no_signal_text, scale, segments, umd_text, Area, Config, Fit, UmdAlign,
+    border_color, layout, no_signal_card, no_signal_text, scale, segments, umd_text, Area, Config,
+    Fit, NoSignalLook, UmdAlign, BARS,
 };
 use strata_mv_core::{Color, LayerKind, TextAlign, VerticalAlign};
-use tiny_skia::{FillRule, Mask, PixmapPaint, Transform};
+use tiny_skia::{FillRule, Mask, Pixmap, PixmapPaint, Transform};
 
 use super::fit::{fitted_path, rect, Fit as TextFit};
 use super::Draw;
@@ -25,6 +30,82 @@ pub(crate) fn motion(_d: &mut Draw) -> Option<Motion> {
 
 fn fill_area(d: &mut Draw, a: Area, r: f32, c: Color, m: Option<&Mask>) {
     rect(d, a[0], a[1], a[2], a[3], r, c, m);
+}
+
+/// The F AudioVisuel signature drawn `w` × `h` pixels, kept: the card has
+/// the same size frame after frame.
+fn signature(w: u32, h: u32) -> Option<Arc<Pixmap>> {
+    thread_local! {
+        static DRAWN: RefCell<HashMap<(u32, u32), Arc<Pixmap>>> = RefCell::new(HashMap::new());
+    }
+    if let Some(p) = DRAWN.with(|c| c.borrow().get(&(w, h)).cloned()) {
+        return Some(p);
+    }
+    const SVG: &str = include_str!("../slate_signature.svg");
+    let tree = resvg::usvg::Tree::from_str(SVG, &resvg::usvg::Options::default()).ok()?;
+    let mut pm = Pixmap::new(w.max(1), h.max(1))?;
+    resvg::render(
+        &tree,
+        // The tree has its view box applied: 910 × 135.2, the quill at the top.
+        Transform::from_scale(w as f32 / 910.0, h as f32 / 135.2),
+        &mut pm.as_mut(),
+    );
+    let pm = Arc::new(pm);
+    DRAWN.with(|c| {
+        let mut c = c.borrow_mut();
+        if c.len() > 32 {
+            c.clear();
+        }
+        c.insert((w, h), pm.clone());
+    });
+    Some(pm)
+}
+
+/// No picture: the SMPTE bars, the F AudioVisuel card bouncing over them.
+fn bars(d: &mut Draw, c: &Config, v: Area, m: Option<&Mask>) {
+    for (x, y, w, h, col) in BARS {
+        let a = [v[0] + x * v[2], v[1] + y * v[3], w * v[2], h * v[3]];
+        fill_area(d, a, 0.0, Draw::hex(col), m);
+    }
+    let Some(card) = no_signal_card(v, d.time.now_ms) else {
+        return;
+    };
+    fill_area(d, card.plate, card.radius, Draw::hex("#000000c7"), m);
+    // Drawn at the output's scale, not stretched.
+    let k = (d.tf.sx * d.tf.sx + d.tf.ky * d.tf.ky).sqrt().max(0.01);
+    let [lx, ly, lw, lh] = card.logo;
+    let (pw, ph) = ((lw * k).round() as u32, (lh * k).round() as u32);
+    if let Some(logo) = signature(pw, ph) {
+        let tf =
+            d.tf.pre_translate(lx, ly)
+                .pre_scale(lw / pw.max(1) as f32, lh / ph.max(1) as f32);
+        let paint = PixmapPaint {
+            opacity: d.opacity,
+            quality: tiny_skia::FilterQuality::Bilinear,
+            ..Default::default()
+        };
+        d.pm.draw_pixmap(0, 0, logo.as_ref().as_ref(), &paint, tf, m);
+    }
+    let s = no_signal_text(c, d.lang);
+    let t = card.text;
+    let size = t[3] * 0.82;
+    if let Some(f) = d.font("Inter", 700) {
+        let (p, _) = fitted_path(
+            &f,
+            &s,
+            size,
+            size * 0.06,
+            TextAlign::Center,
+            (t[0], t[1], t[2].max(1.0), t[3]),
+            Some(TextFit {
+                min_size: size * 0.5,
+                min_squeeze: 70.0,
+            }),
+        );
+        if let Some(p) = p {
+            d.fill(&p, Draw::hex("#ffffff"), FillRule::Winding, m);
+        }
+    }
 }
 
 pub(crate) fn draw(d: &mut Draw) -> bool {
@@ -84,6 +165,9 @@ pub(crate) fn draw(d: &mut Draw) -> bool {
                 };
                 d.pm.draw_pixmap(0, 0, img.as_ref().as_ref(), &paint, tf, Some(&m));
             }
+        }
+        _ if c.no_signal_look == NoSignalLook::Bars && v[2] > 0.0 && v[3] > 0.0 => {
+            bars(d, c, v, bm);
         }
         _ => {
             // No picture: the words, in the middle of the picture's area.

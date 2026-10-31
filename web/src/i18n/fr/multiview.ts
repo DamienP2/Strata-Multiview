@@ -151,4 +151,6 @@ export const multiview: Record<string, string> = {
   '{n} multiviews': '{n} multiviews',
   'Permanent keys for tally systems, automation and scripts.': 'Clés permanentes pour les systèmes de tally, l’automatisation et les scripts.',
   'For automation (tally systems, scripts): send': 'Pour l’automatisation (systèmes de tally, scripts) : envoyez',
+  'Colour bars': 'Mire',
+  Plain: 'Simple',
 };

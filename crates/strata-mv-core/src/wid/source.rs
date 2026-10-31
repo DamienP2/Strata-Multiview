@@ -50,6 +50,17 @@ pub enum VuPosition {
     Off,
 }
 
+/// What the tile shows while its input has no picture.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub enum NoSignalLook {
+    /// SMPTE colour bars, the F AudioVisuel card bouncing over them.
+    #[default]
+    Bars,
+    /// The background and the words only.
+    Plain,
+}
+
 /// The colours of the tally.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(default, rename_all = "camelCase")]
@@ -167,6 +178,7 @@ pub struct Config {
     pub badge: bool,
     /// Shown without a picture ("" = « No signal » in the project's language).
     pub no_signal: String,
+    pub no_signal_look: NoSignalLook,
 }
 
 impl Default for Config {
@@ -181,6 +193,7 @@ impl Default for Config {
             vu: Vu::default(),
             badge: false,
             no_signal: String::new(),
+            no_signal_look: NoSignalLook::Bars,
         }
     }
 }
@@ -319,6 +332,92 @@ pub fn no_signal_text(c: &Config, lang: &str) -> String {
     }
 }
 
+/// SMPTE colour bars (EG 1-1990): (x, y, width, height) as fractions of the
+/// picture's area, and the colour. 75 % bars, the reverse blue row, then
+/// −I, white, +Q, black and the PLUGE.
+pub const BARS: [(f32, f32, f32, f32, &str); 21] = {
+    const S: f32 = 1.0 / 7.0;
+    const T: f32 = 2.0 / 3.0;
+    const M: f32 = 0.75;
+    const B: f32 = 5.0 / 28.0;
+    const P: f32 = 1.0 / 21.0;
+    [
+        (0.0, 0.0, S, T, "#c0c0c0"),
+        (S, 0.0, S, T, "#c0c000"),
+        (2.0 * S, 0.0, S, T, "#00c0c0"),
+        (3.0 * S, 0.0, S, T, "#00c000"),
+        (4.0 * S, 0.0, S, T, "#c000c0"),
+        (5.0 * S, 0.0, S, T, "#c00000"),
+        (6.0 * S, 0.0, S, T, "#0000c0"),
+        (0.0, T, S, M - T, "#0000c0"),
+        (S, T, S, M - T, "#131313"),
+        (2.0 * S, T, S, M - T, "#c000c0"),
+        (3.0 * S, T, S, M - T, "#131313"),
+        (4.0 * S, T, S, M - T, "#00c0c0"),
+        (5.0 * S, T, S, M - T, "#131313"),
+        (6.0 * S, T, S, M - T, "#c0c0c0"),
+        (0.0, M, B, 1.0 - M, "#00214c"),
+        (B, M, B, 1.0 - M, "#ffffff"),
+        (2.0 * B, M, B, 1.0 - M, "#32006a"),
+        (3.0 * B, M, B + P, 1.0 - M, "#131313"),
+        (4.0 * B + P, M, P, 1.0 - M, "#090909"),
+        (4.0 * B + 2.0 * P, M, P, 1.0 - M, "#1d1d1d"),
+        (6.0 * S, M, S, 1.0 - M, "#131313"),
+    ]
+};
+
+/// Width over height of the F AudioVisuel signature, its quill included
+/// (`strata-mv-render/src/slate_signature.svg`, `web/src/widgets/signature.svg`).
+pub const LOGO_RATIO: f32 = 910.0 / 135.2;
+
+/// The card bouncing over the bars: its plate, the logo, the words under it.
+#[derive(Debug, Clone, PartialEq)]
+pub struct Card {
+    pub plate: Area,
+    pub logo: Area,
+    pub text: Area,
+    /// Corner radius of the plate.
+    pub radius: f32,
+}
+
+/// Where along a back-and-forth run of `range` a point is after `travel`.
+fn bounce(travel: f64, range: f64) -> f64 {
+    if range <= 0.0 {
+        return 0.0;
+    }
+    let p = (travel / range).rem_euclid(2.0);
+    range * if p > 1.0 { 2.0 - p } else { p }
+}
+
+/// The card in the picture's area `video` at `now_ms` (the server's clock):
+/// it crosses the picture at a tenth of its width a second, a little faster
+/// down, and bounces off the edges. None when the picture is too small.
+pub fn no_signal_card(video: Area, now_ms: i64) -> Option<Card> {
+    let [vx, vy, vw, vh] = video;
+    let mut lh = (vh * 0.1).clamp(8.0, 110.0);
+    let mut lw = lh * LOGO_RATIO;
+    if lw > vw * 0.55 {
+        let k = vw * 0.55 / lw;
+        lw *= k;
+        lh *= k;
+    }
+    let pad = (lh * 0.4).round();
+    let (gap, th) = (lh * 0.25, lh * 0.55);
+    let (pw, ph) = (lw + 2.0 * pad, pad + lh + gap + th + pad);
+    if lh < 6.0 || pw > vw || ph > vh {
+        return None;
+    }
+    let t = now_ms as f64 / 1000.0;
+    let x = vx + bounce(t * f64::from(vw) * 0.1, f64::from(vw - pw)) as f32;
+    let y = vy + bounce(t * f64::from(vh) * 0.13, f64::from(vh - ph)) as f32;
+    Some(Card {
+        plate: [x, y, pw, ph],
+        logo: [x + pad, y + pad, lw, lh],
+        text: [x + pad, y + pad + lh + gap, lw, th],
+        radius: pad * 0.6,
+    })
+}
+
 /// A level on the scale: 0 at `min`, 1 at full scale.
 pub fn scale(c: &Vu, db: f32) -> f32 {
     let min = c.min.min(-1.0);
@@ -367,6 +466,35 @@ mod tests {
         c.umd.position = UmdPosition::Top;
         let l = layout(&c, 640.0, 360.0, 0);
         assert!(l.video[1] > l.inner[1] && l.meters.is_empty());
+    }
+
+    #[test]
+    fn the_bars_fill_the_picture_and_the_card_stays_in_it() {
+        // Each row of bars covers the whole width, the rows the whole height.
+        for (y, h) in [
+            (0.0, 2.0 / 3.0),
+            (2.0 / 3.0, 0.75 - 2.0 / 3.0),
+            (0.75, 0.25),
+        ] {
+            let w: f32 = BARS
+                .iter()
+                .filter(|b| (b.1 - y).abs() < 1e-6 && (b.3 - h).abs() < 1e-6)
+                .map(|b| b.2)
+                .sum();
+            assert!((w - 1.0).abs() < 1e-5, "row at {y}: {w}");
+        }
+        let video = [4.0, 4.0, 632.0, 352.0];
+        let mut seen = std::collections::HashSet::new();
+        for i in 0..400 {
+            let c = no_signal_card(video, 1_700_000_000_000 + i * 97).unwrap();
+            let [x, y, w, h] = c.plate;
+            assert!(x >= 4.0 - 1e-3 && y >= 4.0 - 1e-3);
+            assert!(x + w <= 636.0 + 1e-3 && y + h <= 356.0 + 1e-3);
+            seen.insert((x as i32, y as i32));
+        }
+        // It moves.
+        assert!(seen.len() > 100);
+        assert!(no_signal_card([0.0, 0.0, 30.0, 20.0], 0).is_none());
     }
 
     #[test]
