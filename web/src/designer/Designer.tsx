@@ -13,13 +13,12 @@ import { Stage, StageZoom } from './Stage';
 import { InsertTools } from './Insert';
 import { copyLayers, cutLayers, pasteClipboard } from './clipboard';
 import { useGuidesView } from './Guides';
-import { DisplayMenu, type StageBackground } from './DisplayMenu';
+import { DisplayMenu } from './DisplayMenu';
 import { ProjectHistory } from './MultiviewSettings';
 import { OutputSelect } from './OutputSelect';
 import { Splitter, useLayout } from '../ui/Splitter';
 import { designTemplates } from '../engine/drafts';
 import { t } from '../i18n';
-import { useDisplayPref } from '../displayPrefs';
 
 /*
  * The Designer edits one multiview: a project is a multiview, its page (the
@@ -148,9 +147,6 @@ export const Designer = memo(function Designer() {
   useEffect(() => setTopSlot(document.getElementById('topbar-slot')), []);
   // The inspector's width, adjustable with the splitter.
   const [layout, setLayout] = useLayout('designer.layout', { right: 380 }, true);
-  const [background, setBackground] = useDisplayPref<StageBackground>('designer.background', 'checker');
-  // The live video input behind the stage (« video » background).
-  const [bgInput, setBgInput] = useDisplayPref<string>('designer.backgroundInput', '');
   useShortcuts();
   const { state: saveState, flush: flushSaves } = useAutosave();
   const lock = useEditLock(project, template?.id);
@@ -245,17 +241,11 @@ export const Designer = memo(function Designer() {
             </>
           )}
           <div className="spacer" />
-          <DisplayMenu
-            project={project}
-            background={background}
-            onBackground={setBackground}
-            bgInput={bgInput}
-            onBgInput={setBgInput}
-          />
+          <DisplayMenu />
           <StageZoom />
         </div>
         <div className="stage-holder">
-          <Stage project={project} size={{ width: project.width, height: project.height }} background={background} bgInput={bgInput} />
+          <Stage project={project} size={{ width: project.width, height: project.height }} background="black" bgInput="" />
         </div>
       </main>
       <aside className="panel right">
