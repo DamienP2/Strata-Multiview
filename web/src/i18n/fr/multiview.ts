@@ -177,6 +177,7 @@ export const multiview: Record<string, string> = {
   'PTP, NTP and the faults on now': 'PTP, NTP et les alarmes en cours',
   'The faults of the inputs, the newest first': 'Les alarmes des entrées, les plus récentes d’abord',
   'Examples': 'Exemples',
+  'NDI name already used: « {name} » — another NDI source of this computer (Strata Graphics?) has it. Rename this output.': 'Nom NDI déjà utilisé : « {name} » — une autre source NDI de cet ordinateur (Strata Graphics ?) porte ce nom. Renommez cette sortie.',
   'another multiview': 'un autre multiview',
   'Take “{name}” off {channel}?': 'Retirer « {name} » de {channel} ?',
   '{channel} shows its still picture instead.': '{channel} affiche son image fixe à la place.',

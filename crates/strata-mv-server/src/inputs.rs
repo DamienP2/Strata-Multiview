@@ -569,7 +569,6 @@ impl Inputs {
             .collect()
     }
 
-
     /// The newest picture and its number (previews: not delayed by the smoothing).
     /// Pictures received so far (changes when a new one comes).
     #[cfg(test)]
@@ -593,7 +592,11 @@ impl Inputs {
             .unwrap_or_else(|p| p.into_inner())
             .get(id)?
             .clone();
-        let pic = l.picture.read().unwrap_or_else(|p| p.into_inner()).clone()?;
+        let pic = l
+            .picture
+            .read()
+            .unwrap_or_else(|p| p.into_inner())
+            .clone()?;
         let n = l.received.load(Ordering::Relaxed);
         {
             let made = l.jpegs.lock().unwrap_or_else(|p| p.into_inner());
@@ -1112,18 +1115,28 @@ pub async fn mjpeg(
                             ));
                         }
                     }
-                    match tokio::time::timeout(std::time::Duration::from_secs(2), frames.changed()).await {
+                    match tokio::time::timeout(std::time::Duration::from_secs(2), frames.changed())
+                        .await
+                    {
                         // The input went away: the stream ends.
                         Ok(Err(_)) => return None,
                         Ok(Ok(())) => {}
                         // Nothing new for 2 s: the same picture again.
                         Err(_) if last.is_some() => {
                             let (h2, id2) = (hub.clone(), id.clone());
-                            if let Some((_, jpeg)) = tokio::task::spawn_blocking(move || h2.jpeg(&id2, width)).await.ok().flatten() {
+                            if let Some((_, jpeg)) =
+                                tokio::task::spawn_blocking(move || h2.jpeg(&id2, width))
+                                    .await
+                                    .ok()
+                                    .flatten()
+                            {
                                 let mut part = format!("--frame\r\nContent-Type: image/jpeg\r\nContent-Length: {}\r\n\r\n", jpeg.len()).into_bytes();
                                 part.extend_from_slice(&jpeg);
                                 part.extend_from_slice(b"\r\n");
-                                return Some((Ok(axum::body::Bytes::from(part)), (hub, id, last, frames)));
+                                return Some((
+                                    Ok(axum::body::Bytes::from(part)),
+                                    (hub, id, last, frames),
+                                ));
                             }
                         }
                         Err(_) => {}

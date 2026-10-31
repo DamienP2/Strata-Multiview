@@ -79,10 +79,19 @@ Les installateurs `.pkg` et `.msi` ajoutent l'application **Strata Multiview** :
 - l'adresse réseau du serveur (un clic la copie) ;
 - **Ouvrir la page web** ;
 - **Carte réseau** : la carte de l'interface web et celle de NDI (le serveur redémarre seul) ;
+- **Port de connexion** : le port de l'interface web (8090 par défaut, d'autres proposés, ou **Autre port…** pour le saisir) ; un port déjà pris, par Strata Graphics par exemple, est refusé avec la raison. Le serveur redémarre sur le nouveau port et l'application le suit ;
 - **Démarrer / Arrêter / Redémarrer le serveur**, sans mot de passe sur macOS pour un compte administrateur ;
 - **Journal du serveur…** et **Désinstaller Strata Multiview…**.
 
 Elle se trouve aussi dans *Applications* (macOS) et dans le menu Démarrer (Windows). L'ouvrir depuis ces emplacements ouvre la page web.
+
+**Pare-feu macOS** : l'installateur ajoute le serveur au pare-feu de l'application (s'il est actif) et vérifie qu'il y figure ; le résultat est dans `/Library/Logs/Strata Multiview/install.log`. Si d'autres machines n'atteignent pas l'interface (« connexion réinitialisée ») :
+
+```bash
+sudo /usr/libexec/ApplicationFirewall/socketfilterfw --add /usr/local/strata-multiview/strata-mv-server
+sudo /usr/libexec/ApplicationFirewall/socketfilterfw --unblockapp /usr/local/strata-multiview/strata-mv-server
+sudo launchctl kickstart -k system/com.stratamultiview.server
+```
 
 ## Réglages du serveur
 

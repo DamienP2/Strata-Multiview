@@ -61,6 +61,12 @@ struct Words {
     quit: &'static str,
     cannot: &'static str,
     adapter_failed: &'static str,
+    port: &'static str,
+    port_default: &'static str,
+    port_other: &'static str,
+    port_prompt: &'static str,
+    port_invalid: &'static str,
+    port_failed: &'static str,
 }
 
 const FR: Words = Words {
@@ -84,6 +90,12 @@ const FR: Words = Words {
     quit: "Quitter",
     cannot: "Impossible de {a} le serveur Strata Multiview.",
     adapter_failed: "Impossible de changer la carte réseau (mettez le serveur à jour).",
+    port: "Port de connexion",
+    port_default: "{p} (par défaut)",
+    port_other: "Autre port…",
+    port_prompt: "Port de connexion de l’interface web (1 à 65535) :",
+    port_invalid: "« {p} » n’est pas un port (un nombre de 1 à 65535).",
+    port_failed: "Impossible de passer au port {p} : {e}",
 };
 
 const EN: Words = Words {
@@ -107,6 +119,12 @@ const EN: Words = Words {
     quit: "Quit",
     cannot: "Could not {a} the Strata Multiview server.",
     adapter_failed: "Could not change the network adapter (update the server).",
+    port: "Connection Port",
+    port_default: "{p} (default)",
+    port_other: "Other Port…",
+    port_prompt: "Port of the web interface (1 to 65535):",
+    port_invalid: "“{p}” is not a port (a number from 1 to 65535).",
+    port_failed: "Could not move to port {p}: {e}",
 };
 
 fn system_is_french() -> bool {
@@ -295,6 +313,62 @@ fn ask(method: &str, port: u16, path: &str, json: Option<String>) -> bool {
     };
     r.is_ok_and(|r| r.status().is_success())
 }
+
+/// Moves the server to another port (it restarts there; the menu follows
+/// it through `runtime.json`). The server's reason when it cannot.
+fn set_port(port: u16, new: u16) -> Result<(), String> {
+    let a: ureq::Agent = ureq::Agent::config_builder()
+        .timeout_global(Some(Duration::from_secs(5)))
+        .http_status_as_error(false)
+        .build()
+        .into();
+    let mut r = a
+        .put(format!("{}/api/system/network", base_url(port)))
+        .header("Content-Type", "application/json")
+        .send(serde_json::json!({ "port": new }).to_string())
+        .map_err(|e| e.to_string())?;
+    if r.status().is_success() {
+        return Ok(());
+    }
+    let why = r.body_mut().read_to_string().unwrap_or_default();
+    Err(if why.trim().is_empty() {
+        r.status().to_string()
+    } else {
+        why.trim().to_string()
+    })
+}
+
+/// Asks for a port in a native dialog (None: cancelled).
+fn prompt_port(w: &Words, current: u16) -> Option<String> {
+    #[cfg(target_os = "macos")]
+    let out = {
+        let esc = |t: &str| t.replace('\\', "\\\\").replace('"', "\\\"");
+        let script = format!(
+            "text returned of (display dialog \"{}\" default answer \"{current}\" with title \"Strata Multiview\")",
+            esc(w.port_prompt)
+        );
+        Command::new("osascript").args(["-e", &script]).output()
+    };
+    #[cfg(windows)]
+    let out = {
+        use std::os::windows::process::CommandExt;
+        const CREATE_NO_WINDOW: u32 = 0x0800_0000;
+        let ps = format!(
+            "Add-Type -AssemblyName Microsoft.VisualBasic; [Microsoft.VisualBasic.Interaction]::InputBox('{}', 'Strata Multiview', '{current}')",
+            w.port_prompt.replace('\'', "''")
+        );
+        Command::new("powershell")
+            .args(["-NoProfile", "-Command", &ps])
+            .creation_flags(CREATE_NO_WINDOW)
+            .output()
+    };
+    let out = out.ok().filter(|o| o.status.success())?;
+    let text = String::from_utf8_lossy(&out.stdout).trim().to_string();
+    (!text.is_empty()).then_some(text)
+}
+
+/// The ports offered in the menu (the current one added when another).
+const PORTS: [u16; 8] = [8090, 8091, 8092, 8093, 8094, 8095, 9090, 80];
 
 /// Runs `strata-mv-server service <action>` with administrator rights: without a
 /// password when the installer allowed it (sudoers), else the system prompt.
@@ -514,6 +588,11 @@ struct Items {
     address: MenuItem,
     home: MenuItem,
     network: Submenu,
+    /// The port submenu, its choices and « Other… », and the port they show.
+    port: Submenu,
+    ports: Vec<(CheckMenuItem, u16)>,
+    port_other: MenuItem,
+    shown_port: Option<u16>,
     /// The adapter choices now in the submenu: item, role, adapter name.
     choices: Vec<(CheckMenuItem, Role, String)>,
     /// What the submenu shows (adapters, chosen ones), to rebuild it on change only.
@@ -535,6 +614,10 @@ impl Items {
             address: MenuItem::new("", false, None),
             home: MenuItem::new(w.open_home, false, None),
             network: Submenu::new(w.network, false),
+            port: Submenu::new(w.port, false),
+            ports: Vec::new(),
+            port_other: MenuItem::new(w.port_other, true, None),
+            shown_port: None,
             choices: Vec::new(),
             shown_network: None,
             start_stop: MenuItem::new(w.start, true, None),
@@ -553,6 +636,7 @@ impl Items {
             &items.home,
             &PredefinedMenuItem::separator(),
             &items.network,
+            &items.port,
             &PredefinedMenuItem::separator(),
             &items.start_stop,
             &items.restart,
@@ -590,6 +674,32 @@ impl Items {
             }
         }
         self.shown_network = Some(wanted);
+    }
+
+    /// The port submenu, the server's port checked.
+    fn rebuild_port(&mut self, port: u16) {
+        if self.shown_port == Some(port) {
+            return;
+        }
+        while self.port.remove_at(0).is_some() {}
+        self.ports.clear();
+        let mut list = PORTS.to_vec();
+        if !list.contains(&port) {
+            list.insert(0, port);
+        }
+        for p in list {
+            let label = if p == DEFAULT_PORT {
+                self.w.port_default.replace("{p}", &p.to_string())
+            } else {
+                p.to_string()
+            };
+            let item = CheckMenuItem::new(label, true, p == port, None);
+            let _ = self.port.append(&item);
+            self.ports.push((item, p));
+        }
+        let _ = self.port.append(&PredefinedMenuItem::separator());
+        let _ = self.port.append(&self.port_other);
+        self.shown_port = Some(port);
     }
 
     fn apply(&mut self, s: &Status, tray: Option<&TrayIcon>) {
@@ -643,8 +753,10 @@ impl Items {
         }
         self.network
             .set_enabled(s.running && !s.interfaces.is_empty());
+        self.port.set_enabled(s.running);
         if s.running {
             self.rebuild_network(s);
+            self.rebuild_port(s.port);
         }
         self.start_stop
             .set_text(if s.running { w.stop } else { w.start });
@@ -748,6 +860,43 @@ pub fn run() {
                 } else if id == items.quit.id() {
                     tray.take();
                     *control_flow = ControlFlow::Exit;
+                } else if let Some(&(_, new)) = items.ports.iter().find(|(c, _)| c.id() == id) {
+                    let port = status.port;
+                    // The check marks follow the server once it restarts.
+                    items.shown_port = None;
+                    if new != port {
+                        std::thread::spawn(move || {
+                            if let Err(e) = set_port(port, new) {
+                                alert(
+                                    &w.port_failed
+                                        .replace("{p}", &new.to_string())
+                                        .replace("{e}", &e),
+                                );
+                            }
+                        });
+                    }
+                } else if id == items.port_other.id() {
+                    let port = status.port;
+                    items.shown_port = None;
+                    std::thread::spawn(move || {
+                        let Some(text) = prompt_port(w, port) else {
+                            return;
+                        };
+                        match text.parse::<u16>() {
+                            Ok(new) if new > 0 => {
+                                if new != port {
+                                    if let Err(e) = set_port(port, new) {
+                                        alert(
+                                            &w.port_failed
+                                                .replace("{p}", &new.to_string())
+                                                .replace("{e}", &e),
+                                        );
+                                    }
+                                }
+                            }
+                            _ => alert(&w.port_invalid.replace("{p}", &text)),
+                        }
+                    });
                 } else if let Some((_, role, name)) =
                     items.choices.iter().find(|(c, ..)| c.id() == id)
                 {

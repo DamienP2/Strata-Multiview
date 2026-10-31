@@ -8,9 +8,22 @@ ln -sf "$PREFIX/strata-mv-server" /usr/local/bin/strata-mv-server
 # firewall. Done here, before the service starts: it signs the program in
 # place, which must never happen to a running one.
 FW=/usr/libexec/ApplicationFirewall/socketfilterfw
-if "$FW" --getglobalstate 2>/dev/null | grep -q "State = [12]"; then
-  "$FW" --add "$PREFIX/strata-mv-server" >/dev/null 2>&1 || true
-  "$FW" --unblockapp "$PREFIX/strata-mv-server" >/dev/null 2>&1 || true
+LOG="/Library/Logs/Strata Multiview/install.log"
+mkdir -p "/Library/Logs/Strata Multiview"
+allowed() { "$FW" --listapps 2>/dev/null | grep -qF "$PREFIX/strata-mv-server"; }
+if "$FW" --getglobalstate 2>&1 | grep -q "State = [12]"; then
+  {
+    echo "--- $(date) firewall"
+    "$FW" --add "$PREFIX/strata-mv-server" 2>&1
+    "$FW" --unblockapp "$PREFIX/strata-mv-server" 2>&1
+    # Not taken (a signature it would not read): signed ad hoc, then again.
+    if ! allowed; then
+      codesign --force --sign - --identifier com.stratamultiview.server "$PREFIX/strata-mv-server" 2>&1
+      "$FW" --add "$PREFIX/strata-mv-server" 2>&1
+      "$FW" --unblockapp "$PREFIX/strata-mv-server" 2>&1
+    fi
+    allowed && echo "allowed through the firewall" || echo "NOT allowed through the firewall"
+  } >>"$LOG" 2>&1 || true
 fi
 "$PREFIX/strata-mv-server" service install
 

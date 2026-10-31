@@ -1901,6 +1901,8 @@ struct NetworkRolesInput {
     control: Option<String>,
     /// The interface NDI uses ("" = every one).
     ndi: Option<String>,
+    /// The port of the web UI and the API.
+    port: Option<u16>,
 }
 
 /// Picks the network adapter of the web UI and of NDI, then restarts the
@@ -1920,9 +1922,34 @@ async fn put_network_roles(
             )));
         }
     }
+    // Another port: free (another program, Strata Graphics, may hold it).
+    let port = i.port.filter(|p| *p != s.bind.port());
+    if let Some(p) = port {
+        if p == 0 {
+            return Err(bad("no port 0"));
+        }
+        if std::net::TcpListener::bind(("0.0.0.0", p)).is_err() {
+            return Err((
+                StatusCode::CONFLICT,
+                format!("port {p} is already used by another program"),
+            ));
+        }
+    }
+    if i.control.is_none() && i.ndi.is_none() && port.is_none() {
+        return Ok(StatusCode::NO_CONTENT);
+    }
     let dir = s.data_dir.clone();
+    let ip = s.config.bind.map(|b| b.ip());
     tokio::task::spawn_blocking(move || {
         let mut cfg = ServerConfig::load(&dir);
+        if let Some(p) = port {
+            let ip = cfg
+                .bind
+                .map(|b| b.ip())
+                .or(ip)
+                .unwrap_or(std::net::Ipv4Addr::UNSPECIFIED.into());
+            cfg.bind = Some(SocketAddr::new(ip, p));
+        }
         if let Some(c) = i.control {
             cfg.hardware.network.control = c;
         }
@@ -1934,7 +1961,7 @@ async fn put_network_roles(
     .await
     .map_err(internal)?
     .map_err(internal)?;
-    tracing::info!("network roles changed from the menu bar app, restarting");
+    tracing::info!("network settings changed from the menu bar app, restarting");
     crate::update::restart_soon();
     Ok(StatusCode::ACCEPTED)
 }

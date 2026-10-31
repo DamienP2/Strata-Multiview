@@ -305,7 +305,7 @@ impl NdiSender {
             // Most often a source of that name already exists on this
             // machine (another program, Strata Graphics…).
             return Err(OutputError::Unsupported(format!(
-                "NDI could not create the source « {} »: a source of this name may already exist on this machine (another program such as Strata Graphics): give it another name",
+                "NDI name already in use: « {} » (another NDI source of this machine, Strata Graphics for one, may have it): give this output another name",
                 config.name
             )));
         }

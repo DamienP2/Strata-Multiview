@@ -30,13 +30,31 @@ pub fn allow(exe: &std::path::Path) {
     if state.contains("State = 0") {
         return;
     }
-    let added = run(&["--add", &path]);
-    let unblocked = run(&["--unblockapp", &path]);
-    match (added, unblocked) {
-        (Ok(_), Ok(_)) => tracing::info!(exe = %path, "allowed through the macOS firewall"),
-        (a, b) => {
-            tracing::warn!(exe = %path, add = ?a.err(), unblock = ?b.err(), "cannot allow the server through the macOS firewall")
-        }
+    let allow = || {
+        let _ = run(&["--add", &path]);
+        let _ = run(&["--unblockapp", &path]);
+    };
+    // Listed: taken. Else (a signature it would not read, without a word):
+    // signed ad hoc under a stable identifier, then once more.
+    let listed = || run(&["--listapps"]).is_ok_and(|l| l.contains(&*path));
+    allow();
+    if !listed() {
+        let _ = Command::new("codesign")
+            .args([
+                "--force",
+                "--sign",
+                "-",
+                "--identifier",
+                "com.stratamultiview.server",
+            ])
+            .arg(exe)
+            .output();
+        allow();
+    }
+    if listed() {
+        tracing::info!(exe = %path, "allowed through the macOS firewall");
+    } else {
+        tracing::warn!(exe = %path, "cannot allow the server through the macOS firewall: other machines cannot reach it");
     }
 }
 

@@ -41,6 +41,7 @@ export function friendlyError(raw: string | null | undefined): string {
   if (/NDI runtime found but not loadable/i.test(s)) return t('NDI runtime unreadable');
   if (/NDI runtime not found/i.test(s)) return t('NDI runtime missing');
   if (/NDI runtime refused to start/i.test(s)) return t('NDI runtime refused to start');
+  if ((m = s.match(/NDI name already in use: « (.*) »/i))) return t('NDI name already used: « {name} » — another NDI source of this computer (Strata Graphics?) has it. Rename this output.', { name: m[1] });
   return s;
 }
 

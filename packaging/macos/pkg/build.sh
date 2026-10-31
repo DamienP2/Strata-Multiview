@@ -80,6 +80,15 @@ if [ -n "${MACOS_APP_IDENTITY:-}" ]; then
   sign "$PAYLOAD/strata-mv-server"
   sign "$APPS/Strata Multiview.app"
   sign "$APPS/Uninstall Strata Multiview.app"
+else
+  # Unsigned build: an ad-hoc signature under a stable identifier all the
+  # same, so the macOS firewall takes the server (the installer adds it;
+  # a bare linker signature may be refused there without a word).
+  codesign --force --sign - --identifier com.stratamultiview.server "$PAYLOAD/strata-mv-server"
+  [ -f "$PAYLOAD/bin/ffmpeg" ] && codesign --force --sign - "$PAYLOAD/bin/ffmpeg"
+  [ -f "$PAYLOAD/lib/libndi.dylib" ] && codesign --force --sign - "$PAYLOAD/lib/libndi.dylib"
+  codesign --force --deep --sign - "$APPS/Strata Multiview.app"
+  codesign --force --deep --sign - "$APPS/Uninstall Strata Multiview.app"
 fi
 
 # --- package ---------------------------------------------------------------------
