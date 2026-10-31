@@ -490,6 +490,36 @@ pub enum LayerKind {
         #[serde(flatten)]
         x: Box<crate::wid::source::Config>,
     },
+    /// The audio meters of an input (16 channels at most).
+    #[serde(rename_all = "camelCase")]
+    AudioMeter {
+        #[serde(flatten)]
+        x: Box<crate::wid::broadcast::MeterConfig>,
+    },
+    /// The EBU R128 loudness of an input.
+    #[serde(rename_all = "camelCase")]
+    Loudness {
+        #[serde(flatten)]
+        x: Box<crate::wid::broadcast::LoudnessConfig>,
+    },
+    /// The station's timecode, or an input's.
+    #[serde(rename_all = "camelCase")]
+    Timecode {
+        #[serde(flatten)]
+        x: Box<crate::wid::broadcast::TimecodeConfig>,
+    },
+    /// PTP, NTP and the faults on now.
+    #[serde(rename_all = "camelCase")]
+    Status {
+        #[serde(flatten)]
+        x: Box<crate::wid::broadcast::StatusConfig>,
+    },
+    /// The alarm journal.
+    #[serde(rename_all = "camelCase")]
+    AlarmLog {
+        #[serde(flatten)]
+        x: Box<crate::wid::broadcast::AlarmLogConfig>,
+    },
     /// Bézier path drawn with the pen tool.
     #[serde(rename_all = "camelCase")]
     Pen {

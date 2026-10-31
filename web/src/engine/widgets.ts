@@ -96,7 +96,7 @@ function zoneName(tz: string, fallback: string): string {
   return formatter(name) ? name : fallback.trim();
 }
 
-function zonedFields(ms: number, tz: string): Fields {
+export function zonedFields(ms: number, tz: string): Fields {
   const f = formatter(tz) ?? formatter('')!;
   const parts: Record<string, number> = {};
   for (const p of f.formatToParts(new Date(ms))) if (p.type !== 'literal') parts[p.type] = parseInt(p.value, 10);

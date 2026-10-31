@@ -275,6 +275,11 @@ export function descendants(t: Template, id: string): string[] {
 /** Layer type names, in English: translated where shown. */
 export const LABELS: Record<LayerType, string> = {
   source: 'Source',
+  audioMeter: 'Audio meters',
+  loudness: 'Loudness',
+  timecode: 'Timecode',
+  status: 'Status',
+  alarmLog: 'Alarm log',
   group: 'Group',
   rect: 'Rectangle',
   ellipse: 'Ellipse',

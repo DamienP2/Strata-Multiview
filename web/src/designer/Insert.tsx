@@ -100,6 +100,11 @@ type MenuItem = {
 
 /** The + menu: one list of widgets, in this order. */
 const MENU: { type?: LayerType; widget?: string; label: string; soon?: typeof Video; patch?: Record<string, unknown>; action?: 'video'; hint?: string; preset?: string }[] = [
+  { widget: 'audioMeter', label: 'Audio meters', hint: 'Up to 16 channels of an input, with or without picture' },
+  { widget: 'loudness', label: 'Loudness', hint: 'EBU R128: integrated, momentary, short-term, range, true peak' },
+  { widget: 'timecode', label: 'Timecode', hint: 'The station’s or an input’s' },
+  { widget: 'status', label: 'Status', hint: 'PTP, NTP and the faults on now' },
+  { widget: 'alarmLog', label: 'Alarm log', hint: 'The faults of the inputs, the newest first' },
   { type: 'ticker', label: 'Ticker' },
   { widget: 'clock', label: 'Clock' },
   { widget: 'time', label: 'Time' },

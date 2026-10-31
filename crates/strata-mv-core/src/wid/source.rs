@@ -61,6 +61,18 @@ pub enum NoSignalLook {
     Plain,
 }
 
+/// The timecode shown on the tile.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub enum TcShow {
+    #[default]
+    Off,
+    /// The one the input carries.
+    Input,
+    /// The station's (the server's time of day).
+    Station,
+}
+
 /// The colours of the tally.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(default, rename_all = "camelCase")]
@@ -179,6 +191,12 @@ pub struct Config {
     /// Shown without a picture ("" = « No signal » in the project's language).
     pub no_signal: String,
     pub no_signal_look: NoSignalLook,
+    /// The timecode, top right.
+    pub timecode: TcShow,
+    /// The loudness (short-term), bottom right.
+    pub loudness: bool,
+    /// The faults the server sees: a banner, and the frame in their colour.
+    pub alarms: bool,
 }
 
 impl Default for Config {
@@ -194,6 +212,9 @@ impl Default for Config {
             badge: false,
             no_signal: String::new(),
             no_signal_look: NoSignalLook::Bars,
+            timecode: TcShow::Off,
+            loudness: false,
+            alarms: true,
         }
     }
 }
@@ -286,6 +307,83 @@ pub fn layout(c: &Config, w: f32, h: f32, channels: usize) -> Layout {
         lamps,
         text,
         meters,
+    }
+}
+
+/// Where the overlays go: the timecode, the loudness, the fault's banner,
+/// and the size of their text.
+#[derive(Debug, Clone, PartialEq)]
+pub struct Overlay {
+    pub tc: Area,
+    pub lufs: Area,
+    pub banner: Area,
+    pub size: f32,
+}
+
+/// The overlays of a tile laid out as `l` (`h`: the tile's height).
+pub fn overlay(c: &Config, l: &Layout, h: f32) -> Overlay {
+    let size = (h * 0.05).clamp(9.0, 30.0).round();
+    let m = c.vu.margin.max(4.0);
+    let v = l.video;
+    // Left of the meters when they are on the right.
+    let right = match (c.vu.position, l.meters.first()) {
+        (VuPosition::Right, Some(a)) => a[0] - m,
+        _ => v[0] + v[2] - m,
+    };
+    let (mut top, mut bottom) = (v[1] + m, v[1] + v[3] - m);
+    if let (Some(u), false) = (l.umd, c.umd.outside) {
+        if c.umd.position == UmdPosition::Top {
+            top = u[1] + u[3] + m;
+        } else {
+            bottom = u[1] - m;
+        }
+    }
+    // JetBrains Mono: 0.6 em a character.
+    let (tw, lw) = (
+        (11.0 * 0.6 * size + size).round(),
+        (5.0 * 0.6 * size + size).round(),
+    );
+    let bh = (size * 1.5).round();
+    let banner_h = (size * 2.0).round();
+    let banner_w = (v[2] * 0.7).round();
+    Overlay {
+        tc: [right - tw, top, tw, bh],
+        lufs: [right - lw, bottom - bh, lw, bh],
+        banner: [
+            v[0] + (v[2] - banner_w) / 2.0,
+            v[1] + (v[3] - banner_h) / 2.0,
+            banner_w,
+            banner_h,
+        ],
+        size,
+    }
+}
+
+/// The frame's colour with the faults: a critical one blinks (half a
+/// second on, half a second as the tally says), a warning stays.
+pub fn alarm_border<'a>(
+    c: &'a Config,
+    t: &crate::signal::Tally,
+    alarms: &[crate::signal::Alarm],
+    now_ms: i64,
+) -> &'a str {
+    use crate::signal::Severity;
+    if c.alarms {
+        match alarms.first().map(|a| a.severity) {
+            Some(Severity::Critical) if (now_ms / 500).rem_euclid(2) == 0 => return "#dc2626",
+            Some(Severity::Warning) => return "#fbbf24",
+            _ => {}
+        }
+    }
+    border_color(c, t)
+}
+
+/// The words of the banner: the worst fault, and how many others.
+pub fn alarm_banner(alarms: &[crate::signal::Alarm], lang: &str) -> String {
+    match alarms {
+        [] => String::new(),
+        [a] => a.kind.text(lang).to_string(),
+        [a, rest @ ..] => format!("{} +{}", a.kind.text(lang), rest.len()),
     }
 }
 

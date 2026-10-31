@@ -2004,7 +2004,14 @@ impl Renderer {
                     self.draw_image(pm, &src, *fit, w, h, tf, opacity, mask);
                 }
             }
-            LayerKind::Polygon { .. } | LayerKind::Pen { .. } | LayerKind::Source { .. } => {}
+            LayerKind::Polygon { .. }
+            | LayerKind::Pen { .. }
+            | LayerKind::Source { .. }
+            | LayerKind::AudioMeter { .. }
+            | LayerKind::Loudness { .. }
+            | LayerKind::Timecode { .. }
+            | LayerKind::Status { .. }
+            | LayerKind::AlarmLog { .. } => {}
         }
     }
 

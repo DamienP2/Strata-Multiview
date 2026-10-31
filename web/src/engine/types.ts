@@ -68,7 +68,12 @@ export type LayerKind =
   | (({ type: 'ticker'; text: string; separator: string; speed: number } & FontStyle) & import('../widgets/ticker').Config)
   | ({ type: 'polygon' } & import('../widgets/polygon').Config)
   | ({ type: 'pen' } & import('../widgets/pen').Config)
-  | ({ type: 'source' } & import('../widgets/source').Config);
+  | ({ type: 'source' } & import('../widgets/source').Config)
+  | ({ type: 'audioMeter' } & import('../widgets/broadcast').MeterConfig)
+  | ({ type: 'loudness' } & import('../widgets/broadcast').LoudnessConfig)
+  | ({ type: 'timecode' } & import('../widgets/broadcast').TimecodeConfig)
+  | ({ type: 'status' } & import('../widgets/broadcast').StatusConfig)
+  | ({ type: 'alarmLog' } & import('../widgets/broadcast').AlarmLogConfig);
 
 export type LayerType = LayerKind['type'];
 

@@ -5,7 +5,8 @@
 // crates/strata-mv-core/src/wid/source.rs (keep in sync).
 import { MonitorPlay } from 'lucide-react';
 import { interpolateText } from '../engine/evaluate';
-import { useInputs, useLiveFrame, useSignal, type InputInfo, type SignalView, type Tally } from '../engine/liveInputs';
+import { alarmText, useInputs, useLiveFrame, useSignal, type Alarm, type InputInfo, type SignalView, type Tally } from '../engine/liveInputs';
+import { CRIT, loudColor, num1, stationTimecode, TARGET, WARN } from './broadcast';
 import type { Data } from '../engine/types';
 import { FontPick } from '../ui/FontPick';
 import { t, tc, tl } from '../i18n';
@@ -65,12 +66,18 @@ export interface Config {
   noSignal?: string;
   /** No picture: SMPTE bars and the bouncing card, or the background and the words. */
   noSignalLook?: 'bars' | 'plain';
+  /** The timecode, top right: the input's, the station's, or none. */
+  timecode?: 'off' | 'input' | 'station';
+  /** The short-term loudness, bottom right. */
+  loudness?: boolean;
+  /** The faults the server sees: a banner, the frame in their colour. */
+  alarms?: boolean;
 }
 
 const D_TALLY: TallyLook = { border: true, program: '#e5212b', preview: '#17b14a', aux: '#f2b705', off: '#262a33' };
 const D_UMD: Umd = { position: 'bottom', size: 11, outside: false, text: '', font: 'Inter', weight: 600, align: 'center', color: '#ffffff', background: '#000000b3', lamps: true };
 const D_VU: Vu = { position: 'right', width: 6, gap: 2, margin: 6, min: -60, yellow: -18, red: -9, hold: true, max: 0 };
-const D = { input: '', fit: 'contain' as Fit, background: '#0b0d12', border: 4, badge: false, noSignal: '', noSignalLook: 'bars' as 'bars' | 'plain' };
+const D = { input: '', fit: 'contain' as Fit, background: '#0b0d12', border: 4, badge: false, noSignal: '', noSignalLook: 'bars' as 'bars' | 'plain', timecode: 'off' as 'off' | 'input' | 'station', loudness: false, alarms: true };
 
 export type Full = typeof D & { tally: TallyLook; umd: Umd; vu: Vu };
 
@@ -150,6 +157,40 @@ export function borderColor(c: Full, tally: Tally): string {
   if (tally.aux) return c.tally.aux;
   return c.tally.off;
 }
+
+/** Where the overlays go: timecode, loudness, the fault's banner, and their text size (mirrors overlay). */
+export function overlay(c: Full, l: Layout, h: number) {
+  const size = Math.round(clamp(h * 0.05, 9, 30));
+  const m = Math.max(c.vu.margin, 4);
+  const v = l.video;
+  const right = c.vu.position === 'right' && l.meters.length ? l.meters[0][0] - m : v[0] + v[2] - m;
+  let [top, bottom] = [v[1] + m, v[1] + v[3] - m];
+  if (l.umd && !c.umd.outside) {
+    if (c.umd.position === 'top') top = l.umd[1] + l.umd[3] + m;
+    else bottom = l.umd[1] - m;
+  }
+  const [tw, lw] = [Math.round(11 * 0.6 * size + size), Math.round(5 * 0.6 * size + size)];
+  const bh = Math.round(size * 1.5);
+  const [bannerH, bannerW] = [Math.round(size * 2), Math.round(v[2] * 0.7)];
+  return {
+    tc: [right - tw, top, tw, bh] as Area,
+    lufs: [right - lw, bottom - bh, lw, bh] as Area,
+    banner: [v[0] + (v[2] - bannerW) / 2, v[1] + (v[3] - bannerH) / 2, bannerW, bannerH] as Area,
+    size,
+  };
+}
+
+/** The frame with the faults: a critical one blinks, a warning stays (mirrors alarm_border). */
+export function alarmBorder(c: Full, tally: Tally, alarms: Alarm[], nowMs: number): string {
+  if (c.alarms && alarms.length) {
+    if (alarms[0].severity === 'critical' && ((Math.floor(nowMs / 500) % 2) + 2) % 2 === 0) return '#dc2626';
+    if (alarms[0].severity === 'warning') return '#fbbf24';
+  }
+  return borderColor(c, tally);
+}
+
+/** The worst fault and how many others (mirrors alarm_banner). */
+export const alarmBanner = (alarms: Alarm[], lang?: string) => (!alarms.length ? '' : alarms.length === 1 ? alarmText(alarms[0].kind, lang) : `${alarmText(alarms[0].kind, lang)} +${alarms.length - 1}`);
 
 /** The UMD text: the one set, else the switcher's, else the input's name (mirrors umd_text). */
 export function umdText(c: Full, info: InputInfo | undefined, signal: SignalView, data: Data): string {
@@ -247,7 +288,7 @@ export function noSignalCard(v: Area, nowMs: number): { plate: Area; logo: Area;
 
 const box = (a: Area, extra?: React.CSSProperties): React.CSSProperties => ({ position: 'absolute', left: a[0], top: a[1], width: a[2], height: a[3], ...extra });
 
-function SourceView({ layer, w, h, data, designer, lang, nowMs }: { layer: Config & { name: string }; w: number; h: number; data: Data; designer?: boolean; lang?: string; nowMs: number }) {
+function SourceView({ layer, w, h, data, designer, lang, nowMs, tz, fps }: { layer: Config & { name: string }; w: number; h: number; data: Data; designer?: boolean; lang?: string; nowMs: number; tz: string; fps: number }) {
   const c = cfg(layer);
   const id = c.input.trim();
   const live = useLiveFrame(id, designer ? 'preview' : 'stream');
@@ -298,8 +339,18 @@ function SourceView({ layer, w, h, data, designer, lang, nowMs }: { layer: Confi
   const bpad = Math.round(bsize * 0.4);
   const name = umdText(c, info, signal, data) || (designer && !id ? layer.name : '');
   const lamp = (a: Area, lit: boolean | undefined, col: string) => <div style={box(a, { background: hex(lit ? col : LAMP_OFF), borderRadius: a[2] * 0.2 })} />;
+  const alarms = info ? (signal.alarms ?? []) : [];
+  const o = overlay(c, l, h);
+  const tc = c.timecode === 'input' ? (info ? (signal.timecode ?? '') : '') : c.timecode === 'station' ? stationTimecode(nowMs, tz, fps) : '';
+  const lo = info ? signal.loudness : undefined;
+  const tag = (a: Area, s: string, size: number, bg: string, fg: string, mono: boolean) => (
+    <>
+      <div style={box(a, { background: hex(bg), borderRadius: size * 0.25 })} />
+      <FitLine text={s} size={size} weight={mono ? 700 : 800} family={mono ? 'JetBrains Mono' : undefined} align="center" box={a} color={hex(fg)} fit={{ overflow: 'shrink', minSize: size * 0.55, minSqueeze: 70 }} />
+    </>
+  );
   return (
-    <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', background: hex(borderColor(c, tally)) }}>
+    <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', background: hex(alarmBorder(c, tally, alarms, nowMs)) }}>
       <div style={box(l.inner, { background: hex(c.background) })} />
       {pic}
       {fmt && (
@@ -321,6 +372,9 @@ function SourceView({ layer, w, h, data, designer, lang, nowMs }: { layer: Confi
           </div>
         );
       })}
+      {tc && tag(o.tc, tc, o.size, '#000000b3', '#fbbf24', true)}
+      {c.loudness && lo && tag(o.lufs, num1(lo[1]), o.size, '#000000b3', loudColor(lo[1], lo[4], TARGET, 1), true)}
+      {c.alarms && alarms.length > 0 && picture && tag(o.banner, alarmBanner(alarms, lang), o.size * 1.1, ...((alarms[0].severity === 'critical' ? CRIT : WARN) as [string, string]), false)}
       {l.umd && (
         <>
           <div style={box(l.umd, { background: hex(c.umd.background) })} />
@@ -373,7 +427,7 @@ export default defineWidget({
   ownsLook: true,
   // Its picture, tally and meters change by themselves.
   live: () => true,
-  Render: ({ layer, w, h, data, designer, lang, time }) => <SourceView layer={layer as Config & { name: string }} w={w} h={h} data={data} designer={designer} lang={lang} nowMs={time.nowMs} />,
+  Render: ({ layer, w, h, data, designer, lang, time, fps }) => <SourceView layer={layer as Config & { name: string }} w={w} h={h} data={data} designer={designer} lang={lang} nowMs={time.nowMs} tz={time.defaultTz} fps={time.fps || fps} />,
   Inspector: ({ layer, set }) => {
     const c = cfg(layer as Config);
     return (
@@ -402,6 +456,20 @@ export default defineWidget({
             ]}
           />
           <Text label={t('Words')} value={c.noSignal} placeholder={t('NO SIGNAL')} onChange={(v) => set('noSignal', v)} />
+        </Section>
+        <Section id="source-overlays" title={t('Overlays')}>
+          <Seg
+            label={t('Timecode')}
+            value={c.timecode}
+            onChange={(v) => set('timecode', v)}
+            options={[
+              ['off', t('None')],
+              ['input', t('The input’s')],
+              ['station', t('Station')],
+            ]}
+          />
+          <Toggle label={t('Loudness')} text={t('Short-term, bottom right')} value={c.loudness} onChange={(v) => set('loudness', v)} />
+          <Toggle label={t('Alarms')} text={t('Black, frozen, silence, loudness…')} value={c.alarms} onChange={(v) => set('alarms', v)} />
         </Section>
         <Section id="source-tally" title={t('Tally')}>
           <Num label={t('Frame')} value={c.border} min={0} max={60} unit=" px" onChange={(v) => set('border', v)} />

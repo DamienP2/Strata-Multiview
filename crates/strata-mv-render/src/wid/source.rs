@@ -6,9 +6,10 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use strata_mv_core::signal::SourceView;
 
+use strata_mv_core::wid::broadcast::{alarm_colors, loud_color, num1, station_timecode};
 use strata_mv_core::wid::source::{
-    border_color, layout, no_signal_card, no_signal_text, scale, segments, umd_text, Area, Config,
-    Fit, NoSignalLook, UmdAlign, BARS,
+    alarm_banner, alarm_border, layout, no_signal_card, no_signal_text, overlay, scale, segments,
+    umd_text, Area, Config, Fit, NoSignalLook, TcShow, UmdAlign, BARS,
 };
 use strata_mv_core::{Color, LayerKind, TextAlign, VerticalAlign};
 use tiny_skia::{FillRule, Mask, Pixmap, PixmapPaint, Transform};
@@ -59,6 +60,43 @@ fn signature(w: u32, h: u32) -> Option<Arc<Pixmap>> {
         c.insert((w, h), pm.clone());
     });
     Some(pm)
+}
+
+/// A text on a plate (the overlays): mono figures, or bold words.
+#[allow(clippy::too_many_arguments)]
+fn tag(
+    d: &mut Draw,
+    a: Area,
+    s: &str,
+    size: f32,
+    bg: &str,
+    fg: &str,
+    mono: bool,
+    m: Option<&Mask>,
+) {
+    fill_area(d, a, size * 0.25, Draw::hex(bg), m);
+    let (family, weight) = if mono {
+        ("JetBrains Mono", 700)
+    } else {
+        ("Inter", 800)
+    };
+    if let Some(f) = d.font(family, weight) {
+        let (p, _) = fitted_path(
+            &f,
+            s,
+            size,
+            0.0,
+            TextAlign::Center,
+            (a[0], a[1], a[2], a[3]),
+            Some(TextFit {
+                min_size: size * 0.55,
+                min_squeeze: 70.0,
+            }),
+        );
+        if let Some(p) = p {
+            d.fill(&p, Draw::hex(fg), FillRule::Winding, m);
+        }
+    }
 }
 
 /// No picture: the SMPTE bars, the F AudioVisuel card bouncing over them.
@@ -126,12 +164,13 @@ pub(crate) fn draw(d: &mut Draw) -> bool {
     let boxed = d.boxed();
     let bm = boxed.as_ref();
 
-    // The frame, in the tally's colour, and the picture's background.
+    let alarms = view.as_ref().map(|v| v.alarms.clone()).unwrap_or_default();
+    // The frame, in the tally's colour (or the fault's), and the picture's background.
     fill_area(
         d,
         [0.0, 0.0, d.w, d.h],
         0.0,
-        Draw::hex(border_color(c, &tally)),
+        Draw::hex(alarm_border(c, &tally, &alarms, d.time.now_ms)),
         bm,
     );
     fill_area(d, l.inner, 0.0, Draw::hex(&c.background), bm);
@@ -253,6 +292,56 @@ pub(crate) fn draw(d: &mut Draw) -> bool {
         }
     }
 
+    // The overlays: timecode, loudness, the fault's banner.
+    let o = overlay(c, &l, d.h);
+    let tc = match c.timecode {
+        TcShow::Off => String::new(),
+        TcShow::Input => view
+            .as_ref()
+            .map(|v| v.timecode.clone())
+            .unwrap_or_default(),
+        TcShow::Station => {
+            let fps = if d.time.fps > 0.0 { d.time.fps } else { d.fps };
+            station_timecode(d.time.now_ms, d.time.default_tz, fps)
+        }
+    };
+    if !tc.is_empty() {
+        tag(d, o.tc, &tc, o.size, "#000000b3", "#fbbf24", true, bm);
+    }
+    if c.loudness {
+        if let Some(lo) = view.as_ref().and_then(|v| v.loudness) {
+            let col = loud_color(
+                lo.short_term,
+                lo.true_peak,
+                strata_mv_core::signal::TARGET,
+                1.0,
+            );
+            tag(
+                d,
+                o.lufs,
+                &num1(lo.short_term),
+                o.size,
+                "#000000b3",
+                col,
+                true,
+                bm,
+            );
+        }
+    }
+    if c.alarms && !alarms.is_empty() && picture.is_some() {
+        let (bg, fg) = alarm_colors(alarms[0].kind);
+        tag(
+            d,
+            o.banner,
+            &alarm_banner(&alarms, d.lang),
+            o.size * 1.1,
+            bg,
+            fg,
+            false,
+            bm,
+        );
+    }
+
     // The UMD: its bar, its lamps, its text.
     if let Some(bar) = l.umd {
         fill_area(d, bar, 0.0, Draw::hex(&c.umd.background), bm);
@@ -334,6 +423,7 @@ mod tests {
                     },
                     Level::default(),
                 ],
+                ..Default::default()
             })
         }
     }

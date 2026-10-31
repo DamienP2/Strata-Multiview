@@ -25,7 +25,7 @@ pub struct TimeCtx<'a> {
     pub fps: f64,
 }
 
-fn zone(name: &str, fallback: &str) -> TimeZone {
+pub(crate) fn zone(name: &str, fallback: &str) -> TimeZone {
     let name = if name.trim().is_empty() {
         fallback
     } else {

@@ -6,6 +6,7 @@
 //! Designer asks the server to apply them to its own try-out state, so the
 //! logic lives here only. Both renderers read the state as JSON.
 
+pub mod broadcast;
 pub mod ellipse;
 pub mod image;
 pub mod pen;
@@ -48,6 +49,11 @@ pub fn widget_id(kind: &LayerKind) -> Option<&'static str> {
         LayerKind::Clock { .. } => "timer",
         LayerKind::Ticker { .. } => "ticker",
         LayerKind::Source { .. } => "source",
+        LayerKind::AudioMeter { .. } => "audioMeter",
+        LayerKind::Loudness { .. } => "loudness",
+        LayerKind::Timecode { .. } => "timecode",
+        LayerKind::Status { .. } => "status",
+        LayerKind::AlarmLog { .. } => "alarmLog",
         _ => return None,
     })
 }
