@@ -145,6 +145,7 @@ pub fn router() -> Router<Shared> {
         )
         .route("/api/system/update/rollback", post(update_rollback))
         .route("/output", get(output_redirect))
+        .route("/api/outputs/page/{path}", get(output_page))
         .route("/ws", get(ws_upgrade))
 }
 
@@ -1789,6 +1790,26 @@ async fn health(State(s): State<Shared>) -> Json<serde_json::Value> {
         "channels": s.channels.len(),
         "needsSetup": s.auth.needs_setup(),
     }))
+}
+
+/// The channel of a web page address (`/output/<path>`): a page's own
+/// address, else a channel's id.
+async fn output_page(
+    State(s): State<Shared>,
+    MaybeUser(me): MaybeUser,
+    Path(path): Path<String>,
+) -> ApiResult<Json<serde_json::Value>> {
+    require(me.is_some() || s.config.public_outputs)?;
+    let p = path.trim();
+    let by_page = s.config.channels.iter().find(|c| {
+        c.pictures()
+            .iter()
+            .any(|(_, _, _, o)| o.html5.iter().any(|h| h.path.trim().eq_ignore_ascii_case(p)))
+    });
+    let ch = by_page
+        .or_else(|| s.config.channels.iter().find(|c| c.id == p))
+        .ok_or_else(|| not_found("web page"))?;
+    Ok(Json(serde_json::json!({ "channel": ch.id })))
 }
 
 /// `/output` without a channel: the first channel (tray app, old links).

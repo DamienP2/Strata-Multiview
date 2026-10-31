@@ -225,7 +225,7 @@ function PictureBlock({ p, rate }: { p: PictureMetrics; rate: number }) {
                     <td>
                       <span className="perf-status" title={o.message}>
                         <Dot tone={o.ok ? (o.dropped ? 'warn' : 'ok') : 'bad'} />
-                        <span>{o.ok && (!o.message || o.message === 'Running') ? t('Running') : o.message}</span>
+                        <span>{o.ok && (!o.message || o.message === 'Running') ? t('Broadcasting') : o.message}</span>
                       </span>
                     </td>
                     <td className={`num tone-${o.ok ? fpsTone(o.fps, rate) : 'idle'}`}>{fps(o.fps)}</td>

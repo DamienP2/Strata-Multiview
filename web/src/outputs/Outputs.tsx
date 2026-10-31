@@ -2,7 +2,7 @@ import { ArrowRightToLine, Check, Copy, Cpu, ExternalLink, Frame, ImageOff, MapP
 import { HexColorField } from '../ui/fields';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { api, can, useApp, useChanged } from '../store';
-import { VIDEO_FORMATS, slateStyleOf, videoFormatIndex, type ChannelConfig, type HardwareConfig, type Html5Output, type NdiOutput, type OutputState, type OutputsConfig, type SdiOutput, type ServerConfig, type SlateStyle, type St2110Output, type StreamOutput, type StreamProtocol, type SystemInfo } from './types';
+import { VIDEO_FORMATS, slateStyleOf, videoFormatIndex, type ChannelConfig, type HardwareConfig, type Html5Output, type NdiOutput, type NdiQuality, type OutputState, type OutputsConfig, type SdiOutput, type ServerConfig, type SlateStyle, type St2110Output, type StreamOutput, type StreamProtocol, type SystemInfo } from './types';
 import { CLOCKS, ENCODINGS, clockLabel, fillSdi, fillSt2110, hardwareOf, modeLabel, sdiOutputLabel, sdiPorts, usedHardware } from '../hardware/model';
 import { AssetLibrary } from '../designer/AssetPicker';
 import { navigate } from '../router';
@@ -31,10 +31,10 @@ type DestKind = Exclude<Kind, 'program' | 'picture' | 'source'>;
 
 /** Labels translated where shown. */
 const KIND: Record<Kind, { label: string; color: string; icon: typeof Play }> = {
-  program: { label: 'Program', color: '#bfcaff', icon: Play },
+  program: { label: 'Output', color: '#bfcaff', icon: Play },
   picture: { label: 'Format', color: '#38bdf8', icon: Frame },
   source: { label: 'Source', color: '#94a3b8', icon: ArrowRightToLine },
-  html5: { label: 'HTML5', color: '#22c55e', icon: Globe },
+  html5: { label: 'Web page', color: '#22c55e', icon: Globe },
   sdi: { label: 'SDI', color: '#f5a524', icon: Tv },
   st2110: { label: 'ST 2110', color: '#e879f9', icon: Network },
   ndi: { label: 'NDI', color: '#14b8a6', icon: Radio },
@@ -152,7 +152,16 @@ const formatLabel = (ch: ChannelConfig) => {
   return f?.label ?? `${ch.width}×${ch.height} ${+(ch.frameRate.num / ch.frameRate.den).toFixed(2)}${ch.interlaced ? 'i' : 'p'}`;
 };
 
-const outputUrl = (channel: string, picture: string, bg: string) => `${location.origin}/output/${encodeURIComponent(channel)}${picture === 'main' ? '' : `/${encodeURIComponent(picture)}`}${bg ? `?bg=${encodeURIComponent(bg)}` : ''}`;
+const outputUrl = (page: string, bg: string) => `${location.origin}/output/${encodeURIComponent(page)}${bg ? `?bg=${encodeURIComponent(bg)}` : ''}`;
+/** The name in a web page's address: its own, else the channel's id. */
+const pageOf = (o: Html5Output, channel: string) => o.path?.trim() || channel;
+const NDI_QUALITIES: { value: NdiQuality; label: string }[] = [
+  { value: 'full', label: 'Full (the channel’s format)' },
+  { value: '1080', label: '1080p' },
+  { value: '720', label: '720p' },
+  { value: '540', label: '540p' },
+  { value: '360', label: '360p (preview)' },
+];
 
 const slug = (s: string) =>
   s
@@ -306,7 +315,7 @@ export function Outputs({ mode }: { mode: Mode }) {
     const s = status[ch.id]?.[d.value.id];
     if (!s) return { tone: 'idle', text: t('Starting…') };
     if (s.message === 'Off') return { tone: 'idle', text: tc('output', 'Off') };
-    return s.ok ? { tone: 'ok', text: !s.message || s.message === 'Running' ? t('Running') : friendlyError(s.message), raw: s.message } : { tone: 'warn', text: friendlyError(s.message), raw: s.message };
+    return s.ok ? { tone: 'ok', text: !s.message || s.message === 'Running' ? t('Broadcasting') : friendlyError(s.message), raw: s.message } : { tone: 'warn', text: friendlyError(s.message), raw: s.message };
   };
   const projectName = (id?: string | null) => projects.find((p) => p.id === id)?.name;
   const liveCh = live.find((c) => c.id === ch?.id);
@@ -330,9 +339,9 @@ export function Outputs({ mode }: { mode: Mode }) {
           id: 'program',
           kind: 'program',
           title: ch.name,
-          sub: `${formatLabel(ch)}\n${projectName(liveCh?.projectId) ? t('shows “{name}”', { name: projectName(liveCh?.projectId)! }) : t('no multiview loaded')}`,
-          tone: liveCh ? 'ok' : 'idle',
-          status: liveCh ? t('Running') : t('Not applied yet'),
+          sub: formatLabel(ch),
+          tone: liveCh?.projectId ? 'ok' : 'idle',
+          status: !liveCh ? t('Not applied yet') : projectName(liveCh.projectId) ? t('Used by the multiview “{name}”', { name: projectName(liveCh.projectId)! }) : t('No multiview'),
         },
         ...allDests.map((d) => {
           const st = destStatus(d);
@@ -402,7 +411,7 @@ export function Outputs({ mode }: { mode: Mode }) {
         const base = `Multiview ${c.name}${p.id === 'main' ? '' : ` ${p.name}`}`;
         let name = base;
         for (let k = 2; names.has(name.toLowerCase()); k++) name = `${base} ${k}`;
-        (picOutputs.ndi ??= []).push({ id, name, groups: '', alpha: true });
+        (picOutputs.ndi ??= []).push({ id, name, groups: '', quality: 'full' });
       } else if (kind === 'stream') {
         // An SRT listener on a port no other stream (output or input) uses.
         const urls = new Set([...all.channels.flatMap((x) => pictures(x).flatMap((pp) => (pp.outputs.streams ?? []).map((o) => o.url))), ...(all.inputs ?? []).map((i) => i.url)]);
@@ -664,7 +673,7 @@ export function Outputs({ mode }: { mode: Mode }) {
                     <span className="chip">{locations.find((l) => l.id === (ch.location || locations[0].id))?.name}</span>
                   </div>
                   <span className="muted small">
-                    {formatLabel(ch)} · {projectName(liveCh?.projectId) ? t('shows “{name}”', { name: projectName(liveCh?.projectId)! }) : t('no multiview loaded')} · {tn(allDests.length, '{n} destination', '{n} destinations')}
+                    {formatLabel(ch)} · {projectName(liveCh?.projectId) ? t('Used by the multiview “{name}”', { name: projectName(liveCh?.projectId)! }) : t('No multiview')} · {tn(allDests.length, '{n} destination', '{n} destinations')}
                   </span>
                 </div>
                 <div className="spacer" />
@@ -688,7 +697,7 @@ export function Outputs({ mode }: { mode: Mode }) {
                 <div {...cv.viewport} className={`oc-canvas ${cv.viewport.className}`} onPointerDown={(e) => (setAddMenu(null), cv.viewport.onPointerDown(e))}>
                   <div ref={planeRef} data-canvas-void className={`oc-plane ${wire ? (wire.moving ? 'wiring-in' : 'wiring-out') : ''}`} style={{ width, height, ...cv.spaceStyle }} onPointerDown={() => setAddMenu(null)}>
                     <span className="oc-col" style={{ left: colX('program') }}>
-                      {t('Program')}
+                      {t('Output')}
                     </span>
                     <span className="oc-col" style={{ left: colX('dest') }}>
                       {t('Destinations')}
@@ -984,11 +993,17 @@ export function Outputs({ mode }: { mode: Mode }) {
                   {selDest?.kind === 'html5' &&
                     (() => {
                       const o = selDest.value as Html5Output;
-                      const url = outputUrl(ch.id, selDest.picture, o.background);
+                      const url = outputUrl(pageOf(o, ch.id), o.background);
                       return (
                         <>
                           <Field label={t('Name')}>
                             <input value={o.name} onChange={(e) => editDest<Html5Output>((d) => void (d.name = e.target.value))} />
+                          </Field>
+                          <Field label={t('Address')} hint={t('Letters, digits, - and _. Empty: the channel’s id.')}>
+                            <div className="oc-path">
+                              <span>/output/</span>
+                              <input value={o.path ?? ''} placeholder={ch.id} onChange={(e) => editDest<Html5Output>((d) => void (d.path = e.target.value.replace(/[^A-Za-z0-9_-]/g, '')))} />
+                            </div>
                           </Field>
                           <Field label={t('Background')}>
                             <select value={o.background} onChange={(e) => editDest<Html5Output>((d) => void (d.background = e.target.value))}>
@@ -1179,14 +1194,16 @@ export function Outputs({ mode }: { mode: Mode }) {
                           <Field label={t('Groups')} hint={t('Comma-separated; empty = public.')}>
                             <input value={o.groups} placeholder="public" onChange={(e) => editDest<NdiOutput>((d) => void (d.groups = e.target.value))} />
                           </Field>
-                          <label className="check">
-                            <input type="checkbox" checked={o.alpha} onChange={(e) => editDest<NdiOutput>((d) => void (d.alpha = e.target.checked))} />
-                            {t('Send the alpha channel')}
-                          </label>
-                          <Field label={t('NDI runtime (all NDI outputs)')} hint={t('Leave empty to use the NDI runtime installed with Strata. Only to force another libndi.')}>
-                            <input value={cfg.ndiLibrary ?? ''} placeholder={info.os === 'macos' ? '/usr/local/lib/libndi.dylib' : info.os === 'windows' ? 'C:\\Program Files\\NDI\\…\\Processing.NDI.Lib.x64.dll' : '/usr/lib/libndi.so.6'} onChange={(e) => edit((c) => void (c.ndiLibrary = e.target.value))} />
+                          <Field label={t('Quality')} hint={t('NDI’s bandwidth follows the size of the picture.')}>
+                            <select value={o.quality ?? 'full'} onChange={(e) => editDest<NdiOutput>((d) => void (d.quality = e.target.value as NdiQuality))}>
+                              {NDI_QUALITIES.map((q) => (
+                                <option key={q.value} value={q.value}>
+                                  {t(q.label)}
+                                </option>
+                              ))}
+                            </select>
                           </Field>
-                          {note(t('Seen by every NDI receiver on the network (TriCaster, vMix, OBS, Studio Monitor…). The NDI runtime comes with the Strata installers (macOS, Windows).'))}
+                          {note(t('Seen by every NDI receiver on the network (TriCaster, vMix, OBS, Studio Monitor…).'))}
                         </>
                       );
                     })()}
@@ -1394,7 +1411,7 @@ function destSub(d: Dest, ch: ChannelConfig, hw: HardwareConfig): string {
     case 'html5': {
       const o = d.value as Html5Output;
       const bg = BACKGROUNDS.find((b) => b.value === o.background);
-      return `/output/${ch.id}${d.picture === 'main' ? '' : `/${d.picture}`}\n${bg ? t(bg.label) : o.background}`;
+      return `/output/${pageOf(o, ch.id)}\n${bg ? t(bg.label) : o.background}`;
     }
     case 'sdi': {
       const o = d.value as SdiOutput;
@@ -1409,7 +1426,7 @@ function destSub(d: Dest, ch: ChannelConfig, hw: HardwareConfig): string {
     }
     case 'ndi': {
       const o = d.value as NdiOutput;
-      return `${o.groups || 'public'}\n${o.alpha ? t('with alpha') : t('no alpha')}`;
+      return `${o.groups || 'public'}\n${t(NDI_QUALITIES.find((q) => q.value === (o.quality ?? 'full'))!.label)}`;
     }
     case 'stream': {
       const o = d.value as StreamOutput;

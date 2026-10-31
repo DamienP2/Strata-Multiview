@@ -90,6 +90,9 @@ pub struct Html5Config {
     /// CSS background of the page ("" = transparent).
     #[serde(default)]
     pub background: String,
+    /// Its address, /output/<path> ("" = the channel's id).
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub path: String,
 }
 
 /// A place the channels belong to (a studio, a gallery, a truck…).
@@ -329,6 +332,7 @@ impl ServerConfig {
                         id: String::new(),
                         name: "Web page".into(),
                         background: String::new(),
+                        path: String::new(),
                     });
                 }
             }
@@ -516,6 +520,25 @@ impl ServerConfig {
         self.validate_hardware()?;
         let mut ndi_names = HashSet::new();
         let mut ids = HashSet::new();
+        // The web pages' addresses: one channel each, not another channel's id.
+        let mut paths = HashSet::new();
+        for ch in &self.channels {
+            for (_, _, _, outputs) in ch.pictures() {
+                for o in &outputs.html5 {
+                    let p = o.path.trim();
+                    if p.is_empty() {
+                        continue;
+                    }
+                    if !p.chars().all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_') {
+                        return Err(format!("web page address `{p}`: letters, digits, - or _ only"));
+                    }
+                    let taken_by_channel = self.channels.iter().any(|c| c.id == p && c.id != ch.id);
+                    if taken_by_channel || !paths.insert(p.to_lowercase()) {
+                        return Err(format!("web page address `/output/{p}` is used twice"));
+                    }
+                }
+            }
+        }
         for ch in &self.channels {
             let valid_id = !ch.id.is_empty()
                 && ch

@@ -33,18 +33,23 @@ export interface SdiOutput {
   genlockOffset?: number;
 }
 
+/** The picture an NDI output sends: the channel's, or smaller (less bandwidth). */
+export type NdiQuality = 'full' | '1080' | '720' | '540' | '360';
+
 export interface NdiOutput {
   id: string;
   enabled?: boolean;
   name: string;
   groups: string;
-  alpha: boolean;
+  quality?: NdiQuality;
 }
 
 export interface Html5Output {
   id: string;
   name: string;
   background: string;
+  /** Its address: /output/<path> ("" = the channel's id). */
+  path?: string;
 }
 
 export type StreamProtocol = 'srt' | 'udp' | 'rtmp' | 'hls';

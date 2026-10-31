@@ -1,4 +1,5 @@
-//! NDI output (alpha included) through the NDI runtime.
+//! NDI output (an opaque picture, at the channel's size or smaller) through
+//! the NDI runtime.
 //!
 //! The NDI SDK is distributed by Vizrt under its own licence, so it is not
 //! linked at build time: the runtime library (installed with NDI Tools, or
@@ -29,14 +30,42 @@ pub struct NdiConfig {
     /// Comma-separated NDI groups ("" = public).
     #[serde(default)]
     pub groups: String,
-    /// Send the alpha channel (RGBA) or an opaque picture (RGBX).
-    #[serde(default = "yes")]
-    pub alpha: bool,
+    /// The picture sent: the channel's, or smaller (less bandwidth).
+    #[serde(default)]
+    pub quality: NdiQuality,
 }
 
-fn yes() -> bool {
-    true
+/// The size of an NDI output's picture: NDI's bandwidth follows it.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub enum NdiQuality {
+    /// The channel's format.
+    #[default]
+    Full,
+    #[serde(rename = "1080")]
+    P1080,
+    #[serde(rename = "720")]
+    P720,
+    #[serde(rename = "540")]
+    P540,
+    /// A preview, for a monitoring screen far away.
+    #[serde(rename = "360")]
+    P360,
 }
+
+impl NdiQuality {
+    /// The picture's height at most (None: the channel's).
+    pub fn height(self) -> Option<u32> {
+        match self {
+            NdiQuality::Full => None,
+            NdiQuality::P1080 => Some(1080),
+            NdiQuality::P720 => Some(720),
+            NdiQuality::P540 => Some(540),
+            NdiQuality::P360 => Some(360),
+        }
+    }
+}
+
 
 #[repr(C)]
 struct SendCreate {
@@ -321,6 +350,48 @@ impl NdiSender {
     }
 }
 
+/// The size an NDI output sends a `width` × `height` picture at: its
+/// quality's height at most, the same shape (even sizes).
+pub fn sent_size(q: NdiQuality, width: u32, height: u32) -> (u32, u32) {
+    match q.height() {
+        Some(h) if h < height => {
+            let w = (width as u64 * h as u64 / height.max(1) as u64) as u32;
+            ((w & !1).max(2), h)
+        }
+        _ => (width, height),
+    }
+}
+
+/// A smaller opaque copy (RGBX) of a picture: each pixel the mean of the
+/// pixels it covers.
+fn downscale(src: &[u8], sw: u32, sh: u32, dw: u32, dh: u32, out: &mut Vec<u8>) {
+    let (sw, sh, dw, dh) = (sw as usize, sh as usize, dw as usize, dh as usize);
+    out.resize(dw * dh * 4, 0);
+    for dy in 0..dh {
+        let y0 = dy * sh / dh;
+        let y1 = ((dy + 1) * sh / dh).max(y0 + 1).min(sh);
+        for dx in 0..dw {
+            let x0 = dx * sw / dw;
+            let x1 = ((dx + 1) * sw / dw).max(x0 + 1).min(sw);
+            let mut sum = [0u32; 3];
+            for y in y0..y1 {
+                let row = &src[(y * sw + x0) * 4..(y * sw + x1) * 4];
+                for p in row.as_chunks::<4>().0 {
+                    sum[0] += u32::from(p[0]);
+                    sum[1] += u32::from(p[1]);
+                    sum[2] += u32::from(p[2]);
+                }
+            }
+            let n = ((y1 - y0) * (x1 - x0)) as u32;
+            let o = (dy * dw + dx) * 4;
+            out[o] = (sum[0] / n) as u8;
+            out[o + 1] = (sum[1] / n) as u8;
+            out[o + 2] = (sum[2] / n) as u8;
+            out[o + 3] = 255;
+        }
+    }
+}
+
 /// NDI takes straight (not premultiplied) alpha.
 pub fn unpremultiply(rgba: &[u8], out: &mut Vec<u8>, alpha: bool) {
     out.resize(rgba.len(), 0);
@@ -351,38 +422,39 @@ impl OutputSink for NdiSender {
     }
 
     fn push(&mut self, frame: &Arc<Frame>, at: std::time::SystemTime) -> Result<(), OutputError> {
+        let (w, h) = sent_size(self.config.quality, frame.width, frame.height);
         // The same picture again (nothing moved): converted already; else
-        // only the rows that changed since the last one.
+        // only the rows that changed since the last one (at the full size).
         if !self.last.as_ref().is_some_and(|l| Arc::ptr_eq(l, frame)) {
             let buf = Arc::make_mut(&mut self.buf);
-            match crate::changed_rows(frame, self.last.as_deref()) {
-                Some(rows) if buf.len() == frame.data.len() => {
-                    let w = frame.width as usize * 4;
-                    for (y, _) in rows.iter().enumerate().filter(|(_, c)| **c) {
-                        let r = y * w..(y + 1) * w;
-                        unpremultiply_into(&frame.data[r.clone()], &mut buf[r], self.config.alpha);
+            if (w, h) != (frame.width, frame.height) {
+                downscale(&frame.data, frame.width, frame.height, w, h, buf);
+            } else {
+                match crate::changed_rows(frame, self.last.as_deref()) {
+                    Some(rows) if buf.len() == frame.data.len() => {
+                        let row = frame.width as usize * 4;
+                        for (y, _) in rows.iter().enumerate().filter(|(_, c)| **c) {
+                            let r = y * row..(y + 1) * row;
+                            unpremultiply_into(&frame.data[r.clone()], &mut buf[r], false);
+                        }
                     }
+                    _ => unpremultiply(&frame.data, buf, false),
                 }
-                _ => unpremultiply(&frame.data, buf, self.config.alpha),
             }
             self.last = Some(frame.clone());
         }
         let buf = &self.buf;
         let video = VideoFrameV2 {
-            xres: frame.width as i32,
-            yres: frame.height as i32,
-            four_cc: if self.config.alpha {
-                FOURCC_RGBA
-            } else {
-                FOURCC_RGBX
-            },
+            xres: w as i32,
+            yres: h as i32,
+            four_cc: FOURCC_RGBX,
             frame_rate_n: self.rate.0,
             frame_rate_d: self.rate.1,
             picture_aspect_ratio: 0.0,
             frame_format_type: PROGRESSIVE,
             timecode: TIMECODE_SYNTHESIZE,
             p_data: buf.as_ptr(),
-            line_stride_in_bytes: frame.width as i32 * 4,
+            line_stride_in_bytes: w as i32 * 4,
             p_metadata: std::ptr::null(),
             // When the channel shows the frame (100 ns since the Unix epoch):
             // receivers pace on it, evenly, not on when the send happened.
@@ -752,6 +824,21 @@ mod tests {
         assert_eq!(out, vec![128, 64, 0, 128, 10, 10, 10, 0]);
         unpremultiply(&[64, 32, 0, 128], &mut out, false);
         assert_eq!(out[3], 255);
+    }
+
+    #[test]
+    fn smaller_pictures_keep_their_shape() {
+        assert_eq!(sent_size(NdiQuality::Full, 1920, 1080), (1920, 1080));
+        assert_eq!(sent_size(NdiQuality::P720, 1920, 1080), (1280, 720));
+        assert_eq!(sent_size(NdiQuality::P1080, 1280, 720), (1280, 720));
+        let mut out = Vec::new();
+        // 4×2 → 2×1: each the mean of a 2×2 block.
+        let src = [
+            10, 20, 30, 255, 30, 40, 50, 255, 0, 0, 0, 255, 100, 100, 100, 255, //
+            10, 20, 30, 255, 30, 40, 50, 255, 0, 0, 0, 255, 100, 100, 100, 255,
+        ];
+        downscale(&src, 4, 2, 2, 1, &mut out);
+        assert_eq!(out, vec![20, 30, 40, 255, 50, 50, 50, 255]);
     }
 
     #[test]

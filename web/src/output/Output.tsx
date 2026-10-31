@@ -7,11 +7,24 @@ import { OutputDebug } from './OutputDebug';
 /**
  * HTML5 output of one channel picture: a transparent, chrome-less page meant
  * for browser sources (OBS, vMix, CasparCG HTML producer…).
- * URL: /output/<channel>. Query params: `scale=fit|1`
+ * URL: /output/<page> (the address set on its web page destination, or the
+ * channel's id). Query params: `scale=fit|1`
  * (default fit), `bg=<css color>` for checks, `debug` for motion measures.
  */
-export function Output({ channelId }: { channelId: string }) {
+export function Output({ channelId: page }: { channelId: string }) {
   const { connect, channels, full, live } = useApp();
+  // The channel of this address (a page's own address, else a channel's id).
+  const [channelId, setChannelId] = useState<string | null>(null);
+  useEffect(() => {
+    let alive = true;
+    fetch(`/api/outputs/page/${encodeURIComponent(page)}`, { credentials: 'same-origin' })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j: { channel?: string } | null) => alive && setChannelId(j?.channel ?? page))
+      .catch(() => alive && setChannelId(page));
+    return () => {
+      alive = false;
+    };
+  }, [page]);
   const params = new URLSearchParams(location.search);
   const fixed = params.get('scale') === '1';
   const bg = params.get('bg') ?? 'transparent';
@@ -20,6 +33,7 @@ export function Output({ channelId }: { channelId: string }) {
   const [size, setSize] = useState({ w: innerWidth, h: innerHeight });
 
   useEffect(() => {
+    if (!channelId) return;
     document.documentElement.classList.add('output-mode');
     connect(channelId);
     const onResize = () => setSize({ w: innerWidth, h: innerHeight });
@@ -28,7 +42,7 @@ export function Output({ channelId }: { channelId: string }) {
   }, [connect, channelId]);
 
   const channel = channels.find((c) => c.id === channelId);
-  if (!channel) return null;
+  if (!channel || !channelId) return null;
   const picture = channel;
   const project = channel.projectId ? full[channel.projectId] : undefined;
   const scale = fixed ? 1 : Math.min(size.w / picture.width, size.h / picture.height);
