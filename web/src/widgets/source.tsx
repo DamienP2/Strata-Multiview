@@ -13,6 +13,7 @@ import { FontPick } from '../ui/FontPick';
 import { t, tc, tl } from '../i18n';
 import { ColorPick, defineWidget, hex, Num, Row, Section, Seg, Select, Text, Toggle, withDefaults } from './kit';
 import { FitLine } from './text-fit';
+import { SmoothMeters } from './SmoothMeters';
 
 export type Fit = 'contain' | 'cover' | 'stretch';
 
@@ -86,7 +87,6 @@ export const cfg = (c: Config): Full => ({ ...withDefaults(D, c), tally: withDef
 
 /** The meters' colours (green, yellow, red), their track, a lamp that is off (mirrors METER, TRACK, LAMP_OFF). */
 export const METER = ['#2bd96b', '#f2c12e', '#ff3b3b'];
-const TRACK = '#000000a6';
 /** Meters shown at rest when the input sends no audio (mirrors SILENT_CHANNELS of wid/source.rs). */
 const SILENT_CHANNELS = 2;
 const LAMP_OFF = '#ffffff26';
@@ -370,23 +370,8 @@ function SourceView({ layer, w, h, data, designer, lang, nowMs, tz, fps, seed }:
       {fmt && (
         <div style={box([v[0] + bpad, v[1] + bpad, 0, bsize * 1.5], { width: 'auto', padding: `0 ${bpad}px`, background: hex('#000000b3'), borderRadius: bsize * 0.25, font: `700 ${bsize}px Inter, sans-serif`, color: '#fff', display: 'flex', alignItems: 'center', whiteSpace: 'pre' })}>{fmt}</div>
       )}
-      {l.meters.map((a, i) => {
-        const lv = levels[i];
-        // A channel without sound: its track only.
-        if (!lv) return <div key={i} style={box(a, { background: hex(TRACK) })} />;
-        const [peak, , held] = lv;
-        const k = scale(c.vu, held);
-        const zone = held >= c.vu.red ? 2 : held >= c.vu.yellow ? 1 : 0;
-        const th = clamp(a[3] * 0.012, 1, 3);
-        return (
-          <div key={i} style={box(a, { background: hex(TRACK) })}>
-            {segments(c.vu, peak).map(([from, to, z]) => (
-              <div key={z} style={{ position: 'absolute', left: 0, width: a[2], top: a[3] * (1 - to), height: a[3] * (to - from), background: METER[z] }} />
-            ))}
-            {c.vu.hold && held > c.vu.min && <div style={{ position: 'absolute', left: 0, width: a[2], top: Math.min(a[3] * (1 - k), a[3] - th), height: th, background: METER[zone] }} />}
-          </div>
-        );
-      })}
+      {/* At the display's rate, the peaks falling smoothly (on the outputs' timeline, with the picture). */}
+      {l.meters.length > 0 && <SmoothMeters id={info ? id : ''} areas={l.meters} vu={c.vu} />}
       {tc && tag(o.tc, tc, o.size, '#000000b3', '#fbbf24', true)}
       {c.loudness && lo && tag(o.lufs, num1(lo[1]), o.size, '#000000b3', loudColor(lo[1], lo[4], TARGET, 1), true)}
       {c.alarms && alarms.length > 0 && picture && tag(o.banner, alarmBanner(alarms, lang), o.size * 1.1, ...((alarms[0].severity === 'critical' ? CRIT : WARN) as [string, string]), false)}

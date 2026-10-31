@@ -131,6 +131,8 @@ pub struct Pull {
     pub audio: Option<String>,
     /// Where ffmpeg sends the sound to be listened to (a local port).
     pub pcm: Option<u16>,
+    /// This ffmpeg knows `-fps_mode` (5.1 and later).
+    pub fps_mode: bool,
 }
 
 /// The sound of an input as listened to: 16-bit stereo at 48 kHz.
@@ -300,6 +302,11 @@ impl InputConfig {
         if info {
             a.extend(["-vf", "showinfo=checksum=0"].map(String::from));
         }
+        // Every picture once, none added nor dropped: each is the one
+        // `showinfo` told of (its own time).
+        if pull.fps_mode {
+            a.extend(["-fps_mode", "passthrough"].map(String::from));
+        }
         a.extend(["-pix_fmt", "rgba", "-f", "rawvideo", "pipe:1"].map(String::from));
         if audio {
             a.extend(["-map".into(), format!("{from}:a:0")]);
@@ -307,7 +314,22 @@ impl InputConfig {
             // The sound, to be listened to (Strata reads it on that port).
             if let Some(port) = pull.pcm {
                 a.extend(["-map".into(), format!("{from}:a:0")]);
-                a.extend(["-ac", "2", "-ar", "48000", "-f", "s16le"].map(String::from));
+                // Each packet written at once (not 170 ms at a time); a frame
+                // lost on the way leaves silence in its place, so the count of
+                // samples stays the sound's own time.
+                a.extend(
+                    [
+                        "-ac",
+                        "2",
+                        "-af",
+                        "aresample=48000:async=1",
+                        "-flush_packets",
+                        "1",
+                        "-f",
+                        "s16le",
+                    ]
+                    .map(String::from),
+                );
                 a.push(format!("tcp://127.0.0.1:{port}"));
             }
         }
@@ -339,9 +361,20 @@ pub struct InputStatus {
 /// Pictures waiting for their time, and the one on show.
 #[derive(Default)]
 struct Paced {
-    queue: VecDeque<(Instant, Arc<Pixmap>)>,
+    /// Each with when it shows and how long it waited for that.
+    queue: VecDeque<(Instant, Arc<Pixmap>, Duration)>,
     shown: Option<Arc<Pixmap>>,
+    /// How long the picture on show waited: its sound and its meters wait
+    /// as long, to go with it.
+    shown_wait: Duration,
     last_due: Option<Instant>,
+    /// When each picture was due (a burst spread out a frame apart): the
+    /// web pages play them out on it, the outputs show them a smoothing
+    /// buffer later, the sound goes with them.
+    clock: RateClock,
+    /// The time given to the last picture: the next one comes 0.9 frame
+    /// after it at least (a burst late on its time catches up in a second).
+    last_smooth: Option<Instant>,
 }
 
 /// One running input.
@@ -372,6 +405,8 @@ struct Live {
     no_audio: AtomicBool,
     /// This ffmpeg has no `showinfo` (or not its options): without it.
     no_info: AtomicBool,
+    /// This ffmpeg has no `-fps_mode` (before 5.1): without it.
+    no_fps_mode: AtomicBool,
     /// The ffmpeg receiving a relayed stream.
     relay: Mutex<Option<Child>>,
     /// What it carries (`probe`).
@@ -382,15 +417,249 @@ struct Live {
     /// The newest pictures as JPEG, by width: the web pages showing this
     /// input at the same size share them.
     jpegs: Mutex<VecDeque<(u64, u32, axum::body::Bytes)>>,
-    /// Its sound as it comes (`PCM_RATE`, stereo, 16-bit): to the people
-    /// listening to it.
-    audio: tokio::sync::broadcast::Sender<axum::body::Bytes>,
+    /// The last pictures, each with its number and its smoothed time (ms
+    /// since 1970): a web page gets every one, at its time.
+    recent: Mutex<VecDeque<(u64, u64, Arc<Pixmap>)>>,
+    /// Its sound as it comes (`PCM_RATE`, stereo, 16-bit), timed: to the
+    /// people listening to it and to the outputs sending it.
+    audio: tokio::sync::broadcast::Sender<Pcm>,
+    /// Its own times on the wall clock (streams: ffmpeg tells them).
+    media: Arc<Mutex<MediaClock>>,
+}
+
+/// Sound of an input as it came: 16-bit stereo at `PCM_RATE`, and when its
+/// first sample came (smoothed: the samples a constant rate apart).
+#[derive(Clone, Debug)]
+pub struct Pcm {
+    pub at: Instant,
+    /// The same, ms since 1970.
+    pub at_ms: f64,
+    pub data: axum::body::Bytes,
+}
+
+/// Times what comes at a constant rate in bursts (sound, pictures): the
+/// time of item k is `base + k × step`, `base` the earliest arrival seen
+/// (each item came at that time or later: a burst comes late, never early),
+/// rising 2 ms a second to follow the clocks drifting apart. Set again when
+/// the items come more than a second late (a pause, a restart).
+#[derive(Default)]
+struct RateClock {
+    base: Option<Instant>,
+    count: f64,
+    seen: Option<Instant>,
+}
+
+impl RateClock {
+    /// When the first of `n` items that come now (`step` apart) was due:
+    /// what comes is done when it comes (`end`: sound, the last sample just
+    /// came) or starts then (a picture).
+    fn time(&mut self, n: f64, step: Duration) -> Instant {
+        self.time_as(n, step, true)
+    }
+
+    /// When a picture that comes now (`step` apart) was due.
+    fn picture(&mut self, step: Duration) -> Instant {
+        self.time_as(1.0, step, false)
+    }
+
+    fn time_as(&mut self, n: f64, step: Duration, end: bool) -> Instant {
+        let now = Instant::now();
+        let step_s = step.as_secs_f64();
+        let back = if end { self.count + n } else { self.count };
+        // Item 0's time if these came right now.
+        let implied = now
+            .checked_sub(Duration::from_secs_f64(back * step_s))
+            .unwrap_or(now);
+        let base = match (self.base, self.seen) {
+            (Some(b), Some(seen)) => {
+                let drift = now.saturating_duration_since(seen).mul_f64(0.002);
+                let b = b + drift;
+                if implied > b + Duration::from_secs(1) {
+                    None
+                } else {
+                    Some(b.min(implied))
+                }
+            }
+            _ => None,
+        };
+        self.seen = Some(now);
+        let base = match base {
+            Some(b) => b,
+            None => {
+                // From now again.
+                self.count = 0.0;
+                let back = if end { n * step_s } else { 0.0 };
+                now.checked_sub(Duration::from_secs_f64(back))
+                    .unwrap_or(now)
+            }
+        };
+        self.base = Some(base);
+        let at = base + Duration::from_secs_f64(self.count * step_s);
+        self.count += n;
+        at
+    }
+}
+
+/// An input's own times (the PTS of its pictures and of its sound) put on
+/// the wall clock, the same way for both: so that its sound, its meters
+/// and its pictures stay together whatever the decoder's delay between
+/// them. Each stream's offset (wall time − PTS) is the smallest seen (a
+/// burst comes late, never early), rising 2 ms a second; both use the
+/// larger of the two (each is there by then).
+#[derive(Default)]
+pub struct MediaClock {
+    video: Option<(f64, Instant)>,
+    audio: Option<(f64, Instant)>,
+    /// The PTS of the first sample of the sound (the sound listened to and
+    /// the meters start there).
+    audio_start: Option<f64>,
+    /// The PTS of the pictures ffmpeg told of (`showinfo`), by their
+    /// number, not read yet.
+    pts: VecDeque<(u64, f64)>,
+    /// How late its sound comes after its time, at most lately (s; falling
+    /// 10 ms a second): the pictures wait as long, to be shown with it.
+    late: f64,
+    late_seen: Option<Instant>,
+}
+
+/// The instant the media times are counted from.
+fn anchor() -> Instant {
+    static A: std::sync::OnceLock<Instant> = std::sync::OnceLock::new();
+    *A.get_or_init(Instant::now)
+}
+
+impl MediaClock {
+    fn see(slot: &mut Option<(f64, Instant)>, pts: f64) {
+        let now = Instant::now();
+        let implied = now.saturating_duration_since(anchor()).as_secs_f64() - pts;
+        *slot = Some(match *slot {
+            Some((off, seen)) => {
+                let off = off + now.saturating_duration_since(seen).as_secs_f64() * 0.002;
+                // A jump of the times (a restart, a loop): from here again.
+                if implied > off + 1.0 || implied < off - 3.0 {
+                    (implied, now)
+                } else {
+                    (off.min(implied), now)
+                }
+            }
+            None => (implied, now),
+        });
+    }
+    /// A picture of time `pts` comes now.
+    fn saw_picture(&mut self, pts: f64) {
+        Self::see(&mut self.video, pts);
+    }
+    /// Sound up to time `pts` comes now.
+    fn saw_sound(&mut self, pts: f64) {
+        Self::see(&mut self.audio, pts);
+        let now = Instant::now();
+        if let Some(t) = self.at(pts) {
+            let late = now.saturating_duration_since(t).as_secs_f64();
+            let was = self.late
+                - self.late_seen.map_or(0.0, |s| {
+                    now.saturating_duration_since(s).as_secs_f64() * 0.01
+                });
+            self.late = late.max(was).max(0.0);
+            self.late_seen = Some(now);
+        }
+    }
+
+    /// How long the pictures wait at least to go with their sound.
+    fn sound_late(&self) -> Duration {
+        Duration::from_secs_f64(self.late.min(1.0))
+    }
+    /// When media time `pts` is, on the wall clock.
+    fn at(&self, pts: f64) -> Option<Instant> {
+        let off = match (self.video, self.audio) {
+            (Some((v, _)), Some((a, _))) => v.max(a),
+            (Some((v, _)), None) => v,
+            (None, Some((a, _))) => a,
+            (None, None) => return None,
+        };
+        let w = pts + off;
+        Some(if w >= 0.0 {
+            anchor() + Duration::from_secs_f64(w)
+        } else {
+            anchor()
+                .checked_sub(Duration::from_secs_f64(-w))
+                .unwrap_or_else(anchor)
+        })
+    }
+}
+
+/// `pts_time:` of an ffmpeg log line.
+fn pts_time(line: &str) -> Option<f64> {
+    line.split("pts_time:")
+        .nth(1)?
+        .split_whitespace()
+        .next()?
+        .parse()
+        .ok()
+        .filter(|v: &f64| v.is_finite())
+}
+
+/// Times the sound of an input, chunk by chunk (its samples at `PCM_RATE`).
+#[derive(Default)]
+struct SampleClock(RateClock);
+
+impl SampleClock {
+    /// When the first of `samples` samples that came now was due.
+    fn time(&mut self, samples: usize) -> Instant {
+        self.0.time(
+            samples as f64,
+            Duration::from_secs_f64(1.0 / PCM_RATE as f64),
+        )
+    }
+}
+
+/// An instant as ms since 1970.
+fn epoch_ms(t: Instant) -> f64 {
+    let now = Instant::now();
+    let ms = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map_or(0.0, |d| d.as_secs_f64() * 1000.0);
+    if t >= now {
+        ms + (t - now).as_secs_f64() * 1000.0
+    } else {
+        ms - (now - t).as_secs_f64() * 1000.0
+    }
 }
 
 impl Live {
     fn say(&self, m: impl Into<String>) {
         *self.message.lock().unwrap_or_else(|p| p.into_inner()) = m.into();
     }
+    /// How long its pictures wait before they show: its smoothing buffer,
+    /// and as long as its sound comes late (with 20 ms to spare), so that
+    /// they go with it.
+    fn delay(&self) -> Duration {
+        if self.config.kind == InputKind::Sdi {
+            return Duration::ZERO;
+        }
+        let buffer = self.period() * self.config.buffer.min(10);
+        let late = self
+            .media
+            .lock()
+            .unwrap_or_else(|p| p.into_inner())
+            .sound_late();
+        if late.is_zero() {
+            buffer
+        } else {
+            buffer.max(late + Duration::from_millis(20))
+        }
+    }
+
+    /// How long the picture on show waited (see `Paced::shown_wait`).
+    fn shown_wait(&self) -> Duration {
+        let p = self.paced.lock().unwrap_or_else(|p| p.into_inner());
+        if p.shown.is_some() {
+            p.shown_wait
+        } else {
+            drop(p);
+            self.delay()
+        }
+    }
+
     /// A picture came lately, or the source is known to be there still.
     fn fresh(&self) -> bool {
         let now = Instant::now();
@@ -417,6 +686,12 @@ impl Live {
     }
 
     fn put(&self, pm: Pixmap) {
+        self.put_at(pm, None);
+    }
+
+    /// A picture that was due `when` (its PTS on the wall clock; None: as
+    /// it comes, bursts spread out).
+    fn put_at(&self, pm: Pixmap, when: Option<Instant>) {
         let now = Instant::now();
         // Black, frozen? (a few samples of it)
         self.signals.picture(&self.config.id, &pm);
@@ -424,10 +699,6 @@ impl Live {
         *self.picture.write().unwrap_or_else(|p| p.into_inner()) = Some(pm.clone());
         let n = self.received.fetch_add(1, Ordering::Relaxed) + 1;
         *self.last_at.lock().unwrap_or_else(|p| p.into_inner()) = Some(now);
-        let ms = std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .map_or(0, |d| d.as_millis() as u64);
-        self.frames.send_replace((n, ms));
         // SDI comes off a clocked card, evenly: shown at once, no smoothing.
         let sdi = self.config.kind == InputKind::Sdi;
         let (period, frames) = (
@@ -435,7 +706,31 @@ impl Live {
             if sdi { 0 } else { self.config.buffer.min(10) },
         );
         let delay = period * frames;
+        // Its wait (the smoothing buffer, longer while its sound comes late).
+        let wait = if frames > 0 {
+            self.delay()
+        } else {
+            Duration::ZERO
+        };
         let mut p = self.paced.lock().unwrap_or_else(|p| p.into_inner());
+        // When it was due: its own time, else see RateClock; never less
+        // than 0.9 frame after the one before.
+        let t = when.unwrap_or_else(|| p.clock.picture(period));
+        let gap = period.mul_f64(0.9);
+        let smooth = match p.last_smooth {
+            Some(l) if t < l + gap && t + Duration::from_secs(1) > l => l + gap,
+            _ => t,
+        };
+        p.last_smooth = Some(smooth);
+        let ms = epoch_ms(smooth).max(0.0) as u64;
+        {
+            let mut recent = self.recent.lock().unwrap_or_else(|p| p.into_inner());
+            recent.push_back((n, ms, pm.clone()));
+            while recent.len() > 6 {
+                recent.pop_front();
+            }
+        }
+        self.frames.send_replace((n, ms));
         // Time goes on even when nothing draws this input.
         self.advance(&mut p, now);
         let mut due = now + delay;
@@ -445,23 +740,17 @@ impl Live {
                 due = d + period;
             }
         } else if frames > 0 {
-            // At least a frame after the previous one: bursts spread out.
-            if let Some(next) = p.last_due.map(|d| d + period) {
-                due = due.max(next);
-            }
-            // Further and further behind (a sender faster than its rate):
-            // start again from now.
-            if due > now + delay + period * 3 {
-                due = now + delay;
-                let n = p.queue.len() as u64;
-                p.queue.clear();
-                self.dropped.fetch_add(n, Ordering::Relaxed);
-            }
+            // A smoothing buffer after it was due (longer while its sound
+            // comes late): a frame apart, whatever the bursts, and on the
+            // same clock as its sound.
+            due = smooth + wait;
         }
         p.last_due = Some(due);
-        p.queue.push_back((due, pm));
-        while p.queue.len() > frames as usize + 3 {
-            if let Some((_, old)) = p.queue.pop_front() {
+        p.queue.push_back((due, pm, wait));
+        // As many waiting as the delay holds, and 3 more.
+        let held = (wait.as_secs_f64() / period.as_secs_f64()).ceil() as usize;
+        while p.queue.len() > held.max(frames as usize) + 3 {
+            if let Some((_, old, _)) = p.queue.pop_front() {
                 self.recycle(old);
             }
             self.dropped.fetch_add(1, Ordering::Relaxed);
@@ -477,10 +766,11 @@ impl Live {
 
     /// Shows the pictures whose time has come.
     fn advance(&self, p: &mut Paced, now: Instant) {
-        while p.queue.front().is_some_and(|(due, _)| *due <= now) {
-            let Some((_, pm)) = p.queue.pop_front() else {
+        while p.queue.front().is_some_and(|(due, ..)| *due <= now) {
+            let Some((_, pm, wait)) = p.queue.pop_front() else {
                 break;
             };
+            p.shown_wait = wait;
             if let Some(old) = p.shown.replace(pm) {
                 self.recycle(old);
             }
@@ -577,11 +867,14 @@ impl Inputs {
                 signals: self.signals.clone(),
                 no_audio: AtomicBool::new(false),
                 no_info: AtomicBool::new(false),
+                no_fps_mode: AtomicBool::new(false),
                 relay: Mutex::new(None),
                 facts: Arc::new(Mutex::new(crate::probe::Facts::default())),
                 frames: tokio::sync::watch::channel((0, 0)).0,
                 jpegs: Mutex::new(VecDeque::new()),
-                audio: tokio::sync::broadcast::channel(64).0,
+                recent: Mutex::new(VecDeque::new()),
+                audio: tokio::sync::broadcast::channel(256).0,
+                media: Default::default(),
             });
             let l = live.clone();
             let spawned = std::thread::Builder::new()
@@ -645,69 +938,131 @@ impl Inputs {
         map.get(id).map(|l| l.received.load(Ordering::Relaxed))
     }
 
-    /// Wakes when an input has a new picture: (its number, when it came).
-    /// The sound of input `id` for an output: each call, what came since
-    /// the one before (16-bit stereo at 48 kHz); followed again when the
-    /// input restarts. At most a second is kept.
-    pub fn sound_of(inputs: Arc<Inputs>, id: String) -> strata_mv_output::ndi::AudioSource {
-        let mut rx: Option<tokio::sync::broadcast::Receiver<axum::body::Bytes>> = None;
+    /// How long the picture of an input on show waited (its smoothing
+    /// buffer, longer while its sound comes late): its sound and levels wait
+    /// as long to go with it.
+    pub fn delay_of(&self, id: &str) -> Duration {
+        let map = self.live.read().unwrap_or_else(|p| p.into_inner());
+        map.get(id).map_or(Duration::ZERO, |l| l.shown_wait())
+    }
+
+    /// The sound of input `id` for an output whose pictures are rendered
+    /// `ahead` before they go: each call, the sound that goes with the
+    /// picture going now (16-bit stereo at 48 kHz) — what came as long ago as
+    /// that picture's, the input's smoothing and `ahead`. Followed again when
+    /// the input restarts.
+    pub fn sound_of(
+        inputs: Arc<Inputs>,
+        id: String,
+        ahead: Duration,
+    ) -> strata_mv_output::ndi::AudioSource {
+        let mut rx: Option<tokio::sync::broadcast::Receiver<Pcm>> = None;
+        let mut waiting: VecDeque<Pcm> = VecDeque::new();
         Box::new(move || {
             use tokio::sync::broadcast::error::TryRecvError;
             let mut out: Vec<i16> = Vec::new();
             if rx.is_none() {
                 rx = inputs.audio(&id);
             }
-            let Some(r) = rx.as_mut() else {
-                return out;
-            };
-            loop {
-                match r.try_recv() {
-                    Ok(b) => {
-                        out.extend(b.as_chunks::<2>().0.iter().map(|c| i16::from_le_bytes(*c)))
-                    }
-                    Err(TryRecvError::Lagged(_)) => continue,
-                    Err(TryRecvError::Empty) => break,
-                    Err(TryRecvError::Closed) => {
-                        rx = None;
-                        break;
+            if let Some(r) = rx.as_mut() {
+                loop {
+                    match r.try_recv() {
+                        Ok(c) => waiting.push_back(c),
+                        Err(TryRecvError::Lagged(_)) => continue,
+                        Err(TryRecvError::Empty) => break,
+                        Err(TryRecvError::Closed) => {
+                            rx = None;
+                            break;
+                        }
                     }
                 }
             }
-            // Never more than a second behind.
-            let max = PCM_RATE as usize * 2;
-            if out.len() > max {
-                out.drain(..out.len() - max);
+            let wait = inputs.delay_of(&id) + ahead;
+            let Some(due) = Instant::now().checked_sub(wait) else {
+                return out;
+            };
+            // A chunk goes when its middle is due (its samples, on average, with
+            // their picture).
+            let mid = |c: &Pcm| {
+                c.at + Duration::from_secs_f64(c.data.len() as f64 / 4.0 / PCM_RATE as f64 / 2.0)
+            };
+            while waiting.front().is_some_and(|c| mid(c) <= due) {
+                if let Some(c) = waiting.pop_front() {
+                    out.extend(
+                        c.data
+                            .as_chunks::<2>()
+                            .0
+                            .iter()
+                            .map(|b| i16::from_le_bytes(*b)),
+                    );
+                }
+            }
+            // Never more than a second waiting (an output stopped a while).
+            while waiting.len() > 100 {
+                waiting.pop_front();
             }
             out
         })
     }
 
     /// The sound of an input as it comes (see `Live::audio`).
-    pub fn audio(&self, id: &str) -> Option<tokio::sync::broadcast::Receiver<axum::body::Bytes>> {
+    pub fn audio(&self, id: &str) -> Option<tokio::sync::broadcast::Receiver<Pcm>> {
         let map = self.live.read().unwrap_or_else(|p| p.into_inner());
         Some(map.get(id)?.audio.subscribe())
     }
 
+    /// Wakes when an input has a new picture: (its number, its time).
     pub fn watch(&self, id: &str) -> Option<tokio::sync::watch::Receiver<(u64, u64)>> {
         let map = self.live.read().unwrap_or_else(|p| p.into_inner());
         map.get(id).map(|l| l.frames.subscribe())
     }
 
-    /// The newest picture as JPEG at most `width` wide, made once for every
-    /// page asking for this width (None: no picture yet).
-    pub fn jpeg(&self, id: &str, width: u32) -> Option<(u64, axum::body::Bytes)> {
+    /// The pictures of an input after number `after` (the last few), each
+    /// with its number and smoothed time (ms since 1970); the newest one
+    /// when `after` is None.
+    pub fn pictures_after(&self, id: &str, after: Option<u64>) -> Vec<(u64, u64)> {
+        let map = self.live.read().unwrap_or_else(|p| p.into_inner());
+        let Some(l) = map.get(id) else {
+            return Vec::new();
+        };
+        let recent = l.recent.lock().unwrap_or_else(|p| p.into_inner());
+        match after {
+            Some(a) => recent
+                .iter()
+                .filter(|(n, ..)| *n > a)
+                .map(|(n, ms, _)| (*n, *ms))
+                .collect(),
+            None => recent
+                .back()
+                .map(|(n, ms, _)| (*n, *ms))
+                .into_iter()
+                .collect(),
+        }
+    }
+
+    /// Picture number `n` (the newest when it is gone) as JPEG at most
+    /// `width` wide, made once for every page asking for this width.
+    pub fn jpeg(&self, id: &str, width: u32, n: Option<u64>) -> Option<(u64, axum::body::Bytes)> {
         let l = self
             .live
             .read()
             .unwrap_or_else(|p| p.into_inner())
             .get(id)?
             .clone();
-        let pic = l
-            .picture
-            .read()
-            .unwrap_or_else(|p| p.into_inner())
-            .clone()?;
-        let n = l.received.load(Ordering::Relaxed);
+        let (n, pic) = {
+            let recent = l.recent.lock().unwrap_or_else(|p| p.into_inner());
+            let found = n.and_then(|n| recent.iter().find(|(m, ..)| *m == n));
+            match found.or(recent.back()) {
+                Some((m, _, p)) => (*m, p.clone()),
+                None => (
+                    l.received.load(Ordering::Relaxed),
+                    l.picture
+                        .read()
+                        .unwrap_or_else(|p| p.into_inner())
+                        .clone()?,
+                ),
+            }
+        };
         {
             let made = l.jpegs.lock().unwrap_or_else(|p| p.into_inner());
             if let Some((_, _, b)) = made.iter().find(|(m, w, _)| *m == n && *w == width) {
@@ -716,9 +1071,9 @@ impl Inputs {
         }
         let b = axum::body::Bytes::from(strata_mv_render::jpeg(&pic, width, 78)?);
         let mut made = l.jpegs.lock().unwrap_or_else(|p| p.into_inner());
-        made.retain(|(m, _, _)| *m + 2 >= n);
+        made.retain(|(m, _, _)| *m + 6 >= n);
         made.push_back((n, width, b.clone()));
-        while made.len() > 8 {
+        while made.len() > 16 {
             made.pop_front();
         }
         Some((n, b))
@@ -864,7 +1219,8 @@ impl strata_mv_render::LiveInputs for Inputs {
             format,
             live: fresh,
             tally: self.signals.tally(id),
-            levels: self.signals.levels(id),
+            // As late as the picture shown with them.
+            levels: self.signals.levels_at(id, l.shown_wait()),
             loudness,
             history,
             timecode: self.signals.timecode_of(id),
@@ -966,7 +1322,9 @@ pub async fn list(
 }
 
 /// `GET /api/inputs/{id}/audio`: the sound of an input as it comes, to
-/// listen to it (16-bit stereo PCM at 48 kHz, little-endian, endless).
+/// listen to it, endless: chunks of a 4-byte length (little-endian), when
+/// their first sample came (f64, ms since 1970, little-endian), then their
+/// 16-bit stereo PCM at 48 kHz (little-endian).
 pub async fn audio(
     State(s): State<Shared>,
     MaybeUser(me): MaybeUser,
@@ -985,7 +1343,18 @@ pub async fn audio(
                 return None;
             }
             match rx.recv().await {
-                Ok(b) => return Some((Ok::<_, std::io::Error>(b), (rx, closing))),
+                // Each chunk: its length and when its first sample came
+                // (ms since 1970), then its samples.
+                Ok(c) => {
+                    let mut b = Vec::with_capacity(12 + c.data.len());
+                    b.extend_from_slice(&(c.data.len() as u32).to_le_bytes());
+                    b.extend_from_slice(&c.at_ms.to_le_bytes());
+                    b.extend_from_slice(&c.data);
+                    return Some((
+                        Ok::<_, std::io::Error>(axum::body::Bytes::from(b)),
+                        (rx, closing),
+                    ));
+                }
                 // Too slow a listener: on from the newest.
                 Err(tokio::sync::broadcast::error::RecvError::Lagged(_)) => continue,
                 // The input went away (restarted): the page asks again.
@@ -995,7 +1364,7 @@ pub async fn audio(
     });
     (
         [
-            (header::CONTENT_TYPE, "audio/L16; rate=48000; channels=2"),
+            (header::CONTENT_TYPE, "application/octet-stream"),
             (header::CACHE_CONTROL, "no-store"),
         ],
         Body::from_stream(stream),
@@ -1268,36 +1637,55 @@ pub async fn mjpeg(
         return not_found("input").into_response();
     };
     let mut closing = s.closing.subscribe();
-    // Each picture as soon as it comes (woken by it, not polling), with
-    // when it came (X-Time, ms since 1970): the page plays them out evenly.
-    // One at least every 2 s, so the page knows the stream is alive.
+    // Every picture, in order, as soon as it comes (woken by it, not
+    // polling), with its smoothed time (X-Time, ms since 1970): the page
+    // plays them out a frame apart. One at least every 2 s, so the page
+    // knows the stream is alive.
+    let part = |n: Option<u64>, at: Option<u64>, jpeg: &[u8]| {
+        let mut head = format!(
+            "--frame\r\nContent-Type: image/jpeg\r\nContent-Length: {}\r\n",
+            jpeg.len()
+        );
+        if let (Some(n), Some(at)) = (n, at) {
+            head.push_str(&format!("X-Frame: {n}\r\nX-Time: {at}\r\n"));
+        }
+        head.push_str("\r\n");
+        let mut b = head.into_bytes();
+        b.extend_from_slice(jpeg);
+        b.extend_from_slice(b"\r\n");
+        b
+    };
     let stream = futures_util::stream::unfold(
         (hub, id, None::<u64>, frames),
-        move |(hub, id, last, mut frames)| {
+        move |(hub, id, mut last, mut frames)| {
             let stop = *closing.borrow_and_update();
             async move {
                 if stop {
                     return None;
                 }
                 loop {
-                    let (n, at) = *frames.borrow_and_update();
-                    if Some(n) != last || last.is_none() {
+                    frames.borrow_and_update();
+                    let list = hub.pictures_after(&id, last);
+                    if !list.is_empty() {
                         let (h2, id2) = (hub.clone(), id.clone());
-                        let made = tokio::task::spawn_blocking(move || h2.jpeg(&id2, width))
-                            .await
-                            .ok()
-                            .flatten();
-                        if let Some((n, jpeg)) = made {
-                            let mut part = format!(
-                                "--frame\r\nContent-Type: image/jpeg\r\nContent-Length: {}\r\nX-Frame: {n}\r\nX-Time: {at}\r\n\r\n",
-                                jpeg.len()
-                            )
-                            .into_bytes();
-                            part.extend_from_slice(&jpeg);
-                            part.extend_from_slice(b"\r\n");
+                        let made = tokio::task::spawn_blocking(move || {
+                            list.iter()
+                                .filter_map(|(n, at)| {
+                                    h2.jpeg(&id2, width, Some(*n)).map(|(m, j)| (m, *at, j))
+                                })
+                                .collect::<Vec<_>>()
+                        })
+                        .await
+                        .unwrap_or_default();
+                        if let Some((n, ..)) = made.last() {
+                            last = Some(*n);
+                            let mut out = Vec::new();
+                            for (n, at, j) in &made {
+                                out.extend(part(Some(*n), Some(*at), j));
+                            }
                             return Some((
-                                Ok::<_, std::io::Error>(axum::body::Bytes::from(part)),
-                                (hub, id, Some(n), frames),
+                                Ok::<_, std::io::Error>(axum::body::Bytes::from(out)),
+                                (hub, id, last, frames),
                             ));
                         }
                     }
@@ -1311,16 +1699,13 @@ pub async fn mjpeg(
                         Err(_) if last.is_some() => {
                             let (h2, id2) = (hub.clone(), id.clone());
                             if let Some((_, jpeg)) =
-                                tokio::task::spawn_blocking(move || h2.jpeg(&id2, width))
+                                tokio::task::spawn_blocking(move || h2.jpeg(&id2, width, None))
                                     .await
                                     .ok()
                                     .flatten()
                             {
-                                let mut part = format!("--frame\r\nContent-Type: image/jpeg\r\nContent-Length: {}\r\n\r\n", jpeg.len()).into_bytes();
-                                part.extend_from_slice(&jpeg);
-                                part.extend_from_slice(b"\r\n");
                                 return Some((
-                                    Ok(axum::body::Bytes::from(part)),
+                                    Ok(axum::body::Bytes::from(part(None, None, &jpeg))),
                                     (hub, id, last, frames),
                                 ));
                             }
@@ -1514,6 +1899,7 @@ fn run_stream(l: &Live) {
             .as_ref()
             .and_then(|t| t.local_addr().ok())
             .map(|a| a.port());
+        pull.fps_mode = !l.no_fps_mode.load(Ordering::Relaxed);
         let args = c.ffmpeg_args_from(&pull, audio, info).unwrap_or_default();
         let log = Arc::new(Mutex::new(String::new()));
         // The relay first: the decoder reads what it writes.
@@ -1576,6 +1962,7 @@ fn run_stream(l: &Live) {
             "Connecting…"
         });
         l.facts().reset(relay.is_some());
+        *l.media.lock().unwrap_or_else(|p| p.into_inner()) = MediaClock::default();
         let mut out = child.stdout.take();
         let into_decoder = child.stdin.take();
         let from_relay = relay.as_mut().and_then(|r| r.stdout.take());
@@ -1584,20 +1971,47 @@ fn run_stream(l: &Live) {
         if let Some(err) = child.stderr.take() {
             let log = log.clone();
             let (signals, id, facts) = (l.signals.clone(), c.id.clone(), l.facts.clone());
+            let media = l.media.clone();
             std::thread::spawn(move || {
                 let mut sent = false;
                 let mut in_output = false;
                 let mut meters = MeterLog::default();
+                let lock = || media.lock().unwrap_or_else(|p| p.into_inner());
                 for line in log_lines(err) {
-                    // The audio levels: to the meters, not to the log.
+                    // The audio levels: to the meters, not to the log; timed
+                    // by the sound's own time (with the pictures).
                     if let Some(levels) = meters.line(&line) {
+                        if let Some(pts) = meters.pts {
+                            let mut m = lock();
+                            m.audio_start.get_or_insert(pts);
+                        }
                         if let Some(levels) = levels {
-                            signals.measure(&id, &levels);
+                            let at = meters.done_pts.and_then(|pts| {
+                                let mut m = lock();
+                                m.saw_sound(pts + 0.04);
+                                m.at(pts)
+                            });
+                            signals.measure_at(&id, &levels, at.unwrap_or_else(Instant::now));
                             if let Some(l) = meters.loudness.take() {
                                 signals.loudness(&id, l);
                             }
                         }
                         continue;
+                    }
+                    // A picture's own time (`showinfo`), for when it is read.
+                    if line.starts_with("[Parsed_showinfo") && line.contains(" n:") {
+                        let n = line
+                            .split(" n:")
+                            .nth(1)
+                            .and_then(|r| r.split_whitespace().next())
+                            .and_then(|v| v.parse::<u64>().ok());
+                        if let (Some(n), Some(t)) = (n, pts_time(&line)) {
+                            let mut m = lock();
+                            m.pts.push_back((n, t));
+                            while m.pts.len() > 120 {
+                                m.pts.pop_front();
+                            }
+                        }
                     }
                     // Each picture and the opening of the input: what it carries.
                     let taken = facts.lock().unwrap_or_else(|p| p.into_inner()).line(
@@ -1656,15 +2070,43 @@ fn run_stream(l: &Live) {
                 *l.rate.lock().unwrap_or_else(|p| p.into_inner()) = fps;
                 let size = (w as usize) * (h as usize) * 4;
                 let mut first = true;
+                // Pictures read so far (their number in ffmpeg's `showinfo`).
+                let mut count = 0u64;
                 loop {
                     let mut buf = l.buffer(size);
                     if out.read_exact(&mut buf).is_err() || l.stopped() {
                         break;
                     }
+                    // Its own time, as ffmpeg told it (`showinfo`, by the
+                    // picture's number: told before the picture is written,
+                    // its line may still be on its way here).
+                    let when = info.then(|| {
+                        let start = Instant::now();
+                        loop {
+                            let mut m = l.media.lock().unwrap_or_else(|p| p.into_inner());
+                            while m.pts.front().is_some_and(|(n, _)| *n < count) {
+                                m.pts.pop_front();
+                            }
+                            if let Some(&(n, pts)) = m.pts.front() {
+                                if n == count {
+                                    m.pts.pop_front();
+                                    m.saw_picture(pts);
+                                    break m.at(pts);
+                                }
+                            }
+                            drop(m);
+                            if start.elapsed() > Duration::from_millis(40) {
+                                break None;
+                            }
+                            std::thread::sleep(Duration::from_millis(1));
+                        }
+                    });
+                    let when = when.flatten();
+                    count += 1;
                     // Opaque or transparent black: already premultiplied.
                     if let Some(pm) = IntSize::from_wh(w, h).and_then(|s| Pixmap::from_vec(buf, s))
                     {
-                        l.put(pm);
+                        l.put_at(pm, when);
                     }
                     if first {
                         first = false;
@@ -1687,6 +2129,11 @@ fn run_stream(l: &Live) {
         // No audio track: again at once, without the meters.
         if audio && said.contains("matches no streams") {
             l.no_audio.store(true, Ordering::Relaxed);
+            continue;
+        }
+        // An ffmpeg without -fps_mode (before 5.1): again, without it.
+        if pull.fps_mode && said.contains("fps_mode") {
+            l.no_fps_mode.store(true, Ordering::Relaxed);
             continue;
         }
         // An ffmpeg without showinfo (or its options): again, without it.
@@ -1718,9 +2165,12 @@ fn read_pcm(l: &Live, listener: std::net::TcpListener) {
     };
     let _ = conn.set_nonblocking(false);
     let _ = conn.set_read_timeout(Some(Duration::from_secs(1)));
-    // 20 ms at a time, whole stereo samples.
+    // 20 ms at a time, whole stereo samples, timed.
     let mut buf = vec![0u8; 3840];
     let mut have = 0;
+    let mut clock = SampleClock::default();
+    // Samples read so far: the sound's own time is its start plus as many.
+    let mut read = 0u64;
     loop {
         match conn.read(&mut buf[have..]) {
             Ok(0) => return,
@@ -1728,10 +2178,24 @@ fn read_pcm(l: &Live, listener: std::net::TcpListener) {
                 have += n;
                 let whole = have - have % 4;
                 if whole >= 1920 || have == buf.len() {
+                    let n = (whole / 4) as u64;
+                    let fallback = clock.time(n as usize);
+                    let at = {
+                        let mut m = l.media.lock().unwrap_or_else(|p| p.into_inner());
+                        m.audio_start.and_then(|a0| {
+                            let rate = PCM_RATE as f64;
+                            m.saw_sound(a0 + (read + n) as f64 / rate);
+                            m.at(a0 + read as f64 / rate)
+                        })
+                    }
+                    .unwrap_or(fallback);
+                    read += n;
                     if l.audio.receiver_count() > 0 {
-                        let _ = l
-                            .audio
-                            .send(axum::body::Bytes::copy_from_slice(&buf[..whole]));
+                        let _ = l.audio.send(Pcm {
+                            at,
+                            at_ms: epoch_ms(at),
+                            data: axum::body::Bytes::copy_from_slice(&buf[..whole]),
+                        });
                     }
                     buf.copy_within(whole..have, 0);
                     have -= whole;
@@ -1802,6 +2266,9 @@ struct MeterLog {
     r128: BTreeMap<String, f32>,
     /// The loudness of the last frame read whole (taken by the caller).
     loudness: Option<strata_mv_core::signal::Loudness>,
+    /// The time (PTS) of the frame being read, and of the last one read whole.
+    pts: Option<f64>,
+    done_pts: Option<f64>,
 }
 
 impl MeterLog {
@@ -1851,6 +2318,10 @@ impl MeterLog {
                     true_peak: strata_mv_core::signal::db(get("true_peak").unwrap_or(0.0)),
                 });
             }
+        }
+        if line.contains("frame:") {
+            self.done_pts = self.pts;
+            self.pts = pts_time(line);
         }
         if line.contains("frame:") && !self.frame.is_empty() {
             let levels = std::mem::take(&mut self.frame)
@@ -1922,6 +2393,7 @@ fn run_ndi(l: &Live) {
         l.say(format!("Connecting to {source}…"));
         let mut shown = None;
         let mut loudness = R128::default();
+        let mut ndi_clock = SampleClock::default();
         l.facts().reset(false);
         let (mut video_frames, mut audio_frames) = (0u64, 0u64);
         while !l.stopped() {
@@ -1947,7 +2419,12 @@ fn run_ndi(l: &Live) {
                     if l.audio.receiver_count() > 0 {
                         let pcm = ndi_pcm(&a);
                         if !pcm.is_empty() {
-                            let _ = l.audio.send(axum::body::Bytes::from(pcm));
+                            let at = ndi_clock.time(pcm.len() / 4);
+                            let _ = l.audio.send(Pcm {
+                                at,
+                                at_ms: epoch_ms(at),
+                                data: axum::body::Bytes::from(pcm),
+                            });
                         }
                     }
                     let levels: Vec<_> = (0..a.channels)
@@ -2334,11 +2811,14 @@ mod tests {
             signals: Default::default(),
             no_audio: AtomicBool::new(false),
             no_info: AtomicBool::new(false),
+            no_fps_mode: AtomicBool::new(false),
             relay: Mutex::new(None),
             facts: Arc::new(Mutex::new(crate::probe::Facts::default())),
             frames: tokio::sync::watch::channel((0, 0)).0,
             jpegs: Mutex::new(VecDeque::new()),
-            audio: tokio::sync::broadcast::channel(64).0,
+            recent: Mutex::new(VecDeque::new()),
+            audio: tokio::sync::broadcast::channel(256).0,
+            media: Default::default(),
         }
     }
 
@@ -2375,6 +2855,43 @@ mod tests {
         // Nothing new: the last one stays.
         assert_eq!(l.current().unwrap().width(), 3);
         assert_eq!(l.dropped.load(Ordering::Relaxed), 0);
+    }
+
+    #[test]
+    fn sound_and_picture_of_one_time_are_shown_together() {
+        let mut m = MediaClock::default();
+        // The picture of time 5.0 comes; its sound of the same time comes 120 ms later
+        // (the decoder's delay between them).
+        m.saw_picture(5.0);
+        std::thread::sleep(Duration::from_millis(120));
+        m.saw_sound(5.0);
+        let (p, s) = (m.at(5.0).unwrap(), m.at(5.0).unwrap());
+        assert_eq!(p, s);
+        // Both on the later one: each is there by then.
+        let late = Instant::now() - p;
+        assert!(late < Duration::from_millis(20), "{late:?}");
+        assert_eq!(
+            pts_time("[Parsed_showinfo_0 @ 0x1] n:   3 pts:  5520 pts_time:0.0613 duration:3600"),
+            Some(0.0613)
+        );
+    }
+
+    #[test]
+    fn a_burst_of_sound_is_timed_by_its_rate() {
+        let mut c = SampleClock::default();
+        let first = c.time(960);
+        // Three chunks of 20 ms come at once 60 ms later: each 20 ms after the one before.
+        std::thread::sleep(Duration::from_millis(60));
+        let t: Vec<Instant> = (0..3).map(|_| c.time(960)).collect();
+        for w in t.windows(2) {
+            let d = w[1] - w[0];
+            assert!((d.as_secs_f64() - 0.02).abs() < 0.001, "{d:?}");
+        }
+        assert!(
+            t[0] - first >= Duration::from_millis(19),
+            "{:?}",
+            t[0] - first
+        );
     }
 
     #[test]

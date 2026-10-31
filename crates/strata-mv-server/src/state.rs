@@ -67,6 +67,8 @@ pub enum Event {
         sources: BTreeMap<String, crate::signals::SignalView>,
         /// PTP, NTP and the alarm journal.
         system: strata_mv_core::signal::SystemView,
+        /// When they were sent (ms since 1970).
+        at: f64,
     },
 }
 

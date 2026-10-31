@@ -4,7 +4,7 @@
 // crates/strata-mv-core/src/wid/broadcast.rs (keep in sync); the Rust engine draws the same list
 // (crates/strata-mv-render/src/wid/broadcast.rs).
 import { Activity, AudioLines, BellRing, Gauge, Timer } from 'lucide-react';
-import { alarmText, useInputs, useSignal, useSystem, type SignalView, type SystemView } from '../engine/liveInputs';
+import { alarmText, smoothLevels, useEveryFrame, useInputs, useSignal, useSystem, type SignalView, type SystemView } from '../engine/liveInputs';
 import { zonedFields } from '../engine/widgets';
 import type { Panel } from '../engine/types';
 import { t } from '../i18n';
@@ -367,7 +367,11 @@ function InputPick({ value, onChange, none }: { value: string; onChange: (v: str
 }
 
 function MeterView({ c, w, h }: { c: MeterConfig; w: number; h: number }) {
-  return <Items items={meters(c, w, h, useSignal((c.input ?? '').trim()))} look={(c as { panel?: Panel }).panel} />;
+  const id = (c.input ?? '').trim();
+  const signal = useSignal(id);
+  // Drawn on each frame: the meters on their sound's time (with the pictures), falling smoothly.
+  useEveryFrame(!!id);
+  return <Items items={meters(c, w, h, id ? { ...signal, levels: smoothLevels(id) } : signal)} look={(c as { panel?: Panel }).panel} />;
 }
 function LoudnessView({ c, w, h, lang }: { c: LoudnessConfig; w: number; h: number; lang: string }) {
   return <Items items={loudness(c, w, h, useSignal((c.input ?? '').trim()), lang)} look={(c as { panel?: Panel }).panel} />;

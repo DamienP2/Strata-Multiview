@@ -6,7 +6,7 @@
 // - the Designer and the Video streams page ask for the newest picture a
 //   few times a second: short requests that get through any proxy and never
 //   hold one of the few connections a browser opens to a server.
-import { useEffect, useSyncExternalStore } from 'react';
+import { useEffect, useState, useSyncExternalStore } from 'react';
 import { t } from '../i18n';
 
 export interface InputInfo {
@@ -243,8 +243,6 @@ export interface LiveStream {
   queue: Timed[];
   /** The picture on show. */
   current: ImageBitmap | null;
-  /** Smallest delay seen between a picture coming to the server and here (ms, both clocks). */
-  lag: number | null;
   users: number;
   abort: AbortController;
   subs: Set<() => void>;
@@ -254,14 +252,46 @@ const streams = new Map<string, LiveStream>();
 const WIDTHS = [320, 480, 640, 960, 1280, 1920, 3840];
 /** The width asked of the server for a picture drawn `px` wide (a few sizes only: shared by the tiles alike). */
 export const streamWidth = (px: number) => WIDTHS.find((w) => w >= px) ?? 3840;
-/** How long after its time a picture is shown: room for the network's irregularity. */
+// ------------------------------------------------------------ the clock --
+// One timeline for everything an input brings: its pictures, its sound and its meters each carry
+// when they came to the server (ms since 1970); each is played that long after, plus the smallest
+// delay seen between the server and here and a playout delay that absorbs the network: so they
+// stay together.
+
+/** How long after its time anything is played at least: room for the network's irregularity. */
 const PLAYOUT_MS = 80;
+/** The smallest delay seen from the server to here (ms, both clocks), rising slowly (the clocks drift apart). */
+let lag: number | null = null;
+let lagAt = 0;
+/** How much later than that things came lately (ms; a source sending its sound in bursts): played as late. */
+let late = 0;
+
+/** Something the server timed `serverMs` has just come (`dur`: what it holds lasts that long after). */
+export function observe(serverMs: number, dur = 0) {
+  const now = performance.timeOrigin + performance.now();
+  const seen = now - serverMs - dur;
+  const dt = lagAt ? now - lagAt : 0;
+  // Rises by 1 ms a second at most: a delay grown for good is followed slowly, a shorter one at once.
+  if (lag == null) lag = seen;
+  else lag = Math.min(seen, lag + dt / 1000);
+  // Later than that: the playout waits as long at once, and comes back 10 ms a second.
+  late = Math.max(seen - lag, late - dt / 100, 0);
+  lagAt = now;
+}
+
+/** How long after its time anything plays now (ms): never under 80 ms, as long as things came late lately. */
+export const playout = () => Math.min(1200, Math.max(PLAYOUT_MS, late + 30));
+
+/** When (performance.now()) something timed `serverMs` by the server plays here. */
+export function playAt(serverMs: number): number {
+  return serverMs + (lag ?? 0) + playout() - performance.timeOrigin;
+}
 
 function streamFor(id: string, width: number): LiveStream {
   const key = `${id}@${width}`;
   let s = streams.get(key);
   if (!s) {
-    s = { size: null, queue: [], current: null, lag: null, users: 0, abort: new AbortController(), subs: new Set() };
+    s = { size: null, queue: [], current: null, users: 0, abort: new AbortController(), subs: new Set() };
     streams.set(key, s);
     void runStream(id, width, s);
   }
@@ -309,6 +339,8 @@ async function runStream(id: string, width: number, s: LiveStream) {
 
 /** Decodes a picture and queues it for its time. */
 async function take(s: LiveStream, blob: Blob, came: number) {
+  // Seen as it comes, before the decoding (which is not the network's delay).
+  if (came > 0) observe(came);
   let bmp: ImageBitmap;
   try {
     bmp = await createImageBitmap(blob);
@@ -316,17 +348,12 @@ async function take(s: LiveStream, blob: Blob, came: number) {
     return;
   }
   if (s.abort.signal.aborted) return bmp.close();
-  const now = performance.now();
-  let at = now;
-  if (came > 0) {
-    // The smallest delay seen, rising slowly (the clocks drift apart).
-    const lag = performance.timeOrigin + now - came;
-    s.lag = s.lag == null ? lag : Math.min(lag, s.lag + 0.05);
-    at = came + s.lag + PLAYOUT_MS - performance.timeOrigin;
-  }
+  let at = performance.now();
+  // On the inputs' common timeline (the sound and the meters too).
+  if (came > 0) at = playAt(came);
   s.queue.push({ bmp, at });
-  // Too far behind (a tab in the background): only the newest ones.
-  while (s.queue.length > 8) s.queue.shift()!.bmp.close();
+  // Too far behind (a tab in the background): only the newest ones (the playout holds a second at most).
+  while (s.queue.length > 60) s.queue.shift()!.bmp.close();
   if (!s.size || s.size[0] !== bmp.width || s.size[1] !== bmp.height) {
     s.size = [bmp.width, bmp.height];
     s.subs.forEach((f) => f());
@@ -392,6 +419,12 @@ export function useLiveStream(id: string, width: number): LiveStream | null {
   return key ? streamFor(id, width) : null;
 }
 
+/** Draws the component again on each frame of the display while `on` (meters falling smoothly). */
+export function useEveryFrame(on: boolean) {
+  const [, setFrame] = useState(0);
+  useEffect(() => (on ? onPaint(() => setFrame((n) => (n + 1) % 1e6)) : undefined), [on]);
+}
+
 /** Calls `paint` at the display's rate while the streams play (until the returned function). */
 export function onPaint(paint: () => void): () => void {
   painters.add(paint);
@@ -451,6 +484,10 @@ export interface SignalView {
   tally?: Tally;
   /** Per audio channel: [peak, mean power, hold], dBFS. */
   levels?: [number, number, number][];
+  /** The time of the sound they measure (ms since 1970). */
+  levelsAt?: number;
+  /** Every measure since the last message: its time (ms since 1970) and the meters then. */
+  levelsSeq?: [number, [number, number, number][]][];
   /** [momentary, short-term, integrated] LUFS, range LU, true peak dBTP. */
   loudness?: [number, number, number, number, number];
   /** Short-term loudness, one a second, oldest first (sent when it changes; kept here). */
@@ -482,7 +519,79 @@ let system: SystemView = { ptp: { running: false, locked: false, state: '', gran
 const signalSubs = new Set<() => void>();
 
 /** From the WebSocket (store.ts): a history not sent again is the one kept. */
-export function setSignals(all: Record<string, SignalView>, sys?: SystemView) {
+/** Signals waiting for their time on the timeline (with the pictures they go with). */
+const waiting: { t: number; all: Record<string, SignalView>; sys?: SystemView }[] = [];
+let waitTimer: ReturnType<typeof setTimeout> | null = null;
+
+function flushSignals() {
+  waitTimer = null;
+  const now = performance.now();
+  while (waiting.length && waiting[0].t <= now + 2) {
+    const w = waiting.shift()!;
+    applySignals(w.all, w.sys);
+  }
+  if (waiting.length) waitTimer = setTimeout(flushSignals, Math.max(0, waiting[0].t - performance.now()));
+}
+
+/** From the WebSocket (store.ts), sent at `at` (ms since 1970): shown as late as the pictures of that moment. */
+export function setSignals(all: Record<string, SignalView>, sys?: SystemView, at?: number) {
+  if (!at) return applySignals(all, sys);
+  observe(at);
+  // The meters on their sound's own time (with its pictures), the rest when sent.
+  for (const [id, v] of Object.entries(all)) {
+    if (!v.levels?.length) continue;
+    const q = levelQueue.get(id) ?? [];
+    // Each measure at its time (they come in bursts), else the last one.
+    if (v.levelsSeq?.length) for (const [t, levels] of v.levelsSeq) q.push({ t: playAt(t), levels });
+    else q.push({ t: playAt(v.levelsAt ?? at), levels: v.levels });
+    while (q.length > 100) q.shift();
+    levelQueue.set(id, q);
+  }
+  // Inputs gone silent: their meters go when the message's time comes.
+  for (const id of levelQueue.keys()) if (!all[id]?.levels?.length) levelQueue.get(id)!.push({ t: playAt(at), levels: [] });
+  waiting.push({ t: playAt(at), all, sys });
+  // A tab long in the background: only the newest ones.
+  while (waiting.length > 50) waiting.shift();
+  if (!waitTimer) waitTimer = setTimeout(flushSignals, Math.max(0, waiting[0].t - performance.now()));
+}
+
+type Levels = [number, number, number][];
+/** Each input's meters waiting for their time, and the ones shown. */
+const levelQueue = new Map<string, { t: number; levels: Levels }[]>();
+const levelShown = new Map<string, Levels>();
+/** dB a second a peak falls (mirrors signals.rs FALL). */
+const FALL = 24;
+const smooth = new Map<string, { at: number; peaks: number[]; out: Levels }>();
+
+/** An input's meters at this moment of the timeline. */
+function levelsNow(id: string): Levels {
+  const q = levelQueue.get(id);
+  const now = performance.now();
+  if (q) while (q.length && q[0].t <= now) levelShown.set(id, q.shift()!.levels);
+  return levelShown.get(id) ?? signals[id]?.levels ?? [];
+}
+
+/**
+ * An input's meters drawn at the display's rate: on their sound's time (with the pictures), a peak
+ * rising at once and falling smoothly between two measures. The same for every meter of the input
+ * in a frame.
+ */
+export function smoothLevels(id: string): Levels {
+  const now = performance.now();
+  let s = smooth.get(id);
+  if (s && now - s.at < 4) return s.out;
+  const lv = levelsNow(id);
+  const dt = s ? Math.min(0.25, (now - s.at) / 1000) : 0;
+  const peaks = lv.map(([p], i) => {
+    const was = s?.peaks[i] ?? -200;
+    return p >= was ? p : Math.max(p, was - FALL * dt);
+  });
+  s = { at: now, peaks, out: lv.map(([, rms, hold], i) => [peaks[i], rms, hold]) };
+  smooth.set(id, s);
+  return s.out;
+}
+
+function applySignals(all: Record<string, SignalView>, sys?: SystemView) {
   const next: Record<string, SignalView> = {};
   for (const [id, v] of Object.entries(all)) next[id] = v.history || !signals[id]?.history ? v : { ...v, history: signals[id].history };
   signals = next;

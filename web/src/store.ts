@@ -17,7 +17,7 @@ type ServerEvent =
   | { type: 'lock'; projectId: string; templateId: string; lock: EditLock | null; takenFrom: string | null }
   | { type: 'folders'; folders: Folders }
   | { type: 'changed'; what: string }
-  | { type: 'signals'; sources: Record<string, SignalView>; system?: SystemView }
+  | { type: 'signals'; sources: Record<string, SignalView>; system?: SystemView; at?: number }
   | { type: 'error'; message: string };
 
 
@@ -313,7 +313,7 @@ export const useApp = create<AppStore>((set, get) => {
               set({ channels: msg.channels });
               break;
             case 'signals':
-              setSignals(msg.sources, msg.system);
+              setSignals(msg.sources, msg.system, msg.at);
               break;
             case 'channel':
               set({ live: { ...get().live, [msg.channelId]: { state: msg.state, at: now } }, serverOffset: clockOffset(msg.serverTime, now) });

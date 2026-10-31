@@ -110,7 +110,14 @@ fn open_outputs(
             let s = if audio.is_empty() {
                 s
             } else {
-                s.with_audio(crate::inputs::Inputs::sound_of(inputs.clone(), audio))
+                s.with_audio(crate::inputs::Inputs::sound_of(
+                    inputs.clone(),
+                    audio,
+                    // Its pictures are rendered that long before they go, and
+                    // show at the first tick after their time (half a tick late
+                    // on average).
+                    period * cfg.render_ahead.clamp(1, 4) + period / 2,
+                ))
             };
             Box::new(s) as Box<dyn OutputSink>
         });

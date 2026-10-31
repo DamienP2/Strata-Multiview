@@ -50,6 +50,14 @@ struct Meter {
     at: Instant,
     /// Since when every channel is silent.
     silent_since: Option<Instant>,
+    /// The meters as they were at each measure, the last second and a half:
+    /// an output shows them as late as its pictures.
+    past: VecDeque<(Instant, Vec<Level>)>,
+    /// The time of the sound the meters show now.
+    shown_at: Instant,
+    /// The measures not sent to the browsers yet, each with its time: the
+    /// measures come in bursts, each is played at its time.
+    unsent: Vec<(Instant, Vec<Level>)>,
 }
 
 struct Loud {
@@ -108,6 +116,14 @@ pub struct SignalView {
     /// Per channel: peak, mean power, hold (dBFS, one decimal).
     #[serde(skip_serializing_if = "Vec::is_empty")]
     pub levels: Vec<[f32; 3]>,
+    /// The time of the sound they measure (ms since 1970): the pages show
+    /// them with the pictures of that time.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub levels_at: Option<f64>,
+    /// Every measure since the last message: its time (ms since 1970) and
+    /// the meters then.
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub levels_seq: Vec<(f64, Vec<[f32; 3]>)>,
     /// Momentary, short-term, integrated (LUFS), range (LU), true peak (dBTP).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub loudness: Option<[f32; 5]>,
@@ -194,6 +210,13 @@ impl Signals {
     /// A new measure of an input's audio: the meters rise at once, fall
     /// at [`FALL`]; the hold mark keeps the highest peak for [`HOLD`].
     pub fn measure(&self, id: &str, levels: &[Level]) {
+        self.measure_at(id, levels, Instant::now());
+    }
+
+    /// The same, the sound measured being of time `when` (its own time on
+    /// the wall clock: the outputs and the pages show it with the pictures
+    /// of that time).
+    pub fn measure_at(&self, id: &str, levels: &[Level], when: Instant) {
         let now = Instant::now();
         let mut audio = write(&self.audio);
         let m = audio.entry(id.to_string()).or_insert_with(|| Meter {
@@ -201,6 +224,9 @@ impl Signals {
             held: Vec::new(),
             at: now,
             silent_since: None,
+            past: VecDeque::new(),
+            shown_at: now,
+            unsent: Vec::new(),
         });
         let dt = now.saturating_duration_since(m.at).as_secs_f32().min(1.0);
         m.at = now;
@@ -221,6 +247,19 @@ impl Signals {
             m.silent_since.get_or_insert(now);
         } else {
             m.silent_since = None;
+        }
+        m.past.push_back((when, m.shown.clone()));
+        m.shown_at = when;
+        m.unsent.push((when, m.shown.clone()));
+        if m.unsent.len() > 50 {
+            m.unsent.remove(0);
+        }
+        while m
+            .past
+            .front()
+            .is_some_and(|(t, _)| now.saturating_duration_since(*t) > Duration::from_millis(1500))
+        {
+            m.past.pop_front();
         }
         self.bump();
     }
@@ -290,6 +329,37 @@ impl Signals {
         } else {
             l.black_since = None;
         }
+    }
+
+    /// The meters of an input as they were `delay` ago (an output shows
+    /// its pictures that late): the peaks falling smoothly since that
+    /// measure, not by steps from one measure to the next.
+    pub fn levels_at(&self, id: &str, delay: Duration) -> Vec<Level> {
+        let audio = read(&self.audio);
+        let Some(m) = audio.get(id).filter(|m| m.at.elapsed() < GONE) else {
+            return Vec::new();
+        };
+        let Some(when) = Instant::now().checked_sub(delay) else {
+            return m.shown.clone();
+        };
+        let Some((t, levels)) = m
+            .past
+            .iter()
+            .rev()
+            .find(|(t, _)| *t <= when)
+            .or(m.past.front())
+        else {
+            return m.shown.clone();
+        };
+        let fall = FALL * when.saturating_duration_since(*t).as_secs_f32().min(1.0);
+        levels
+            .iter()
+            .map(|l| Level {
+                peak: (l.peak - fall).max(SILENCE),
+                rms: l.rms,
+                hold: l.hold,
+            })
+            .collect()
     }
 
     /// The meters of an input (none: no audio lately).
@@ -464,13 +534,27 @@ impl Signals {
             }
         }
         let round = |v: f32| (v * 10.0).round() / 10.0;
-        for (id, m) in read(&self.audio).iter() {
+        for (id, m) in write(&self.audio).iter_mut() {
+            let unsent = std::mem::take(&mut m.unsent);
             if m.at.elapsed() < GONE && !m.shown.is_empty() {
-                out.entry(id.clone()).or_default().levels = m
+                let v = out.entry(id.clone()).or_default();
+                v.levels_seq = unsent
+                    .into_iter()
+                    .map(|(t, l)| {
+                        (
+                            epoch_ms(t).round(),
+                            l.iter()
+                                .map(|l| [round(l.peak), round(l.rms), round(l.hold)])
+                                .collect(),
+                        )
+                    })
+                    .collect();
+                v.levels = m
                     .shown
                     .iter()
                     .map(|l| [round(l.peak), round(l.rms), round(l.hold)])
                     .collect();
+                v.levels_at = Some(epoch_ms(m.shown_at).round());
             }
         }
         for (id, l) in write(&self.loud).iter_mut() {
@@ -521,6 +605,19 @@ impl Signals {
     }
 }
 
+/// An instant as ms since 1970.
+fn epoch_ms(t: Instant) -> f64 {
+    let now = Instant::now();
+    let ms = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map_or(0.0, |d| d.as_secs_f64() * 1000.0);
+    if t >= now {
+        ms + (t - now).as_secs_f64() * 1000.0
+    } else {
+        ms - (now - t).as_secs_f64() * 1000.0
+    }
+}
+
 /// Marks the journal's line of a fault of `input` as over at `t`.
 fn end(journal: &mut VecDeque<JournalEntry>, input: &str, kind: AlarmKind, t: i64) {
     if let Some(e) = journal
@@ -531,20 +628,21 @@ fn end(journal: &mut VecDeque<JournalEntry>, input: &str, kind: AlarmKind, t: i6
     }
 }
 
-/// Sends the signals to the browsers while they change (every 80 ms at
-/// most); looks at the faults, and PTP and NTP every two seconds.
+/// Sends the signals to the browsers while they change (every 40 ms at
+/// most, the meters' own rate), with when (they play them as late as the
+/// pictures); looks at the faults, and PTP and NTP every two seconds.
 pub async fn broadcast(s: crate::state::Shared) {
     let mut sent = u64::MAX;
     let mut last: BTreeMap<String, SignalView> = BTreeMap::new();
     let mut last_system = SystemView::default();
-    let mut tick = tokio::time::interval(Duration::from_millis(80));
+    let mut tick = tokio::time::interval(Duration::from_millis(40));
     tick.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Skip);
     let mut n = 0u64;
     loop {
         tick.tick().await;
         n += 1;
         let signals = s.inputs.signals();
-        if n % 25 == 1 {
+        if n % 50 == 1 {
             let st = s.perf.sync.get();
             signals.set_sync(
                 PtpView {
@@ -562,7 +660,7 @@ pub async fn broadcast(s: crate::state::Shared) {
                 },
             );
         }
-        if n.is_multiple_of(3) {
+        if n.is_multiple_of(6) {
             signals.evaluate(&s.inputs.watched());
         }
         let v = signals.version();
@@ -582,6 +680,9 @@ pub async fn broadcast(s: crate::state::Shared) {
             let _ = s.events.send(crate::state::Event::Signals {
                 sources: now,
                 system: system.clone(),
+                at: std::time::SystemTime::now()
+                    .duration_since(std::time::UNIX_EPOCH)
+                    .map_or(0.0, |d| d.as_secs_f64() * 1000.0),
             });
             last = bare;
             last_system = system;

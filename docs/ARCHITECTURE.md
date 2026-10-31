@@ -69,6 +69,20 @@ Le serveur repose sur axum et tokio.
 - **Utilisateurs** : `users.json` stocke des hachages Argon2. Chaque route vérifie le rôle de l'appelant et son périmètre de multiviews et de chaînes.
 - **Redémarrage à chaud** : une modification des réglages reconstruit les chaînes et le listener sans arrêter le processus ; les entrées et le tally continuent.
 
+### Synchronisation image, son et vu-mètres
+
+Une entrée arrive souvent par à-coups : les images sortent du décodeur par rafales, et le flux de transport livre l'audio par paquets de 100 à 400 ms. Dater ce qui arrive à son heure d'arrivée ferait saccader l'image et décalerait le son. Chaque entrée a donc **une horloge** (`inputs.rs`, `MediaClock`) qui place ses propres temps (les **PTS**) sur l'horloge murale, de la même façon pour l'image et le son :
+
+- le PTS de chaque image vient du filtre `showinfo` (associé à l'image par son numéro, ffmpeg en `-fps_mode passthrough` : ni ajout ni saut) ; celui du son, du début de l'audio (premier bloc de mesure) plus le nombre d'échantillons (`aresample=async=1` comble les trames perdues) ; celui de chaque mesure des vu-mètres, de son bloc de 40 ms ;
+- l'écart (horloge − PTS) de chaque flux est le plus petit vu (une rafale arrive en retard, jamais en avance), et les deux flux prennent le plus grand des deux : chacun est là à temps ;
+- sans PTS (NDI, SDI, ffmpeg sans `showinfo`), les éléments sont datés par leur cadence de la même façon (`RateClock`) ; deux images restent au moins à 0,9 période l'une de l'autre.
+
+**Sur le serveur** (rendu, NDI, SDI, flux) : une image s'affiche un tampon de lissage après son heure, allongé tant que le son de l'entrée arrive en retard (+20 ms, décroissant de 10 ms/s). Les vu-mètres dessinés sont ceux du moment de l'image affichée (`Signals::levels_at`, avec la chute des crêtes entre deux mesures), et le son envoyé avec une sortie NDI est celui qui accompagne l'image qui part (`Inputs::sound_of` : le délai de l'image affichée, l'avance de rendu et une demi-période).
+
+**Dans le navigateur** (`engine/liveInputs.ts`) : images (`X-Time`), son (`GET /api/inputs/{id}/audio`, chaque paquet daté) et mesures des vu-mètres (`levelsSeq`, toutes, chacune datée ; envoyées 25 fois par seconde) sont rejoués sur **une ligne de temps commune** : heure serveur + plus petit délai vu + délai de lecture (80 ms au moins, autant que les retards récents). Les vu-mètres sont dessinés à la cadence de l'écran, la crête tombant de 24 dB/s entre deux mesures.
+
+Mesures (source à flash et bip simultanés toutes les 2 s) : son/image +0,5 ms, vu-mètres/image −10 ms, sortie NDI +3 ms en moyenne (−30 à +37 ms) ; images régulières à 0,3 ms près.
+
 ## Feuille de route
 
 - [ ] Plusieurs pistes audio par flux (aujourd'hui la première, tous ses canaux).

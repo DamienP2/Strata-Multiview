@@ -1,11 +1,13 @@
-// Listening to an input: its sound as the server sends it (inputs.rs `audio`: 16-bit stereo PCM at
-// 48 kHz, endless), played through Web Audio with a short buffer that absorbs the network. One input
-// at a time in a page.
+// Listening to an input: its sound as the server sends it (inputs.rs `audio`: chunks of 16-bit
+// stereo PCM at 48 kHz, each with when its first sample came), played through Web Audio on the
+// inputs' common timeline (engine/liveInputs): with its pictures and its meters. One input at a
+// time in a page.
 import { useSyncExternalStore } from 'react';
+import { observe, playAt } from './liveInputs';
 
 const RATE = 48000;
-/** How far ahead of the clock the sound is played (absorbs the network's irregularity). */
-const AHEAD = 0.15;
+/** Played on from the last chunk when its time is this close (s): the sound stays continuous. */
+const SLACK = 0.03;
 
 let ctx: AudioContext | null = null;
 let gain: GainNode | null = null;
@@ -40,28 +42,41 @@ async function play(id: string, abort: AbortController) {
       for (;;) {
         const { value, done } = await reader.read();
         if (done || abort.signal.aborted) break;
-        const bytes = new Uint8Array(rest.length + value.length);
-        bytes.set(rest);
-        bytes.set(value, rest.length);
-        const frames = Math.floor(bytes.length / 4);
-        rest = bytes.slice(frames * 4);
-        if (!frames) continue;
-        const buf = ctx.createBuffer(2, frames, RATE);
-        const l = buf.getChannelData(0);
-        const rr = buf.getChannelData(1);
-        const view = new DataView(bytes.buffer, bytes.byteOffset, frames * 4);
-        for (let i = 0; i < frames; i++) {
-          l[i] = view.getInt16(i * 4, true) / 32768;
-          rr[i] = view.getInt16(i * 4 + 2, true) / 32768;
+        const joined = new Uint8Array(rest.length + value.length);
+        joined.set(rest);
+        joined.set(value, rest.length);
+        let off = 0;
+        // Each chunk: its length (u32), when its first sample came (f64, ms since 1970), its samples.
+        while (joined.length - off >= 12) {
+          const head = new DataView(joined.buffer, joined.byteOffset + off, 12);
+          const len = head.getUint32(0, true);
+          const at = head.getFloat64(4, true);
+          if (joined.length - off < 12 + len) break;
+          const frames = Math.floor(len / 4);
+          const view = new DataView(joined.buffer, joined.byteOffset + off + 12, frames * 4);
+          off += 12 + len;
+          if (!frames) continue;
+          observe(at, (frames / RATE) * 1000);
+          const buf = ctx.createBuffer(2, frames, RATE);
+          const l = buf.getChannelData(0);
+          const rr = buf.getChannelData(1);
+          for (let i = 0; i < frames; i++) {
+            l[i] = view.getInt16(i * 4, true) / 32768;
+            rr[i] = view.getInt16(i * 4 + 2, true) / 32768;
+          }
+          // When it plays: on the timeline, heard when it comes out of the speakers.
+          const latency = ctx.outputLatency || ctx.baseLatency || 0;
+          const when = ctx.currentTime + (playAt(at) - performance.now()) / 1000 - latency;
+          // Too late: dropped. Close to where the last one ends: right after it (no click).
+          if (when + buf.duration < ctx.currentTime) continue;
+          if (Math.abs(when - next) > SLACK) next = Math.max(when, ctx.currentTime);
+          const src = ctx.createBufferSource();
+          src.buffer = buf;
+          src.connect(gain);
+          src.start(next);
+          next += buf.duration;
         }
-        // Too late (a pause) or too far ahead (a burst): from now again.
-        const now = ctx.currentTime;
-        if (next < now + 0.02 || next > now + 1) next = now + AHEAD;
-        const src = ctx.createBufferSource();
-        src.buffer = buf;
-        src.connect(gain);
-        src.start(next);
-        next += buf.duration;
+        rest = joined.slice(off);
       }
     } catch {
       if (abort.signal.aborted) return;
