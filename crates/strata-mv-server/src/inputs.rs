@@ -1936,7 +1936,7 @@ fn run_ndi(l: &Live) {
                 }
             }
             // A sender sends a picture when it changes only (a screen, a
-            // still graphic): connected after a first picture, it is there.
+            // still multiview): connected after a first picture, it is there.
             l.hold(shown.is_some() && rx.connected() == Some(true));
             // What the source sends: for the analysis of the input.
             if about.is_some() || sound_of.is_some() || rx.metadata.is_some() {
@@ -2690,7 +2690,7 @@ mod tests {
             None,
         )
         .unwrap();
-        // Transparent graphics over the blue background.
+        // Transparent multiviews over the blue background.
         let frame = Arc::new(strata_mv_render::Frame::blank(320, 180));
         let mut got = false;
         for _ in 0..200 {

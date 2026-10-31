@@ -1023,7 +1023,7 @@ mod tests {
         let cfg = St2110Config {
             id: "a".into(),
             enabled: true,
-            name: "CG".into(),
+            name: "Multiview".into(),
             hardware: String::new(),
             encoding: St2110Encoding::FillKey,
             fill: "239.1.0.1:5004".parse().unwrap(),

@@ -35,7 +35,7 @@ fn main() {
         std::hint::black_box(r.render_channel(&project, &state, OUT, "UTC"));
     }
     println!(
-        "render 1080p (2 graphics): {:.2} ms/frame",
+        "render 1080p (2 multiviews): {:.2} ms/frame",
         t.elapsed().as_secs_f64() * 1000.0 / n as f64
     );
 }

@@ -783,12 +783,12 @@ pub fn progress(
             .iter()
             .find(|k| !it.cat.is_empty() && k.name == it.cat)
             .map(|k| {
-                let (cs, cp, cg) = (
+                let (cs, cp, chip_gap) = (
                     (size * 0.6).round(),
                     (size * 0.36).round(),
                     (size * 0.45).round(),
                 );
-                m.width("Inter", 900, &k.name.to_uppercase(), cs, 0.0) + 2.0 * cp + cg
+                m.width("Inter", 900, &k.name.to_uppercase(), cs, 0.0) + 2.0 * cp + chip_gap
             })
             .unwrap_or(0.0);
         (m.width(&font.font_family, font.font_weight, &up(&it.text), size, ls) + chip + gap) as f64
@@ -885,7 +885,7 @@ pub fn act(
     let h = height(layer);
     let now = ctx.now_ms;
     match op {
-        // The graphic's sources are read again (the server does it): the
+        // The multiview's sources are read again (the server does it): the
         // items follow them, nothing to change here.
         "reload" => return Ok(()),
         "start" => {

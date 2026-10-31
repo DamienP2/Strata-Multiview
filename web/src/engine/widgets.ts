@@ -8,7 +8,7 @@ import { lineWidth } from './textFit';
 export interface TimeCtx {
   /** Wall-clock time (server clock), Unix ms. */
   nowMs: number;
-  /** Seconds since the graphic was taken on air (or the designer playhead). */
+  /** Seconds since the multiview was taken on air (or the designer playhead). */
   ageSecs: number;
   /** Server zone, used when a widget does not set one. */
   defaultTz: string;

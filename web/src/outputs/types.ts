@@ -69,7 +69,7 @@ export interface StreamOutput {
   /** Video bit rate, kbit/s (8000 by default). */
   bitrate: number;
   codec: 'h264' | 'hevc';
-  /** Streams carry no alpha: the graphics are laid over this colour. */
+  /** Streams carry no alpha: the multiviews are laid over this colour. */
   background: string;
   /** A silent stereo track (RTMP platforms usually need one). */
   audio: boolean;

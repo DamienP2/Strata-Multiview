@@ -74,8 +74,8 @@ pub fn changes(old: &[NamedColor], new: &[NamedColor]) -> Vec<(Color, Color)> {
 }
 
 impl Project {
-    /// Replaces the colours in the templates, drafts and rundown (the
-    /// palette changed them). True when something changed.
+    /// Replaces the colours in the multiviews and their drafts (the palette
+    /// changed them). True when something changed.
     pub fn replace_colors(&mut self, changes: &[(Color, Color)]) -> bool {
         if changes.is_empty() {
             return false;
@@ -85,7 +85,7 @@ impl Project {
         };
         let mut n = 0;
         for (from, to) in changes {
-            for part in ["templates", "drafts", "rundown"] {
+            for part in ["templates", "drafts"] {
                 if let Some(x) = v.get_mut(part) {
                     n += replace(x, *from, *to);
                 }

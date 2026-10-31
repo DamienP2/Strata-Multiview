@@ -196,7 +196,7 @@ pub struct Renderer {
     scaled: scaled::Scaled,
     /// Masks kept from frame to frame (faded zones, `mask::Kept`).
     masks: mask::Kept,
-    /// A frame-sized picture for the graphics drawn over what moves
+    /// A frame-sized picture for the multiviews drawn over what moves
     /// (`cache::top_item`), kept cleared between frames.
     over: Option<Pixmap>,
     /// Layers kept drawn (`sprite`).
@@ -214,7 +214,7 @@ pub struct Renderer {
 struct Steps {
     /// Planning: the steps met so far (None while drawing).
     plan: Option<Vec<cache::Op>>,
-    /// Planning: the graphic on air the steps belong to.
+    /// Planning: the multiview on air the steps belong to.
     item: usize,
     /// Planning: inside a Lottie group the operator controls (its own clock).
     clocked: u32,
@@ -233,7 +233,7 @@ struct Steps {
     under: bool,
     /// Drawing a layer in two steps: its second one not begun yet.
     split: bool,
-    /// Inside a cross-fade (the graphic drawn twice: no sprites).
+    /// Inside a cross-fade (the multiview drawn twice: no sprites).
     fading: bool,
     /// Drawing the sprite of a layer drawn in two steps: its first only.
     base_only: bool,
@@ -274,22 +274,22 @@ fn value_tf(
     }
 }
 
-/// A graphic on air, prepared for drawing only when it is drawn (or planned).
+/// A multiview on air, prepared for drawing only when it is drawn (or planned).
 struct OnAir<'p> {
     layer: u32,
     item: &'p strata_mv_core::PlayoutItem,
-    /// Below 1: the graphic replaced in a « Fade » zone, fading out under the new one.
+    /// Below 1: the multiview replaced in a « Fade » zone, fading out under the new one.
     alpha: f32,
     template: &'p Template,
     /// Laid out for the format, with the operator's settings.
     set: std::cell::OnceCell<std::borrow::Cow<'p, Template>>,
-    /// What the graphic's state is drawn from (`sprite`), hashed.
+    /// What the multiview's state is drawn from (`sprite`), hashed.
     key: std::cell::OnceCell<u64>,
     /// Its data as shown now (values counting on their way).
     data: std::borrow::Cow<'p, Data>,
 }
 
-/// A graphic on air, hashed (its template, data, widget states and clocks:
+/// A multiview on air, hashed (its template, data, widget states and clocks:
 /// its timeline frame and age aside, which the layers' values and motion
 /// keys carry).
 fn item_key(item: &strata_mv_core::PlayoutItem) -> u64 {
@@ -337,13 +337,13 @@ struct Ctx<'a> {
     frame: f64,
     data: &'a Data,
     time: TimeCtx<'a>,
-    /// The graphic on air (widget clocks the operator controls), and the
+    /// The multiview on air (widget clocks the operator controls), and the
     /// project frame rate its ages are counted in.
     item: Option<&'a strata_mv_core::PlayoutItem>,
     fps: f64,
     /// The project's language (texts without their own).
     lang: &'a str,
-    /// The graphic on air: its index among those on air and its state
+    /// The multiview on air: its index among those on air and its state
     /// hashed (`item_key`), for the sprites.
     item_index: usize,
     item_key: u64,
@@ -598,9 +598,9 @@ impl Renderer {
         let fps = project.frame_rate.as_f64().max(1.0);
         let now = shown_ms.round() as i64;
         let portrait = dh > dw;
-        // The graphics on air, lowest first, laid out for this format with
+        // The multiviews on air, lowest first, laid out for this format with
         // the settings the Operator was given (mask, font, logo…) when drawn.
-        // A graphic replaced in a « Fade » zone comes just under the new one.
+        // A multiview replaced in a « Fade » zone comes just under the new one.
         let on_air: Vec<OnAir> = state
             .layers
             .iter()
@@ -659,10 +659,10 @@ impl Renderer {
                 .map(|f| (f.opacity(), &f.data))
         }
         // Planned: what is the same as in the frames kept, and which
-        // graphics are over the last one that moves (drawn apart, cache::top_item;
+        // multiviews are over the last one that moves (drawn apart, cache::top_item;
         // drawn whole too, so that frames are the same either way).
         let mut planned = None;
-        // A graphic fading out: every frame drawn whole (the kept steps follow one graphic per layer).
+        // A multiview fading out: every frame drawn whole (the kept steps follow one multiview per layer).
         let kept_cache = cache.filter(|_| self.caching && !leaving);
         let mut top = None;
         let mut top_kept = None;
@@ -704,10 +704,10 @@ impl Renderer {
             for (i, a) in on_air.iter().enumerate() {
                 self.steps.item = i;
                 if fading(a.item).is_some() || !a.item.changes.is_empty() {
-                    // A cross-fade, values moving: the graphic drawn whole, as one step.
+                    // A cross-fade, values moving: the multiview drawn whole, as one step.
                     self.plan_step(cache::Motion::Moving);
                 } else if let Some(ops) = kept.still_steps(&scene, i) {
-                    // The same graphic as in the frame before, nothing of it moving.
+                    // The same multiview as in the frame before, nothing of it moving.
                     self.steps.plan.get_or_insert_with(Vec::new).extend(ops);
                 } else {
                     let ctx = ctx!(i);
@@ -738,22 +738,22 @@ impl Renderer {
             planned = Some((kept, scene));
         }
         let mut pm = pm.unwrap_or_else(|| pool::pixmap(out.width, out.height));
-        // The graphics over what moves, drawn apart (when not kept).
+        // The multiviews over what moves, drawn apart (when not kept).
         let mut over: Option<Pixmap> = None;
-        // The step after the last one of each graphic.
+        // The step after the last one of each multiview.
         let mut item_end = vec![0; on_air.len()];
         for (i, op) in self.steps.ops.iter().enumerate() {
             item_end[op.item] = i + 1;
         }
         for i in 0..on_air.len() {
-            // Every step of this graphic is in the picture already.
+            // Every step of this multiview is in the picture already.
             if item_end[i] > self.steps.at && item_end[i] <= self.steps.skip {
                 self.steps.at = item_end[i];
                 continue;
             }
             let apart = top.is_some_and(|t| i >= t);
             if apart && top_kept.is_some() {
-                // In the kept picture of the graphics over what moves.
+                // In the kept picture of the multiviews over what moves.
                 self.steps.at = self.steps.at.max(item_end[i]);
                 continue;
             }
@@ -785,7 +785,7 @@ impl Renderer {
                 .map(|r| build_mask(pm, None, r, root));
             let alpha = on_air[i].alpha;
             if alpha < 1.0 {
-                // The graphic going in a « Fade » zone: drawn whole, then laid at its opacity.
+                // The multiview going in a « Fade » zone: drawn whole, then laid at its opacity.
                 self.enter_step(pm);
                 self.steps.whole += 1;
                 self.steps.fading = true;
@@ -807,7 +807,7 @@ impl Renderer {
                 continue;
             }
             // Values sliding or turning over (a data source changed them): the
-            // graphic with the new values, the layers showing them moved in
+            // multiview with the new values, the layers showing them moved in
             // their box, then those layers with the old values.
             let turning: Vec<&strata_mv_core::playout::Change> = item
                 .changes
@@ -868,7 +868,7 @@ impl Renderer {
             }
             match fading(item) {
                 None => self.draw_children(pm, ctx, None, root, 1.0, zone_mask.as_ref()),
-                // A cross-fade (Update, data set row): the graphic with
+                // A cross-fade (Update, data set row): the multiview with
                 // the old values and with the new ones, each drawn
                 // whole, then mixed (old × k + new × (1 − k)): what both
                 // cover stays opaque, the rest fades in or out.
@@ -928,7 +928,7 @@ impl Renderer {
                 }
             }
         }
-        // The graphics over what moves, laid over the frame.
+        // The multiviews over what moves, laid over the frame.
         let lay = |pm: &mut Pixmap, tiles: &scaled::Tiles| {
             for (x, y, t) in tiles {
                 scaled::composite(pm, t, *x, *y, 1.0, None);
@@ -1407,7 +1407,7 @@ impl Renderer {
         (inner.iter().fold(own, |m, o| m.and(o.motion)), then)
     }
 
-    /// What the step of `r` is drawn from, hashed (`sprite`): the graphic's
+    /// What the step of `r` is drawn from, hashed (`sprite`): the multiview's
     /// state, the layer's values but its placement, its text, the fonts and
     /// pictures, the sprite's transform; with its children when `subtree`.
     /// With it, the box the drawing is expected in, in layer space.
@@ -2590,7 +2590,7 @@ mod tests {
         for _ in 0..200 {
             state.tick(1.0);
         }
-        // The same take in a Cut zone: the new graphic alone.
+        // The same take in a Cut zone: the new multiview alone.
         let mut cut = state.clone();
         for z in &mut project.zones {
             z.transition = strata_mv_core::ZoneTransition::Cut;
@@ -2603,8 +2603,8 @@ mod tests {
         let mut r = Renderer::new(std::env::temp_dir().join("strata-mv-render-test-assets"));
         let alone = r.render_channel(&project, &cut, OUT, "UTC");
         let both = r.render_channel(&project, &state, OUT, "UTC");
-        assert_ne!(alone.data, both.data, "the graphic going still shows");
-        // Faded out: only the new graphic.
+        assert_ne!(alone.data, both.data, "the multiview going still shows");
+        // Faded out: only the new multiview.
         let going = state
             .layers
             .values_mut()
@@ -2704,7 +2704,7 @@ mod tests {
         let px = |x: usize, y: usize| &f.data[(y * 1920 + x) * 4..(y * 1920 + x) * 4 + 4];
         assert_eq!(px(165, 900)[3], 255);
         assert!(px(165, 900)[0] > 200);
-        // Outside the graphic: the multiview's background (the default dark grey).
+        // Outside the multiview: the multiview's background (the default dark grey).
         assert_eq!(px(10, 10), &[0x14, 0x14, 0x16, 255]);
         if let Ok(path) = std::env::var("STRATA_MV_DUMP_PNG") {
             std::fs::write(path, f.to_png()).unwrap();

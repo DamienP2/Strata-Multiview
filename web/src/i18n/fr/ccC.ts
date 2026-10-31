@@ -8,7 +8,6 @@ export const ccC: Record<string, string> = {
   'Target time': 'Heure cible',
   'Step of − +': 'Pas des − +',
   // The Counter.
-  'cc|on air': 'à l’antenne',
   'cc|Step': 'Pas',
   // The Progress bar.
   'cc|Data': 'Données',

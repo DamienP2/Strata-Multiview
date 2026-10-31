@@ -62,7 +62,7 @@ pub struct StreamConfig {
     pub bitrate: u32,
     #[serde(default)]
     pub codec: Codec,
-    /// What shows where the graphics are transparent.
+    /// What shows where the multiviews are transparent.
     #[serde(default = "default_background")]
     pub background: String,
     /// A silent stereo track.
@@ -330,7 +330,7 @@ fn over_background_into(rgba: &[u8], bg: [u8; 3], out: &mut [u8]) {
     let px = rgba.as_chunks::<4>().0;
     for (p, o) in px.iter().zip(out.as_chunks_mut::<3>().0) {
         match p[3] {
-            // Most of a graphics picture: nothing, or opaque.
+            // Most of a multiviews picture: nothing, or opaque.
             0 => *o = bg,
             255 => *o = [p[0], p[1], p[2]],
             a => {
@@ -416,7 +416,7 @@ pub fn yuv420_from(frame: &Frame, from: Option<&Frame>, bg: [u8; 3], out: &mut V
         }
         let empty = |r: usize| row(r).as_chunks::<4>().0.iter().all(|p| p[3] == 0);
         if empty(r0) && empty(r1) {
-            // Most rows of a graphics picture: nothing over the background.
+            // Most rows of a multiviews picture: nothing over the background.
             y_plane[r0 * w..(r1 + 1) * w].fill(bg_y);
             u_plane[cy * cw..(cy + 1) * cw].fill(bg_cb);
             v_plane[cy * cw..(cy + 1) * cw].fill(bg_cr);

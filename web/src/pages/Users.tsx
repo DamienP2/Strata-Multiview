@@ -9,7 +9,7 @@ import { confirmDialog } from '../ui/dialogs';
 const ROLES: { value: Role; label: string; plural: string; hint: string; icon: typeof ShieldCheck }[] = [
   { value: 'admin', label: 'Admin', plural: 'Admins', hint: 'Everything: users, channels, server settings.', icon: ShieldCheck },
   { value: 'designer', label: 'Designer', plural: 'Designers', hint: 'Creates projects and templates; can also operate.', icon: Palette },
-  { value: 'operator', label: 'Operator', plural: 'Operators', hint: 'Loads projects on channels, plays graphics, edits rundown data.', icon: Radio },
+  { value: 'operator', label: 'Operator', plural: 'Operators', hint: 'Shows the multiviews on the outputs.', icon: Radio },
   { value: 'viewer', label: 'Viewer', plural: 'Viewers', hint: 'Read-only: sees projects and program monitors.', icon: Eye },
 ];
 

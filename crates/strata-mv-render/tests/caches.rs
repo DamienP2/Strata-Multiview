@@ -1,5 +1,5 @@
 //! The pictures kept between frames (scaled pictures, roll strips, faded
-//! zones, the picture of the graphics over what moves) give the frames drawn
+//! zones, the picture of the multiviews over what moves) give the frames drawn
 //! without them: a frame only depends on what is on air, never on what was
 //! drawn before.
 

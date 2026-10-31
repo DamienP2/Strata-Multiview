@@ -259,7 +259,7 @@ function Render({ layer, r, w, h, data, designer, lang, ageSecs = 0, fps }: { la
     return designer ? (
       <>
         <div style={{ position: 'absolute', inset: 0, border: '4px dashed rgba(255,255,255,.35)', borderRadius: 6, pointerEvents: 'none' }} />
-        <div style={{ position: 'absolute', left: 14, top: 10, font: '600 22px Inter, sans-serif', color: 'rgba(255,255,255,.45)', whiteSpace: 'nowrap' }}>{t('Empty text · nothing on air')}</div>
+        <div style={{ position: 'absolute', left: 14, top: 10, font: '600 22px Inter, sans-serif', color: 'rgba(255,255,255,.45)', whiteSpace: 'nowrap' }}>{t('Empty text · nothing shown')}</div>
       </>
     ) : null;
   const L = layoutText(layer, r, data, lang, rich);
@@ -745,11 +745,11 @@ export default defineWidget({
   warnings: (layer, { data }) => {
     const out: Warning[] = [];
     const text = shownText(layer, data);
-    if (!text.trim()) return [{ level: 'info', text: t('Empty text: nothing goes on air; the box keeps its size.') }];
+    if (!text.trim()) return [{ level: 'info', text: t('Empty text: nothing is shown; the box keeps its size.') }];
     if (missingFont(layer)) out.push({ level: 'warn', text: t('Font “{font}” is missing on the server: replaced by Inter.', { font: layer.fontFamily }), op: true });
     const fb = fallbackChars(text, layer.fontFamily);
     if (fb.length) out.push({ level: 'info', text: t('{chars} not in {font}: drawn with a fallback font (colour emoji / symbols), never an empty box.', { chars: fb.join(' '), font: layer.fontFamily }) });
-    if (/[؀-ۿݐ-ݿ]/.test(text)) out.push({ level: 'info', text: t('Arabic: the on-air renderer has no text shaping, the letters are drawn unjoined there.'), op: true });
+    if (/[؀-ۿݐ-ݿ]/.test(text)) out.push({ level: 'info', text: t('Arabic: the outputs\' renderer has no text shaping, the letters are drawn unjoined there.'), op: true });
     return out;
   },
 });

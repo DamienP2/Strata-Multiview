@@ -102,7 +102,7 @@ function ServerSettings() {
             <Field label={t('Server name')} hint={t('Shown in the UI and the menu bar app.')}>
               <input value={cfg.name} onChange={(e) => edit((c) => void (c.name = e.target.value))} />
             </Field>
-            <Field label={t('HTML5 outputs')} hint={t('Browser sources (OBS, vMix, CasparCG) can play /output/<channel> without logging in.')}>
+            <Field label={t('HTML5 outputs')} hint={t('Browser sources (OBS, vMix, a browser) can play /output/<channel> without logging in.')}>
               <label className="check">
                 <input type="checkbox" checked={cfg.publicOutputs} onChange={(e) => edit((c) => void (c.publicOutputs = e.target.checked))} />
                 {t('Public output pages')}

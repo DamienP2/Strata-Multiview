@@ -12,7 +12,7 @@ export function WidgetRunButtons({ layer, compact }: { layer: Layer; compact?: b
   const running = !!run && run.pausedAge === undefined;
   return (
     <div className={`widget-run ${compact ? 'compact' : ''}`} onPointerDown={(e) => e.stopPropagation()}>
-      <button className={running ? 'on' : ''} title={t('Start (as the operator would)')} onClick={() => control(layer.id, 'start')}>
+      <button className={running ? 'on' : ''} title={t('Start it now')} onClick={() => control(layer.id, 'start')}>
         <Play size={12} />
       </button>
       <button className={run && !running ? 'on' : ''} title={t('Pause')} onClick={() => control(layer.id, 'pause')}>

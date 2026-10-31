@@ -273,7 +273,7 @@ pub(crate) fn shadow_with(
             cover.draw_pixmap(0, 0, pm.as_ref().as_ref(), &pp, local.pre_concat(*t), None);
         }
         let c = sk(color, 1.0).premultiply();
-        let [cr, cg, cb, ca] = [c.red(), c.green(), c.blue(), c.alpha()];
+        let [cr, cgreen, cb, ca] = [c.red(), c.green(), c.blue(), c.alpha()];
         for (o, s) in off
             .data_mut()
             .as_chunks_mut::<4>()
@@ -286,7 +286,7 @@ pub(crate) fn shadow_with(
                 continue;
             }
             // Source over: the picture's shadow over what the paths left.
-            let src = [cr * k, cg * k, cb * k, ca * k];
+            let src = [cr * k, cgreen * k, cb * k, ca * k];
             let keep = 1.0 - src[3];
             for i in 0..4 {
                 o[i] = (src[i] * 255.0 + o[i] as f32 * keep)

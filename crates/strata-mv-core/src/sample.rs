@@ -776,7 +776,7 @@ pub fn demo_project() -> Project {
         zone("full-screen", "Full screen", 50, "#38bdf8"),
         zone("bottom-right", "Bottom right", 70, "#e879f9"),
     ];
-    // Two graphics share a corner: taking one takes the other out first.
+    // Two multiviews share a corner: taking one takes the other out first.
     let zone_of = |template: &str| match template {
         "lower-third" => "lower-third",
         "score-bug" | "analog-clock" => "top-left",

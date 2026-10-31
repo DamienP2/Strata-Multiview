@@ -2,7 +2,7 @@
 //! into the layer), operator state (`State`) and the actions that change it.
 //!
 //! Operator actions are a pure function of (layer, state, action, time): the
-//! server applies them to the graphic on air (`Command::Act`) and the
+//! server applies them to the multiview on air (`Command::Act`) and the
 //! Designer asks the server to apply them to its own try-out state, so the
 //! logic lives here only. Both renderers read the state as JSON.
 
@@ -27,12 +27,12 @@ use crate::model::{Layer, LayerKind};
 pub struct ActCtx<'a> {
     /// Wall-clock time, Unix milliseconds (timestamp-based widgets never drift).
     pub now_ms: i64,
-    /// Seconds the graphic has been on air.
+    /// Seconds the multiview has been on air.
     pub age_secs: f64,
     /// Frames per second of the channel (a crawl moves a whole number of
     /// pixels per frame).
     pub fps: f64,
-    /// Values of the graphic.
+    /// Values of the multiview.
     pub data: &'a Data,
 }
 
@@ -84,7 +84,7 @@ pub fn act(
     }
 }
 
-/// Continue (F2) pressed on the graphic: a widget waiting for it goes on
+/// Continue (F2) pressed on the multiview: a widget waiting for it goes on
 /// (its next page, step, view, its start…) and takes the press. True when
 /// the layer's state changed (the timeline's pause then stays).
 pub fn on_continue(layer: &Layer, state: &mut Value, ctx: &ActCtx) -> bool {

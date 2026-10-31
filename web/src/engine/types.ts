@@ -288,13 +288,12 @@ export interface PlayoutItem {
   frame: number;
   target: number;
   phase: Phase;
-  rundownId?: string | null;
   /** Project frames since the take (keeps counting while holding). */
   age?: number;
   /** Frames spent holding at the current stop. */
   held?: number;
-  /** Waiting for this graphic to finish going out (sequential zones). */
-  next?: { templateId: string; data: Record<string, string>; rundownId?: string | null; target: number } | null;
+  /** Waiting for this multiview to finish going out (sequential zones). */
+  next?: { templateId: string; data: Record<string, string>; target: number } | null;
   /** Widgets started, paused or reset by the operator, by layer id. */
   clocks?: Record<string, LayerClock>;
   /** What the operator changed in the spec widgets (web/src/widgets), by layer id. */
@@ -303,7 +302,7 @@ export interface PlayoutItem {
   fade?: { data: Record<string, string>; frame: number; length: number } | null;
   /** Values a data source changed, moving in the layers showing them. */
   changes?: ValueMove[];
-  /** The graphic it replaced in a « Fade » zone, fading out under it. */
+  /** The multiview it replaced in a « Fade » zone, fading out under it. */
   leaving?: { item: PlayoutItem; frame: number; length: number } | null;
 }
 

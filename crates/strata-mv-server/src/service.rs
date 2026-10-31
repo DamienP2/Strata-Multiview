@@ -101,7 +101,7 @@ mod imp {
         )?;
         let unit = format!(
             "[Unit]\n\
-             Description=Strata Multiview broadcast graphics server\n\
+             Description=Strata Multiview broadcast multiviewer server\n\
              After=network-online.target\n\
              Wants=network-online.target\n\n\
              [Service]\n\
@@ -357,9 +357,7 @@ mod imp {
             .context(
                 "cannot create the service (already installed? run `service uninstall` first)",
             )?;
-        svc.set_description(
-            "Broadcast character generator: HTML5, SDI and SMPTE ST 2110 graphics playout",
-        )?;
+        svc.set_description("Broadcast multiviewer: HTML5, NDI, SDI and SMPTE ST 2110 outputs")?;
         let restart = ServiceAction {
             action_type: ServiceActionType::Restart,
             delay: Duration::from_secs(2),

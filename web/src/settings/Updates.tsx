@@ -106,7 +106,7 @@ export function Updates({ Card }: { Card: (p: { icon: React.ReactNode; title: st
   const { status } = info;
   const latest = status.latest;
   const newer = latest && isNewer(latest.version, info.current);
-  const restartNote = t('The engine restarts: graphics on air are cleared and outputs stop for a few seconds.');
+  const restartNote = t('The engine restarts: the outputs stop for a few seconds.');
 
   const check = async () => {
     try {

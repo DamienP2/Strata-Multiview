@@ -179,7 +179,7 @@ const unique = (base: string, taken: Set<string>) => {
 };
 
 /** Node positions, per browser (moving a node does not restart the outputs). */
-const LAYOUT_KEY = 'pulse.outputsLayout';
+const LAYOUT_KEY = 'stratamv.outputsLayout';
 type Layout = Record<string, Record<string, { x: number; y: number }>>;
 export type Mode = 'outputs' | 'inputs';
 
@@ -227,7 +227,7 @@ export function Outputs({ mode }: { mode: Mode }) {
   // Node widths, per browser.
   const [widths, setWidths] = useState<Record<string, number>>(() => {
     try {
-      return JSON.parse(localStorage.getItem('pulse.outputs.widths') ?? '{}');
+      return JSON.parse(localStorage.getItem('stratamv.outputs.widths') ?? '{}');
     } catch {
       return {};
     }
@@ -236,7 +236,7 @@ export function Outputs({ mode }: { mode: Mode }) {
     setWidths((cur) => {
       const next = { ...cur, [id]: w };
       try {
-        localStorage.setItem('pulse.outputs.widths', JSON.stringify(next));
+        localStorage.setItem('stratamv.outputs.widths', JSON.stringify(next));
       } catch {
         /* private mode */
       }
@@ -407,7 +407,7 @@ export function Outputs({ mode }: { mode: Mode }) {
         (picOutputs.sdi ??= []).push(o);
       } else if (kind === 'ndi') {
         const names = new Set(all.channels.flatMap((x) => pictures(x).flatMap((pp) => (pp.outputs.ndi ?? []).map((o) => o.name.toLowerCase()))));
-        // « Multiview … »: a source of Strata Graphics on the same machine is often named after its channel too, and NDI refuses a second source of the same name.
+        // « Multiview … »: another program's source on the same machine may be named after a channel too, and NDI refuses a second source of the same name.
         const base = `Multiview ${c.name}${p.id === 'main' ? '' : ` ${p.name}`}`;
         let name = base;
         for (let k = 2; names.has(name.toLowerCase()); k++) name = `${base} ${k}`;
@@ -1026,7 +1026,7 @@ export function Outputs({ mode }: { mode: Mode }) {
                               </a>
                             </div>
                           </div>
-                          {note(cfg.publicOutputs ? t('A web page playing the graphics live: browser source in OBS, vMix, CasparCG, a web player or a screen. No login needed.') : t('A web page playing the graphics live. Output pages need a login (Settings › Public output pages).'))}
+                          {note(cfg.publicOutputs ? t('A web page showing the multiview live: browser source in OBS, vMix, a web player or a screen. No login needed.') : t('A web page showing the multiview live. Output pages need a login (Settings › Public output pages).'))}
                         </>
                       );
                     })()}
@@ -1329,7 +1329,7 @@ export function Outputs({ mode }: { mode: Mode }) {
                               <InfoTip text={t('VideoToolbox on a Mac, NVENC / Quick Sync / AMF elsewhere; falls back to the processor when none works.')} />
                             </span>
                           </div>
-                          {note(`${t('Streams carry no transparency: the graphics are laid over the background colour.')} ${t('Encoded by ffmpeg, which must be installed on the server.')}`)}
+                          {note(`${t('Streams carry no transparency: the multiview is laid over the background colour.')} ${t('Encoded by ffmpeg, which must be installed on the server.')}`)}
                         </>
                       );
                     })()}

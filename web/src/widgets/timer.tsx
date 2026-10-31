@@ -630,8 +630,8 @@ function TimerBar(p: OpP) {
   const stepTxt = stepS >= 60 ? `${stepS / 60} min` : `${stepS} s`;
   const field = useRef<HTMLSpanElement>(null);
   // Confirmations only on air (a key does as its button).
-  const resetMsg = t('{name} is on air: reset it to its start value?', { name: layer.name });
-  const restartMsg = t('{name} is on air: start it again from its start value?', { name: layer.name });
+  const resetMsg = t('{name} is shown on an output: reset it to its start value?', { name: layer.name });
+  const restartMsg = t('{name} is shown on an output: start it again from its start value?', { name: layer.name });
   const confirmed = (msg: string, go: () => void) => async () => {
     if (item && !(await confirmDialog({ title: msg, confirm: t('Yes') }))) return;
     go();

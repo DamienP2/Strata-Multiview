@@ -1,6 +1,3 @@
-// The control centre of the widgets (web/src/widgets/centre.tsx and the
-// widgets' three lines): the state, the actions, the settings. The actions
-// use the `cc` context (tc): their wording is the centre's, whatever the
 // same English word means elsewhere.
 export const controls: Record<string, string> = {
   'Next in {n} s': 'Suivante dans {n} s',
@@ -19,12 +16,10 @@ export const controls: Record<string, string> = {
   'cc|Pause': 'Pause',
   'cc|Stop': 'Arrêt',
   'cc|Continue': 'Continuer',
-  'cc|Previous': 'Précédente',
   'cc|Next': 'Suivante',
   'cc|Refresh': 'Actualiser',
   'cc|Reset': 'Réinitialiser',
   'cc|Restart': 'Relancer',
   // The table.
   'cc|Page': 'Page',
-  'How it starts on air: at the In, on Continue (F2), or on a trigger (also the API action widget)': 'Comment il démarre à l’antenne\u00a0: dès le IN, sur Continuer (F2) ou sur un déclencheur (aussi l’action widget de l’API)',
 };

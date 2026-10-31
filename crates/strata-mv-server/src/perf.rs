@@ -825,7 +825,7 @@ pub async fn metrics(State(s): State<Shared>, CurrentUser(me): CurrentUser) -> J
             let r = sm.pictures.get(&key).cloned().unwrap_or_default();
             let load = r.ms / frame_ms * 100.0;
             load_max = load_max.max(load);
-            // Rendering an empty channel says little about rendering graphics.
+            // Rendering an empty channel says little about rendering multiviews.
             let rendered = ps.width as f64 * ps.height as f64 * r.fps;
             costs[0].add((on_air > 0 && r.fps >= 1.0).then_some(r.cpu), rendered);
             let vars = |extra: (&'static str, Value)| -> [(&'static str, Value); 3] {

@@ -31,7 +31,7 @@ pub enum Role {
     Admin,
     /// Creates and edits projects (templates); can operate channels.
     Designer,
-    /// Runs channels: loads projects, takes graphics, edits rundown data.
+    /// Runs the outputs: shows the multiviews on them.
     Operator,
     /// Read-only: sees the program and the projects.
     Viewer,

@@ -5,22 +5,22 @@
 //! drawing, the renderer *plans* the frame: it walks the same layers and asks
 //! each one how its picture depends on time ([`Motion`]: not at all, only
 //! through a value such as a clock's digits, or every instant). With the
-//! state of the graphics on air (their timeline frame, data, operator state:
+//! state of the multiviews on air (their timeline frame, data, operator state:
 //! everything but their age), that tells whether a step draws the same
 //! pixels as in an earlier frame:
 //!
 //! - nothing moves and the scene is the one of the frame kept: that frame is
 //!   given again (the same `Arc`, so the outputs know it too);
 //! - else the picture after the first steps that did not change (the static
-//!   layers under a ticker, a lower graphic under one coming in) is kept and
+//!   layers under a ticker, a lower multiview under one coming in) is kept and
 //!   copied, and only the steps after it are drawn on it;
-//! - the graphics over the last one that moves (a bug over a ticker, a
+//! - the multiviews over the last one that moves (a bug over a ticker, a
 //!   clock over a lower third coming in) are drawn apart, on a picture of
 //!   their own laid over the frame ([`top_item`]): that picture is kept too,
 //!   and laid again while they do not change.
 //!
 //! Drawing goes on in the same order on the same picture, so frames are the
-//! same, pixel for pixel, as drawn whole (drawn whole, the graphics over the
+//! same, pixel for pixel, as drawn whole (drawn whole, the multiviews over the
 //! last that moves are drawn apart and laid over the frame as well). A layer whose dependence on time is
 //! not known is taken as moving. A widget may draw in two steps (the map:
 //! its base, then its pulsing markers over it, `Renderer::sub_step`) so that
@@ -42,7 +42,7 @@ use crate::{Frame, OutputFormat};
 /// How a layer's picture depends on time (see `wid::motion`).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub(crate) enum Motion {
-    /// The same whatever the time (for the same state of the graphic).
+    /// The same whatever the time (for the same state of the multiview).
     Still,
     /// Depends on time only through this value (a clock's digits, a counter
     /// at rest on its value…): the same value, the same pixels.
@@ -75,7 +75,7 @@ pub(crate) struct Op {
     pub motion: Motion,
     /// Steps of the layer's subtree, its own included (1 for a leaf).
     pub span: usize,
-    /// The graphic on air it belongs to (index in [`Scene::items`]).
+    /// The multiview on air it belongs to (index in [`Scene::items`]).
     pub item: usize,
 }
 
@@ -88,7 +88,7 @@ pub(crate) struct Scene {
     /// Font database and picture cache versions of the renderer.
     pub fonts: u64,
     pub assets: u64,
-    /// The graphics on air (playout layer, state with age and hold time zeroed:
+    /// The multiviews on air (playout layer, state with age and hold time zeroed:
     /// they matter only through the motion keys).
     pub items: Vec<(u32, PlayoutItem)>,
     pub ops: Vec<Op>,
@@ -123,7 +123,7 @@ impl Scene {
         }) {
             return false;
         }
-        // The graphics those steps belong to.
+        // The multiviews those steps belong to.
         let items = a.last().map_or(0, |o| o.item + 1);
         self.items.len() >= items
             && o.items.len() >= items
@@ -160,7 +160,7 @@ impl Scene {
     }
 }
 
-/// The first of the graphics over the last one that moves (none: nothing
+/// The first of the multiviews over the last one that moves (none: nothing
 /// moves, or nothing is over what moves): those are drawn on a picture of
 /// their own, laid over the frame (and kept while they are the same).
 pub(crate) fn top_item(ops: &[Op], items: usize) -> Option<usize> {
@@ -173,7 +173,7 @@ pub(crate) fn top_item(ops: &[Op], items: usize) -> Option<usize> {
 }
 
 impl Scene {
-    /// Graphics `t..` and their steps are the same as in `o` (none moving).
+    /// Multiviews `t..` and their steps are the same as in `o` (none moving).
     fn same_top(&self, o: &Scene, t: usize) -> bool {
         if !self.same_frame(o) || self.items.len() != o.items.len() || t > self.items.len() {
             return false;
@@ -193,7 +193,7 @@ impl Scene {
     }
 }
 
-/// The picture of the graphics over what moves (`top_item`), in pieces
+/// The picture of the multiviews over what moves (`top_item`), in pieces
 /// (`scaled::tiles`).
 struct Top {
     scene: Scene,
@@ -220,7 +220,7 @@ pub struct FrameCache {
     start: Mutex<Option<Start>>,
     /// The scene planned last (where the next one starts to differ).
     last: Mutex<Option<Scene>>,
-    /// The picture of the graphics over what moves.
+    /// The picture of the multiviews over what moves.
     top: Mutex<Option<Top>>,
     /// Frames where that picture was laid again.
     topped: AtomicU64,
@@ -260,7 +260,7 @@ impl FrameCache {
         )
     }
 
-    /// Frames where the kept picture of the graphics over what moves was
+    /// Frames where the kept picture of the multiviews over what moves was
     /// laid again, so far.
     pub fn tops(&self) -> u64 {
         self.topped.load(Ordering::Relaxed)
@@ -274,7 +274,7 @@ impl FrameCache {
         *lock(&self.top) = None;
     }
 
-    /// The kept picture of graphics `t..` of `scene` (and its place), when
+    /// The kept picture of multiviews `t..` of `scene` (and its place), when
     /// they are the same as when it was drawn.
     pub(crate) fn top(&self, scene: &Scene, t: usize) -> Option<Arc<crate::scaled::Tiles>> {
         let top = lock(&self.top);
@@ -286,7 +286,7 @@ impl FrameCache {
         Some(top.picture.clone())
     }
 
-    /// Keeps the picture of graphics `t..` of `scene` (its pieces).
+    /// Keeps the picture of multiviews `t..` of `scene` (its pieces).
     pub(crate) fn keep_top(&self, scene: &Scene, t: usize, picture: Arc<crate::scaled::Tiles>) {
         *lock(&self.top) = Some(Top {
             scene: scene.clone(),
@@ -325,7 +325,7 @@ impl FrameCache {
         }
     }
 
-    /// The steps of graphic `i` of `scene` (its ops not planned yet) when
+    /// The steps of multiview `i` of `scene` (its ops not planned yet) when
     /// it was planned in the scene before, the same, with none of its steps
     /// depending on time: they are the same (no need to walk its layers).
     pub(crate) fn still_steps(&self, scene: &Scene, i: usize) -> Option<Vec<Op>> {

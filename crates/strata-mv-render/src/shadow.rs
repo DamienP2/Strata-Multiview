@@ -143,7 +143,7 @@ pub fn compose(
     sigma: f32,
 ) -> Option<(Pixmap, i32, i32)> {
     let (x0, y0, x1, y1) = opaque_box(content)?;
-    let [cr, cg, cb, ca] = color.0.map(|c| c.clamp(0.0, 1.0));
+    let [cr, green, cb, ca] = color.0.map(|c| c.clamp(0.0, 1.0));
     let pad = (sigma * 3.0).ceil() as i32 + 1;
     let (bx, by) = (x0 - pad, y0 - pad);
     let (bw, bh) = ((x1 - x0 + 2 * pad) as usize, (y1 - y0 + 2 * pad) as usize);
@@ -178,7 +178,7 @@ pub fn compose(
         for (px, a) in sh.data_mut().as_chunks_mut::<4>().0.iter_mut().zip(&alpha) {
             let a = (a * ca).clamp(0.0, 1.0);
             px[0] = round_u8(cr * a * 255.0);
-            px[1] = round_u8(cg * a * 255.0);
+            px[1] = round_u8(green * a * 255.0);
             px[2] = round_u8(cb * a * 255.0);
             px[3] = round_u8(a * 255.0);
         }

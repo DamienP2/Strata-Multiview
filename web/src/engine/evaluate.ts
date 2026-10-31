@@ -249,7 +249,7 @@ export function outFrame(t: Template): number | undefined {
   return t.markers.find((m) => m.kind === 'out')?.frame;
 }
 
-/** The On air frame (what the graphic looks like on air), for previews and thumbnails. */
+/** The On air frame (what the multiview looks like on air), for previews and thumbnails. */
 export function holdFrame(t: Template): number {
   return outFrame(t) ?? t.duration;
 }

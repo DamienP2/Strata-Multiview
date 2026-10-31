@@ -667,7 +667,7 @@ mod tests {
                 "sdi": {
                     "cards": [{ "id": "c", "name": "C", "model": card, "device": 0,
                                 "connectors": [{}, {}, {}, {}] }],
-                    "outputs": [{ "id": "o", "name": "CG", "card": "c", "fill": 0, "key": 1,
+                    "outputs": [{ "id": "o", "name": "Multiview", "card": "c", "fill": 0, "key": 1,
                                   "mode": mode }]
                 }
             }))

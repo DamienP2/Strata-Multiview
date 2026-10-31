@@ -80,23 +80,7 @@
   text-transform: uppercase;
   color: var(--text-3);
 }
-.hw-conn {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 4px 6px;
-  font-size: 12.5px;
-}
-.hw-conn select {
-  width: auto;
-  padding-top: 2px;
-  padding-bottom: 2px;
-}
-.hw-conn small {
-  flex-basis: 100%;
-  color: var(--text-3);
-  font-size: 11px;
-}
+
 .hw-users {
   font-size: 12px;
   color: var(--text-2);
@@ -210,19 +194,9 @@
 .hw-clock-seg {
   align-self: flex-start;
 }
-.hw-clock-hint {
-  margin: 8px 0 12px;
-  font-size: 12.5px;
-  color: var(--text-2);
-  max-width: 70ch;
-}
+
 .hw-row.sync {
   grid-template-columns: minmax(0, 1fr) auto minmax(180px, 260px);
-}
-.hw-sync-grid {
-  display: grid;
-  grid-template-columns: 140px 140px;
-  gap: 10px 12px;
 }
 
 /* ---------- Flux I/O ---------- */
@@ -697,10 +671,7 @@
 .net-table td input.net-discovery {
   width: 260px;
 }
-.net-ports {
-  display: flex;
-  gap: 6px;
-}
+
 .net-name {
   display: flex;
   align-items: center;

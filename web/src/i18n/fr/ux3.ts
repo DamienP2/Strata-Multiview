@@ -1,4 +1,3 @@
-// Pages outside the Operator and the Designer: projects, data, video
 // streams, Hardware, performance, as-run, settings; server errors made readable.
 export const ux3: Record<string, string> = {
   // Server errors (ui/serverError.ts)
@@ -34,7 +33,6 @@ export const ux3: Record<string, string> = {
   'Modified {n} month ago': 'Modifié il y a {n} mois',
   'Modified {n} months ago': 'Modifié il y a {n} mois',
   'Recent': 'Récents',
-  'Click the projects to select': 'Cliquez sur les projets à sélectionner',
   'Move…': 'Déplacer…',
   'Close (Esc)': 'Fermer (Échap)',
   // Data
@@ -57,6 +55,4 @@ export const ux3: Record<string, string> = {
   'of {max} ({n} core in use)': 'sur {max} ({n} cœur utilisé)',
   'of {max} ({n} cores in use)': 'sur {max} ({n} cœurs utilisés)',
   'The machine uses {cpu} of {max} ({cores})': 'La machine utilise {cpu} sur {max} ({cores})',
-  // As-run log
-  // Social
 };

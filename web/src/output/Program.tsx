@@ -66,7 +66,7 @@ export const Program = memo(function Program({ project, live, width, height, max
         const moves = movesAt(item, since * fps);
         const shown = shownData(item.data, moves);
         const turning = movingLayers(t, moves);
-        // The graphic replaced in a « Fade » zone, fading out under the new one.
+        // The multiview replaced in a « Fade » zone, fading out under the new one.
         const going = item.leaving;
         const goingT = going && templates.get(going.item.templateId);
         const goingAlpha = going ? 1 - Math.min(1, (going.frame + since * fps) / Math.max(1, going.length)) : 0;
@@ -82,7 +82,7 @@ export const Program = memo(function Program({ project, live, width, height, max
             )}
             <LayerTime item={item} template={t} ageSecs={age} since={live?.at ?? now} now={now} maxFps={maxFps} fps={fps} lang={project.language}>
               {/*
-               * A row or an Update fading: the graphic with the new values fades in while the one with
+               * A row or an Update fading: the multiview with the new values fades in while the one with
                * the old values fades out, added up (plus-lighter): what both cover stays opaque.
                */}
               {(() => {

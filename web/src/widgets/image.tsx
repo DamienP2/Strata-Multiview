@@ -469,7 +469,7 @@ function MediaBar({ layer, state, data, act, time, item }: { layer: unknown; sta
   const pstate: 'stop' | 'run' | 'pause' | 'ended' = !s ? 'stop' : running ? 'run' : s.ended ? 'ended' : paused ? 'pause' : 'stop';
   // Confirmations only on air (the T key does as the ⟲ button).
   const restart = async () => {
-    if (item && !(await confirmDialog({ title: t('{name} is on air: start it again from its start value?', { name: l.name ?? '' }), confirm: t('Yes') }))) return;
+    if (item && !(await confirmDialog({ title: t('{name} is shown on an output: start it again from its start value?', { name: l.name ?? '' }), confirm: t('Yes') }))) return;
     act('restart');
   };
   const play = () => act(pstate === 'run' ? 'pause' : pstate === 'ended' || held ? 'restart' : 'play');
@@ -502,7 +502,7 @@ function MediaBar({ layer, state, data, act, time, item }: { layer: unknown; sta
       status={status}
       actions={[
         pstate === 'run' ? { icon: Pause, label: tc('cc', 'Pause'), key: 'P', main: true, onClick: play } : { icon: Play, label: tc('cc', 'Play'), key: 'P', main: true, onClick: play },
-        { icon: RotateCcw, label: tc('cc', 'Restart'), key: 'T', confirm: item ? t('{name} is on air: start it again from its start value?', { name: l.name ?? '' }) : undefined, onClick: () => act('restart') },
+        { icon: RotateCcw, label: tc('cc', 'Restart'), key: 'T', confirm: item ? t('{name} is shown on an output: start it again from its start value?', { name: l.name ?? '' }) : undefined, onClick: () => act('restart') },
       ]}
     >
       {designer && (

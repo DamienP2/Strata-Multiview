@@ -1,7 +1,3 @@
-// French texts, by English wording. One file per part of the interface.
-//
-// Words: template → modèle, layer → calque, channel → canal, on air → à
-// l’antenne, asset → ressource, tile → tuile, meter → vu-mètre. French
 // spacing: a no-break space (U+00A0) before ? ! : ; and inside « ».
 import { buttons } from './buttons';
 import { common } from './common';

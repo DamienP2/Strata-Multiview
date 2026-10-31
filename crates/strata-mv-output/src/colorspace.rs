@@ -185,7 +185,7 @@ fn rows_to_rgba709(uyvy: &[u8], width: usize, out: &mut [u8]) {
 
 /// [`uyvy_to_rgba709`] split over a few threads (a 1080 picture in a couple
 /// of milliseconds instead of a dozen): the live input is under the
-/// graphics sooner.
+/// multiviews sooner.
 pub fn uyvy_to_rgba709_par(uyvy: &[u8], width: usize, height: usize, out: &mut Vec<u8>) {
     let line = width * 2;
     let threads = std::thread::available_parallelism()

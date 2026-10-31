@@ -2,7 +2,7 @@
 
 **Multiviewer broadcast logiciel pour la régie de diffusion.** Strata Multiview compose des mosaïques de sources vidéo (multiviews) dans le navigateur : les images des entrées en direct avec leur **tally**, leur **UMD**, leurs **vu-mètres**, leur **loudness EBU R128** et leur **timecode**, les **alarmes** (perte, noir, image figée, silence, niveau), l'état **PTP / NTP**, le journal des défauts, des horloges et des logos. Il envoie le résultat vers les sorties du studio : HTML5, NDI, flux SRT / RTMP / HLS, SDI (DeckLink) et SMPTE ST 2110.
 
-Strata Multiview reprend le design, le Designer et le moteur de rendu de Strata Graphics. Les deux applications sont indépendantes et tournent côte à côte sur la même machine. Un seul exécutable par plateforme, un moteur de rendu en Rust, une interface web.
+Un seul exécutable par plateforme, un moteur de rendu en Rust, une interface web.
 
 ![Le modèle « Régie finale » à l'antenne : tally, UMD, timecode, loudness, alarmes, 16 canaux audio et mire sur les entrées absentes](docs/screenshots/output.png)
 
@@ -82,7 +82,7 @@ Les commandes de service sont les mêmes partout :
 strata-mv-server service install | uninstall | start | stop | status
 ```
 
-**À côté de Strata Graphics** : tout est distinct, rien n'est partagé. Le port par défaut est **8090** (8080 pour Strata Graphics), le cookie de session `strata_mv_session`, les clés d'API commencent par `smv_`. Les dossiers aussi sont distincts : `/opt/strata-multiview`, `/var/lib/strata-multiview`, « Strata Multiview » sous Windows et macOS. Le service tourne sous son propre compte `strata-mv` et l'installateur Windows a son propre code de mise à niveau.
+**À côté d'autres logiciels** : rien n'est partagé. Le port par défaut est **8090**, le cookie de session `strata_mv_session`, les clés d'API commencent par `smv_`. Les dossiers aussi sont distincts : `/opt/strata-multiview`, `/var/lib/strata-multiview`, « Strata Multiview » sous Windows et macOS. Le service tourne sous son propre compte `strata-mv` et l'installateur Windows a son propre code de mise à niveau.
 
 Les **mises à jour** se font depuis **Système › Paramètres › Mises à jour** : en ligne (releases GitHub de `DamienP2/Strata-Multiview`, paquets `StrataMV-<version>-<plateforme>`) ou en déposant l'archive pour un serveur hors ligne, avec retour automatique à la version précédente si la nouvelle ne démarre pas.
 
@@ -125,7 +125,7 @@ Un multiview s'édite directement : une seule page, ni calques, ni timeline, ni 
 
 ![Les exemples](docs/screenshots/examples.png)
 
-Comme dans Strata Graphics, la page **Multiviews** propose des **Exemples** : dix multiviews dessinés pour la **régie de diffusion** (pas de production). **Ajouter à mes multiviews** en fait une copie, dont les tuiles prennent les entrées du serveur dans l'ordre, et l'ouvre dans le Designer : tout y reste modifiable. Un nouveau multiview, lui, part d'une page vide ou d'une disposition.
+La page **Multiviews** propose des **Exemples** : dix multiviews dessinés pour la **régie de diffusion** (pas de production). **Ajouter à mes multiviews** en fait une copie, dont les tuiles prennent les entrées du serveur dans l'ordre, et l'ouvre dans le Designer : tout y reste modifiable. Un nouveau multiview, lui, part d'une page vide ou d'une disposition.
 
 | Exemple | Contenu |
 | --- | --- |
@@ -172,7 +172,7 @@ Tous les widgets sont rendus à l'identique en HTML5 et par le moteur Rust (la g
 | **Temps** | **Timecode** : celui de la station (heure locale à la cadence de la chaîne) ou d'une entrée (NDI) ; Horloge (heure, date, fuseau, cadran analogique) ; Temps (chronomètre, compte à rebours) |
 | **Supervision** | **État** : PTP (verrouillage, domaine, écart), NTP, alarmes en cours ; **Journal des alarmes** : les défauts des entrées, les plus récents d'abord, avec leur début et leur fin |
 | **Labels et logos** | Texte, Image (PNG, JPEG, SVG, GIF, vidéo en boucle) |
-| **Habillage** | rectangle, ellipse, polygone, groupes, dégradés |
+| **Formes** | rectangle, cercle, trait, dégradés |
 
 La **publication** envoie les multiviews vers les sorties ; tant qu'un multiview n'est pas publié, les chaînes gardent la version précédente.
 

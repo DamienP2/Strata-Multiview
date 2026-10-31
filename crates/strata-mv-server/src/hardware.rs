@@ -964,7 +964,7 @@ mod tests {
             "sdi": {
                 "cards": [{ "id": "card-1", "name": "Quad", "model": "quad2", "device": 0,
                             "connectors": [{}, {}, {}, {}, {}, {}, {}, {}] }],
-                "outputs": [{ "id": "sdi-out-1", "name": "CG", "card": "card-1", "fill": 1, "key": 5,
+                "outputs": [{ "id": "sdi-out-1", "name": "Multiview", "card": "card-1", "fill": 1, "key": 5,
                               "mode": "externalKey" }]
             }
         }))
@@ -1002,7 +1002,7 @@ mod tests {
         assert_eq!((o.fill, o.key), (4, Some(6)));
         assert!(!hw.link_detected(&detected));
         let mut o: strata_mv_output::sdi::SdiConfig = serde_json::from_value(serde_json::json!({
-            "name": "CG", "device": 0, "hardware": "sdi-out-1"
+            "name": "Multiview", "device": 0, "hardware": "sdi-out-1"
         }))
         .unwrap();
         hw.sdi.cards[0].genlock = true;
@@ -1014,7 +1014,7 @@ mod tests {
     fn flow() -> St2110Flow {
         St2110Flow {
             id: "flow-1".into(),
-            name: "CG".into(),
+            name: "Multiview".into(),
             direction: FlowDirection::Output,
             encoding: St2110Encoding::FillKey,
             fill: "239.1.0.1:5004".parse().unwrap(),
@@ -1035,7 +1035,7 @@ mod tests {
         hw.sync.tai_offset = 37;
         let mut o: strata_mv_output::st2110::St2110Config =
             serde_json::from_value(serde_json::json!({
-                "name": "CG", "fill": "0.0.0.0:0", "hardware": "flow-1"
+                "name": "Multiview", "fill": "0.0.0.0:0", "hardware": "flow-1"
             }))
             .unwrap();
         hw.apply_st2110(&mut o);

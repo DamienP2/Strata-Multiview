@@ -546,7 +546,7 @@ pub enum ClockMode {
     Time,
     /// Remaining time until `target` (time of day or date-time).
     Countdown,
-    /// Time since the graphic was taken on air.
+    /// Time since the multiview was taken on air.
     Elapsed,
     /// Counts down from the `target` duration once on air.
     Timer,
@@ -740,7 +740,7 @@ pub struct Guides {
     pub action_area: Option<Area>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub title_area: Option<Area>,
-    /// Areas graphics must leave clear (channel bug, sign language box…).
+    /// Areas multiviews must leave clear (channel bug, sign language box…).
     #[serde(default)]
     pub exclusions: Vec<Exclusion>,
 }
@@ -805,7 +805,7 @@ fn yes() -> bool {
 pub enum MarkerKind {
     /// Playback stops here and resumes as set by [`Marker::resume`]
     /// (operator "Continue", after a delay, or on a trigger). Before the
-    /// on-air point they build the graphic in steps; after it, they stop
+    /// on-air point they build the multiview in steps; after it, they stop
     /// the out animation.
     Pause,
     /// The on-air point, which is also where the out animation starts: the
@@ -841,71 +841,6 @@ pub enum Resume {
     /// When the template's Triggers say so (their « Sortir » or « Reprendre
     /// la pause » node, wired to events the server watches on air).
     Triggers,
-}
-
-/// What an event node of the Triggers watches on air (the server).
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-#[serde(tag = "kind", rename_all = "camelCase")]
-pub enum TriggerEvent {
-    /// A ticker or a credit roll is done: after `passes` passes (0 = at its end).
-    ScrollEnd {
-        layer: String,
-        #[serde(default)]
-        passes: u32,
-    },
-    /// A countdown reaches zero.
-    TimerZero { layer: String },
-    /// A timer shows this time (seconds).
-    TimerAt { layer: String, seconds: f64 },
-    /// A video (or an animated sequence) ends.
-    VideoEnd { layer: String },
-    /// A data set shows its last row.
-    LastRow { dataset: String },
-    /// A value changes.
-    DataChange { key: String },
-    /// A value meets a condition: `op` is `=`, `!=`, `>`, `<`, `>=`, `<=` or `contains`.
-    DataIs {
-        key: String,
-        op: String,
-        value: String,
-    },
-    /// Another graphic goes on air (`out`: goes out).
-    Graphic {
-        template: String,
-        #[serde(default)]
-        out: bool,
-    },
-}
-
-impl TriggerEvent {
-    /// A value meeting the condition (numbers compared as numbers).
-    pub fn holds(op: &str, have: &str, want: &str) -> bool {
-        let (a, b) = (have.trim(), want.trim());
-        let nums = a
-            .replace(',', ".")
-            .parse::<f64>()
-            .ok()
-            .zip(b.replace(',', ".").parse::<f64>().ok());
-        let ord = match nums {
-            Some((x, y)) => x.partial_cmp(&y),
-            None => Some(a.to_lowercase().cmp(&b.to_lowercase())),
-        };
-        match op.trim() {
-            "!=" | "≠" => ord != Some(std::cmp::Ordering::Equal),
-            ">" => ord == Some(std::cmp::Ordering::Greater),
-            "<" => ord == Some(std::cmp::Ordering::Less),
-            ">=" | "≥" => matches!(
-                ord,
-                Some(std::cmp::Ordering::Greater | std::cmp::Ordering::Equal)
-            ),
-            "<=" | "≤" => matches!(
-                ord,
-                Some(std::cmp::Ordering::Less | std::cmp::Ordering::Equal)
-            ),
-            "contains" => a.to_lowercase().contains(&b.to_lowercase()),
-            _ => ord == Some(std::cmp::Ordering::Equal),
-        }
-    }
 }
 
 impl Resume {
@@ -957,7 +892,7 @@ pub enum ValueChange {
     /// At once.
     #[default]
     Cut,
-    /// The graphic with the old value fades into the one with the new.
+    /// The multiview with the old value fades into the one with the new.
     Fade,
     /// In the layers showing it: the old value goes up, the new comes from below.
     Slide,
@@ -965,10 +900,10 @@ pub enum ValueChange {
     Flip,
     /// Numbers count from the old value to the new (else a cross-fade).
     Count,
-    /// The graphic goes out and comes in again with the new value.
+    /// The multiview goes out and comes in again with the new value.
     OutIn,
     /// Not on air by itself: the value shown stays until the operator
-    /// takes or updates the graphic.
+    /// takes or updates the multiview.
     Hold,
 }
 
@@ -1230,7 +1165,7 @@ impl Template {
         std::borrow::Cow::Owned(t)
     }
 
-    /// The on-air frame (what the graphic looks like on air): the on-air /
+    /// The on-air frame (what the multiview looks like on air): the on-air /
     /// out marker, else the end.
     pub fn hold_frame(&self) -> f64 {
         self.out_frame().unwrap_or(self.duration)
@@ -1471,16 +1406,16 @@ impl Template {
     }
 }
 
-/// What happens when a graphic is taken in a zone that is already on air.
+/// What happens when a multiview is taken in a zone that is already on air.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub enum ZoneTransition {
-    /// The graphic on air plays its out animation, then the new one comes in.
+    /// The multiview on air plays its out animation, then the new one comes in.
     #[default]
     Sequential,
-    /// The new graphic replaces the old one immediately.
+    /// The new multiview replaces the old one immediately.
     Cut,
-    /// The new graphic comes in while the one on air fades out.
+    /// The new multiview comes in while the one on air fades out.
     Fade,
 }
 
@@ -1590,7 +1525,7 @@ const ZONE_COLORS: [&str; 8] = [
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-/// A show project: the templates and the rundown of one programme,
+/// A project: one multiview (its template and its draft),
 /// designed for one video format (channels scale it to their own format).
 pub struct Project {
     pub id: String,
@@ -1602,7 +1537,7 @@ pub struct Project {
     pub frame_rate: FrameRate,
     #[serde(default)]
     pub templates: Vec<Template>,
-    /// Screen zones, one graphic on air at a time in each.
+    /// Screen zones, one multiview on air at a time in each.
     #[serde(default)]
     pub zones: Vec<Zone>,
     /// Alternative layouts (the main one is width × height).

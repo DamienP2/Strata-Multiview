@@ -8,7 +8,7 @@
 //! picture is laid on the frame at its position, with its opacity, through
 //! its clip. The next frames lay the same picture again while nothing of
 //! the layer changed (its values, text, data, the motion key…); a slide, a
-//! fade, a graphic coming in under a static one: the layer is not drawn
+//! fade, a multiview coming in under a static one: the layer is not drawn
 //! again, only laid. At rest the fraction of its position is drawn into the
 //! picture, so the frame is the one of drawing the layer straight; while
 //! its geometry animates, the picture is laid at the fraction (bilinear)
@@ -42,7 +42,7 @@ pub(crate) struct Sprite {
     used: u64,
 }
 
-/// The sprites of a renderer, by graphic on air and layer.
+/// The sprites of a renderer, by multiview on air and layer.
 #[derive(Default)]
 pub(crate) struct Sprites {
     map: HashMap<(usize, u64), Sprite>,

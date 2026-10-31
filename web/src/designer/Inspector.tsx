@@ -307,8 +307,8 @@ export function WidgetSettings({ layer, set, data = {} }: { layer: Layer; set: (
               options={[
                 { value: 'time', label: t('Time of day') },
                 { value: 'countdown', label: t('Countdown to…') },
-                { value: 'timer', label: t('Timer (from take)') },
-                { value: 'elapsed', label: t('Stopwatch (since take)') },
+                { value: 'timer', label: t('Timer (since shown)') },
+                { value: 'elapsed', label: t('Stopwatch (since shown)') },
               ]}
             />
           </Row>

@@ -9,7 +9,7 @@ case "$(defaults read -g AppleLanguages 2>/dev/null | sed -n 2p | tr -d ' ",')" 
     TITLE="Désinstaller Strata Multiview"
     ASK="Le serveur Strata Multiview, l'application de la barre des menus et ce désinstallateur vont être supprimés.
 
-Faut-il aussi supprimer vos données (templates, rundown, médias et réglages) ?"
+Faut-il aussi supprimer vos données (multiviews, entrées, médias et réglages) ?"
     CANCEL="Annuler"; KEEP="Garder mes données"; PURGE="Tout supprimer"
     DONE="Strata Multiview a été désinstallé."
     MISSING="Strata Multiview n'est pas installé sur ce Mac."
@@ -18,7 +18,7 @@ Faut-il aussi supprimer vos données (templates, rundown, médias et réglages) 
     TITLE="Uninstall Strata Multiview"
     ASK="The Strata Multiview server, the menu bar app and this uninstaller will be removed.
 
-Do you also want to delete your data (templates, rundown, media and settings)?"
+Do you also want to delete your data (multiviews, inputs, media and settings)?"
     CANCEL="Cancel"; KEEP="Keep my data"; PURGE="Delete everything"
     DONE="Strata Multiview has been uninstalled."
     MISSING="Strata Multiview is not installed on this Mac."

@@ -13,7 +13,7 @@
 //! Older clock layers (`mode` time / countdown / elapsed / timer, legacy
 //! format tokens) have no `timerMode`: they are mapped to the new modes and
 //! keep following their time on air (so the old start / pause controls of
-//! the graphic still drive them).
+//! the multiview still drive them).
 
 use serde::{Deserialize, Serialize};
 
@@ -313,7 +313,7 @@ pub struct Config {
     /// Time source: only "system" (the server clock) exists.
     pub source: String,
     /// A countdown at zero fires this trigger (pauses waiting for it play
-    /// on, in every graphic on air); "" = none.
+    /// on, in every multiview on air); "" = none.
     pub zero_trigger: String,
     pub fine: f64,
     pub fine_unit: FineUnit,

@@ -239,7 +239,7 @@ export function InputsMode({ cfg, saved, edit }: { cfg: ServerConfig; saved: Ser
         <div className="lib-nav-section">
           <span className="grow">
             {t('Inputs')}
-            <InfoTip text={t('Cameras, encoders, NDI or SDI sources coming into the server. The Video widget shows them in the graphics.')} />
+            <InfoTip text={t('Cameras, encoders, NDI or SDI sources coming into the server. The Source tiles show them in the multiviews.')} />
           </span>
           <button className="icon-btn ghost" title={t('Add an input')} onClick={add}>
             <Plus size={14} />

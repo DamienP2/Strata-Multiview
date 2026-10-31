@@ -1,7 +1,7 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "Strata API",
+    "title": "Strata Multiview API",
     "version": "0.0.0",
     "description": "Everything the web app does goes through this API: automation systems (Companion / Stream Deck, broadcast controllers, scripts) have the same power as the UI.\n\n**Authentication**: `Authorization: Bearer <API key>` (create one in *Users → API keys*), or the `strata_mv_session` cookie of the web app.\n\n**Real time**: `GET /ws` (WebSocket) pushes `hello`, `project`, `projectDeleted`, `channels` and `channel` events, and accepts `{\"type\":\"command\",\"channelId\":\"main\",\"command\":{…}}`. `/ws?channel=<id>` follows one channel (HTML5 output pages; public when *public outputs* is on).\n\nUnits: frames are project frames; times are Unix milliseconds."
   },
@@ -808,7 +808,7 @@
           "Projects"
         ],
         "summary": "Delete a template",
-        "description": "Also removes its draft and rundown items. The last template of a project cannot be deleted (409).\n\n**Rights:** admin, designer.",
+        "description": "Also removes its draft. The last template of a project cannot be deleted (409).\n\n**Rights:** admin, designer.",
         "responses": {
           "204": {
             "description": "Done"
@@ -2870,7 +2870,7 @@
               "cut",
               "fade"
             ],
-            "description": "sequential: the graphic on air goes out before the new one comes in; cut: replaced at once; fade: the new one comes in while the one on air fades out."
+            "description": "sequential: the multiview on air goes out before the new one comes in; cut: replaced at once; fade: the new one comes in while the one on air fades out."
           },
           "areas": {
             "type": "object",
@@ -2895,42 +2895,9 @@
           }
         }
       },
-      "RundownItem": {
-        "type": "object",
-        "required": [
-          "id",
-          "name",
-          "templateId"
-        ],
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "name": {
-            "type": "string"
-          },
-          "templateId": {
-            "type": "string"
-          },
-          "zone": {
-            "type": "string",
-            "description": "Zone id; empty = the template's zone."
-          },
-          "playlist": {
-            "type": "string"
-          },
-          "layer": {
-            "type": "integer",
-            "deprecated": true
-          },
-          "data": {
-            "$ref": "#/components/schemas/Data"
-          }
-        }
-      },
       "Template": {
         "type": "object",
-        "description": "A graphic: timeline (frames), markers, data fields and layers. See web/src/engine/types.ts for the full layer model.",
+        "description": "A multiview: timeline (frames), markers, data fields and layers. See web/src/engine/types.ts for the full layer model.",
         "properties": {
           "id": {
             "type": "string"
@@ -3107,12 +3074,6 @@
               "$ref": "#/components/schemas/Template"
             }
           },
-          "rundown": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/RundownItem"
-            }
-          },
           "zones": {
             "type": "array",
             "items": {
@@ -3160,9 +3121,6 @@
             "$ref": "#/components/schemas/FrameRate"
           },
           "templates": {
-            "type": "integer"
-          },
-          "rundown": {
             "type": "integer"
           }
         }
@@ -3271,12 +3229,6 @@
               "out"
             ]
           },
-          "rundownId": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
           "age": {
             "type": "number",
             "description": "Project frames on air since the take."
@@ -3286,7 +3238,7 @@
               "object",
               "null"
             ],
-            "description": "Take waiting for this graphic to go out (sequential zones)."
+            "description": "Take waiting for this multiview to go out (sequential zones)."
           },
           "clocks": {
             "type": "object",
@@ -3310,7 +3262,7 @@
         "properties": {
           "layers": {
             "type": "object",
-            "description": "Playout layer (zone stacking order) → graphic on air.",
+            "description": "Playout layer (zone stacking order) → multiview on air.",
             "additionalProperties": {
               "$ref": "#/components/schemas/PlayoutItem"
             }
@@ -3350,10 +3302,6 @@
           "data": {
             "$ref": "#/components/schemas/Data"
           },
-          "rundownId": {
-            "type": "string",
-            "description": "take: rundown item, for tally"
-          },
           "target": {
             "type": "string",
             "description": "widget: layer id or name of a timed widget (timer, stopwatch, ticker, roll, counter…), or `*` for all of them"
@@ -3371,16 +3319,16 @@
           },
           "name": {
             "type": "string",
-            "description": "trigger: resumes every graphic holding on a pause that waits for this trigger"
+            "description": "trigger: resumes every multiview holding on a pause that waits for this trigger"
           },
           "dataset": {
             "type": "string",
-            "description": "row: key or name of a data set of the graphic on air"
+            "description": "row: key or name of a data set of the multiview on air"
           },
           "row": {
             "type": "integer",
             "minimum": 1,
-            "description": "row: the row to show (1 = first); the graphic changes the way its data set says (out › in, crossfade or cut)"
+            "description": "row: the row to show (1 = first); the multiview changes the way its data set says (out › in, crossfade or cut)"
           },
           "fade": {
             "type": "boolean",
@@ -3669,7 +3617,7 @@
                 "type": "null"
               }
             ],
-            "description": "The graphic `next` takes (tally `cue`)."
+            "description": "The multiview `next` takes (tally `cue`)."
           },
           "items": {
             "type": "array",
@@ -3684,7 +3632,7 @@
                 },
                 "index": {
                   "type": "integer",
-                  "description": "Position in the rundown (1 = first)"
+                  "description": "Its position (1 = first)"
                 },
                 "playlist": {
                   "type": "string"
@@ -3953,7 +3901,7 @@
           },
           "label": {
             "type": "string",
-            "description": "The graphic"
+            "description": "The multiview"
           },
           "zone": {
             "type": "string"

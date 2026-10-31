@@ -254,7 +254,7 @@ fn clear(b: &[u8]) -> bool {
 /// Side of the blocks of [`tiles`].
 const TILE: usize = 64;
 
-/// The blocks of `pm` that are not all transparent (graphics scattered over
+/// The blocks of `pm` that are not all transparent (multiviews scattered over
 /// the frame: a bug in a corner, a clock in another), each cleared in `pm`
 /// once copied. Laid back with [`composite`], they make what `pm` laid
 /// whole would (transparent pixels leave the frame as it is).

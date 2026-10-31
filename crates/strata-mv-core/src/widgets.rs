@@ -16,7 +16,7 @@ use crate::model::ClockMode;
 pub struct TimeCtx<'a> {
     /// Wall-clock time, Unix milliseconds.
     pub now_ms: i64,
-    /// Seconds since the graphic was taken on air (or the designer playhead).
+    /// Seconds since the multiview was taken on air (or the designer playhead).
     pub age_secs: f64,
     /// Zone used when a widget does not set one ("" = system zone).
     pub default_tz: &'a str,

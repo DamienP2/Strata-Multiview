@@ -159,7 +159,7 @@ pub struct ChannelRt {
 }
 
 /// What a channel has on air, kept on disk so a restart (or a crash) puts
-/// it back: graphics, their data, running timers (timestamps).
+/// it back: multiviews, their data, running timers (timestamps).
 #[derive(Serialize, Deserialize)]
 struct OnAir {
     project_id: Option<String>,
@@ -283,7 +283,7 @@ pub struct AppState {
     /// Who edits which template in the designer.
     pub locks: Arc<crate::locks::Locks>,
     /// Held from reading a project to saving it, so two edits at the same
-    /// time (an autosave and a rundown change…) never undo each other.
+    /// time (two autosaves…) never undo each other.
     pub edits: tokio::sync::Mutex<()>,
     /// Whether each video output runs, by channel and output id.
     pub output_status: Arc<OutputStatus>,

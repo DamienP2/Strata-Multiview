@@ -1157,7 +1157,7 @@ async fn template_thumbnail(
     }
     .cloned()
     .ok_or_else(|| not_found("template"))?;
-    // Default to the on-air point: that's what the graphic looks like on air.
+    // Default to the on-air point: that's what the multiview looks like on air.
     let frame = q.frame.unwrap_or_else(|| template.hold_frame());
     let mut data = template.default_data();
     if let Some(extra) = q
@@ -1950,7 +1950,7 @@ async fn put_network_roles(
             )));
         }
     }
-    // Another port: free (another program, Strata Graphics, may hold it).
+    // Another port: free (another program may hold it).
     let port = i.port.filter(|p| *p != s.bind.port());
     if let Some(p) = port {
         if p == 0 {

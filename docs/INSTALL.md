@@ -79,7 +79,7 @@ Les installateurs `.pkg` et `.msi` ajoutent l'application **Strata Multiview** :
 - l'adresse réseau du serveur (un clic la copie) ;
 - **Ouvrir la page web** ;
 - **Carte réseau** : la carte de l'interface web et celle de NDI (le serveur redémarre seul) ;
-- **Port de connexion** : le port de l'interface web (8090 par défaut, d'autres proposés, ou **Autre port…** pour le saisir) ; un port déjà pris, par Strata Graphics par exemple, est refusé avec la raison. Le serveur redémarre sur le nouveau port et l'application le suit ;
+- **Port de connexion** : le port de l'interface web (8090 par défaut, d'autres proposés, ou **Autre port…** pour le saisir) ; un port déjà pris par un autre logiciel est refusé avec la raison. Le serveur redémarre sur le nouveau port et l'application le suit ;
 - **Démarrer / Arrêter / Redémarrer le serveur**, sans mot de passe sur macOS pour un compte administrateur ;
 - **Journal du serveur…** et **Désinstaller Strata Multiview…**.
 
@@ -117,7 +117,7 @@ La page **Réglages** est réservée aux administrateurs. Les comptes se gèrent
 Adresses utiles :
 
 - Web app (projets, Designer, diffusion, tally) : `http://<serveur>:8090/`
-- Sortie HTML5 d'une chaîne (OBS, vMix, CasparCG) : `http://<serveur>:8090/output/<chaîne>`, par exemple `/output/main`
+- Sortie HTML5 d'une chaîne (OBS, vMix, navigateur) : `http://<serveur>:8090/output/<chaîne>`, par exemple `/output/main`
 
 Les sorties ST 2110 / SDI se configurent dans la page **Réglages** (`/settings`).
 
@@ -133,7 +133,7 @@ Le serveur :
 1. vérifie l'empreinte SHA-256 publiée par GitHub ;
 2. lance le nouveau programme pour s'assurer qu'il fonctionne sur cette machine ;
 3. garde l'ancien programme à côté (`strata-mv-server.previous`) ;
-4. redémarre : les graphiques à l'antenne sont coupés quelques secondes.
+4. redémarre : les sorties sont coupées quelques secondes.
 
 Si la nouvelle version n'arrive pas à démarrer trois fois de suite, l'ancienne est **restaurée automatiquement**. Le bouton *Revenir à …* permet aussi de revenir en arrière à la main.
 
@@ -204,7 +204,7 @@ ffmpeg est un programme séparé, sous licence GPL pour ces builds (voir `bin/FF
 strata-mv-server                   # données dans le profil utilisateur
 strata-mv-server --data-dir ./data # ou dans un dossier choisi
 ```
-Le dossier utilisateur par défaut est `~/.local/share/stratamultiview` (Linux), `~/Library/Application Support/com.StrataMultiview.Strata-Graphics` (macOS) ou `%APPDATA%\StrataMultiview\Strata Multiview\data` (Windows). Les variables `STRATA_MV_BIND`, `STRATA_MV_DATA_DIR` et `STRATA_MV_WEB_DIR` remplacent les options équivalentes.
+Le dossier utilisateur par défaut est `~/.local/share/stratamultiview` (Linux), `~/Library/Application Support/com.StrataMultiview.Strata-Multiview` (macOS) ou `%APPDATA%\StrataMultiview\Strata Multiview\data` (Windows). Les variables `STRATA_MV_BIND`, `STRATA_MV_DATA_DIR` et `STRATA_MV_WEB_DIR` remplacent les options équivalentes.
 
 ## Notes pour la production broadcast
 

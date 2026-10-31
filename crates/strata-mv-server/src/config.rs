@@ -223,7 +223,7 @@ pub struct ServerConfig {
     /// Web UI / API listening address. `None` = installer / CLI default.
     #[serde(default)]
     pub bind: Option<SocketAddr>,
-    /// Let HTML5 output pages (OBS / vMix / CasparCG browser sources) play
+    /// Let HTML5 output pages (OBS / vMix browser sources) play
     /// without logging in.
     #[serde(default = "yes")]
     pub public_outputs: bool,

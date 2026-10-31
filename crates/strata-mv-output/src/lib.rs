@@ -2,7 +2,7 @@
 //!
 //! The HTML5 output does not go through here: it is a browser page driven by
 //! the server over WebSocket (see `strata-mv-server`), rendering the same scene with
-//! the web engine, which is what OBS / vMix / CasparCG browser sources expect.
+//! the web engine, which is what OBS / vMix browser sources expect.
 
 pub mod colorspace;
 pub mod decklink;

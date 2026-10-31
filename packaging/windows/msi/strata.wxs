@@ -16,7 +16,7 @@
            Scope="perMachine"
            Codepage="1252"
            Compressed="yes">
-    <SummaryInformation Description="Strata Multiview broadcast graphics server" />
+    <SummaryInformation Description="Strata Multiview broadcast multiviewer server" />
     <MajorUpgrade DowngradeErrorMessage="Une version plus récente de [ProductName] est déjà installée." />
     <MediaTemplate EmbedCab="yes" />
 
@@ -45,7 +45,7 @@
         <ServiceInstall Id="ServiceInstall"
                         Name="strata-multiview"
                         DisplayName="Strata Multiview Server"
-                        Description="Broadcast character generator: HTML5, SDI and SMPTE ST 2110 graphics playout"
+                        Description="Broadcast multiviewer: HTML5, NDI, SDI and SMPTE ST 2110 outputs"
                         Type="ownProcess"
                         Start="auto"
                         ErrorControl="normal"

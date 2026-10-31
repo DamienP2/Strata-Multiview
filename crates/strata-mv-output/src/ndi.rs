@@ -345,9 +345,9 @@ impl NdiSender {
         let instance = unsafe { (lib.create)(&create) };
         if instance.is_null() {
             // Most often a source of that name already exists on this
-            // machine (another program, Strata Graphics…).
+            // machine (another program).
             return Err(OutputError::Unsupported(format!(
-                "NDI name already in use: « {} » (another NDI source of this machine, Strata Graphics for one, may have it): give this output another name",
+                "NDI name already in use: « {} » (another NDI source of this machine may have it): give this output another name",
                 config.name
             )));
         }

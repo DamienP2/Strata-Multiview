@@ -168,7 +168,7 @@ impl Default for Config {
     }
 }
 
-/// No operator state: a text is taken, continued and taken out like any graphic.
+/// No operator state: a text is taken, continued and taken out like any multiview.
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
 #[serde(default, rename_all = "camelCase")]
 pub struct State {}

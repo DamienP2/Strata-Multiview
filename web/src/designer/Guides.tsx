@@ -413,7 +413,7 @@ export function SafeSettings({ project }: { project: Project }) {
           <Plus size={13} />
         </button>
       </div>
-      {!g.exclusions.length && <p className="hint">{t('None. Add the channel bug, a clock or a sign language box: graphics snap around them.')}</p>}
+      {!g.exclusions.length && <p className="hint">{t('None. Add a logo or a clock: the tiles snap around them.')}</p>}
       {g.exclusions.map((x) => (
         <div key={x.id} className="gm-excl">
           <div className="row">

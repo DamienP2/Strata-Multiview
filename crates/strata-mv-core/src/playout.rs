@@ -1,9 +1,9 @@
 //! Playout state machine for an output channel.
 //!
 //! A channel holds several *playout layers* (z-ordered); each one can carry a
-//! graphic on air. Take in plays to the on-air marker, stopping at the pause
+//! multiview on air. Take in plays to the on-air marker, stopping at the pause
 //! markers on the way; take out plays from the on-air marker to the end,
-//! stopping at the pauses after it, before the graphic is removed. A pause
+//! stopping at the pauses after it, before the multiview is removed. A pause
 //! resumes on Continue, after its delay, or on its trigger.
 
 use std::collections::BTreeMap;
@@ -26,14 +26,12 @@ pub enum Phase {
     OutHold,
 }
 
-/// A take waiting for the graphic on air in its zone to finish going out.
+/// A take waiting for the multiview on air in its zone to finish going out.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct QueuedTake {
     pub template_id: String,
     pub data: Data,
-    #[serde(default)]
-    pub rundown_id: Option<String>,
     /// First hold frame of the template.
     pub target: f64,
 }
@@ -46,14 +44,11 @@ pub struct PlayoutItem {
     pub frame: f64,
     pub target: f64,
     pub phase: Phase,
-    /// Rundown item that triggered it, if any (for operator tally).
-    #[serde(default)]
-    pub rundown_id: Option<String>,
     /// Frames spent on air since the take, including holds (drives tickers,
     /// rolls and timers).
     #[serde(default)]
     pub age: f64,
-    /// Comes in once this graphic has finished going out (sequential zones).
+    /// Comes in once this multiview has finished going out (sequential zones).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub next: Option<QueuedTake>,
     /// Widgets started, paused or reset by the operator, by layer id.
@@ -65,7 +60,7 @@ pub struct PlayoutItem {
     /// Out animation: `target` is a pause, not the end.
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     pub pause_ahead: bool,
-    /// The graphic as it was before a data set row change, fading out.
+    /// The multiview as it was before a data set row change, fading out.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub fade: Option<Fade>,
     /// Values a data source changed, moving in the layers showing them.
@@ -74,14 +69,14 @@ pub struct PlayoutItem {
     /// What the operator changed in the spec widgets (`wid`), by layer id.
     #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
     pub widgets: BTreeMap<String, serde_json::Value>,
-    /// Auto next has taken the graphic after this one.
+    /// Auto next has taken the multiview after this one.
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     pub advanced: bool,
-    /// The graphic this one replaced in a « Fade » zone, fading out under it.
+    /// The multiview this one replaced in a « Fade » zone, fading out under it.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub leaving: Option<Box<Leaving>>,
     /// What its Triggers watch, by node, since the take: a value as it was
-    /// (it changes), another graphic seen on air (it goes out), an action
+    /// (it changes), another multiview seen on air (it goes out), an action
     /// done (it acts once each time its input becomes true).
     #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
     pub watch: BTreeMap<String, String>,
@@ -117,24 +112,24 @@ impl TextWidth for EstimatedWidth {
     }
 }
 
-/// A graphic replaced in a « Fade » zone: drawn under the new one while it fades out.
+/// A multiview replaced in a « Fade » zone: drawn under the new one while it fades out.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Leaving {
     pub item: PlayoutItem,
-    /// Frames since the new graphic was taken.
+    /// Frames since the new multiview was taken.
     pub frame: f64,
     pub length: f64,
 }
 
 impl Leaving {
-    /// Opacity of the graphic going, 1 → 0.
+    /// Opacity of the multiview going, 1 → 0.
     pub fn opacity(&self) -> f32 {
         (1.0 - self.frame / self.length.max(1.0)).clamp(0.0, 1.0) as f32
     }
 }
 
-/// A cross-fade from the data the graphic had (drawn fading out above it).
+/// A cross-fade from the data the multiview had (drawn fading out above it).
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Fade {
@@ -207,7 +202,7 @@ pub fn count_value(from: &str, to: &str, k: f64) -> Option<String> {
     Some(if comma { v.replace('.', ",") } else { v })
 }
 
-/// The data a graphic shows now: its counting values on their way.
+/// The data a multiview shows now: its counting values on their way.
 pub fn shown_data(item: &PlayoutItem) -> std::borrow::Cow<'_, crate::anim::Data> {
     if !item.changes.iter().any(|c| c.kind == ValueChange::Count) {
         return std::borrow::Cow::Borrowed(&item.data);
@@ -321,7 +316,6 @@ impl PlayoutItem {
             frame: 0.0,
             target: q.target,
             phase: Phase::Playing,
-            rundown_id: q.rundown_id,
             age: 0.0,
             next: None,
             clocks: BTreeMap::new(),
@@ -369,7 +363,7 @@ pub enum Command {
         layer: Option<u32>,
         template_id: String,
     },
-    /// Removes the graphic(s) at once; without zone or layer, everything.
+    /// Removes the multiview(s) at once; without zone or layer, everything.
     Clear {
         #[serde(default)]
         zone: Option<String>,
@@ -398,11 +392,11 @@ pub enum PlayoutError {
     UnknownZone(String),
     #[error("say which zone (or layer) to play in")]
     NoZone,
-    #[error("no timed widget `{0}` in the graphic on air")]
+    #[error("no timed widget `{0}` in the multiview on air")]
     UnknownWidget(String),
     #[error("nothing on air on layer {0}")]
     EmptyLayer(u32),
-    #[error("no data set `{0}` in the graphic on air")]
+    #[error("no data set `{0}` in the multiview on air")]
     UnknownDataset(String),
     #[error("{0}")]
     Widget(String),
@@ -478,30 +472,13 @@ impl ChannelState {
                 let take = QueuedTake {
                     template_id,
                     data: t.default_data(),
-                    rundown_id: None,
                     target: hold_target(t, 0.0),
                 };
-                // The same rundown item on air elsewhere (its zone changed since): it goes out there.
-                if let Some(rid) = take.rundown_id.clone() {
-                    let stale: Vec<u32> = self
-                        .layers
-                        .iter()
-                        .filter(|(l, it)| **l != layer && it.rundown_id.as_deref() == Some(&*rid))
-                        .map(|(l, _)| *l)
-                        .collect();
-                    for l in stale {
-                        let it = self.layers.get_mut(&l).expect("listed");
-                        it.next = None;
-                        if !begin_out(project, it) {
-                            self.layers.remove(&l);
-                        }
-                    }
-                }
                 let transition = project
                     .zone_at(layer)
                     .map_or(ZoneTransition::Sequential, |z| z.transition);
                 match self.layers.get_mut(&layer) {
-                    // Zone busy: the graphic on air goes out first.
+                    // Zone busy: the multiview on air goes out first.
                     Some(current) if transition == ZoneTransition::Sequential => {
                         if begin_out(project, current) {
                             current.next = Some(take);
@@ -509,7 +486,7 @@ impl ChannelState {
                             *current = PlayoutItem::start(take);
                         }
                     }
-                    // Zone busy, « Fade »: the new graphic comes in over the one on air, which fades out.
+                    // Zone busy, « Fade »: the new multiview comes in over the one on air, which fades out.
                     Some(current) if transition == ZoneTransition::Fade => {
                         let mut old = std::mem::replace(current, PlayoutItem::start(take));
                         old.next = None;

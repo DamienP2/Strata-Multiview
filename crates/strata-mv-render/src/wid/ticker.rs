@@ -145,9 +145,9 @@ impl Ctx<'_> {
         else {
             return 0.0;
         };
-        let (cs, cp, cg) = chip(self.lk.size);
+        let (cs, cp, chip_gap) = chip(self.lk.size);
         let f = self.lk.chip_font.as_ref().unwrap_or(&self.lk.font);
-        tx::text_width(f, &cat.name.to_uppercase(), cs, 0.0) + 2.0 * cp + cg
+        tx::text_width(f, &cat.name.to_uppercase(), cs, 0.0) + 2.0 * cp + chip_gap
     }
     fn item_w(&self, it: &Item) -> f32 {
         tx::text_width(

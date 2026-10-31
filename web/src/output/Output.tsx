@@ -7,7 +7,7 @@ import { ListenControls } from './Listen';
 
 /**
  * HTML5 output of one channel picture: a transparent, chrome-less page meant
- * for browser sources (OBS, vMix, CasparCG HTML producer…).
+ * for browser sources (OBS, vMix…).
  * URL: /output/<page> (the address set on its web page destination, or the
  * channel's id). Query params: `scale=fit|1`
  * (default fit), `bg=<css color>` for checks, `debug` for motion measures.

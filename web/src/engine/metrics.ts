@@ -27,7 +27,7 @@ export interface ChannelMetrics {
   id: string;
   name: string;
   projectId: string | null;
-  /** Graphics on air. */
+  /** Multiviews on air. */
   onAir: number;
   /** Channel frame rate. */
   rate: number;

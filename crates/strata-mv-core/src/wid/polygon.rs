@@ -202,7 +202,7 @@ pub fn rule(c: &Config) -> FillRule {
     }
 }
 
-/// No operator state: a polygon is taken and taken out like any graphic.
+/// No operator state: a polygon is taken and taken out like any multiview.
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
 #[serde(default, rename_all = "camelCase")]
 pub struct State {}

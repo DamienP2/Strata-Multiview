@@ -1,5 +1,5 @@
-// The output a multiview is shown on, in the Designer's top bar (as the Operator's output picker of
-// Strata Graphics): the channels showing it, the free ones, those showing another multiview. Picking
+// The output a multiview is shown on, in the Designer's top bar: the channels showing it, the free
+// ones, those showing another multiview. Picking
 // one shows the multiview there at once; « No output » takes it off the channel it was on.
 import { ExternalLink } from 'lucide-react';
 import { memo } from 'react';

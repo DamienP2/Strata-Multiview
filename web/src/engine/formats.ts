@@ -102,7 +102,7 @@ export function isOverridden(l: Layer, format: string, prop: Prop): boolean {
 // ---------------------------------------------------------------------------
 // Smart adaptation: a first layout of every element in a new format.
 //
-// - The short side sets the scale of the graphics (a 1080-wide vertical
+// - The short side sets the scale of the multiviews (a 1080-wide vertical
 //   keeps the text size of a 1080-high landscape), capped by the safe area.
 // - Each element keeps its anchoring: corners, edges or centre, with its
 //   distance to the edges scaled the same way.

@@ -136,7 +136,7 @@ pub fn outline(c: &Config, w: f32, h: f32, radius: f32, per_corner: Option<[f32;
     rounded_polygon(&pts, &radii)
 }
 
-/// No operator state: a quad is taken, continued and taken out like any graphic.
+/// No operator state: a quad is taken, continued and taken out like any multiview.
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
 #[serde(default, rename_all = "camelCase")]
 pub struct State {}

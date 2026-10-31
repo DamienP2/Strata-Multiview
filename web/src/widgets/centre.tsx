@@ -89,7 +89,7 @@ export function SetInput({ placeholder, title, onSet, width = 76 }: { placeholde
     const s = v.trim();
     if (!s) return;
     const err = onSet(s);
-    if (typeof err === 'string') return void toast(t('{error} — nothing changed on air.', { error: err }), 'error');
+    if (typeof err === 'string') return void toast(t('{error} — nothing changed on the outputs.', { error: err }), 'error');
     setV('');
   };
   return (

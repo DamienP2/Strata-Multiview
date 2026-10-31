@@ -298,13 +298,7 @@
   color: var(--text-3);
   margin-right: 2px;
 }
-.oc-tool-sep {
-  width: 1px;
-  align-self: stretch;
-  min-height: 24px;
-  margin: 0 6px;
-  background: var(--line-2);
-}
+
 .oc-tool.unavailable,
 .oc-add-menu button.unavailable {
   opacity: 0.45;
@@ -314,40 +308,6 @@
   background: var(--panel);
   color: var(--text-2);
   border-color: var(--line);
-}
-.oc-more {
-  position: relative;
-  display: inline-flex;
-}
-.oc-more > .oc-tool {
-  padding: 0 8px;
-}
-.oc-more-menu {
-  min-width: 190px;
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-  left: auto;
-  right: 0;
-}
-.oc-more-menu button {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 9px;
-  border: none;
-  background: none;
-  border-radius: 6px;
-  color: var(--text-2);
-  font: inherit;
-  font-size: 12px;
-  text-align: left;
-  cursor: pointer;
-  white-space: nowrap;
-}
-.oc-more-menu button:hover {
-  background: var(--panel-3);
-  color: var(--text);
 }
 
 /* Format → destination wires: hovered like the other canvases, a click removes them. */
@@ -490,66 +450,6 @@
   font-size: var(--fs-11);
   letter-spacing: 0.02em;
   vertical-align: 1px;
-}
-
-/* A source whose format differs from the program's: the three ways out. */
-.oc-src-choices {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding: 0 10px 9px;
-}
-.oc-src-choices button {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-height: 28px;
-  padding: 4px 9px;
-  border: 1px solid var(--line-2);
-  border-radius: 7px;
-  background: var(--panel-2);
-  color: var(--text);
-  font: inherit;
-  font-size: 12px;
-  font-weight: 600;
-  text-align: left;
-  cursor: pointer;
-}
-.oc-src-choices button:hover:not(:disabled) {
-  border-color: var(--text-3);
-  background: var(--panel-3);
-}
-.oc-src-choices button.on {
-  border-color: var(--accent);
-  background: var(--accent-soft);
-}
-.oc-src-choices button:disabled {
-  opacity: 0.45;
-  cursor: default;
-}
-.oc-src-choices.big {
-  padding: 8px 0 0;
-}
-.oc-src-check {
-  display: flex;
-  flex-direction: column;
-  font-size: 12.5px;
-}
-.oc-src-check > div:not(.oc-src-choices) {
-  display: flex;
-  justify-content: space-between;
-  gap: 10px;
-  padding: 6px 0;
-  border-bottom: 1px solid var(--line);
-}
-.oc-src-check > div > span:last-child {
-  font-family: var(--mono);
-  font-size: 11.5px;
-  color: var(--text-2);
-  text-align: right;
-}
-.oc-src-check > div.bad > span:last-child {
-  color: #fcd38d;
 }
 
 /* NDI source picker: a picture of each source, grouped by machine. */

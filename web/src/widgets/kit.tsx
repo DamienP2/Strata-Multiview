@@ -68,9 +68,9 @@ export interface OperatorProps<T extends LayerType = LayerType> {
   /** The operator's state of this widget (undefined = default). */
   state: unknown;
   data: Data;
-  /** Sends an action (Command `act`) to the graphic on air (or to the Designer's try-out). */
+  /** Sends an action (Command `act`) to the multiview on air (or to the Designer's try-out). */
   act: (op: string, args?: unknown) => void;
-  /** The graphic on air (undefined in the Designer). */
+  /** The multiview on air (undefined in the Designer). */
   item?: PlayoutItem;
   time: TimeCtx;
   /** The project's language ("fr" by default). */
@@ -204,7 +204,7 @@ export function withDefaults<D extends object, C extends object>(d: D, c: C): Om
 export const FirstSection = createContext<((id: string) => boolean) | null>(null);
 
 export function Section({ id, title, children, actions, level = 1, closed }: { id: string; title: string; children: ReactNode; actions?: ReactNode; level?: 1 | 2; closed?: boolean }) {
-  const key = `pulse.insp2.${id}`;
+  const key = `stratamv.insp.${id}`;
   const first = useContext(FirstSection);
   const [open, setOpen] = useState(() => {
     const byDefault = !closed && (first ? first(id) : true);
@@ -242,7 +242,7 @@ export type Expose = string | readonly string[] | false | undefined;
 
 /**
  * Where a widget's control centre is drawn (web/src/widgets/centre.tsx): the Designer's panel, the
- * Operator (the preview's bar), or a tile of a graphic on air (its state and actions only: no field,
+ * Operator (the preview's bar), or a tile of a multiview on air (its state and actions only: no field,
  * no setting).
  */
 export type CentreMode = 'designer' | 'operator' | 'air';
