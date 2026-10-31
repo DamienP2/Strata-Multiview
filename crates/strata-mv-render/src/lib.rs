@@ -1810,7 +1810,50 @@ impl Renderer {
         f(&mut d)
     }
 
+    /// A layer, inside its frame (`Layer::panel`): the fill under it, the
+    /// border over it.
     fn draw_layer(
+        &mut self,
+        pm: &mut Pixmap,
+        ctx: &Ctx,
+        r: &ResolvedLayer,
+        tf: Transform,
+        opacity: f32,
+        mask: Option<&Mask>,
+    ) {
+        let panel = r.layer.panel.as_ref();
+        let (w, h) = (r.num(Prop::Width) as f32, r.num(Prop::Height) as f32);
+        let hex = |s: &str| strata_mv_core::Color::from_hex(s).filter(|c| c.0[3] > 0.0);
+        if let Some((p, c)) = panel.and_then(|p| Some((p, hex(&p.fill)?))) {
+            if let Some(path) = rounded_rect(w, h, p.radius.max(0.0)) {
+                pm.fill_path(&path, &paint_for(c, opacity), FillRule::Winding, tf, mask);
+            }
+        }
+        self.draw_layer_content(pm, ctx, r, tf, opacity, mask);
+        if let Some((p, c)) = panel
+            .filter(|p| p.border > 0.0)
+            .and_then(|p| Some((p, hex(&p.border_color)?)))
+        {
+            // Inside the box: its outer edge on the box's.
+            let b = p.border.min(w.min(h) / 2.0);
+            let inner = rounded_rect(w - b, h - b, (p.radius - b / 2.0).max(0.0));
+            if let Some(path) = inner {
+                let stroke = Stroke {
+                    width: b,
+                    ..Default::default()
+                };
+                pm.stroke_path(
+                    &path,
+                    &paint_for(c, opacity),
+                    &stroke,
+                    tf.pre_translate(b / 2.0, b / 2.0),
+                    mask,
+                );
+            }
+        }
+    }
+
+    fn draw_layer_content(
         &mut self,
         pm: &mut Pixmap,
         ctx: &Ctx,

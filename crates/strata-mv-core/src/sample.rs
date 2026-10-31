@@ -37,6 +37,7 @@ fn layer(
         scale_lock: false,
         lock_ratio: false,
         drop_shadow: false,
+        panel: None,
         timeline: None,
         props: props.iter().copied().collect(),
         tracks: BTreeMap::new(),

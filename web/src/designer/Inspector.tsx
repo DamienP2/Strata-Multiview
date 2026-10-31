@@ -21,7 +21,7 @@ import { fitLayer, layerText } from '../engine/Scene';
 import { MultiviewSettings } from './MultiviewSettings';
 import { layerIcon } from './LayersPanel';
 import { widgetOf } from '../widgets';
-import { Bound, CentreModeContext, FirstSection, Row as KitRow, setPath, SliderNum, Warnings, wiredKeys } from '../widgets/kit';
+import { Bound, CentreModeContext, ColorPick, FirstSection, Num as KitNum, Row as KitRow, Section as KitSection, setPath, SliderNum, Warnings, wiredKeys } from '../widgets/kit';
 import { t, tn } from '../i18n';
 import { useDisplayPref } from '../displayPrefs';
 
@@ -590,8 +590,54 @@ function SpecInspector({ layer }: { layer: Layer }) {
       <FirstSection.Provider value={claimFirst}>
         <Warnings list={warnings} />
         <Insp layer={layer as never} template={template} data={data} edit={edit as never} set={set} state={state} act={act} />
+        <LookSections layer={layer} set={set} />
       </FirstSection.Provider>
     </Bound>
+  );
+}
+
+/** Widgets with a frame (fill, border, corners); those with their own background colour; those with texts of their own. */
+const FRAMED = new Set(['source', 'audioMeter', 'loudness', 'timecode', 'status', 'alarmLog', 'clock', 'text', 'image']);
+const OWN_BACKGROUND = new Set(['source', 'audioMeter', 'loudness', 'timecode', 'status', 'alarmLog']);
+const TYPED = new Set(['audioMeter', 'loudness', 'timecode', 'status', 'alarmLog']);
+
+/** The frame of a widget and the typography of its texts (model::Panel), the same for every widget. */
+function LookSections({ layer, set }: { layer: Layer; set: (path: string, v: unknown, coalesce?: boolean) => void }) {
+  if (!FRAMED.has(layer.type)) return null;
+  const p = layer.panel ?? {};
+  const own = OWN_BACKGROUND.has(layer.type);
+  const bg = own ? String((layer as unknown as { background?: string }).background ?? '') : (p.fill ?? '');
+  return (
+    <>
+      <KitSection id="look-frame" title={t('Frame')}>
+        <ColorPick label={t('Background')} value={bg} none={own ? undefined : t('None')} first="#0b0d12" onChange={(v) => set(own ? 'background' : 'panel.fill', v, true)} />
+        <KitNum
+          label={t('Border')}
+          value={p.border ?? 0}
+          min={0}
+          max={40}
+          unit=" px"
+          onChange={(v) => {
+            set('panel.border', v, true);
+            if (v > 0 && !p.borderColor) set('panel.borderColor', '#ffffff');
+          }}
+        />
+        {(p.border ?? 0) > 0 && <ColorPick label={t('Border colour')} value={p.borderColor ?? '#ffffff'} onChange={(v) => set('panel.borderColor', v, true)} />}
+        <KitNum label={t('Corners')} value={p.radius ?? 0} min={0} max={200} unit=" px" onChange={(v) => set('panel.radius', v, true)} />
+      </KitSection>
+      {TYPED.has(layer.type) && (
+        <KitSection id="look-type" title={t('Typography')}>
+          <KitRow label={t('Font')}>
+            <FontPick family={p.font || 'Inter'} weight={400} onChange={(f) => set('panel.font', f === 'Inter' ? undefined : f)} />
+          </KitRow>
+          <KitRow label={t('Figures')}>
+            <FontPick family={p.figures || 'JetBrains Mono'} weight={400} onChange={(f) => set('panel.figures', f === 'JetBrains Mono' ? undefined : f)} />
+          </KitRow>
+          <ColorPick label={t('Text colour')} value={p.textColor ?? ''} none={t('White')} first="#ffffff" onChange={(v) => set('panel.textColor', v || undefined, true)} />
+          <KitNum label={t('Text size')} value={p.textScale || 100} min={50} max={200} unit=" %" onChange={(v) => set('panel.textScale', v === 100 ? undefined : v, true)} />
+        </KitSection>
+      )}
+    </>
   );
 }
 

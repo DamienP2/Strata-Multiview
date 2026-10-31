@@ -273,8 +273,11 @@ const LayerNode = memo(function LayerNode({ layer, childrenOf, frame, data, hold
       {line || ' '}
     </div>
   ));
+  const panel = layer.panel;
   const body = (
     <>
+      {/* Its frame's fill, under what it draws (mirror of draw_layer). */}
+      {panel?.fill && <div style={{ position: 'absolute', inset: 0, zIndex: -1, background: panel.fill, borderRadius: Math.max(0, panel.radius ?? 0), pointerEvents: 'none' }} />}
       {lines && (squeeze < 1 ? <div style={{ width: `${100 / squeeze}%`, transform: `scaleX(${squeeze})`, transformOrigin: '0 0' }}>{lines}</div> : lines)}
       {src && layer.type === 'image' && <img src={src} alt="" draggable={false} style={{ width: '100%', height: '100%', objectFit: layer.fit === 'stretch' ? 'fill' : layer.fit, display: 'block' }} />}
       {widgetOf(layer)?.Render ? <SpecWidget layer={layer} frame={frame} data={data} hold={hold} interactive={interactive} /> : LIVE_TYPES.has(layer.type) ? <WidgetContent layer={layer} frame={frame} data={data} hold={hold} /> : null}
@@ -284,6 +287,10 @@ const LayerNode = memo(function LayerNode({ layer, childrenOf, frame, data, hold
         kids.map((k) => <LayerNode key={k.id} layer={k} childrenOf={childrenOf} frame={framed.has(k.id) ? frame : hold} data={data} hold={hold} interactive={interactive} />)
       )}
       {interactive && layer.type === 'group' && layer.lottie !== undefined && !kids.length && <LottiePlaceholder />}
+      {/* Its border, inside its edge, over what it draws. */}
+      {!!panel?.border && panel.border > 0 && panel.borderColor && (
+        <div style={{ position: 'absolute', inset: 0, zIndex: 1, boxSizing: 'border-box', border: `${panel.border}px solid ${panel.borderColor}`, borderRadius: Math.max(0, panel.radius ?? 0), pointerEvents: 'none' }} />
+      )}
     </>
   );
   return (

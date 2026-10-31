@@ -339,8 +339,15 @@ export function Range(p: { label?: ReactNode; path?: string; expose?: Expose; ex
 }
 
 /** Number field (drag the label, wheel, arrows), like the properties. */
-export function Num(p: { label?: ReactNode; path?: string; expose?: Expose; exposeValue?: unknown; exposeOptions?: [string, string][]; value?: number; onChange?: (v: number) => void; min?: number; max?: number; step?: number; precision?: number; unit?: string }) {
+export function Num(p: { label?: ReactNode; path?: string; expose?: Expose; exposeValue?: unknown; exposeOptions?: [string, string][]; value?: number; onChange?: (v: number) => void; min?: number; max?: number; step?: number; precision?: number; unit?: string; /** Bounded: a slider with the field (unless false). */ slider?: boolean }) {
   const [v, set] = useBind<number>(p.path, p.value, p.onChange);
+  // A number between bounds: a slider beside its field.
+  if (p.slider !== false && p.min !== undefined && p.max !== undefined && Number.isFinite(p.min) && Number.isFinite(p.max) && p.max > p.min)
+    return (
+      <Row label={p.label} expose={p.expose ?? p.path} exposeValue={p.exposeValue ?? (p.path ? v : undefined)} exposeOptions={p.exposeOptions} exposeRange={[p.min, p.max]}>
+        <SliderNum value={Number(v ?? 0)} min={p.min} max={p.max} step={p.step ?? 1} precision={p.precision ?? 0} unit={p.unit?.trim()} onChange={(x) => set(x, true)} />
+      </Row>
+    );
   return (
     <Row label={p.label} expose={p.expose ?? p.path} exposeValue={p.exposeValue ?? (p.path ? v : undefined)} exposeOptions={p.exposeOptions}>
       <span className="pp-field">

@@ -6,6 +6,7 @@
 import { Activity, AudioLines, BellRing, Gauge, Timer } from 'lucide-react';
 import { alarmText, useInputs, useSignal, useSystem, type SignalView, type SystemView } from '../engine/liveInputs';
 import { zonedFields } from '../engine/widgets';
+import type { Panel } from '../engine/types';
 import { t } from '../i18n';
 import { ColorPick, defineWidget, Num, Section, Select, Text, Toggle, withDefaults } from './kit';
 import { FitLine } from './text-fit';
@@ -342,17 +343,20 @@ const hexCss = (c: string) => {
   return c;
 };
 
-/** Draws the items (the same as the Rust engine). */
-export function Items({ items }: { items: Item[] }) {
+/** The typography of a widget's texts (mirror of model::Panel::family, text_color, text_size). */
+const familyOf = (look: Panel | undefined, mono: boolean) => (mono ? look?.figures?.trim() || 'JetBrains Mono' : look?.font?.trim() || undefined);
+const colorOf = (look: Panel | undefined, color: string) => (color.toLowerCase() === '#ffffff' && look?.textColor?.trim() ? look.textColor.trim() : color);
+const sizeOf = (look: Panel | undefined, size: number) => ((look?.textScale ?? 0) > 0 ? (size * Math.min(400, Math.max(25, look!.textScale!))) / 100 : size);
+
+/** Draws the items (the same as the Rust engine), in the widget's typography. */
+export function Items({ items, look }: { items: Item[]; look?: Panel }) {
   return (
     <>
-      {items.map((it, i) =>
-        'rect' in it ? (
-          <div key={i} style={{ position: 'absolute', left: it.rect[0], top: it.rect[1], width: it.rect[2], height: it.rect[3], background: hexCss(it.color), borderRadius: it.radius }} />
-        ) : (
-          <FitLine key={i} text={it.text} size={it.size} weight={it.weight} family={it.mono ? 'JetBrains Mono' : undefined} align={it.align} box={it.box} color={it.color} fit={{ overflow: 'shrink', minSize: it.size * 0.55, minSqueeze: 70 }} />
-        ),
-      )}
+      {items.map((it, i) => {
+        if ('rect' in it) return <div key={i} style={{ position: 'absolute', left: it.rect[0], top: it.rect[1], width: it.rect[2], height: it.rect[3], background: hexCss(it.color), borderRadius: it.radius }} />;
+        const size = sizeOf(look, it.size);
+        return <FitLine key={i} text={it.text} size={size} weight={it.weight} family={familyOf(look, it.mono)} align={it.align} box={it.box} color={colorOf(look, it.color)} fit={{ overflow: 'shrink', minSize: size * 0.55, minSqueeze: 70 }} />;
+      })}
     </>
   );
 }
@@ -363,23 +367,23 @@ function InputPick({ value, onChange, none }: { value: string; onChange: (v: str
 }
 
 function MeterView({ c, w, h }: { c: MeterConfig; w: number; h: number }) {
-  return <Items items={meters(c, w, h, useSignal((c.input ?? '').trim()))} />;
+  return <Items items={meters(c, w, h, useSignal((c.input ?? '').trim()))} look={(c as { panel?: Panel }).panel} />;
 }
 function LoudnessView({ c, w, h, lang }: { c: LoudnessConfig; w: number; h: number; lang: string }) {
-  return <Items items={loudness(c, w, h, useSignal((c.input ?? '').trim()), lang)} />;
+  return <Items items={loudness(c, w, h, useSignal((c.input ?? '').trim()), lang)} look={(c as { panel?: Panel }).panel} />;
 }
 function TimecodeView({ c, w, h, nowMs, tz, fps, lang }: { c: TimecodeConfig; w: number; h: number; nowMs: number; tz: string; fps: number; lang: string }) {
   const id = (c.input ?? '').trim();
   const signal = useSignal(id);
   const inputs = useInputs();
   const [tc, tag] = id ? [signal.timecode ?? '', inputs.find((i) => i.id === id)?.name ?? ''] : [stationTimecode(nowMs, tz, fps), fr(lang) ? 'STATION' : 'HOUSE'];
-  return <Items items={timecode(c, w, h, tc, tag)} />;
+  return <Items items={timecode(c, w, h, tc, tag)} look={(c as { panel?: Panel }).panel} />;
 }
 function StatusView({ c, w, h, lang }: { c: StatusConfig; w: number; h: number; lang: string }) {
-  return <Items items={status(c, w, h, useSystem(), lang)} />;
+  return <Items items={status(c, w, h, useSystem(), lang)} look={(c as { panel?: Panel }).panel} />;
 }
 function AlarmLogView({ c, w, h, tz, lang }: { c: AlarmLogConfig; w: number; h: number; tz: string; lang: string }) {
-  return <Items items={alarmLog(c, w, h, useSystem(), tz, lang)} />;
+  return <Items items={alarmLog(c, w, h, useSystem(), tz, lang)} look={(c as { panel?: Panel }).panel} />;
 }
 
 export const audioMeter = defineWidget({
@@ -406,7 +410,6 @@ export const audioMeter = defineWidget({
         <Num label={t('Scale from')} value={c.min} min={-120} max={-6} unit=" dBFS" onChange={(v) => set('min', v)} />
         <Num label={t('Yellow from')} value={c.yellow} min={-60} max={0} unit=" dBFS" onChange={(v) => set('yellow', v)} />
         <Num label={t('Red from')} value={c.red} min={-60} max={0} unit=" dBFS" onChange={(v) => set('red', v)} />
-        <ColorPick label={t('Background')} value={c.background} onChange={(v) => set('background', v)} />
       </Section>
     );
   },
@@ -430,7 +433,6 @@ export const loudnessWidget = defineWidget({
         <Num label={t('Target')} value={c.target} min={-40} max={-10} step={0.5} precision={1} unit=" LUFS" onChange={(v) => set('target', v)} />
         <Num label={t('Tolerance')} value={c.tolerance} min={0} max={5} step={0.5} precision={1} unit=" LU" onChange={(v) => set('tolerance', v)} />
         <Toggle label={t('History')} text={t('The last two minutes')} value={c.history} onChange={(v) => set('history', v)} />
-        <ColorPick label={t('Background')} value={c.background} onChange={(v) => set('background', v)} />
       </Section>
     );
   },
@@ -453,7 +455,6 @@ export const timecodeWidget = defineWidget({
         <InputPick value={c.input} onChange={(v) => set('input', v)} none={t('Station (time of day)')} />
         <Text label={t('Label')} value={c.label} onChange={(v) => set('label', v)} />
         <ColorPick label={t('Figures')} value={c.color} onChange={(v) => set('color', v)} />
-        <ColorPick label={t('Background')} value={c.background} onChange={(v) => set('background', v)} />
       </Section>
     );
   },
@@ -476,7 +477,6 @@ export const statusWidget = defineWidget({
         <Toggle label="PTP" value={c.ptp} onChange={(v) => set('ptp', v)} />
         <Toggle label="NTP" value={c.ntp} onChange={(v) => set('ntp', v)} />
         <Toggle label={t('Alarms')} value={c.alarms} onChange={(v) => set('alarms', v)} />
-        <ColorPick label={t('Background')} value={c.background} onChange={(v) => set('background', v)} />
       </Section>
     );
   },
@@ -498,7 +498,6 @@ export const alarmLogWidget = defineWidget({
       <Section id="alarmLog" title={t('Alarm log')}>
         <Num label={t('Lines')} value={c.rows} min={1} max={40} onChange={(v) => set('rows', v)} />
         <Toggle label={t('Ended')} text={t('The faults over too, dimmed')} value={c.ended} onChange={(v) => set('ended', v)} />
-        <ColorPick label={t('Background')} value={c.background} onChange={(v) => set('background', v)} />
       </Section>
     );
   },

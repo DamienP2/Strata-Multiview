@@ -1,6 +1,23 @@
 // TypeScript mirror of crates/strata-mv-core/src/model.rs — keep in sync.
 
 export type Color = [number, number, number, number];
+
+/** A widget's frame (mirror of model::Panel). */
+export interface Panel {
+  /** `#rrggbb[aa]`; '' none. */
+  fill?: string;
+  /** Border width, px (0 none). */
+  border?: number;
+  borderColor?: string;
+  /** Corner radius, px. */
+  radius?: number;
+  /** The texts of a broadcast widget: their font ('' Inter), the font of their figures ('' JetBrains Mono)… */
+  font?: string;
+  figures?: string;
+  /** …the colour of its plain (white) texts, their size (%, 0: 100). */
+  textColor?: string;
+  textScale?: number;
+}
 export type Value = number | Color;
 
 export type Easing = { type: 'linear' } | { type: 'hold' } | { type: 'easeIn' } | { type: 'easeOut' } | { type: 'easeInOut' } | { type: 'bezier'; x1: number; y1: number; x2: number; y2: number } | { type: 'back' } | { type: 'elastic' } | { type: 'bounce' };
@@ -91,6 +108,8 @@ export type Layer = LayerKind & {
   lockRatio?: boolean;
   /** Drop shadow under the layer and its children (props shadowColor / shadowX / shadowY / shadowBlur); not for Texts (their own). */
   dropShadow?: boolean;
+  /** The widget's frame (mirror of model::Panel): a fill under it, a border inside its edge over it. */
+  panel?: Panel;
   /** How a new value of the data it shows (a source, a data set) shows on air, by data key (set at its port in the Data canvas); none = at once. */
   liveChanges?: Record<string, LiveChange>;
   /** When the layer is shown, in frames of the template's timeline (its bar in the timeline); none = all along. */

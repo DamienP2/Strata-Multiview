@@ -18,6 +18,8 @@ pub(crate) fn motion(_d: &mut Draw) -> Option<Motion> {
 }
 
 fn paint(d: &mut Draw, items: &[Item]) {
+    // Its typography (Layer::panel): font, figures, colour of plain texts, size.
+    let look = d.layer.panel.clone().unwrap_or_default();
     let boxed = d.boxed();
     let m = boxed.as_ref();
     for it in items {
@@ -37,10 +39,14 @@ fn paint(d: &mut Draw, items: &[Item]) {
                 if text.is_empty() || a[2] <= 0.0 || a[3] <= 0.0 {
                     continue;
                 }
-                let family = if *mono { "JetBrains Mono" } else { "Inter" };
-                let Some(f) = d.font(family, *weight) else {
+                let family = look.family(*mono);
+                let Some(f) = d
+                    .font(family, *weight)
+                    .or_else(|| d.font(if *mono { "JetBrains Mono" } else { "Inter" }, *weight))
+                else {
                     continue;
                 };
+                let size = &look.text_size(*size);
                 let (p, _) = fitted_path(
                     &f,
                     text,
@@ -54,7 +60,7 @@ fn paint(d: &mut Draw, items: &[Item]) {
                     }),
                 );
                 if let Some(p) = p {
-                    d.fill(&p, Draw::hex(color), FillRule::Winding, m);
+                    d.fill(&p, Draw::hex(look.text_color(color)), FillRule::Winding, m);
                 }
             }
         }

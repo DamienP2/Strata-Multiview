@@ -441,9 +441,11 @@ export default defineWidget({
   Render: ({ layer, w, h, r, data, designer, lang, time, fps }) => <SourceView layer={layer as Config & { name: string }} w={w} h={h} data={data} designer={designer} lang={lang} nowMs={time.nowMs} tz={time.defaultTz} fps={time.fps || fps} seed={num(r.x) + num(r.y)} />,
   Inspector: ({ layer, set }) => {
     const c = cfg(layer as Config);
+    // The tally shows on the frame and in the UMD's lamps: both on or off.
+    const tally = c.tally.border || (c.umd.position !== 'off' && c.umd.lamps);
     return (
       <>
-        <Section id="source-input" title={t('Source')}>
+        <Section id="source-video" title={t('Video')}>
           <InputPick value={c.input} onChange={(v) => set('input', v)} />
           <Seg
             label={t('Fit')}
@@ -455,7 +457,6 @@ export default defineWidget({
               ['stretch', t('Stretch')],
             ]}
           />
-          <ColorPick label={t('Background')} value={c.background} onChange={(v) => set('background', v)} />
           <Toggle label={t('Format')} text={t('The signal format, top left')} value={c.badge} onChange={(v) => set('badge', v)} />
           <Seg
             label={t('No signal')}
@@ -468,7 +469,32 @@ export default defineWidget({
           />
           <Text label={t('Words')} value={c.noSignal} placeholder={t('NO SIGNAL')} onChange={(v) => set('noSignal', v)} />
         </Section>
-        <Section id="source-overlays" title={t('Overlays')}>
+        <Section id="source-audio" title={t('Audio')}>
+          <Seg
+            label={t('Meters')}
+            value={c.vu.position}
+            onChange={(v) => set('vu.position', v)}
+            options={[
+              ['left', t('Left')],
+              ['right', t('Right')],
+              ['off', t('None')],
+            ]}
+          />
+          {c.vu.position !== 'off' && (
+            <>
+              <Num label={t('Channels')} value={c.vu.max} min={0} max={16} onChange={(v) => set('vu.max', v)} />
+              <Num label={t('Bar width')} value={c.vu.width} min={1} max={60} unit=" px" onChange={(v) => set('vu.width', v)} />
+              <Num label={t('Gap')} value={c.vu.gap} min={0} max={40} unit=" px" onChange={(v) => set('vu.gap', v)} />
+              <Num label={t('Margin')} value={c.vu.margin} min={0} max={100} unit=" px" onChange={(v) => set('vu.margin', v)} />
+              <Num label={t('Scale from')} value={c.vu.min} min={-120} max={-6} unit=" dBFS" onChange={(v) => set('vu.min', v)} />
+              <Num label={t('Yellow from')} value={c.vu.yellow} min={-60} max={0} unit=" dBFS" onChange={(v) => set('vu.yellow', v)} />
+              <Num label={t('Red from')} value={c.vu.red} min={-60} max={0} unit=" dBFS" onChange={(v) => set('vu.red', v)} />
+              <Toggle label={t('Peak hold')} value={c.vu.hold} onChange={(v) => set('vu.hold', v)} />
+            </>
+          )}
+          <Toggle label={t('Loudness')} text={t('Short-term, bottom right')} value={c.loudness} onChange={(v) => set('loudness', v)} />
+        </Section>
+        <Section id="source-data" title={t('Data (ANC)')}>
           <Seg
             label={t('Timecode')}
             value={c.timecode}
@@ -479,16 +505,26 @@ export default defineWidget({
               ['station', t('Station')],
             ]}
           />
-          <Toggle label={t('Loudness')} text={t('Short-term, bottom right')} value={c.loudness} onChange={(v) => set('loudness', v)} />
-          <Toggle label={t('Alarms')} text={t('Black, frozen, silence, loudness…')} value={c.alarms} onChange={(v) => set('alarms', v)} />
         </Section>
         <Section id="source-tally" title={t('Tally')}>
+          <Toggle
+            label={t('Show the tally')}
+            text={t('The frame and the UMD lamps')}
+            value={tally}
+            onChange={(v) => {
+              set('tally.border', v);
+              set('umd.lamps', v);
+            }}
+          />
           <Num label={t('Frame')} value={c.border} min={0} max={60} unit=" px" onChange={(v) => set('border', v)} />
-          <Toggle label={t('Frame colour')} text={t('Follows the tally')} value={c.tally.border} onChange={(v) => set('tally.border', v)} />
-          <ColorPick label={t('On air')} value={c.tally.program} onChange={(v) => set('tally.program', v)} />
-          <ColorPick label={tc('tally', 'Next')} value={c.tally.preview} onChange={(v) => set('tally.preview', v)} />
-          <ColorPick label={t('Aux')} value={c.tally.aux} onChange={(v) => set('tally.aux', v)} />
-          <ColorPick label={t('No tally')} value={c.tally.off} onChange={(v) => set('tally.off', v)} />
+          {tally && (
+            <>
+              <ColorPick label={t('On air')} value={c.tally.program} onChange={(v) => set('tally.program', v)} />
+              <ColorPick label={tc('tally', 'Next')} value={c.tally.preview} onChange={(v) => set('tally.preview', v)} />
+              <ColorPick label={t('Aux')} value={c.tally.aux} onChange={(v) => set('tally.aux', v)} />
+            </>
+          )}
+          <ColorPick label={tally ? t('No tally') : t('Frame colour')} value={c.tally.off} onChange={(v) => set('tally.off', v)} />
         </Section>
         <Section id="source-umd" title="UMD">
           <Seg
@@ -506,7 +542,6 @@ export default defineWidget({
               <Text label={t('Text')} value={c.umd.text} placeholder={t('From the switcher, else the input name')} onChange={(v) => set('umd.text', v)} />
               <Num label={t('Height')} value={c.umd.size} min={2} max={50} step={0.5} precision={1} unit=" %" onChange={(v) => set('umd.size', v)} />
               <Toggle label={t('Outside')} text={t('Beside the picture, not over it')} value={c.umd.outside} onChange={(v) => set('umd.outside', v)} />
-              <Toggle label={t('Lamps')} text={t('On air left, next right')} value={c.umd.lamps} onChange={(v) => set('umd.lamps', v)} />
               <Row label={t('Font')}>
                 <FontPick family={c.umd.font} weight={c.umd.weight} onChange={(f, wt) => (set('umd.font', f), set('umd.weight', wt))} />
               </Row>
@@ -525,29 +560,8 @@ export default defineWidget({
             </>
           )}
         </Section>
-        <Section id="source-vu" title={t('Audio meters')}>
-          <Seg
-            label={t('Position')}
-            value={c.vu.position}
-            onChange={(v) => set('vu.position', v)}
-            options={[
-              ['right', t('Right')],
-              ['left', t('Left')],
-              ['off', t('None')],
-            ]}
-          />
-          {c.vu.position !== 'off' && (
-            <>
-              <Num label={t('Channels')} value={c.vu.max} min={0} max={64} onChange={(v) => set('vu.max', v)} />
-              <Num label={t('Bar width')} value={c.vu.width} min={1} max={60} unit=" px" onChange={(v) => set('vu.width', v)} />
-              <Num label={t('Gap')} value={c.vu.gap} min={0} max={40} unit=" px" onChange={(v) => set('vu.gap', v)} />
-              <Num label={t('Margin')} value={c.vu.margin} min={0} max={100} unit=" px" onChange={(v) => set('vu.margin', v)} />
-              <Num label={t('Scale from')} value={c.vu.min} min={-120} max={-6} unit=" dBFS" onChange={(v) => set('vu.min', v)} />
-              <Num label={t('Yellow from')} value={c.vu.yellow} min={-60} max={0} unit=" dBFS" onChange={(v) => set('vu.yellow', v)} />
-              <Num label={t('Red from')} value={c.vu.red} min={-60} max={0} unit=" dBFS" onChange={(v) => set('vu.red', v)} />
-              <Toggle label={t('Peak hold')} value={c.vu.hold} onChange={(v) => set('vu.hold', v)} />
-            </>
-          )}
+        <Section id="source-alarms" title={t('Alarms')}>
+          <Toggle label={t('Alarms')} text={t('Black, frozen, silence, loudness…')} value={c.alarms} onChange={(v) => set('alarms', v)} />
         </Section>
       </>
     );

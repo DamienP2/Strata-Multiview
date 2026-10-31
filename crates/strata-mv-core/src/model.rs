@@ -614,6 +614,9 @@ pub struct Layer {
     /// `Shadow*` properties; the Text widget has its own.
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     pub drop_shadow: bool,
+    /// The widget's frame: a fill under it, a border over its edge.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub panel: Option<Panel>,
     /// Properties shown on the Designer's timeline (animatable); none =
     /// position, size and opacity. Properties with keyframes always are.
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -1022,6 +1025,56 @@ pub struct Template {
     /// default very dark grey).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub background: Option<Backdrop>,
+}
+
+/// The frame of a widget (its box): a fill under what it draws, a border
+/// inside its edge over it, rounded corners.
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+#[serde(default, rename_all = "camelCase")]
+pub struct Panel {
+    /// `#rrggbb[aa]`; "" none.
+    pub fill: String,
+    /// Width of the border, px (0 none).
+    pub border: f32,
+    pub border_color: String,
+    /// Corner radius, px.
+    pub radius: f32,
+    /// The texts of a broadcast widget: their font ("" Inter)…
+    pub font: String,
+    /// …the font of their figures ("" JetBrains Mono)…
+    pub figures: String,
+    /// …the colour of its plain (white) texts ("" white)…
+    pub text_color: String,
+    /// …and their size, % (0: 100 %).
+    pub text_scale: f32,
+}
+
+impl Panel {
+    /// The font of a text (`mono`: figures).
+    pub fn family(&self, mono: bool) -> &str {
+        match (mono, self.font.trim(), self.figures.trim()) {
+            (true, _, f) if !f.is_empty() => f,
+            (true, ..) => "JetBrains Mono",
+            (false, f, _) if !f.is_empty() => f,
+            _ => "Inter",
+        }
+    }
+    /// The colour of a text drawn `color` (plain white ones take `text_color`).
+    pub fn text_color<'a>(&'a self, color: &'a str) -> &'a str {
+        if color.eq_ignore_ascii_case("#ffffff") && !self.text_color.trim().is_empty() {
+            self.text_color.trim()
+        } else {
+            color
+        }
+    }
+    /// The size of a text of `size` px.
+    pub fn text_size(&self, size: f32) -> f32 {
+        if self.text_scale > 0.0 {
+            size * self.text_scale.clamp(25.0, 400.0) / 100.0
+        } else {
+            size
+        }
+    }
 }
 
 /// The id of the layer drawing a multiview's background (made when drawn,
