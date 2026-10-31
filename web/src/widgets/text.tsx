@@ -16,7 +16,7 @@ import { fitLines, graphemes, HYPHEN_LANGS, type FitLines } from '../engine/text
 import { frameSpeed, scrollPositions } from '../engine/widgets';
 import { ColorGroupRow, GroupRow } from '../designer/Inspector';
 import { Dropdown } from '../ui/Dropdown';
-import { ColorPick, Content, defineWidget, hex, Num, Row, Section, Seg, Select, Toggle, type LayerOf, type Warning, withDefaults } from './kit';
+import { ColorPick, Content, defineWidget, hex, Num, Row, Section, Seg, Select, type LayerOf, type Warning, withDefaults } from './kit';
 import { t, tc } from '../i18n';
 
 /** Settings of the layer (flattened into it; every field optional: older projects lack them). */
@@ -443,7 +443,6 @@ function Inspector({ layer, template, edit }: { layer: TextLayer; data: Data; te
   const k = cfg(layer);
   const set = (key: string, v: unknown) => edit((l) => void ((l as unknown as Record<string, unknown>)[key] = v));
   const mode = layer.overflow ?? 'fit';
-  const stroke = num(propValue(layer as Layer, 'strokeWidth', 0)) > 0;
   const para = !!layer.wrap;
   // The variables set in the text (typed by the Operator): each may have its own looks.
   const vars = [...new Set([...layer.text.matchAll(/\{\{\s*(\w+)\s*\}\}/g)].map((m) => m[1]))]
@@ -623,57 +622,6 @@ function Inspector({ layer, template, edit }: { layer: TextLayer; data: Data; te
                 <Num label={t('Angle')} path="gradAngle" value={k.gradAngle} min={0} max={360} unit="°" />
               </>
             )}
-          </>
-        )}
-      </Section>
-      <Section id="text-effects" title={t('Effects')}>
-        <Toggle
-          // The width is exposed by its own row (Width): the toggle is not.
-          expose={false}
-          label={t('Stroke')}
-          value={stroke}
-          onChange={(v) =>
-            edit((l) => {
-              l.props.strokeWidth = v ? 2 : 0;
-              // A stroke turned on must show: an invisible colour becomes black.
-              const sc = col(l.props.stroke ?? [0, 0, 0, 0]);
-              if (v && sc[3] === 0) l.props.stroke = [0, 0, 0, 1];
-            })
-          }
-        />
-        {stroke && (
-          <>
-            <ColorGroupRow layer={layer as Layer} prop="stroke" label={t('Color')} />
-            <GroupRow layer={layer as Layer} spec={{ label: t('Width'), props: ['strokeWidth'], min: 0, precision: 1, suffix: 'px' }} />
-            <Seg
-              label={t('Placement')}
-              path="strokeOutside"
-              value={false}
-              options={[
-                [false, t('Centred')],
-                [true, t('Outside')],
-              ]}
-            />
-          </>
-        )}
-        <Toggle label={t('Shadow')} path="shadow" value={false} />
-        {k.shadow && (
-          <>
-            <ColorPick label={t('Color')} path="shadowColor" value={D.shadowColor} />
-            <Num label={t('Offset X')} path="shadowX" value={k.shadowX} min={-200} max={200} unit="px" />
-            <Num label={t('Offset Y')} path="shadowY" value={k.shadowY} min={-200} max={200} unit="px" />
-            <Num label={t('Blur')} path="shadowBlur" value={k.shadowBlur} min={0} max={200} unit="px" />
-          </>
-        )}
-        <Toggle label={t('Band')} path="band" value={false} />
-        {k.band && (
-          <>
-            <ColorPick label={t('Color')} path="bandColor" value={D.bandColor} />
-            <Num label={t('Padding')} path="bandPadX" value={k.bandPadX} min={0} max={200} unit="px" />
-            <Num label={t('Gap')} path="bandGap" value={k.bandGap} min={0} max={200} unit="px" />
-            <Num label={t('Corners')} path="bandRadius" value={k.bandRadius} min={0} max={200} unit="px" />
-            <Toggle label={t('Accent')} path="bandAccent" value={true} />
-            {k.bandAccent && <ColorPick label={t('Accent color')} path="bandAccentColor" value={D.bandAccentColor} />}
           </>
         )}
       </Section>

@@ -6,7 +6,7 @@ import { AssetPicker } from './AssetPicker';
 import { Database, RotateCcw, AlignCenter, AlignLeft, AlignRight, ChevronDown, Link as LinkIcon, LayoutTemplate, MonitorPlay, Settings2, Unlink } from 'lucide-react';
 import { createContext, Fragment, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { col, holdFrame, interpolateText, num, propValue, resolveLayer, toHex } from '../engine/evaluate';
-import { MAIN_FORMAT, TEXT_LIKE, type TextOverflow, type FontStyle, type Layer, type LayerType, type Prop, type Template, type Value } from '../engine/types';
+import { MAIN_FORMAT, TEXT_LIKE, type TextOverflow, type FontStyle, type Layer, type Prop, type Template, type Value } from '../engine/types';
 import { useApp } from '../store';
 import { ColorField, NumberField, Segmented, TextInput } from '../ui/fields';
 import { loadFonts, useFonts } from '../engine/fonts';
@@ -19,8 +19,8 @@ import { fitLayer, layerText } from '../engine/Scene';
 import { MultiviewSettings } from './MultiviewSettings';
 import { layerIcon } from './LayersPanel';
 import { widgetOf } from '../widgets';
-import { Bound, CentreModeContext, FirstSection, Row as KitRow, Section as SpecSection, setPath, Toggle, Warnings, wiredKeys } from '../widgets/kit';
-import { t, tc, tn } from '../i18n';
+import { Bound, CentreModeContext, FirstSection, Row as KitRow, setPath, Warnings, wiredKeys } from '../widgets/kit';
+import { t, tn } from '../i18n';
 import { useDisplayPref } from '../displayPrefs';
 
 interface PropSpec {
@@ -135,42 +135,6 @@ export interface RowSpec {
   lock?: 'scaleLock' | 'lockRatio';
 }
 
-const TRANSFORM_ROWS: RowSpec[] = [
-  { label: 'Position', props: ['x', 'y'], fields: ['X', 'Y'], suffix: 'px' },
-  {
-    label: 'Scale',
-    props: ['scaleX', 'scaleY'],
-    fields: ['X', 'Y'],
-    display: 100,
-    suffix: '%',
-    lock: 'scaleLock',
-  },
-  {
-    // "Size", as in the timeline.
-    label: 'Size',
-    props: ['width', 'height'],
-    fields: ['W', 'H'],
-    suffix: 'px',
-    min: 0,
-    lock: 'lockRatio',
-  },
-  {
-    label: 'Anchor',
-    props: ['anchorX', 'anchorY'],
-    fields: ['X', 'Y'],
-    display: 100,
-    suffix: '%',
-  },
-  { label: 'Rotation', props: ['rotation'], suffix: '°', precision: 1 },
-  {
-    label: 'Opacity',
-    props: ['opacity'],
-    display: 100,
-    suffix: '%',
-    min: 0,
-    max: 1,
-  },
-];
 
 /** Values of the selected layer set by a bound variable, at the playhead. */
 const DrivenContext = createContext<Map<string, Value>>(new Map());
@@ -302,10 +266,6 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
   );
 }
 
-function Num({ value, onChange, min, max, step, precision, suffix }: { value: number; onChange: (v: number) => void; min?: number; max?: number; step?: number; precision?: number; suffix?: string }) {
-  return <NumberField value={value} onChange={onChange} min={min} max={max} step={step ?? 1} precision={precision ?? 0} suffix={suffix} />;
-}
-
 const CLOCK_FORMATS = ['HH:mm:ss', 'HH:mm', 'h:mm A', 'mm:ss', 'mm:ss.f', 'H:mm:ss', 'dd/MM/yyyy', 'dd/MM/yy HH:mm', 'yyyy-MM-dd'];
 const ZONES: string[] = (() => {
   try {
@@ -376,19 +336,6 @@ export function WidgetSettings({ layer, set, data = {} }: { layer: Layer; set: (
             </>
           )}
           <p className="hint">{t('Tokens: yyyy yy MM M dd d HH H hh h mm m ss s f (tenths) A (AM/PM).')}</p>
-        </>
-      );
-    case 'ticker':
-      return (
-        <>
-          <span className="prop-label">{t('Items (one per line)')}</span>
-          {text('text', true)}
-          <Row label={t('Separator')}>
-            <input value={layer.separator} onChange={(e) => set('separator', e.target.value, true)} onKeyDown={(e) => e.stopPropagation()} />
-          </Row>
-          <Row label={t('Speed')}>
-            <Num value={layer.speed} onChange={(v) => set('speed', v, true)} min={1} suffix=" px/s" />
-          </Row>
         </>
       );
     default:
@@ -477,8 +424,6 @@ export function FontControls({ layer, set }: { layer: Layer & FontStyle; set: (k
     </>
   );
 }
-
-const FILL_LABEL: Partial<Record<LayerType, string>> = {};
 
 /** In another format than main: what is specific to it, and a reset. */
 function FormatNote({ layer }: { layer: Layer }) {
@@ -682,10 +627,7 @@ function OperatorPreview({ layer }: { layer: Layer }) {
 function LayerInspector({ layer }: { layer: Layer }) {
   const { update } = useDesigner(useShallow((s) => ({ update: s.update })));
   const edit = (fn: (l: Layer) => void, key?: string) => update((t) => fn(findLayer(t, layer.id)!), key);
-  const textLike = TEXT_LIKE.has(layer.type);
-  const radius = layer.type === 'rect' || layer.type === 'group';
   const Icon = layerIcon(layer);
-  const hasLook = layer.type !== 'image' && !widgetOf(layer)?.ownsLook;
   const driven = useDrivenValues(layer);
   const spec = widgetOf(layer);
   return (
@@ -707,89 +649,7 @@ function LayerInspector({ layer }: { layer: Layer }) {
           <LayerGeneral layer={layer} />
         </Group>
       )}
-      {layer.type !== 'text' && <EffectsGroup layer={layer} />}
-      <Group id="properties" title={t('Properties')}>
-        <Group id="transform" title={tc('section', 'Transform')} level={2}>
-          {TRANSFORM_ROWS.map((r) => (
-            <GroupRow key={r.label} layer={layer} spec={r} />
-          ))}
-        </Group>
-        {(hasLook || layer.type === 'group' || (layer.type === 'image' && !spec?.Inspector)) && (
-          <Group id="contents" title={t('Contents')} level={2}>
-            {hasLook && <ColorGroupRow layer={layer} prop="fill" label={FILL_LABEL[layer.type] ?? (textLike ? 'Color' : 'Fill')} />}
-            {hasLook && <ColorGroupRow layer={layer} prop="stroke" label="Stroke" />}
-            {hasLook &&
-              STYLE.filter((st) => (st.prop === 'cornerRadius' ? radius : true)).map((st) => (
-                <GroupRow
-                  key={st.prop}
-                  layer={layer}
-                  spec={{
-                    label: st.label === 'Stroke W' ? 'Stroke width' : st.label,
-                    props: [st.prop],
-                    min: st.min,
-                    precision: st.precision,
-                    suffix: 'px',
-                  }}
-                />
-              ))}
-            {layer.type === 'image' && !spec?.Inspector && (
-              <div className="row">
-                <span className="prop-label">{t('Fit')}</span>
-                <Segmented
-                  value={layer.fit}
-                  onChange={(v) => edit((l) => void (l.type === 'image' && (l.fit = v)))}
-                  options={[
-                    { value: 'contain', label: t('Contain') },
-                    { value: 'cover', label: t('Cover') },
-                    { value: 'stretch', label: t('Stretch') },
-                  ]}
-                />
-              </div>
-            )}
-            {layer.type === 'group' && (
-              <label className="check">
-                <input type="checkbox" checked={!!layer.clip} onChange={(e) => edit((l) => void (l.type === 'group' && (l.clip = e.target.checked)))} />
-                {t('Clip children to group bounds')}
-              </label>
-            )}
-          </Group>
-        )}
-        <Group id="reveal" title={t('Reveal mask')} level={2}>
-          {[
-            { label: 'Left', props: ['cropLeft'] as Prop[] },
-            { label: 'Right', props: ['cropRight'] as Prop[] },
-            { label: 'Top', props: ['cropTop'] as Prop[] },
-            { label: 'Bottom', props: ['cropBottom'] as Prop[] },
-          ].map((r) => (
-            <GroupRow key={r.label} layer={layer} spec={{ ...r, display: 100, suffix: '%', min: 0, max: 1 }} />
-          ))}
-        </Group>
-      </Group>
     </DrivenContext.Provider>
-  );
-}
-
-/**
- * Effects › Shadow of a layer (every widget but the Text, which has its own): on / off, then its
- * colour, offset and blur, animatable like the other properties. Drawn by both renderers.
- */
-function EffectsGroup({ layer }: { layer: Layer }) {
-  const { update } = useDesigner(useShallow((s) => ({ update: s.update })));
-  const set = (path: string, v: unknown, coalesce?: boolean) => update((t) => setPath(findLayer(t, layer.id)!, path, v), coalesce ? `${path}-${layer.id}` : undefined);
-  return (
-    <Bound obj={layer} set={set}>
-      <SpecSection id="layer-effects" title={t('Effects')} closed>
-        <Toggle label={t('Shadow')} expose="dropShadow" exposeValue={!!layer.dropShadow} value={!!layer.dropShadow} onChange={(v) => set('dropShadow', v || undefined)} />
-        {layer.dropShadow && (
-          <>
-            <ColorGroupRow layer={layer} prop="shadowColor" label="Color" />
-            <GroupRow layer={layer} spec={{ label: 'Offset X', props: ['shadowX'], suffix: 'px', min: -200, max: 200 }} />
-            <GroupRow layer={layer} spec={{ label: 'Offset Y', props: ['shadowY'], suffix: 'px', min: -200, max: 200 }} />
-            <GroupRow layer={layer} spec={{ label: 'Blur', props: ['shadowBlur'], suffix: 'px', min: 0, max: 200 }} />
-          </>
-        )}
-      </SpecSection>
-    </Bound>
   );
 }
 
