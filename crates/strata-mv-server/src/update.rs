@@ -77,9 +77,9 @@ const STAGED: &str = if cfg!(windows) {
 };
 /// Exit code asking the service manager for a restart.
 const RESTART_CODE: i32 = 75;
-/// Versions before the Strata Multiview rename keep their data elsewhere:
-/// going back to one of them would start on an empty server.
-const OLDEST_INSTALLABLE: &str = "0.16.0";
+/// The first version of Strata Multiview (its own data folder from the
+/// start): an older number is not one of its versions.
+const OLDEST_INSTALLABLE: &str = "0.0.1";
 const MAX_FAILED_STARTS: u32 = 3;
 
 static SUPERVISED: AtomicBool = AtomicBool::new(false);
@@ -1093,20 +1093,21 @@ mod tests {
         let ours = format!("StrataMV-x{}", PACKAGES[0]);
         let all = vec![
             // Tagged, still building: no package yet, or one being uploaded.
-            gh("v0.19.0", &[], false),
-            gh("v0.18.2", &[(&ours, "starter")], false),
-            gh("v0.18.1", &[(&ours, "uploaded")], false),
-            gh("v0.18.3", &[(&ours, "uploaded")], true),
-            gh("v0.17.0", &[("StrataMV-x-other.tar.gz", "uploaded")], false),
-            gh("v0.16.0", &[(&ours, "uploaded")], false),
-            // Before the rename: its data is elsewhere.
-            gh("v0.15.3", &[(&ours, "uploaded")], false),
+            gh("v0.0.9", &[], false),
+            gh("v0.0.8", &[(&ours, "starter")], false),
+            gh("v0.0.7", &[(&ours, "uploaded")], false),
+            gh("v0.0.10", &[(&ours, "uploaded")], true),
+            gh("v0.0.6", &[("StrataMV-x-other.tar.gz", "uploaded")], false),
+            gh("v0.0.5", &[(&ours, "uploaded")], false),
+            gh("v0.0.1", &[(&ours, "uploaded")], false),
+            // Not a version of Strata Multiview.
+            gh("v0.0.0", &[(&ours, "uploaded")], false),
         ];
         let got: Vec<String> = usable_releases(all, |a| pick_package_for(a, false))
             .into_iter()
             .map(|r| r.version)
             .collect();
-        assert_eq!(got, ["0.18.1", "0.16.0"]);
+        assert_eq!(got, ["0.0.7", "0.0.5", "0.0.1"]);
     }
 
     #[test]
