@@ -505,7 +505,7 @@ impl TsMonitor {
         self.ts_id = Some(u16::from_be_bytes([s[3], s[4]]));
         let end = s.len() - 4;
         let mut programs = BTreeMap::new();
-        for e in s[8..end].chunks_exact(4) {
+        for e in s[8..end].as_chunks::<4>().0 {
             let number = u16::from_be_bytes([e[0], e[1]]);
             let pid = u16::from(e[2] & 0x1F) << 8 | u16::from(e[3]);
             if number == 0 {
@@ -1186,7 +1186,7 @@ fn es(stream_type: u8, pid: u16, d: &[u8], ca: &mut Vec<String>) -> Es {
             } else {
                 "Télétexte VBI".into()
             });
-            for p in d.chunks_exact(5) {
+            for p in d.as_chunks::<5>().0 {
                 if e.language.is_empty() {
                     e.language = lang(&p[..3]);
                 }
@@ -1209,7 +1209,7 @@ fn es(stream_type: u8, pid: u16, d: &[u8], ca: &mut Vec<String>) -> Es {
         }
         0x59 => {
             own_kind = Some("Sous-titres DVB".into());
-            for p in d.chunks_exact(8) {
+            for p in d.as_chunks::<8>().0 {
                 if e.language.is_empty() {
                     e.language = lang(&p[..3]);
                 }
@@ -1226,7 +1226,7 @@ fn es(stream_type: u8, pid: u16, d: &[u8], ca: &mut Vec<String>) -> Es {
         0x86 if !d.is_empty() => {
             // ATSC caption service descriptor: 608 / 708 services.
             let n = (d[0] & 0x1F) as usize;
-            for s in d[1..].chunks_exact(6).take(n) {
+            for s in d[1..].as_chunks::<6>().0.iter().take(n) {
                 let digital = s[3] & 0x80 != 0;
                 let what = if digital {
                     format!("CEA-708 service {}", s[3] & 0x3F)

@@ -128,7 +128,9 @@ fn tally_by_source(d: &[u8]) -> Option<Vec<(u16, bool, bool)>> {
     let n = u16::from_be_bytes([*d.first()?, *d.get(1)?]) as usize;
     Some(
         d.get(2..2 + 3 * n)?
-            .chunks_exact(3)
+            .as_chunks::<3>()
+            .0
+            .iter()
             .map(|c| {
                 (
                     u16::from_be_bytes([c[0], c[1]]),
