@@ -309,7 +309,7 @@ const ago = (s?: number) => (s == null ? '' : s < 60 ? t('{n} s ago', { n: Math.
 const KIND_ICON: Record<string, typeof Film> = { video: Film, audio: AudioLines, subtitle: Captions, data: Database, attachment: FileVideo };
 
 /** The analysis of an input, refreshed every 2 s while shown. */
-export function InputAnalysis({ id, name }: { id: string; name: string }) {
+export function InputAnalysis({ id, name, preview, off }: { id: string; name: string; preview: React.ReactNode; off?: boolean }) {
   const [r, setR] = useState<Report | null>(null);
   const [error, setError] = useState('');
   const [tab, setTab] = useState<Tab>('summary');
@@ -323,6 +323,7 @@ export function InputAnalysis({ id, name }: { id: string; name: string }) {
       .catch((e) => setError((e as Error).message));
   useEffect(() => {
     setR(null);
+    if (off) return;
     let alive = true;
     void load();
     const h = setInterval(() => alive && !document.hidden && void load(), 2000);
@@ -330,7 +331,7 @@ export function InputAnalysis({ id, name }: { id: string; name: string }) {
       alive = false;
       clearInterval(h);
     };
-  }, [id]);
+  }, [id, off]);
   const tabs: { id: Tab; label: string; icon: typeof Film; shown: boolean; alert?: boolean }[] = r
     ? [
         { id: 'summary', label: t('Overview'), icon: Activity, shown: true },
@@ -370,9 +371,14 @@ export function InputAnalysis({ id, name }: { id: string; name: string }) {
           <RefreshCw size={13} className={busy ? 'spin' : ''} /> {t('Refresh')}
         </button>
       </header>
-      {error && <p className="ia-error">{error}</p>}
-      {!r && !error && <p className="muted">{t('Analysing…')}</p>}
-      {r && (
+      <div className="ia-layout">
+        {/* The picture, always in sight on the left. */}
+        <div className="ia-preview">{preview}</div>
+        <div className="ia-main">
+      {off && <p className="muted ia-off">{t('This input is off: switch it on to receive and analyse it.')}</p>}
+      {!off && error && <p className="ia-error">{error}</p>}
+      {!off && !r && !error && <p className="muted ia-off">{t('Analysing…')}</p>}
+      {!off && r && (
         <>
           <nav className="ia-tabs" role="tablist">
             {tabs
@@ -396,6 +402,8 @@ export function InputAnalysis({ id, name }: { id: string; name: string }) {
           </div>
         </>
       )}
+        </div>
+      </div>
     </section>
   );
 }

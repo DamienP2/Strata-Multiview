@@ -1,6 +1,7 @@
 // The analysis of an input (Video inputs page: what the signal carries).
 export const analysis: Record<string, string> = {
   '(no title)': '(sans titre)',
+  'This input is off: switch it on to receive and analyse it.': 'Cette entrée est désactivée : activez-la pour la recevoir et l’analyser.',
   Absent: 'Absent',
   'Ad markers': 'Marqueurs publicitaires',
   'Analysing…': 'Analyse…',

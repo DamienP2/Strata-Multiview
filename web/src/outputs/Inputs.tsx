@@ -267,31 +267,25 @@ export function InputsMode({ cfg, saved, edit }: { cfg: ServerConfig; saved: Ser
                 </button>
               </div>
             ) : (
-              <div className="vs-grid">
-                {inputs.map((i) => {
-                  const st = stateOf(i);
-                  return (
-                    <div key={i.id} role="button" tabIndex={0} className={`vs-tile ${i.id === current?.id ? 'sel' : ''} ${i.enabled === false ? 'off' : ''}`} onClick={() => setSel(i.id)} onKeyDown={(e) => e.key === 'Enter' && setSel(i.id)}>
-                      <Preview id={i.id} live={st.live} />
-                      <span className="vs-tile-head">
-                        <OnSwitch on={i.enabled !== false} mini onChange={(v) => setOn(i.id, v)} />
-                        <strong>{i.name || i.id}</strong>
-                        <span className="vs-badge" style={{ ['--k' as string]: COLOR }}>
-                          {badgeText(i)}
-                        </span>
+              current && (
+                <InputAnalysis
+                  id={current.id}
+                  name={current.name || current.id}
+                  off={current.enabled === false}
+                  preview={
+                    <>
+                      <Preview id={current.id} live={stateOf(current).live} />
+                      <span className="vs-tile-status" title={stateOf(current).text}>
+                        <span className={`oc-dot ${stateOf(current).tone}`} />
+                        <span className="grow">{stateOf(current).text}</span>
+                        <Rate m={rates(current.id)} full />
+                        <span className="vs-res">{detected(stateOf(current).info) || '—'}</span>
                       </span>
-                      <span className="vs-tile-status" title={st.text}>
-                        <span className={`oc-dot ${st.tone}`} />
-                        <span className="grow">{st.text}</span>
-                        <Rate m={rates(i.id)} full />
-                        <span className="vs-res">{detected(st.info) || '—'}</span>
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
+                    </>
+                  }
+                />
+              )
             )}
-            {current && current.enabled !== false && <InputAnalysis id={current.id} name={current.name || current.id} />}
           </div>
 
           <aside className="oc-inspector">
@@ -535,7 +529,7 @@ const detected = (info?: InputInfo) => (info?.width ? `${info.width}×${info.hei
 
 /** The newest picture, five times a second; the last one stays, dimmed, when the signal goes. */
 function Preview({ id, live }: { id: string; live: boolean }) {
-  const pic = useLiveFrame(id, 'tile');
+  const pic = useLiveFrame(id, 'preview');
   return (
     <span className={`vs-preview ${live ? '' : 'stale'}`}>
       {pic.url && <img src={pic.url} alt="" draggable={false} />}

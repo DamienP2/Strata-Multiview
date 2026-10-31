@@ -1,6 +1,6 @@
 /* What an input carries (InputAnalysis.tsx): below the inputs' tiles. */
 .ia {
-  margin-top: 18px;
+  margin-top: 0;
   border: 1px solid var(--line);
   border-radius: 11px;
   background: var(--panel);
@@ -375,5 +375,43 @@
 @media (max-width: 720px) {
   .ia-epg {
     grid-template-columns: 1fr;
+  }
+}
+/* The input's picture on the left, always in sight; its contents on the right. */
+.ia-layout {
+  display: grid;
+  grid-template-columns: minmax(280px, 420px) 1fr;
+  align-items: start;
+}
+.ia-preview {
+  position: sticky;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px;
+  border-right: 1px solid var(--line);
+}
+.ia-preview .vs-preview {
+  border-radius: 8px;
+  overflow: hidden;
+}
+.ia-preview .vs-tile-status {
+  padding: 0 2px;
+}
+.ia-main {
+  min-width: 0;
+}
+.ia-off {
+  margin: 14px 16px;
+}
+@media (max-width: 1100px) {
+  .ia-layout {
+    grid-template-columns: 1fr;
+  }
+  .ia-preview {
+    position: static;
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
   }
 }
