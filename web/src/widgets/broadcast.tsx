@@ -272,15 +272,19 @@ export function status(cfg: StatusConfig, w: number, h: number, s: SystemView, l
   const lines = statusLines(c, s, lang);
   if (!lines.length) return out;
   const rh = (h - 2 * pad) / lines.length;
-  const fs = Math.round(clamp(rh * 0.4, 7, 30));
+  // Narrow: the value under its name.
+  const stack = w < rh * 5;
+  const fs = Math.round(clamp(stack ? Math.min(rh * 0.3, w * 0.06) : rh * 0.4, 7, 30));
+  const lh = stack ? rh * 0.5 : rh;
   lines.forEach(([name, val, col], i) => {
     const y = pad + i * rh;
     const dot = fs * 0.7;
-    out.push(rect([pad, y + (rh - dot) / 2, dot, dot], dot / 2, col));
+    out.push(rect([pad, y + (lh - dot) / 2, dot, dot], dot / 2, col));
     const x = pad + dot + fs * 0.6;
     const tw = w - x - pad;
-    out.push(text([x, y, tw * 0.5, rh], name, fs, 600, false, WHITE, 'left'));
-    out.push(text([x + tw * 0.5, y, tw * 0.5, rh], val, fs, 700, false, col, 'right'));
+    const [nameA, valA]: [Area, Area] = stack ? [[x, y, tw, lh], [x, y + lh, tw, lh]] : [[x, y, tw * 0.5, rh], [x + tw * 0.5, y, tw * 0.5, rh]];
+    out.push(text(nameA, name, fs, 600, false, WHITE, 'left'));
+    out.push(text(valA, val, fs, 700, false, col, stack ? 'left' : 'right'));
   });
   return out;
 }
@@ -301,7 +305,11 @@ export function alarmLog(cfg: AlarmLogConfig, w: number, h: number, s: SystemVie
   const f = fr(lang);
   const rows = clamp(c.rows, 1, 40);
   const rh = (h - 2 * pad) / rows;
-  const fs = Math.round(clamp(rh * 0.42, 7, 28));
+  // Narrow: the fault under its time and input. As wide as the line
+  // allows too.
+  const stack = w < rh * 11;
+  const fs = Math.round(clamp(stack ? Math.min(rh * 0.3, w * 0.06) : Math.min(rh * 0.42, w * 0.026), 7, 28));
+  const lh = stack ? rh * 0.5 : rh;
   const lines = s.journal.filter((e) => c.ended || e.ended == null).slice(0, rows);
   if (!lines.length) {
     out.push(text([pad, pad, w - 2 * pad, rh], f ? 'Aucune alarme' : 'No alarm', fs, 600, false, DIM, 'left'));
@@ -313,15 +321,16 @@ export function alarmLog(cfg: AlarmLogConfig, w: number, h: number, s: SystemVie
     const y = pad + i * rh;
     const over = e.ended != null;
     const fg = over ? DIM : WHITE;
-    out.push(text([pad, y, tw, rh], clockText(e.at, tz), fs, 500, true, DIM, 'left'));
+    out.push(text([pad, y, tw, lh], clockText(e.at, tz), fs, 500, true, DIM, 'left'));
     const [bg, chipFg, word] = over ? ['#ffffff1a', DIM, f ? 'FINIE' : 'OVER'] : e.severity === 'critical' ? [CRIT[0], CRIT[1], f ? 'CRITIQUE' : 'CRITICAL'] : [WARN[0], WARN[1], f ? 'ALERTE' : 'WARNING'];
-    const chip: Area = [pad + tw + fs * 0.4, y + rh * 0.18, cw, rh * 0.64];
+    const chip: Area = [pad + tw + fs * 0.4, y + lh * 0.18, cw, lh * 0.64];
     out.push(rect(chip, fs * 0.25, bg));
     out.push(text(chip, word, fs * 0.72, 800, false, chipFg, 'center'));
     const x = chip[0] + cw + fs * 0.6;
     const rest = Math.max(1, w - x - pad);
-    out.push(text([x, y, rest * 0.4, rh], e.input, fs, 700, false, fg, 'left'));
-    out.push(text([x + rest * 0.4, y, rest * 0.6, rh], alarmText(e.kind, lang), fs, 600, false, fg, 'left'));
+    const [inputA, faultA]: [Area, Area] = stack ? [[x, y, rest, lh], [pad, y + lh, w - 2 * pad, lh]] : [[x, y, rest * 0.4, rh], [x + rest * 0.4, y, rest * 0.6, rh]];
+    out.push(text(inputA, e.input, fs, 700, false, fg, 'left'));
+    out.push(text(faultA, alarmText(e.kind, lang), fs, 600, false, fg, 'left'));
   });
   return out;
 }

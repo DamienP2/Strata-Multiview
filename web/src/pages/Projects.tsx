@@ -3,6 +3,7 @@ import { ArrowLeft, Check, CheckSquare, ChevronRight, Clock, Copy, Download, Fol
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { FrameRate, Project, ProjectSummary } from '../engine/types';
 import { applyLayout, LayoutPicker, PRESETS } from '../designer/Layouts';
+import { buildModel, ModelIcon, MODELS } from '../designer/Models';
 import { useInputs } from '../engine/liveInputs';
 import { api, can, useApp } from '../store';
 import { useShallow } from 'zustand/react/shallow';
@@ -23,6 +24,7 @@ function NewProject({ from, folder, onClose }: { from?: ProjectSummary; folder?:
   const [size, setSize] = useState({ width: 1920, height: 1080 });
   const [rate, setRate] = useState<FrameRate>({ num: 50, den: 1 });
   const [layout, setLayout] = useState('2x2');
+  const [model, setModel] = useState('');
   const [gap, setGap] = useState(4);
   const [margin, setMargin] = useState(0);
   const inputs = useInputs();
@@ -44,13 +46,15 @@ function NewProject({ from, folder, onClose }: { from?: ProjectSummary; folder?:
               frameRate: rate,
             },
       );
-      // Its tiles placed on the layout chosen, with the inputs in order, published at once.
+      // The model chosen, or its tiles placed on the layout chosen, with the inputs in order, published at once.
       const preset = PRESETS.find((x) => x.id === layout);
-      if (!from && preset) {
+      const m = MODELS.find((x) => x.id === model);
+      if (!from && (m || preset)) {
         const full = await api<Project>('GET', `/api/projects/${encodeURIComponent(p.id)}`);
         const page = full.templates[0];
         if (page) {
-          applyLayout(page, preset, size, gap, margin, inputs);
+          if (m) page.layers = buildModel(m, size, inputs);
+          else if (preset) applyLayout(page, preset, size, gap, margin, inputs);
           await api('PUT', `/api/projects/${encodeURIComponent(p.id)}/templates/${encodeURIComponent(page.id)}?publish=true`, page);
         }
       }
@@ -91,6 +95,23 @@ function NewProject({ from, folder, onClose }: { from?: ProjectSummary; folder?:
           </div>
         )}
         {!from && (
+          <div className="set-field">
+            <span className="set-label">{t('Model')}</span>
+            <div className="mv-models">
+              <button type="button" className={`mv-model ${model === '' ? 'on' : ''}`} onClick={() => setModel('')}>
+                <span className="mv-model-none">{t('None')}</span>
+                <span className="mv-model-name">{t('A layout only')}</span>
+              </button>
+              {MODELS.map((m) => (
+                <button type="button" key={m.id} className={`mv-model ${model === m.id ? 'on' : ''}`} title={t(m.hint)} onClick={() => setModel(m.id)}>
+                  <ModelIcon m={m} />
+                  <span className="mv-model-name">{t(m.name)}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+        {!from && !model && (
           <div className="set-field">
             <span className="set-label">{t('Layout')}</span>
             <LayoutPicker value={layout} onChange={setLayout} gap={gap} margin={margin} onGap={setGap} onMargin={setMargin} none />

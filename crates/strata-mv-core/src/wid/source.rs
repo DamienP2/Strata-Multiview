@@ -489,8 +489,9 @@ fn bounce(travel: f64, range: f64) -> f64 {
 
 /// The card in the picture's area `video` at `now_ms` (the server's clock):
 /// it crosses the picture at a tenth of its width a second, a little faster
-/// down, and bounces off the edges. None when the picture is too small.
-pub fn no_signal_card(video: Area, now_ms: i64) -> Option<Card> {
+/// down, and bounces off the edges; `seed` (the tile's place) starts each
+/// tile's card elsewhere. None when the picture is too small.
+pub fn no_signal_card(video: Area, now_ms: i64, seed: f32) -> Option<Card> {
     let [vx, vy, vw, vh] = video;
     let mut lh = (vh * 0.1).clamp(8.0, 110.0);
     let mut lw = lh * LOGO_RATIO;
@@ -506,8 +507,9 @@ pub fn no_signal_card(video: Area, now_ms: i64) -> Option<Card> {
         return None;
     }
     let t = now_ms as f64 / 1000.0;
-    let x = vx + bounce(t * f64::from(vw) * 0.1, f64::from(vw - pw)) as f32;
-    let y = vy + bounce(t * f64::from(vh) * 0.13, f64::from(vh - ph)) as f32;
+    let s = f64::from(seed);
+    let x = vx + bounce(t * f64::from(vw) * 0.1 + s * 3.0, f64::from(vw - pw)) as f32;
+    let y = vy + bounce(t * f64::from(vh) * 0.13 + s * 5.0, f64::from(vh - ph)) as f32;
     Some(Card {
         plate: [x, y, pw, ph],
         logo: [x + pad, y + pad, lw, lh],
@@ -584,7 +586,7 @@ mod tests {
         let video = [4.0, 4.0, 632.0, 352.0];
         let mut seen = std::collections::HashSet::new();
         for i in 0..400 {
-            let c = no_signal_card(video, 1_700_000_000_000 + i * 97).unwrap();
+            let c = no_signal_card(video, 1_700_000_000_000 + i * 97, 0.0).unwrap();
             let [x, y, w, h] = c.plate;
             assert!(x >= 4.0 - 1e-3 && y >= 4.0 - 1e-3);
             assert!(x + w <= 636.0 + 1e-3 && y + h <= 356.0 + 1e-3);
@@ -592,7 +594,7 @@ mod tests {
         }
         // It moves.
         assert!(seen.len() > 100);
-        assert!(no_signal_card([0.0, 0.0, 30.0, 20.0], 0).is_none());
+        assert!(no_signal_card([0.0, 0.0, 30.0, 20.0], 0, 0.0).is_none());
     }
 
     #[test]

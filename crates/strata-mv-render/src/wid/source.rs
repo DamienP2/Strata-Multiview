@@ -105,7 +105,9 @@ fn bars(d: &mut Draw, c: &Config, v: Area, m: Option<&Mask>) {
         let a = [v[0] + x * v[2], v[1] + y * v[3], w * v[2], h * v[3]];
         fill_area(d, a, 0.0, Draw::hex(col), m);
     }
-    let Some(card) = no_signal_card(v, d.time.now_ms) else {
+    // Each tile's card elsewhere: by the tile's place.
+    let seed = d.num(strata_mv_core::Prop::X) + d.num(strata_mv_core::Prop::Y);
+    let Some(card) = no_signal_card(v, d.time.now_ms, seed) else {
         return;
     };
     fill_area(d, card.plate, card.radius, Draw::hex("#000000c7"), m);

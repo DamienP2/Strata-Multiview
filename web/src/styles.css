@@ -21248,3 +21248,44 @@ textarea.tx-grow {
   background: var(--panel-3);
   color: var(--text);
 }
+
+/* New multiview: the ready-made models (designer/Models.tsx). */
+.modal.new-mv {
+  width: min(860px, calc(100vw - 32px));
+}
+.mv-models {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 8px;
+}
+.mv-model {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 6px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel-2);
+  color: var(--text-2);
+  font-size: var(--fs-11);
+  line-height: 1.25;
+  text-align: center;
+}
+.mv-model:hover {
+  border-color: var(--text-3);
+  color: var(--text);
+}
+.mv-model.on {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 14%, var(--panel-2));
+  color: var(--text);
+}
+.mv-model-none {
+  width: 96px;
+  height: 54px;
+  display: grid;
+  place-items: center;
+  border: 1px dashed var(--line-2);
+  border-radius: 2px;
+}

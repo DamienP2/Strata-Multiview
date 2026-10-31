@@ -703,15 +703,29 @@ pub fn status(c: &StatusConfig, w: f32, h: f32, s: &SystemView, lang: &str) -> V
         return out;
     }
     let rh = (h - 2.0 * pad) / lines.len() as f32;
-    let fs = (rh * 0.4).clamp(7.0, 30.0).round();
+    // Narrow: the value under its name.
+    let stack = w < rh * 5.0;
+    let fs = if stack {
+        (rh * 0.3).min(w * 0.06)
+    } else {
+        rh * 0.4
+    }
+    .clamp(7.0, 30.0)
+    .round();
+    let lh = if stack { rh * 0.5 } else { rh };
     for (i, (name, val, col)) in lines.iter().enumerate() {
         let y = pad + i as f32 * rh;
         let dot = fs * 0.7;
-        out.push(rect([pad, y + (rh - dot) / 2.0, dot, dot], dot / 2.0, col));
+        out.push(rect([pad, y + (lh - dot) / 2.0, dot, dot], dot / 2.0, col));
         let x = pad + dot + fs * 0.6;
         let tw = w - x - pad;
+        let (name_a, val_a) = if stack {
+            ([x, y, tw, lh], [x, y + lh, tw, lh])
+        } else {
+            ([x, y, tw * 0.5, rh], [x + tw * 0.5, y, tw * 0.5, rh])
+        };
         out.push(text(
-            [x, y, tw * 0.5, rh],
+            name_a,
             name.clone(),
             fs,
             600,
@@ -720,13 +734,17 @@ pub fn status(c: &StatusConfig, w: f32, h: f32, s: &SystemView, lang: &str) -> V
             TextAlign::Left,
         ));
         out.push(text(
-            [x + tw * 0.5, y, tw * 0.5, rh],
+            val_a,
             val.clone(),
             fs,
             700,
             false,
             col,
-            TextAlign::Right,
+            if stack {
+                TextAlign::Left
+            } else {
+                TextAlign::Right
+            },
         ));
     }
     out
@@ -768,7 +786,17 @@ pub fn alarm_log(
     let fr = lang.to_lowercase().starts_with("fr");
     let rows = c.rows.clamp(1, 40) as usize;
     let rh = (h - 2.0 * pad) / rows as f32;
-    let fs = (rh * 0.42).clamp(7.0, 28.0).round();
+    // Narrow: the fault under its time and input. As wide as the line
+    // allows too.
+    let stack = w < rh * 11.0;
+    let fs = if stack {
+        (rh * 0.3).min(w * 0.06)
+    } else {
+        (rh * 0.42).min(w * 0.026)
+    }
+    .clamp(7.0, 28.0)
+    .round();
+    let lh = if stack { rh * 0.5 } else { rh };
     let lines: Vec<_> = s
         .journal
         .iter()
@@ -794,7 +822,7 @@ pub fn alarm_log(
         let over = e.ended.is_some();
         let fg = if over { DIM } else { WHITE };
         out.push(text(
-            [pad, y, tw, rh],
+            [pad, y, tw, lh],
             clock(e.at, tz),
             fs,
             500,
@@ -809,7 +837,7 @@ pub fn alarm_log(
             }
             (false, Severity::Warning) => (WARN_BG, WARN_FG, if fr { "ALERTE" } else { "WARNING" }),
         };
-        let chip = [pad + tw + fs * 0.4, y + rh * 0.18, cw, rh * 0.64];
+        let chip = [pad + tw + fs * 0.4, y + lh * 0.18, cw, lh * 0.64];
         out.push(rect(chip, fs * 0.25, bg));
         out.push(text(
             chip,
@@ -822,8 +850,13 @@ pub fn alarm_log(
         ));
         let x = chip[0] + cw + fs * 0.6;
         let rest = (w - x - pad).max(1.0);
+        let (input_a, fault_a) = if stack {
+            ([x, y, rest, lh], [pad, y + lh, w - 2.0 * pad, lh])
+        } else {
+            ([x, y, rest * 0.4, rh], [x + rest * 0.4, y, rest * 0.6, rh])
+        };
         out.push(text(
-            [x, y, rest * 0.4, rh],
+            input_a,
             e.input.clone(),
             fs,
             700,
@@ -832,7 +865,7 @@ pub fn alarm_log(
             TextAlign::Left,
         ));
         out.push(text(
-            [x + rest * 0.4, y, rest * 0.6, rh],
+            fault_a,
             e.kind.text(lang),
             fs,
             600,

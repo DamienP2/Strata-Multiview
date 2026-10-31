@@ -4,7 +4,7 @@
 // Same picture as crates/strata-mv-render/src/wid/source.rs; settings and geometry mirror
 // crates/strata-mv-core/src/wid/source.rs (keep in sync).
 import { MonitorPlay } from 'lucide-react';
-import { interpolateText } from '../engine/evaluate';
+import { interpolateText, num } from '../engine/evaluate';
 import { alarmText, useInputs, useLiveFrame, useSignal, type Alarm, type InputInfo, type SignalView, type Tally } from '../engine/liveInputs';
 import { CRIT, loudColor, num1, stationTimecode, TARGET, WARN } from './broadcast';
 import type { Data } from '../engine/types';
@@ -267,7 +267,7 @@ const bounce = (travel: number, range: number) => {
 };
 
 /** The card bouncing over the bars at `nowMs` (mirrors no_signal_card). */
-export function noSignalCard(v: Area, nowMs: number): { plate: Area; logo: Area; text: Area; radius: number } | null {
+export function noSignalCard(v: Area, nowMs: number, seed: number): { plate: Area; logo: Area; text: Area; radius: number } | null {
   const [vx, vy, vw, vh] = v;
   let lh = clamp(vh * 0.1, 8, 110);
   let lw = lh * LOGO_RATIO;
@@ -281,14 +281,14 @@ export function noSignalCard(v: Area, nowMs: number): { plate: Area; logo: Area;
   const [pw, ph] = [lw + 2 * pad, pad + lh + gap + th + pad];
   if (lh < 6 || pw > vw || ph > vh) return null;
   const t = nowMs / 1000;
-  const x = vx + bounce(t * vw * 0.1, vw - pw);
-  const y = vy + bounce(t * vh * 0.13, vh - ph);
+  const x = vx + bounce(t * vw * 0.1 + seed * 3, vw - pw);
+  const y = vy + bounce(t * vh * 0.13 + seed * 5, vh - ph);
   return { plate: [x, y, pw, ph], logo: [x + pad, y + pad, lw, lh], text: [x + pad, y + pad + lh + gap, lw, th], radius: pad * 0.6 };
 }
 
 const box = (a: Area, extra?: React.CSSProperties): React.CSSProperties => ({ position: 'absolute', left: a[0], top: a[1], width: a[2], height: a[3], ...extra });
 
-function SourceView({ layer, w, h, data, designer, lang, nowMs, tz, fps }: { layer: Config & { name: string }; w: number; h: number; data: Data; designer?: boolean; lang?: string; nowMs: number; tz: string; fps: number }) {
+function SourceView({ layer, w, h, data, designer, lang, nowMs, tz, fps, seed }: { layer: Config & { name: string }; w: number; h: number; data: Data; designer?: boolean; lang?: string; nowMs: number; tz: string; fps: number; seed: number }) {
   const c = cfg(layer);
   const id = c.input.trim();
   const live = useLiveFrame(id, designer ? 'preview' : 'stream');
@@ -314,7 +314,7 @@ function SourceView({ layer, w, h, data, designer, lang, nowMs, tz, fps }: { lay
     );
   } else if (c.noSignalLook === 'bars' && v[2] > 0 && v[3] > 0) {
     const s = c.noSignal.trim() || tl(lang, 'NO SIGNAL');
-    const card = noSignalCard(v, nowMs);
+    const card = noSignalCard(v, nowMs, seed);
     pic = (
       <>
         {BARS.map(([x, y, bw, bh, col], i) => (
@@ -427,7 +427,7 @@ export default defineWidget({
   ownsLook: true,
   // Its picture, tally and meters change by themselves.
   live: () => true,
-  Render: ({ layer, w, h, data, designer, lang, time, fps }) => <SourceView layer={layer as Config & { name: string }} w={w} h={h} data={data} designer={designer} lang={lang} nowMs={time.nowMs} tz={time.defaultTz} fps={time.fps || fps} />,
+  Render: ({ layer, w, h, r, data, designer, lang, time, fps }) => <SourceView layer={layer as Config & { name: string }} w={w} h={h} data={data} designer={designer} lang={lang} nowMs={time.nowMs} tz={time.defaultTz} fps={time.fps || fps} seed={num(r.x) + num(r.y)} />,
   Inspector: ({ layer, set }) => {
     const c = cfg(layer as Config);
     return (
