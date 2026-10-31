@@ -529,8 +529,13 @@ impl ServerConfig {
                     if p.is_empty() {
                         continue;
                     }
-                    if !p.chars().all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_') {
-                        return Err(format!("web page address `{p}`: letters, digits, - or _ only"));
+                    if !p
+                        .chars()
+                        .all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_')
+                    {
+                        return Err(format!(
+                            "web page address `{p}`: letters, digits, - or _ only"
+                        ));
                     }
                     let taken_by_channel = self.channels.iter().any(|c| c.id == p && c.id != ch.id);
                     if taken_by_channel || !paths.insert(p.to_lowercase()) {

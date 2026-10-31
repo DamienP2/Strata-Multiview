@@ -310,6 +310,9 @@ struct Live {
     /// Thrown away: too many waiting.
     dropped: AtomicU64,
     last_at: Mutex<Option<std::time::Instant>>,
+    /// Still there until then although no picture came: an NDI sender
+    /// connected, which sends only when its picture changes.
+    held_until: Mutex<Option<Instant>>,
     message: Mutex<String>,
     stop: AtomicBool,
     /// The ffmpeg decoding it (killed to stop a blocked read).
@@ -338,6 +341,24 @@ struct Live {
 impl Live {
     fn say(&self, m: impl Into<String>) {
         *self.message.lock().unwrap_or_else(|p| p.into_inner()) = m.into();
+    }
+    /// A picture came lately, or the source is known to be there still.
+    fn fresh(&self) -> bool {
+        let now = Instant::now();
+        self.last_at
+            .lock()
+            .unwrap_or_else(|p| p.into_inner())
+            .is_some_and(|t| now.saturating_duration_since(t) < Duration::from_secs(2))
+            || self
+                .held_until
+                .lock()
+                .unwrap_or_else(|p| p.into_inner())
+                .is_some_and(|t| t > now)
+    }
+    /// Still there for a moment (see `held_until`), or not.
+    fn hold(&self, on: bool) {
+        *self.held_until.lock().unwrap_or_else(|p| p.into_inner()) =
+            on.then(|| Instant::now() + Duration::from_secs(2));
     }
     fn period(&self) -> Duration {
         let fps = (*self.rate.lock().unwrap_or_else(|p| p.into_inner()))
@@ -498,6 +519,7 @@ impl Inputs {
                 received: AtomicU64::new(0),
                 dropped: AtomicU64::new(0),
                 last_at: Mutex::new(None),
+                held_until: Mutex::new(None),
                 message: Mutex::new("Starting…".into()),
                 stop: AtomicBool::new(false),
                 child: Mutex::new(None),
@@ -532,11 +554,7 @@ impl Inputs {
         map.values()
             .map(|l| {
                 let pic = l.picture.read().unwrap_or_else(|p| p.into_inner()).clone();
-                let fresh = l
-                    .last_at
-                    .lock()
-                    .unwrap_or_else(|p| p.into_inner())
-                    .is_some_and(|t| t.elapsed() < Duration::from_secs(2));
+                let fresh = l.fresh();
                 InputStatus {
                     id: l.config.id.clone(),
                     live: fresh,
@@ -670,11 +688,7 @@ impl Inputs {
             InputKind::Srt if c.listen && c.port > 0 => format!("srt://0.0.0.0:{}", c.port),
             _ => url.to_string(),
         };
-        r.live = l
-            .last_at
-            .lock()
-            .unwrap_or_else(|p| p.into_inner())
-            .is_some_and(|t| t.elapsed() < Duration::from_secs(2));
+        r.live = l.fresh();
         r.status = l.message.lock().unwrap_or_else(|p| p.into_inner()).clone();
         // What cannot be known by this way in.
         match c.kind {
@@ -723,12 +737,7 @@ impl strata_mv_render::LiveInputs for Inputs {
             .clone();
         // A source that stopped sending: no picture (its tile shows the
         // bars), not its last one frozen.
-        let fresh = live
-            .last_at
-            .lock()
-            .unwrap_or_else(|p| p.into_inner())
-            .is_some_and(|t| t.elapsed() < Duration::from_secs(2));
-        if !fresh {
+        if !live.fresh() {
             return None;
         }
         live.current()
@@ -741,11 +750,7 @@ impl strata_mv_render::LiveInputs for Inputs {
             .unwrap_or_else(|p| p.into_inner())
             .get(id)?
             .clone();
-        let fresh = l
-            .last_at
-            .lock()
-            .unwrap_or_else(|p| p.into_inner())
-            .is_some_and(|t| t.elapsed() < Duration::from_secs(2));
+        let fresh = l.fresh();
         let height = l
             .picture
             .read()
@@ -789,7 +794,7 @@ impl Inputs {
             .values()
             .map(|l| {
                 let last = *l.last_at.lock().unwrap_or_else(|p| p.into_inner());
-                let fresh = last.is_some_and(|t| t.elapsed() < Duration::from_secs(2));
+                let fresh = l.fresh();
                 (l.config.id.clone(), l.config.name.clone(), fresh, last)
             })
             .collect()
@@ -1198,7 +1203,9 @@ impl R128 {
             let m = EbuR128::new(
                 ch as u32,
                 rate,
-                Mode::M | Mode::S | Mode::I | Mode::LRA | Mode::TRUE_PEAK,
+                // Histogram: the integrated loudness and the range cost the same
+                // after hours as after a second.
+                Mode::M | Mode::S | Mode::I | Mode::LRA | Mode::TRUE_PEAK | Mode::HISTOGRAM,
             )
             .ok()?;
             self.meter = Some((m, ch, rate));
@@ -1610,6 +1617,9 @@ fn run_ndi(l: &Live) {
                     break;
                 }
             }
+            // A sender sends a picture when it changes only (a screen, a
+            // still graphic): connected after a first picture, it is there.
+            l.hold(shown.is_some() && rx.connected() == Some(true));
             // What the source sends: for the analysis of the input.
             if about.is_some() || sound_of.is_some() || rx.metadata.is_some() {
                 let mut facts = l.facts();
@@ -1688,6 +1698,7 @@ fn run_ndi(l: &Live) {
             }
         }
         drop(rx);
+        l.hold(false);
         if !l.pause(Duration::from_secs(1)) {
             return;
         }
@@ -1966,6 +1977,7 @@ mod tests {
             received: AtomicU64::new(0),
             dropped: AtomicU64::new(0),
             last_at: Mutex::new(None),
+            held_until: Mutex::new(None),
             message: Mutex::new(String::new()),
             stop: AtomicBool::new(false),
             child: Mutex::new(None),

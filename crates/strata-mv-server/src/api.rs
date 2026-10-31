@@ -1802,9 +1802,11 @@ async fn output_page(
     require(me.is_some() || s.config.public_outputs)?;
     let p = path.trim();
     let by_page = s.config.channels.iter().find(|c| {
-        c.pictures()
-            .iter()
-            .any(|(_, _, _, o)| o.html5.iter().any(|h| h.path.trim().eq_ignore_ascii_case(p)))
+        c.pictures().iter().any(|(_, _, _, o)| {
+            o.html5
+                .iter()
+                .any(|h| h.path.trim().eq_ignore_ascii_case(p))
+        })
     });
     let ch = by_page
         .or_else(|| s.config.channels.iter().find(|c| c.id == p))

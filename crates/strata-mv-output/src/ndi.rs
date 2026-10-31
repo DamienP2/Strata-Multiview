@@ -66,7 +66,6 @@ impl NdiQuality {
     }
 }
 
-
 #[repr(C)]
 struct SendCreate {
     p_ndi_name: *const c_char,
@@ -524,6 +523,8 @@ struct RecvLib {
     recv_destroy: unsafe extern "C" fn(Instance),
     /// Older runtimes may not have it: metadata frames are then not asked for.
     recv_free_metadata: Option<unsafe extern "C" fn(Instance, *const MetadataFrame)>,
+    /// How many senders the receiver is connected to (0: none).
+    recv_connections: Option<unsafe extern "C" fn(Instance) -> i32>,
 }
 
 unsafe impl Send for RecvLib {}
@@ -545,6 +546,7 @@ fn recv_lib() -> Result<&'static RecvLib, String> {
             recv_free_audio: *l.get(b"NDIlib_recv_free_audio_v2\0").map_err(why)?,
             recv_destroy: *l.get(b"NDIlib_recv_destroy\0").map_err(why)?,
             recv_free_metadata: l.get(b"NDIlib_recv_free_metadata\0").ok().map(|f| *f),
+            recv_connections: l.get(b"NDIlib_recv_get_no_connections\0").ok().map(|f| *f),
         })
     })
     .as_ref()
@@ -803,6 +805,17 @@ impl NdiReceiver {
             (self.lib.recv_free_video)(self.instance, &v);
             Ok(ok)
         }
+    }
+}
+
+impl NdiReceiver {
+    /// Connected to the sender (None: this runtime cannot tell). A sender
+    /// may send a picture only when it changes: connected, it is still there.
+    pub fn connected(&self) -> Option<bool> {
+        // SAFETY: a receiver of this runtime, alive.
+        self.lib
+            .recv_connections
+            .map(|f| unsafe { f(self.instance) } > 0)
     }
 }
 
