@@ -11,6 +11,7 @@ import { ClipboardMenu, type ClipMenuAt } from './ClipboardMenu';
 import { widgetOf } from '../widgets';
 import { snapTargets, StageGuides, stageViewStyle, useGuidesView, useProjectGuides } from './Guides';
 import { t } from '../i18n';
+import { backdropLayer } from '../engine/backdrop';
 import { useLiveFrame } from '../engine/liveInputs';
 
 interface Box {
@@ -88,6 +89,8 @@ export function Stage({ project: _project, size, background, bgInput }: { projec
   const project = { ..._project, width: size.width, height: size.height };
   const { template, frame, previewData, selected } = useDesigner(useShallow((s) => ({ template: s.template, frame: s.frame, previewData: s.previewData, selected: s.selected })));
   const data = useMemo(() => ({ ...previewData, ...settingDefaults(template) }), [previewData, template]);
+  // The multiview's background, alone (drawn under the layers, never picked).
+  const backdrop = useMemo(() => (template ? { ...template, layers: [backdropLayer(template.background, _project.width, _project.height)] } : null), [template?.background, _project.width, _project.height]); // eslint-disable-line react-hooks/exhaustive-deps
   const wrapRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<HTMLDivElement>(null);
   // Fitted to the canvas area (Auto), or as set by hand (StageZoom).
@@ -525,6 +528,8 @@ export function Stage({ project: _project, size, background, bgInput }: { projec
               {/* Widgets run on the playhead: scrub to see a ticker or a counter move. */}
               <LiveTime ageSecs={frame / fps} since={holdSince} ticking={ticking} layerAge={layerAge} clocked={clocked} widgetState={stateOf} fps={fps} lang={_project.language || 'fr'}>
                 <div style={{ position: 'absolute', inset: 0, filter: shown.filter }}>
+                  {/* The multiview's background: drawn like on air, not picked. */}
+                  {backdrop && <Scene template={backdrop} frame={0} data={data} />}
                   <Scene template={template} frame={frame} data={data} interactive />
                 </div>
               </LiveTime>

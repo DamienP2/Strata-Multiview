@@ -3,9 +3,11 @@ import { useShallow } from 'zustand/react/shallow';
 import { Dropdown } from '../ui/Dropdown';
 import { FontPick } from '../ui/FontPick';
 import { AssetPicker } from './AssetPicker';
-import { Database, RotateCcw, AlignCenter, AlignLeft, AlignRight, ChevronDown, Link as LinkIcon, LayoutTemplate, MonitorPlay, Settings2, Unlink } from 'lucide-react';
+import { Database, RotateCcw, AlignCenter, AlignLeft, AlignRight, ChevronDown, Link as LinkIcon, LayoutTemplate, Settings2, Unlink } from 'lucide-react';
 import { createContext, Fragment, useContext, useEffect, useMemo, useRef, useState } from 'react';
-import { col, holdFrame, interpolateText, num, propValue, resolveLayer, toHex } from '../engine/evaluate';
+import { col, holdFrame, interpolateText, num, parseHex, propValue, resolveLayer, toHex } from '../engine/evaluate';
+import { BACKDROP_COLOR, type Backdrop } from '../engine/backdrop';
+import type { FillStyle } from '../widgets/shape';
 import { MAIN_FORMAT, TEXT_LIKE, type TextOverflow, type FontStyle, type Layer, type Prop, type Template, type Value } from '../engine/types';
 import { useApp } from '../store';
 import { ColorField, NumberField, Segmented, TextInput } from '../ui/fields';
@@ -19,7 +21,7 @@ import { fitLayer, layerText } from '../engine/Scene';
 import { MultiviewSettings } from './MultiviewSettings';
 import { layerIcon } from './LayersPanel';
 import { widgetOf } from '../widgets';
-import { Bound, CentreModeContext, FirstSection, Row as KitRow, setPath, Warnings, wiredKeys } from '../widgets/kit';
+import { Bound, CentreModeContext, FirstSection, Row as KitRow, setPath, SliderNum, Warnings, wiredKeys } from '../widgets/kit';
 import { t, tn } from '../i18n';
 import { useDisplayPref } from '../displayPrefs';
 
@@ -710,14 +712,11 @@ function TextFitControls({ layer, edit }: { layer: Layer & { type: 'text' }; edi
   );
 }
 
-/** Nothing selected: the multiview itself, its picture and what is on it. */
+/** Nothing selected: the multiview itself and its background. */
 function MultiviewInspector({ template }: { template: Template }) {
   const project = useApp((s) => s.project);
-  const select = useDesigner((s) => s.select);
   const [settings, setSettings] = useState(false);
   if (!project) return null;
-  const tiles = template.layers.filter((l) => l.type === 'source');
-  const rate = +(project.frameRate.num / project.frameRate.den).toFixed(2);
   return (
     <>
       <div className="pp-head">
@@ -729,25 +728,102 @@ function MultiviewInspector({ template }: { template: Template }) {
           <Settings2 size={14} />
         </button>
       </div>
-      <Section title={t('Picture')}>
-        <p className="mv-insp-line">
-          {project.width}×{project.height} · {rate} {t('fps')}
-        </p>
-        {project.description && <p className="muted small">{project.description}</p>}
-      </Section>
-      <Section title={tn(tiles.length, '{n} tile', '{n} tiles')}>
-        <div className="mv-insp-tiles">
-          {tiles.map((l) => (
-            <button key={l.id} className="mv-insp-tile" onClick={() => select([l.id])}>
-              <MonitorPlay size={13} />
-              <span>{l.name}</span>
-            </button>
-          ))}
-          {!tiles.length && <p className="muted small">{t('No tile yet: Layout places them on a grid, Source adds one.')}</p>}
-        </div>
-      </Section>
+      <BackdropSection template={template} />
       {settings && <MultiviewSettings project={project} readOnly={false} onClose={() => setSettings(false)} />}
     </>
+  );
+}
+
+type BackdropKind = 'solid' | 'gradient' | 'image';
+const IMAGE_FITS: { value: NonNullable<FillStyle['fit']>; label: string }[] = [
+  { value: 'cover', label: 'Cover the picture' },
+  { value: 'contain', label: 'Whole picture' },
+  { value: 'stretch', label: 'Stretch' },
+  { value: 'tile', label: 'Tile' },
+];
+
+/** The multiview's background: a colour (a very dark grey unless set), a gradient or a picture, under everything. */
+function BackdropSection({ template }: { template: Template }) {
+  const update = useDesigner((s) => s.update);
+  const b = template.background ?? {};
+  const f = b.fillStyle ?? {};
+  const kind: BackdropKind = f.kind === 'linear' || f.kind === 'radial' ? 'gradient' : f.kind === 'image' ? 'image' : 'solid';
+  const color = parseHex(b.color || BACKDROP_COLOR) ?? [0.08, 0.08, 0.086, 1];
+  const color2 = parseHex(f.color2 || '#000000') ?? [0, 0, 0, 1];
+  const set = (fn: (b: Backdrop) => void, key = 'backdrop') =>
+    update((tp) => {
+      const next: Backdrop = structuredClone(tp.background ?? {});
+      next.fillStyle ??= {};
+      fn(next);
+      tp.background = next;
+    }, key);
+  const setKind = (k: BackdropKind) =>
+    set((x) => {
+      const fs = x.fillStyle!;
+      if (k === 'solid') fs.kind = 'solid';
+      else if (k === 'image') fs.kind = 'image';
+      else {
+        fs.kind = fs.kind === 'radial' ? 'radial' : 'linear';
+        fs.color2 ??= '#000000';
+        fs.angle ??= 180;
+      }
+    });
+  return (
+    <Section
+      title={t('Background')}
+      actions={
+        template.background ? (
+          <button className="icon-btn ghost" title={t('Back to the default background (very dark grey)')} onClick={() => update((tp) => void delete tp.background)}>
+            <RotateCcw size={13} />
+          </button>
+        ) : undefined
+      }
+    >
+      <Segmented<BackdropKind>
+        value={kind}
+        onChange={setKind}
+        options={[
+          { value: 'solid', label: t('Colour') },
+          { value: 'gradient', label: t('Gradient') },
+          { value: 'image', label: t('Image') },
+        ]}
+      />
+      <Row label={kind === 'gradient' ? t('Colour 1') : kind === 'image' ? t('Under the picture') : t('Colour')}>
+        <ColorField value={color} onChange={(c) => set((x) => void (x.color = toHex(c)), 'backdrop-color')} />
+      </Row>
+      {kind === 'gradient' && (
+        <>
+          <Row label={t('Colour 2')}>
+            <ColorField value={color2} onChange={(c) => set((x) => void (x.fillStyle!.color2 = toHex(c)), 'backdrop-color2')} />
+          </Row>
+          <Row label={t('Shape')}>
+            <Segmented<'linear' | 'radial'>
+              value={f.kind === 'radial' ? 'radial' : 'linear'}
+              onChange={(v) => set((x) => void (x.fillStyle!.kind = v))}
+              options={[
+                { value: 'linear', label: t('Linear') },
+                { value: 'radial', label: t('Radial') },
+              ]}
+            />
+          </Row>
+          {f.kind !== 'radial' && (
+            <Row label={t('Angle')}>
+              <SliderNum value={f.angle ?? 180} min={0} max={360} unit="°" onChange={(v) => set((x) => void (x.fillStyle!.angle = v), 'backdrop-angle')} />
+            </Row>
+          )}
+        </>
+      )}
+      {kind === 'image' && (
+        <>
+          <Row label={t('Picture')}>
+            <AssetPicker value={f.image ?? ''} onChange={(v) => set((x) => void (x.fillStyle!.image = v))} />
+          </Row>
+          <Row label={t('Fit')}>
+            <Segmented<NonNullable<FillStyle['fit']>> value={f.fit ?? 'cover'} onChange={(v) => set((x) => void (x.fillStyle!.fit = v))} options={IMAGE_FITS.map((o) => ({ value: o.value, label: t(o.label) }))} />
+          </Row>
+        </>
+      )}
+    </Section>
   );
 }
 

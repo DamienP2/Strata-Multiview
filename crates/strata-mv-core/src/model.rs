@@ -1018,6 +1018,56 @@ pub struct Template {
     /// templates are converted by [`Template::normalize_markers`].
     #[serde(default)]
     pub marker_model: u8,
+    /// The multiview's background, under everything (none set: the
+    /// default very dark grey).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub background: Option<Backdrop>,
+}
+
+/// The id of the layer drawing a multiview's background (made when drawn,
+/// never saved).
+pub const BACKDROP_ID: &str = "__backdrop";
+
+/// A multiview's background: a colour, a gradient or a picture.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(default, rename_all = "camelCase")]
+pub struct Backdrop {
+    /// `#rrggbb`: the colour, the first of a gradient.
+    pub color: String,
+    /// Solid, linear, radial or image; the gradient's second colour and
+    /// angle, the picture and how it fits.
+    pub fill_style: crate::wid::shape::FillStyle,
+}
+
+impl Default for Backdrop {
+    fn default() -> Self {
+        Self {
+            color: "#141416".into(),
+            fill_style: crate::wid::shape::FillStyle::default(),
+        }
+    }
+}
+
+impl Backdrop {
+    /// The layer drawing it over `width` × `height` (a locked rectangle).
+    pub fn layer(&self, width: u32, height: u32) -> Option<Layer> {
+        let hex = self.color.trim().trim_start_matches('#');
+        let c = |i: usize| {
+            u8::from_str_radix(hex.get(i..i + 2).unwrap_or("14"), 16).unwrap_or(0x14) as f64 / 255.0
+        };
+        serde_json::from_value(serde_json::json!({
+            "id": BACKDROP_ID,
+            "name": "Background",
+            "type": "rect",
+            "locked": true,
+            "fillStyle": self.fill_style,
+            "props": {
+                "x": 0, "y": 0, "width": width, "height": height,
+                "fill": [c(0), c(2), c(4), 1.0],
+            },
+        }))
+        .ok()
+    }
 }
 
 /// The widget a scrolling Text of older projects becomes: horizontal, the
@@ -1035,6 +1085,22 @@ fn legacy_scroll(kind: &LayerKind) -> Option<LayerKind> {
 }
 
 impl Template {
+    /// The template with its background as its first layer, `width` ×
+    /// `height` (the format it is drawn in).
+    pub fn with_backdrop(&self, width: u32, height: u32) -> Template {
+        let mut t = self.clone();
+        if let Some(l) = t
+            .background
+            .clone()
+            .unwrap_or_default()
+            .layer(width, height)
+        {
+            t.layers.retain(|x| x.id != BACKDROP_ID);
+            t.layers.insert(0, l);
+        }
+        t
+    }
+
     /// An empty template: 1 s long (at `fps`), on air at half of it.
     pub fn blank(name: &str, zone: &str, fps: f64) -> Self {
         Self::blank_secs(name, zone, fps, 1.0)
@@ -1059,6 +1125,7 @@ impl Template {
             zone: zone.into(),
             revision: 0,
             marker_model: MARKER_MODEL,
+            background: None,
         }
     }
 
@@ -1650,6 +1717,30 @@ pub fn new_id() -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn the_backdrop_is_a_locked_rectangle_under_everything() {
+        let t: Template = serde_json::from_value(serde_json::json!({
+            "id": "t", "name": "T", "duration": 1, "layers": [],
+            "background": { "color": "#336699", "fillStyle": { "kind": "linear", "color2": "#000000", "angle": 180 } }
+        }))
+        .unwrap();
+        let b = t.with_backdrop(1920, 1080);
+        let l = &b.layers[0];
+        assert_eq!(l.id, BACKDROP_ID);
+        assert!(l.locked);
+        let LayerKind::Rect { x } = &l.kind else {
+            panic!("not a rectangle")
+        };
+        assert_eq!(x.fill_style.kind, crate::wid::shape::FillKind::Linear);
+        assert_eq!(x.fill_style.angle, 180.0);
+        // None set: the default dark grey; drawn twice, still one.
+        let plain: Template =
+            serde_json::from_value(serde_json::json!({"id": "t", "name": "T", "duration": 1}))
+                .unwrap();
+        let once = plain.with_backdrop(100, 100).with_backdrop(100, 100);
+        assert_eq!(once.layers.len(), 1);
+    }
 
     #[test]
     fn legacy_markers_become_one_on_air_marker() {

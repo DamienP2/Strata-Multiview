@@ -3,6 +3,7 @@ import { movesAt, movingLayers, oldData, shownData, ValueMotionContext } from '.
 import { formatFor, inFormat } from '../engine/formats';
 import { LiveTime, useTicker } from '../engine/LiveTime';
 import { Scene } from '../engine/Scene';
+import { withBackdrop } from '../engine/backdrop';
 import { layerAgeFrames } from '../engine/widgets';
 import { areaClip, zoneArea } from '../engine/zones';
 import type { Layer, PlayoutItem, Project, Template } from '../engine/types';
@@ -17,6 +18,8 @@ export const Program = memo(function Program({ project, live, width, height, max
   const format = formatFor(project, width, height);
   // Templates laid out in that format, computed once per project change.
   const templates = useMemo(() => new Map<string, Template>(project.templates.map((t) => [t.id, inFormat(t, format.id)])), [project, format.id]);
+  // The lowest one on air: the multiview's background under it.
+  const lowest = useMemo(() => new Map<string, Template>([...templates].map(([id, t]) => [id, withBackdrop(t, format.width, format.height)])), [templates, format.width, format.height]);
   const items = Object.entries(live?.state.layers ?? {}).sort(([a], [b]) => Number(a) - Number(b));
   // Redrawn on each frame while a timeline or a fade moves; the widgets that move by themselves (a ticker…) redraw alone.
   const now = useTicker(items.some(([, item]) => moving(item)), maxFps);
@@ -52,8 +55,8 @@ export const Program = memo(function Program({ project, live, width, height, max
         transformOrigin: '0 0',
       }}
     >
-      {items.map(([layer, item]) => {
-        const t = templates.get(item.templateId);
+      {items.map(([layer, item], i) => {
+        const t = (i === 0 ? lowest : templates).get(item.templateId);
         if (!t) return null;
         // The server only sends states when timelines move: extrapolate time on air.
         const age = (item.age ?? 0) / fps;

@@ -190,6 +190,8 @@ export interface Template {
   revision?: number;
   /** Marker model (MARKER_MODEL); older templates are converted by the server. */
   markerModel?: number;
+  /** The multiview's background, under everything (none: a very dark grey). */
+  background?: import('./backdrop').Backdrop;
 }
 
 export type ZoneTransition = 'sequential' | 'cut' | 'fade';

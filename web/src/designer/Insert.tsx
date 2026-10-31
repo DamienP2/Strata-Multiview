@@ -24,7 +24,7 @@ const BROADCAST: { widget: string; label: string; hint: string }[] = [
 const DRAWING: { key: string; icon: LucideIcon; label: string; ctx?: string; type: LayerType; patch?: Record<string, unknown>; name?: () => string }[] = [
   { key: 'rect', icon: Square, label: 'Rectangle', type: 'rect' },
   { key: 'ellipse', icon: Circle, label: 'Circle', type: 'ellipse', patch: { props: { width: 300, height: 300 } } },
-  { key: 'line', icon: Minus, label: 'Line', ctx: 'shape', type: 'rect', patch: { props: { width: 600, height: 4 } }, name: () => tc('shape', 'Line') },
+  { key: 'line', icon: Minus, label: 'Line', ctx: 'shape', type: 'rect', patch: { props: { width: 600, height: 4, fill: [1, 1, 1, 1] } }, name: () => tc('shape', 'Line') },
   { key: 'text', icon: Type, label: 'Text', type: 'text', name: () => t('Text') },
   { key: 'image', icon: Image, label: 'Image', type: 'image' },
 ];

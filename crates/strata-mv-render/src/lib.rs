@@ -301,7 +301,24 @@ fn item_key(item: &strata_mv_core::PlayoutItem) -> u64 {
 }
 
 /// `t` laid out for `format`, with the settings in `data`.
-fn prepared<'p>(t: &'p Template, format: &str, data: &Data) -> std::borrow::Cow<'p, Template> {
+/// A template as drawn: laid out in `format`, with the settings of `data`
+/// and, the lowest one on air (`backdrop`: the format's size), the
+/// multiview's background under it.
+fn prepared<'p>(
+    t: &'p Template,
+    format: &str,
+    data: &Data,
+    backdrop: Option<(u32, u32)>,
+) -> std::borrow::Cow<'p, Template> {
+    use std::borrow::Cow;
+    let t = laid(t, format, data);
+    match backdrop {
+        Some((w, h)) => Cow::Owned(t.with_backdrop(w, h)),
+        None => t,
+    }
+}
+
+fn laid<'p>(t: &'p Template, format: &str, data: &Data) -> std::borrow::Cow<'p, Template> {
     use std::borrow::Cow;
     match t.in_format(format) {
         Cow::Borrowed(t) => t.with_settings(data),
@@ -614,7 +631,9 @@ impl Renderer {
         macro_rules! ctx {
             ($i:expr) => {{
                 let a = &on_air[$i];
-                let t = a.set.get_or_init(|| prepared(a.template, format, &a.data));
+                let t = a.set.get_or_init(|| {
+                    prepared(a.template, format, &a.data, ($i == 0).then_some((dw, dh)))
+                });
                 Ctx {
                     template: t,
                     frame: a.item.frame,
@@ -829,7 +848,12 @@ impl Renderer {
                 for c in &turning {
                     old_data.insert(c.key.clone(), c.from.clone());
                 }
-                let t_old = prepared(on_air[i].template, format, &old_data);
+                let t_old = prepared(
+                    on_air[i].template,
+                    format,
+                    &old_data,
+                    (i == 0).then_some((dw, dh)),
+                );
                 let old_ctx = Ctx {
                     template: &t_old,
                     data: &old_data,
@@ -855,7 +879,12 @@ impl Renderer {
                     let (w, h) = (pm.width(), pm.height());
                     let mut new = Pixmap::new(w, h).expect("valid size");
                     self.draw_children(&mut new, ctx, None, root, 1.0, zone_mask.as_ref());
-                    let t_old = prepared(on_air[i].template, format, old_data);
+                    let t_old = prepared(
+                        on_air[i].template,
+                        format,
+                        old_data,
+                        (i == 0).then_some((dw, dh)),
+                    );
                     let old_ctx = Ctx {
                         template: &t_old,
                         data: old_data,
@@ -981,7 +1010,8 @@ impl Renderer {
         let root = Transform::from_scale(width as f32 / dw as f32, height as f32 / dh as f32);
         self.root_scale = width as f32 / dw as f32;
         let template = template.in_format(format);
-        let template = &*template.with_settings(data);
+        let template = template.with_settings(data).with_backdrop(dw, dh);
+        let template = &template;
         let mut pm = Pixmap::new(width, height).expect("valid size");
         let time = TimeCtx {
             now_ms: now_ms(),
@@ -2488,18 +2518,20 @@ mod tests {
             )
             .unwrap();
         let mut r = Renderer::new(std::env::temp_dir().join("strata-mv-render-test-assets"));
-        let alpha = |f: &Frame| f.data[(100 * 1920 + 200) * 4 + 3];
+        let px = |f: &Frame| f.data[(100 * 1920 + 200) * 4..(100 * 1920 + 200) * 4 + 4].to_vec();
+        // The multiview's background (the default dark grey) where nothing is.
+        let backdrop = vec![0x14, 0x14, 0x16, 255];
         for _ in 0..5 {
             state.tick(1.0);
         }
         let f = r.render_channel(&project, &state, OUT, "UTC");
-        assert!(alpha(&f) > 0, "shown at frame 5");
+        assert_ne!(px(&f), backdrop, "shown at frame 5");
         // Held at its pause (frame 12): gone.
         for _ in 0..20 {
             state.tick(1.0);
         }
         let f = r.render_channel(&project, &state, OUT, "UTC");
-        assert_eq!(alpha(&f), 0, "gone after frame 8");
+        assert_eq!(px(&f), backdrop, "gone after frame 8");
     }
 
     #[test]
@@ -2629,8 +2661,8 @@ mod tests {
         let px = |x: usize, y: usize| &f.data[(y * 1920 + x) * 4..(y * 1920 + x) * 4 + 4];
         assert_eq!(px(165, 900)[3], 255);
         assert!(px(165, 900)[0] > 200);
-        // Outside the graphic stays transparent.
-        assert_eq!(px(10, 10)[3], 0);
+        // Outside the graphic: the multiview's background (the default dark grey).
+        assert_eq!(px(10, 10), &[0x14, 0x14, 0x16, 255]);
         if let Ok(path) = std::env::var("STRATA_MV_DUMP_PNG") {
             std::fs::write(path, f.to_png()).unwrap();
         }

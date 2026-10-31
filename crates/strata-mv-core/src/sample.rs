@@ -214,6 +214,7 @@ pub fn lower_third() -> Template {
     Template {
         revision: 0,
         marker_model: 0,
+        background: None,
         zone: String::new(),
         id: "lower-third".into(),
         name: "Lower third".into(),
@@ -348,6 +349,7 @@ pub fn score_bug() -> Template {
     Template {
         revision: 0,
         marker_model: 0,
+        background: None,
         zone: String::new(),
         id: "score-bug".into(),
         name: "Score bug".into(),
@@ -488,6 +490,7 @@ pub fn clock() -> Template {
     Template {
         revision: 0,
         marker_model: 0,
+        background: None,
         zone: String::new(),
         id: "clock".into(),
         name: "Clock".into(),
@@ -600,6 +603,7 @@ pub fn ticker() -> Template {
     Template {
         revision: 0,
         marker_model: 0,
+        background: None,
         zone: String::new(),
         id: "ticker".into(),
         name: "News ticker".into(),
@@ -621,6 +625,7 @@ fn simple(id: &str, name: &str, duration: f64, fields: Vec<Field>, layers: Vec<L
     Template {
         revision: 0,
         marker_model: 0,
+        background: None,
         zone: String::new(),
         id: id.into(),
         name: name.into(),
