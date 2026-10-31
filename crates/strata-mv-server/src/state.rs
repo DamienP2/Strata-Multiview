@@ -65,6 +65,8 @@ pub enum Event {
     /// The tally, UMD and audio levels of the inputs (`crate::signals`).
     Signals {
         sources: BTreeMap<String, crate::signals::SignalView>,
+        /// PTP, NTP and the alarm journal.
+        system: strata_mv_core::signal::SystemView,
     },
 }
 

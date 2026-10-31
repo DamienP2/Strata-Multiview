@@ -542,6 +542,8 @@ pub struct Received<'a> {
     pub rate: (u32, u32),
     /// The sender's picture is made of two fields.
     pub interlaced: bool,
+    /// Its timecode, 100 ns units (the sender's, or its clock's time of day).
+    pub timecode: i64,
 }
 
 /// Audio received from an NDI source: `channels` planes of `samples`
@@ -673,6 +675,7 @@ impl NdiReceiver {
                     data,
                     rate: (v.frame_rate_n.max(0) as u32, v.frame_rate_d.max(0) as u32),
                     interlaced: v.frame_format_type != PROGRESSIVE,
+                    timecode: v.timecode,
                 });
             }
             (self.lib.recv_free_video)(self.instance, &v);

@@ -244,8 +244,9 @@ export function useLiveFrame(id: string, kind: FeedKind = 'preview'): { url: str
 }
 
 // -------------------------------------------------------------- signals --
-// The tally, UMD and audio levels of the inputs (crates/strata-mv-server/src/signals.rs),
-// pushed by the server a dozen times a second while they change.
+// The tally, UMD, audio levels, loudness, timecode and faults of the inputs, and the state of the
+// plant (crates/strata-mv-server/src/signals.rs), pushed by the server a dozen times a second while
+// they change.
 
 /** Tally lamps and the switcher's UMD text (mirrors strata_mv_core::signal::Tally). */
 export interface Tally {
@@ -255,30 +256,87 @@ export interface Tally {
   umd?: string;
 }
 
-/** One input's signals: per audio channel, [peak, mean power, hold] in dBFS. */
+/** A fault the server sees on an input (mirrors signal::AlarmKind). */
+export type AlarmKind = 'loss' | 'black' | 'freeze' | 'silence' | 'loud' | 'peak';
+export type Severity = 'warning' | 'critical';
+export interface Alarm {
+  kind: AlarmKind;
+  severity: Severity;
+  /** Since when, ms since 1970. */
+  since: number;
+}
+
+/** One input's signals. */
 export interface SignalView {
   tally?: Tally;
+  /** Per audio channel: [peak, mean power, hold], dBFS. */
   levels?: [number, number, number][];
+  /** [momentary, short-term, integrated] LUFS, range LU, true peak dBTP. */
+  loudness?: [number, number, number, number, number];
+  /** Short-term loudness, one a second, oldest first (sent when it changes; kept here). */
+  history?: number[];
+  /** "HH:MM:SS:FF". */
+  timecode?: string;
+  /** The worst first. */
+  alarms?: Alarm[];
+}
+
+/** A line of the alarm journal (mirrors signal::JournalEntry). */
+export interface JournalEntry {
+  at: number;
+  input: string;
+  kind: AlarmKind;
+  severity: Severity;
+  ended?: number | null;
+}
+
+/** PTP, NTP and the alarm journal (mirrors signal::SystemView). */
+export interface SystemView {
+  ptp: { running: boolean; locked: boolean; state: string; grandmaster: string; domain: number; offsetNs?: number | null };
+  ntp: { synced?: boolean | null; source: string; offsetMs?: number | null };
+  journal: JournalEntry[];
 }
 
 let signals: Record<string, SignalView> = {};
+let system: SystemView = { ptp: { running: false, locked: false, state: '', grandmaster: '', domain: 0 }, ntp: { source: '' }, journal: [] };
 const signalSubs = new Set<() => void>();
 
-/** From the WebSocket (store.ts). */
-export function setSignals(all: Record<string, SignalView>) {
-  signals = all;
+/** From the WebSocket (store.ts): a history not sent again is the one kept. */
+export function setSignals(all: Record<string, SignalView>, sys?: SystemView) {
+  const next: Record<string, SignalView> = {};
+  for (const [id, v] of Object.entries(all)) next[id] = v.history || !signals[id]?.history ? v : { ...v, history: signals[id].history };
+  signals = next;
+  if (sys) system = sys;
   signalSubs.forEach((f) => f());
 }
 
 const NONE: SignalView = {};
 
+const subscribe = (f: () => void) => {
+  signalSubs.add(f);
+  return () => void signalSubs.delete(f);
+};
+
 /** The signals of an input, redrawn when they change. */
 export function useSignal(id: string): SignalView {
-  return useSyncExternalStore(
-    (f) => {
-      signalSubs.add(f);
-      return () => void signalSubs.delete(f);
-    },
-    () => (id ? (signals[id] ?? NONE) : NONE),
-  );
+  return useSyncExternalStore(subscribe, () => (id ? (signals[id] ?? NONE) : NONE));
+}
+
+/** PTP, NTP and the alarm journal, redrawn when they change. */
+export function useSystem(): SystemView {
+  return useSyncExternalStore(subscribe, () => system);
+}
+
+/** The words of a fault, in the project's language (mirrors AlarmKind::text). */
+export function alarmText(kind: AlarmKind, lang = 'fr'): string {
+  const fr = lang.toLowerCase().startsWith('fr');
+  const words: Record<AlarmKind, [string, string]> = {
+    loss: ['PERTE DU SIGNAL', 'SIGNAL LOSS'],
+    black: ['NOIR', 'BLACK'],
+    freeze: ['IMAGE FIGÉE', 'FROZEN PICTURE'],
+    silence: ['SILENCE', 'SILENCE'],
+    loud: ['TROP FORT', 'TOO LOUD'],
+    peak: ['TRUE PEAK', 'TRUE PEAK'],
+  };
+  return words[kind][fr ? 0 : 1];
 }

@@ -110,7 +110,7 @@ fn default_fps() -> u32 {
 
 /// The levels of the audio, measured by ffmpeg every 40 ms (at 48 kHz) and
 /// written to its log (read by [`MeterLog`]).
-const METER_FILTER: &str = "asetnsamples=n=1920:p=0,astats=metadata=1:reset=1:measure_overall=none:measure_perchannel=Peak_level+RMS_level,ametadata=mode=print";
+const METER_FILTER: &str = "ebur128=metadata=1:peak=true,asetnsamples=n=1920:p=0,astats=metadata=1:reset=1:measure_overall=none:measure_perchannel=Peak_level+RMS_level,ametadata=mode=print";
 
 impl InputConfig {
     /// The ffmpeg arguments that decode this stream to raw RGBA on stdout,
@@ -276,6 +276,8 @@ impl Live {
 
     fn put(&self, pm: Pixmap) {
         let now = Instant::now();
+        // Black, frozen? (a few samples of it)
+        self.signals.picture(&self.config.id, &pm);
         let pm = Arc::new(pm);
         *self.picture.write().unwrap_or_else(|p| p.into_inner()) = Some(pm.clone());
         self.received.fetch_add(1, Ordering::Relaxed);
@@ -554,13 +556,39 @@ impl strata_mv_render::LiveInputs for Inputs {
             }
             _ => String::new(),
         };
+        let (loudness, history) = self.signals.loudness_of(id);
         Some(strata_mv_core::signal::SourceView {
             name: l.config.name.clone(),
             format,
             live: fresh,
             tally: self.signals.tally(id),
             levels: self.signals.levels(id),
+            loudness,
+            history,
+            timecode: self.signals.timecode_of(id),
+            alarms: self.signals.alarms(id),
         })
+    }
+
+    fn system(&self) -> strata_mv_core::signal::SystemView {
+        self.signals.system()
+    }
+}
+
+impl Inputs {
+    /// Every input, to look at its faults: id, name, a picture came in the
+    /// last two seconds, when the last one came.
+    pub fn watched(&self) -> Vec<(String, String, bool, Option<Instant>)> {
+        self.live
+            .read()
+            .unwrap_or_else(|p| p.into_inner())
+            .values()
+            .map(|l| {
+                let last = *l.last_at.lock().unwrap_or_else(|p| p.into_inner());
+                let fresh = last.is_some_and(|t| t.elapsed() < Duration::from_secs(2));
+                (l.config.id.clone(), l.config.name.clone(), fresh, last)
+            })
+            .collect()
     }
 }
 
@@ -886,6 +914,86 @@ pub async fn mjpeg(
         .into_response()
 }
 
+/// NDI timecode (100 ns units: the sender's, or its clock's time of day,
+/// UTC) as the server's local time of day, "HH:MM:SS:FF" at `fps`.
+fn ndi_timecode(tc: i64, fps: f64) -> Option<String> {
+    if tc <= 0 || tc == i64::MAX || fps <= 0.0 {
+        return None;
+    }
+    let t = jiff::Timestamp::from_nanosecond(i128::from(tc) * 100).ok()?;
+    let z = t.to_zoned(jiff::tz::TimeZone::system());
+    let frame = (f64::from(z.subsec_nanosecond()) / 1e9 * fps).floor() as i64;
+    Some(format!(
+        "{:02}:{:02}:{:02}:{:02}",
+        z.hour(),
+        z.minute(),
+        z.second(),
+        frame
+    ))
+}
+
+/// EBU R128 loudness of NDI audio (ffmpeg measures the streams'), and the
+/// highest true peak of the last three seconds.
+#[derive(Default)]
+struct R128 {
+    meter: Option<(ebur128::EbuR128, usize, u32)>,
+    peaks: std::collections::VecDeque<(Instant, f32)>,
+}
+
+impl R128 {
+    fn add(
+        &mut self,
+        a: &strata_mv_output::ndi::ReceivedAudio,
+    ) -> Option<strata_mv_core::signal::Loudness> {
+        use ebur128::{EbuR128, Mode};
+        let (ch, rate) = (a.channels, a.sample_rate);
+        if ch == 0 || rate == 0 || a.samples == 0 {
+            return None;
+        }
+        if !matches!(&self.meter, Some((_, c, r)) if *c == ch && *r == rate) {
+            let m = EbuR128::new(
+                ch as u32,
+                rate,
+                Mode::M | Mode::S | Mode::I | Mode::LRA | Mode::TRUE_PEAK,
+            )
+            .ok()?;
+            self.meter = Some((m, ch, rate));
+        }
+        let (m, _, _) = self.meter.as_mut()?;
+        let planes: Vec<&[f32]> = (0..ch).map(|c| a.channel(c)).collect();
+        m.add_frames_planar_f32(&planes).ok()?;
+        let now = Instant::now();
+        let tp = (0..ch as u32)
+            .filter_map(|c| m.prev_true_peak(c).ok())
+            .fold(0.0f64, f64::max) as f32;
+        self.peaks.push_back((now, tp));
+        while self
+            .peaks
+            .front()
+            .is_some_and(|(t, _)| t.elapsed() > Duration::from_secs(3))
+        {
+            self.peaks.pop_front();
+        }
+        let peak = self.peaks.iter().map(|(_, p)| *p).fold(0.0, f32::max);
+        let lufs = |r: Result<f64, ebur128::Error>| {
+            r.ok()
+                .filter(|v| v.is_finite())
+                .map_or(-70.0, |v| (v as f32).max(-70.0))
+        };
+        Some(strata_mv_core::signal::Loudness {
+            momentary: lufs(m.loudness_momentary()),
+            short_term: lufs(m.loudness_shortterm()),
+            integrated: lufs(m.loudness_global()),
+            range: m
+                .loudness_range()
+                .ok()
+                .filter(|v| v.is_finite())
+                .unwrap_or(0.0) as f32,
+            true_peak: strata_mv_core::signal::db(peak),
+        })
+    }
+}
+
 /// A stream through ffmpeg, started again 2 s after it stops.
 fn run_stream(l: &Live) {
     let c = &l.config;
@@ -932,6 +1040,9 @@ fn run_stream(l: &Live) {
                     if let Some(levels) = meters.line(&line) {
                         if let Some(levels) = levels {
                             signals.measure(&id, &levels);
+                            if let Some(l) = meters.loudness.take() {
+                                signals.loudness(&id, l);
+                            }
                         }
                         continue;
                     }
@@ -1014,6 +1125,10 @@ fn run_stream(l: &Live) {
 struct MeterLog {
     /// Peak and power of each channel (1-based) of the frame being read.
     frame: BTreeMap<usize, (f32, f32)>,
+    /// `ebur128`'s values of the frame being read (`M`, `S`, `I`, `LRA`, `true_peak`).
+    r128: BTreeMap<String, f32>,
+    /// The loudness of the last frame read whole (taken by the caller).
+    loudness: Option<strata_mv_core::signal::Loudness>,
 }
 
 impl MeterLog {
@@ -1023,6 +1138,13 @@ impl MeterLog {
         use strata_mv_core::signal::{Level, SILENCE};
         if !line.contains("Parsed_ametadata") {
             return None;
+        }
+        if let Some(rest) = line.split("lavfi.r128.").nth(1) {
+            let (key, value) = rest.split_once('=')?;
+            if let Ok(v) = value.trim().parse::<f32>() {
+                self.r128.insert(key.to_string(), v);
+            }
+            return Some(None);
         }
         if let Some(rest) = line.split("lavfi.astats.").nth(1) {
             let (key, value) = rest.split_once('=')?;
@@ -1042,6 +1164,20 @@ impl MeterLog {
                 _ => {}
             }
             return Some(None);
+        }
+        if line.contains("frame:") && !self.r128.is_empty() {
+            let r = std::mem::take(&mut self.r128);
+            let get = |k: &str| r.get(k).copied().filter(|v| v.is_finite());
+            if let (Some(m), Some(st), Some(i)) = (get("M"), get("S"), get("I")) {
+                self.loudness = Some(strata_mv_core::signal::Loudness {
+                    momentary: m.max(-70.0),
+                    short_term: st.max(-70.0),
+                    integrated: i.max(-70.0),
+                    range: get("LRA").unwrap_or(0.0),
+                    // Linear: in dBTP.
+                    true_peak: strata_mv_core::signal::db(get("true_peak").unwrap_or(0.0)),
+                });
+            }
         }
         if line.contains("frame:") && !self.frame.is_empty() {
             let levels = std::mem::take(&mut self.frame)
@@ -1112,20 +1248,25 @@ fn run_ndi(l: &Live) {
         };
         l.say(format!("Connecting to {source}…"));
         let mut shown = None;
+        let mut loudness = R128::default();
         while !l.stopped() {
-            let (mut pic, mut format) = (None, ((0, 0), false));
+            let (mut pic, mut format, mut tc) = (None, ((0, 0), false), 0i64);
             let signals = &l.signals;
             match rx.capture(
                 500,
                 |f| {
                     pic = premultiplied(&f);
                     format = (f.rate, f.interlaced);
+                    tc = f.timecode;
                 },
                 |a| {
                     let levels: Vec<_> = (0..a.channels)
                         .map(|c| strata_mv_core::signal::Level::of(a.channel(c).iter().copied()))
                         .collect();
                     signals.measure(&l.config.id, &levels);
+                    if let Some(v) = loudness.add(&a) {
+                        signals.loudness(&l.config.id, v);
+                    }
                 },
             ) {
                 Ok(_) => {}
@@ -1137,6 +1278,9 @@ fn run_ndi(l: &Live) {
             if let Some(pm) = pic {
                 let ((n, d), fields) = format;
                 let fps = if d > 0 { n as f64 / d as f64 } else { 0.0 };
+                if let Some(s) = ndi_timecode(tc, fps) {
+                    signals.timecode(&l.config.id, s);
+                }
                 let now = (pm.width(), pm.height(), (n, d), fields);
                 if shown != Some(now) {
                     shown = Some(now);
@@ -1545,6 +1689,7 @@ mod tests {
             data: &data,
             rate: (25, 1),
             interlaced: false,
+            timecode: 0,
         };
         let pm = premultiplied(&f).unwrap();
         assert_eq!(pm.data(), &[100, 50, 0, 128, 10, 20, 30, 255]);

@@ -169,6 +169,10 @@ pub trait LiveInputs: Send + Sync {
     fn source(&self, _id: &str) -> Option<strata_mv_core::signal::SourceView> {
         None
     }
+    /// PTP, NTP and the alarm journal (the Status and Alarms widgets).
+    fn system(&self) -> strata_mv_core::signal::SystemView {
+        Default::default()
+    }
 }
 
 pub struct Renderer {
@@ -431,6 +435,11 @@ impl Renderer {
     /// What the Source widget shows of a live input besides its picture.
     pub fn live_source(&self, id: &str) -> Option<strata_mv_core::signal::SourceView> {
         self.live.as_ref()?.source(id)
+    }
+
+    /// PTP, NTP and the alarm journal.
+    pub fn live_system(&self) -> strata_mv_core::signal::SystemView {
+        self.live.as_ref().map(|l| l.system()).unwrap_or_default()
     }
 
     /// The latest picture of a live input.

@@ -34,6 +34,7 @@ directories = "6"
 if-addrs = "0.15"
 gethostname = "1"
 jiff = "0.2"
+ebur128 = "0.1"
 argon2 = "0.5"
 uuid.workspace = true
 rpassword = "7"
