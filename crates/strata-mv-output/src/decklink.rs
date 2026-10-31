@@ -748,9 +748,8 @@ impl InputHandle {
             let mut peak = [0f32; 16];
             let mut rms = [0f32; 16];
             // SAFETY: open handle, buffers of 16.
-            let n = unsafe {
-                ffi::dl_input_audio(self.raw, peak.as_mut_ptr(), rms.as_mut_ptr(), 16)
-            };
+            let n =
+                unsafe { ffi::dl_input_audio(self.raw, peak.as_mut_ptr(), rms.as_mut_ptr(), 16) };
             (0..n.clamp(0, 16) as usize)
                 .map(|c| (peak[c], rms[c]))
                 .collect()

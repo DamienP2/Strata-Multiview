@@ -268,17 +268,3 @@ export function ResizeCorner({ onPointerDown }: { onPointerDown: (e: React.Point
   return <span className="cv-resize" title={t('Resize')} onPointerDown={onPointerDown} />;
 }
 
-/**
- * A free place for a new node near `at` (canvas units): below the nodes it would cover,
- * so nodes never land on each other. `root` holds the canvas's `.logic-node` elements.
- */
-export function freeSpot(root: Element | null, at: { x: number; y: number }, w = 260, h = 150): { x: number; y: number } {
-  const rects = [...(root?.querySelectorAll<HTMLElement>('.logic-node') ?? [])].map((el) => ({ x: el.offsetLeft, y: el.offsetTop, w: el.offsetWidth, h: el.offsetHeight }));
-  let p = { ...at };
-  for (let i = 0; i < 80; i++) {
-    const hit = rects.find((r) => p.x < r.x + r.w + 16 && p.x + w + 16 > r.x && p.y < r.y + r.h + 16 && p.y + h + 16 > r.y);
-    if (!hit) return p;
-    p = { x: p.x, y: hit.y + hit.h + 24 };
-  }
-  return p;
-}

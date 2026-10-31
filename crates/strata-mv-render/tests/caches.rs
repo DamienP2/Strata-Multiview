@@ -19,7 +19,8 @@ const OUT: OutputFormat = OutputFormat {
 fn assets() -> std::path::PathBuf {
     static DIR: std::sync::OnceLock<std::path::PathBuf> = std::sync::OnceLock::new();
     DIR.get_or_init(|| {
-        let dir = std::env::temp_dir().join(format!("strata-mv-render-caches-{}", std::process::id()));
+        let dir =
+            std::env::temp_dir().join(format!("strata-mv-render-caches-{}", std::process::id()));
         std::fs::create_dir_all(&dir).unwrap();
         // A small picture shown large (scaled once, then kept).
         let mut img = image::RgbaImage::new(16, 10);
@@ -37,10 +38,6 @@ fn assets() -> std::path::PathBuf {
     .clone()
 }
 
-fn take(st: &mut ChannelState, p: &Project, template: &str, layer: u32) {
-    take_in(st, p, template, Some(layer), None);
-}
-
 /// Takes `template` on `layer`, or in zone `zone`.
 fn take_in(
     st: &mut ChannelState,
@@ -49,15 +46,12 @@ fn take_in(
     layer: Option<u32>,
     zone: Option<&str>,
 ) {
-    let credits: String = (0..30).map(|i| format!("Role {i}\nName {i}\n\n")).collect();
     st.apply(
         p,
         Command::Take {
             zone: zone.map(str::to_string),
             layer,
             template_id: template.into(),
-            data: Some([("credits".to_string(), credits)].into()),
-            rundown_id: None,
         },
     )
     .unwrap();
@@ -86,65 +80,6 @@ fn same_everywhere(p: &Arc<Project>, frames: &[(ChannelState, f64)]) -> FrameCac
         }
     }
     cache
-}
-
-/// A static bug and clock over a ticker that moves: their picture is kept
-/// and laid over the ticker each frame; changed, it is drawn again.
-#[test]
-fn graphics_over_what_moves_are_kept() {
-    let p = Arc::new(sample::demo_project());
-    let mut st = ChannelState::default();
-    take(&mut st, &p, "ticker", 5);
-    take(&mut st, &p, "score-bug", 20);
-    for _ in 0..120 {
-        st.tick(1.0);
-    }
-    let mut frames = Vec::new();
-    let mut ms = 1_800_000_000_000.0;
-    for i in 0..16 {
-        if i == 8 {
-            // The bug changes: drawn again (the same frames as drawn whole).
-            st.apply(
-                &p,
-                Command::Update {
-                    zone: None,
-                    layer: Some(20),
-                    data: [("home".to_string(), "XYZ".to_string())].into(),
-                    fade: false,
-                },
-            )
-            .unwrap();
-        }
-        frames.push((st.clone(), ms));
-        st.tick(1.0);
-        ms += 20.0;
-    }
-    let cache = same_everywhere(&p, &frames);
-    assert!(cache.tops() >= 10, "{}", cache.tops());
-}
-
-/// Credits rolling (a strip drawn once, shown through the box): the same
-/// frames however they are drawn, and they move.
-#[test]
-fn a_roll_is_the_same_from_its_strip() {
-    let p = Arc::new(sample::demo_project());
-    let mut st = ChannelState::default();
-    take_in(&mut st, &p, "credits", None, Some("full-screen"));
-    let mut frames = Vec::new();
-    let mut ms = 1_800_000_000_000.0;
-    for _ in 0..40 {
-        frames.push((st.clone(), ms));
-        for _ in 0..3 {
-            st.tick(1.0);
-        }
-        ms += 60.0;
-    }
-    same_everywhere(&p, &frames);
-    let dir = assets();
-    let mut r = Renderer::new(&dir);
-    let f1 = r.render_channel_at(&p, &frames[20].0, OUT, "UTC", frames[20].1);
-    let f2 = r.render_channel_at(&p, &frames[21].0, OUT, "UTC", frames[21].1);
-    assert!(f1.data != f2.data, "the roll moves");
 }
 
 /// A small picture shown large in a rounded frame, sliding in then at

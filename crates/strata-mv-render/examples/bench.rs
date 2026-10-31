@@ -1,11 +1,11 @@
 //! Render bench: every example project on air at 1080p, ms per frame.
 //! cargo run --release -p strata-mv-render --example bench -- crates/strata-mv-server/examples [filter] [frames] [renderers]
+use std::sync::Arc;
+use std::time::Instant;
 use strata_mv_core::playout::{ChannelState, Command};
 use strata_mv_core::Project;
 use strata_mv_render::FrameCache;
 use strata_mv_render::{OutputFormat, Renderer};
-use std::sync::Arc;
-use std::time::Instant;
 
 #[derive(serde::Deserialize)]
 struct File {
@@ -39,12 +39,12 @@ fn main() {
         let p = Arc::new(d.project);
         let fps = p.frame_rate.as_f64();
         let name = f.file_name().unwrap().to_string_lossy().to_string();
-        // Everything of the rundown on air at once (one per zone/layer), as a busy moment.
+        // Every template on air at once (one per zone/layer), as a busy moment.
         let items: Vec<(String, String)> = {
             let mut v: Vec<(String, String)> = Vec::new();
-            for r in &p.rundown {
-                if !v.iter().any(|(z, _)| *z == r.zone) {
-                    v.push((r.zone.clone(), r.template_id.clone()));
+            for t in &p.templates {
+                if !v.iter().any(|(z, _)| *z == t.zone) {
+                    v.push((t.zone.clone(), t.id.clone()));
                 }
             }
             if v.is_empty() {
@@ -73,8 +73,6 @@ fn main() {
                         zone: Some(zone.clone()),
                         layer: None,
                         template_id: tid.clone(),
-                        data: None,
-                        rundown_id: None,
                     },
                 );
             }
@@ -89,7 +87,6 @@ fn main() {
             let (mut same, mut prev): (usize, Option<Arc<strata_mv_render::Frame>>) = (0, None);
             for i in 0..frames {
                 st.tick(1.0);
-                st.auto_resume(&p);
                 let r = &mut renderers[i % nr];
                 let t = Instant::now();
                 let fr = r.render_channel_cached(

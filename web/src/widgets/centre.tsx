@@ -16,8 +16,6 @@ import { useState, type ReactNode } from 'react';
 import { confirmDialog } from '../ui/dialogs';
 import { t, tc } from '../i18n';
 import { useApp } from '../store';
-import type { Data, Layer } from '../engine/types';
-import { parseSetting, readPath } from '../engine/settings';
 import { Seg, Text, useBound, useCentreMode } from './kit';
 
 export { CentreModeContext, ExposedFilter, useCentreMode, type CentreMode } from './kit';
@@ -211,15 +209,6 @@ export function Centre({ name, readout, status, actions, rows, children }: { nam
   );
 }
 
-/** The value of an exposed setting as the take has it (else the layer's). */
-export function exposedValue<T>(layer: Layer, data: Data, path: string, fallback: T): T {
-  const key = layer.settingBindings?.[path];
-  const raw = key ? data[key] : undefined;
-  if (raw === undefined) return (readPath(layer, path) as T) ?? fallback;
-  const v = parseSetting(raw, readPath(layer, path) ?? fallback);
-  return (v === undefined ? fallback : v) as T;
-}
-
 // ------------------------------------------------------------- start --
 
 /** How a widget that moves by itself starts on air: at the In, on Continuer (F2) or on a trigger. */
@@ -230,11 +219,6 @@ export const START_MODES = (): [StartMode, string][] => [
   ['trigger', tc('cc', 'Trigger')],
 ];
 export const startMode = (l: { manualStart?: boolean; startOn?: 'continue' | 'trigger' }): StartMode => (!l.manualStart ? 'in' : l.startOn === 'trigger' ? 'trigger' : 'continue');
-export const setStartMode = (l: { manualStart?: boolean; startOn?: 'continue' | 'trigger' }, m: StartMode) => {
-  l.manualStart = m !== 'in' || undefined;
-  l.startOn = m === 'trigger' ? 'trigger' : undefined;
-};
-
 /** Line 3 of a widget that moves by itself, in the Designer: how it starts on air (the template's setting; the Operator sees its state on line 1). */
 export function StartRow({ layer }: { layer: { manualStart?: boolean; startOn?: 'continue' | 'trigger'; startTrigger?: string } }) {
   const mode = useCentreMode();

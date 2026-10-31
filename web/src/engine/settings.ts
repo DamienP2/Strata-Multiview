@@ -1,6 +1,6 @@
 // Exposed settings (Layer.settingBindings): a setting of a layer set from a
 // data field the Operator fills. Mirror of Template::with_settings.
-import type { Data, Field, FieldKind, Layer, Template } from './types';
+import type { Data, Field, Layer, Template } from './types';
 
 /** `path` in `o` (dotted, numbers index lists). */
 export function readPath(o: unknown, path: string): unknown {
@@ -30,16 +30,6 @@ export function formatSetting(v: unknown): string {
   if (v == null) return '';
   if (typeof v === 'object') return JSON.stringify(v);
   return String(v);
-}
-
-/** Field kind for a setting value. */
-export function settingKind(v: unknown, path: string): FieldKind {
-  if (typeof v === 'number') return 'number';
-  if (typeof v === 'boolean') return 'boolean';
-  if (typeof v === 'string' && /^#[0-9a-f]{6}([0-9a-f]{2})?$/i.test(v)) return 'color';
-  if (/(^|\.)(src|logo|image|fallback|sepImage)$/i.test(path)) return 'image';
-  if (typeof v === 'string' && v.includes('\n')) return 'multiline';
-  return 'text';
 }
 
 function writePath(o: Record<string, unknown>, path: string, v: unknown) {
@@ -82,16 +72,11 @@ export function syncSettingDefaults(t: Template) {
   for (const l of t.layers)
     for (const [path, key] of Object.entries(l.settingBindings ?? {})) {
       const f: Field | undefined = t.fields.find((x) => x.key === key);
-      if (f && !f.binding?.source) {
+      if (f) {
         const v = formatSetting(readPath(l, path));
         if (f.default !== v) f.default = v;
       }
     }
-}
-
-/** Whether a field is still used by a layer (property, setting or a {{key}} in a text). */
-export function fieldUsed(t: Template, key: string): boolean {
-  return t.layers.some((l) => Object.values(l.bindings ?? {}).includes(key) || Object.values(l.settingBindings ?? {}).includes(key) || JSON.stringify(l).includes(`{{${key}}}`));
 }
 
 /** A field key not taken yet, from a label ("Name · Mask" → nameMask). */
@@ -114,7 +99,7 @@ export function settingDefaults(t: Template | null | undefined): Data {
   for (const l of t.layers)
     for (const key of Object.values(l.settingBindings ?? {})) {
       const f = t.fields.find((x) => x.key === key);
-      if (f && !f.binding?.source) out[key] = f.default;
+      if (f) out[key] = f.default;
     }
   return out;
 }
@@ -147,10 +132,5 @@ export function forgetKeys(t: Template, gone: (key: string) => boolean) {
     }
     const r = l as unknown as Record<string, unknown>;
     for (const k of Object.keys(r)) if (!['id', 'name', 'props', 'tracks', 'bindings', 'settingBindings'].includes(k)) r[k] = strip(r[k]);
-  }
-  if (t.logic) {
-    const dead = new Set(t.logic.nodes.filter((n) => n.type === 'field' && gone(n.key)).map((n) => n.id));
-    t.logic.nodes = t.logic.nodes.filter((n) => !dead.has(n.id));
-    t.logic.edges = t.logic.edges.filter((e) => !dead.has(e.from));
   }
 }

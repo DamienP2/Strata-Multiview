@@ -131,16 +131,6 @@ export type SlateStyle = 'aurora' | 'bento' | 'gradient' | 'frame' | 'lines' | '
 /** Not set (older settings): the still picture when there is one, else the first design (as the server). */
 export const slateStyleOf = (p: { slate?: string; slateStyle?: SlateStyle }): SlateStyle => p.slateStyle ?? (p.slate?.trim() ? 'custom' : 'aurora');
 
-export interface Rendition {
-  id: string;
-  name: string;
-  width: number;
-  height: number;
-  outputs: OutputsConfig;
-  /** Still picture (`/assets/…`) its outputs show while no project is loaded ("" = none). */
-  slate?: string;
-  slateStyle?: SlateStyle;
-}
 
 export interface ChannelConfig {
   id: string;
@@ -150,17 +140,8 @@ export interface ChannelConfig {
   frameRate: FrameRate;
   /** Interlaced SDI (1080i50): the frame rate counts fields; the SDI outputs weave two images into a frame. */
   interlaced?: boolean;
-  /** The live input under the graphics (the source wired after the program). */
-  background?: string | null;
-  /** Pictures ("main", rendition ids) wired straight to the program: graphics only. */
-  graphicsOnly?: string[];
-  /** The source format chosen to be converted live ("1080p 25"). */
-  sourceConvert?: string;
-  /** The live inputs placed as sources in the canvas. */
-  sources?: string[];
   projectId?: string | null;
   outputs: OutputsConfig;
-  renditions?: Rendition[];
   location?: string;
   /** Still picture (`/assets/…`) the main format shows while no project is loaded ("" = none). */
   slate?: string;
@@ -193,8 +174,6 @@ export interface ServerConfig {
   inputs?: InputConfig[];
   /** DeckLink cards and ST 2110 flows (Hardware page). */
   hardware?: HardwareConfig;
-  /** OSC and TCP control (Bitfocus Buttons), see crates/strata-mv-server/src/apiv1. */
-  control?: { oscEnabled: boolean; oscPort: number; tcpEnabled: boolean; tcpPort: number; allow: string[] };
 }
 
 // ---- Hardware (crates/strata-mv-server/src/hardware.rs) ----

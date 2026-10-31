@@ -46,8 +46,8 @@ const BUS: Record<string, string> = { pcie: 'PCIe', usb: 'USB', thunderbolt: 'Th
 /** "PCIe · 20000 · ID 7B10…04E". */
 const placeOf = (d: DetectedCard) => [d.interface ? `${BUS[d.interface]}${d.topologicalId ? ` ${d.topologicalId}` : ''}` : d.topologicalId, `ID ${shortId(d.id)}`].filter(Boolean).join(' · ');
 
-/** The pictures of a channel with their outputs (main, renditions, unwired). */
-const picturesOf = (ch: ChannelConfig): { w: number; h: number; outputs: OutputsConfig }[] => [{ w: ch.width, h: ch.height, outputs: ch.outputs }, ...(ch.renditions ?? []).map((r) => ({ w: r.width, h: r.height, outputs: r.outputs })), ...(ch.unwired ? [{ w: ch.width, h: ch.height, outputs: ch.unwired }] : [])];
+/** The pictures of a channel with their outputs (main, unwired). */
+const picturesOf = (ch: ChannelConfig): { w: number; h: number; outputs: OutputsConfig }[] => [{ w: ch.width, h: ch.height, outputs: ch.outputs }, ...(ch.unwired ? [{ w: ch.width, h: ch.height, outputs: ch.unwired }] : [])];
 
 /** The first channel destination sending to a Hardware id. */
 function userOf(cfg: ServerConfig, id: string) {

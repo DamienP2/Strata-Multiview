@@ -1044,31 +1044,6 @@ fn now_run(e: &Eff, st: &State, ctx: &ActCtx) -> State {
     s
 }
 
-/// The trigger a countdown fires now: its name and the zero it is for,
-/// when it is at zero and has not fired for that zero yet.
-pub fn due_trigger(
-    layer: &Layer,
-    st: &State,
-    data: &Data,
-    now: i64,
-    age_ms: i64,
-    default_tz: &str,
-) -> Option<(String, i64)> {
-    let e = eff(layer, data)?;
-    let name = e.c.zero_trigger.trim();
-    if name.is_empty() || e.mode != TimerMode::Countdown {
-        return None;
-    }
-    let r = run(&e, st, now, age_ms, default_tz);
-    if !r.started(&e) {
-        return None;
-    }
-    let v = value(&e, &r, now, default_tz)?;
-    // Without its instant, the start stands for this run (never fires again each frame).
-    let at = v.zero_at.or(r.started_at).unwrap_or(0);
-    (v.zero && st.fired != Some(at)).then(|| (name.to_string(), at))
-}
-
 /// What a timer shows now, once started: its time (ms), whether it counts
 /// down and whether it is at zero.
 pub fn reading(
@@ -1459,28 +1434,6 @@ mod tests {
             r#"{"id":"a","name":"C","type":"clock","mode":"elapsed","format":"mm:ss:FF","timerMode":"stopwatch","startMode":"auto","props":{}}"#,
         );
         assert_eq!(text(&l, &State::default(), T0, 1_960), "00:01:24");
-    }
-
-    #[test]
-    fn a_countdown_at_zero_fires_its_trigger_once() {
-        let l = layer(
-            r#"{"id":"a","name":"C","type":"clock","mode":"timer","format":"mm:ss","timerMode":"countdown","cdDuration":5000,"startMode":"auto","zeroTrigger":"next","props":{}}"#,
-        );
-        let d = data();
-        let mut st = State::default();
-        assert!(due_trigger(&l, &st, &d, T0, 1000, "").is_none(), "not yet");
-        let (name, at) = due_trigger(&l, &st, &d, T0, 6000, "").expect("at zero");
-        assert_eq!(name, "next");
-        st.fired = Some(at);
-        assert!(
-            due_trigger(&l, &st, &d, T0 + 1000, 7000, "").is_none(),
-            "once"
-        );
-        // No trigger set: nothing.
-        let l = layer(
-            r#"{"id":"a","name":"C","type":"clock","mode":"timer","format":"mm:ss","timerMode":"countdown","cdDuration":5000,"startMode":"auto","props":{}}"#,
-        );
-        assert!(due_trigger(&l, &State::default(), &d, T0, 6000, "").is_none());
     }
 
     #[test]

@@ -7,7 +7,6 @@ mod fit;
 mod image;
 mod pen;
 mod polygon;
-pub(crate) mod qrcode;
 mod quad;
 mod shape;
 mod source;
@@ -224,10 +223,8 @@ pub(crate) fn draw(d: &mut Draw) -> bool {
         "pen" => pen::draw(d, &state(&raw)),
         "timer" => timer::draw(d, &state(&raw)),
         "ticker" => ticker::draw(d, &state(&raw)),
-        "qrcode" => qrcode::draw(d, &state(&raw)),
         "source" => source::draw(d),
         // No browser here: its box stays empty on these outputs.
-        "web" => true,
         _ => false,
     }
 }
@@ -244,7 +241,7 @@ pub(crate) fn motion(d: &mut Draw) -> Option<Motion> {
     let raw = d.state;
     match id {
         // Nothing of time in their drawing.
-        "quad" | "polygon" | "ellipse" | "qrcode" | "web" => Some(Motion::Still),
+        "quad" | "polygon" | "ellipse" => Some(Motion::Still),
         "text" => text::motion(d),
         "image" => image::motion(d, &state(raw)),
         "pen" => pen::motion(d),

@@ -460,7 +460,9 @@ pub(crate) fn chain(d: &mut Draw, main: ab_glyph::FontArc, text: &str) -> Chain 
     // The pictures of a Text (`<img>`).
     if !d.inline.is_empty() {
         let lh = match &d.layer.kind {
-            strata_mv_core::LayerKind::Text { line_height, .. } => line_height.unwrap_or(tx::LINE_HEIGHT),
+            strata_mv_core::LayerKind::Text { line_height, .. } => {
+                line_height.unwrap_or(tx::LINE_HEIGHT)
+            }
             _ => tx::LINE_HEIGHT,
         };
         let pics: Vec<_> = d.inline.clone();

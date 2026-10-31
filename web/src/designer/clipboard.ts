@@ -67,10 +67,10 @@ const ALWAYS = new Set<Prop>(['x', 'y', 'width', 'height', 'anchorX', 'anchorY',
 export function layerHasProp(l: Layer, p: Prop): boolean {
   if (ALWAYS.has(p) || l.props[p] !== undefined || l.tracks[p]?.length || l.timeline?.includes(p)) return true;
   if (p === 'fontSize' || p === 'letterSpacing') return TEXT_LIKE.has(l.type) || 'fontFamily' in l;
-  const look = l.type !== 'image' && l.type !== 'slideshow' && !widgetOf(l)?.ownsLook;
+  const look = l.type !== 'image' && !widgetOf(l)?.ownsLook;
   if (p === 'fill') return look;
-  if (p === 'cornerRadius') return look && ['rect', 'group', 'progress'].includes(l.type);
-  if (p === 'stroke' || p === 'strokeWidth') return look && !['progress', 'qrCode'].includes(l.type);
+  if (p === 'cornerRadius') return look && ['rect', 'group'].includes(l.type);
+  if (p === 'stroke' || p === 'strokeWidth') return look;
   // The arcs of a circle (Ellipse widget).
   if (p === 'arcStart' || p === 'arcEnd' || p === 'innerRadius') return l.type === 'ellipse';
   // The drawn portion of a pen.
@@ -245,9 +245,9 @@ export function pasteLayers() {
       }
       if (sameTemplate && tpl.layers.some((l) => l.name === c.name)) c.name = t('{name} copy', { name: c.name });
     }
-    // Data: the variables of another template come along when this one lacks them; keys of data sets it does not have are let go.
+    // Data: the variables of another template come along when this one lacks them.
     if (!sameTemplate) {
-      const known = (k: string) => tpl.fields.some((f) => f.key === k) || (tpl.datasets ?? []).some((d) => k.startsWith(`${d.key}_`));
+      const known = (k: string) => tpl.fields.some((f) => f.key === k);
       for (const k of keysOf(clones)) {
         if (known(k)) continue;
         const f = clip.fields.find((x) => x.key === k);
@@ -256,7 +256,6 @@ export function pasteLayers() {
           continue;
         }
         const copy = structuredClone(f);
-        delete copy.binding;
         tpl.fields.push(copy);
         added.push(copy.label || copy.key);
       }

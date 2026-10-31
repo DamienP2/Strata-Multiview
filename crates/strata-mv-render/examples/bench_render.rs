@@ -20,8 +20,6 @@ fn main() {
                     zone: None,
                     layer: Some(layer),
                     template_id: id.into(),
-                    data: None,
-                    rundown_id: None,
                 },
             )
             .unwrap();

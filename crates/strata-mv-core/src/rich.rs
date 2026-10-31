@@ -23,9 +23,9 @@ use crate::model::{LayerKind, Template, TextTransform};
 use crate::wid::text::VarStyle;
 
 /// Keys whose values may have styles: the template's values typed by the
-/// operator (not read from a data source).
+/// operator.
 pub fn typed_key(t: &Template, key: &str) -> bool {
-    t.fields.iter().any(|f| f.key == key && f.binding.is_none())
+    t.fields.iter().any(|f| f.key == key)
 }
 
 /// First character standing for a picture in the shown text (the n-th

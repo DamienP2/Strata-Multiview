@@ -7,10 +7,10 @@ import { OutputDebug } from './OutputDebug';
 /**
  * HTML5 output of one channel picture: a transparent, chrome-less page meant
  * for browser sources (OBS, vMix, CasparCG HTML producer…).
- * URL: /output/<channel>[/<rendition>]. Query params: `scale=fit|1`
+ * URL: /output/<channel>. Query params: `scale=fit|1`
  * (default fit), `bg=<css color>` for checks, `debug` for motion measures.
  */
-export function Output({ channelId, rendition }: { channelId: string; rendition?: string | null }) {
+export function Output({ channelId }: { channelId: string }) {
   const { connect, channels, full, live } = useApp();
   const params = new URLSearchParams(location.search);
   const fixed = params.get('scale') === '1';
@@ -29,12 +29,12 @@ export function Output({ channelId, rendition }: { channelId: string; rendition?
 
   const channel = channels.find((c) => c.id === channelId);
   if (!channel) return null;
-  const picture = channel.renditions.find((r) => r.id === rendition) ?? channel;
+  const picture = channel;
   const project = channel.projectId ? full[channel.projectId] : undefined;
   const scale = fixed ? 1 : Math.min(size.w / picture.width, size.h / picture.height);
   // No project loaded: what the other outputs show (the server draws the
   // built-in designs; a new address when the settings change).
-  const pictureId = picture === channel ? 'main' : rendition!;
+  const pictureId = 'main';
   const key = [channel.name, picture.width, picture.height, channel.frameRate.num, channel.frameRate.den, picture.slateStyle].join(' ');
   const slate = channel.projectId ? '' : picture.slateStyle === 'custom' ? (picture.slate ?? '') : `/api/channels/${encodeURIComponent(channelId)}/slate.png?${new URLSearchParams({ picture: pictureId, v: key })}`;
   return (

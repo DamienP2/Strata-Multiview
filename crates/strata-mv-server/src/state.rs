@@ -5,7 +5,7 @@ use std::sync::{Arc, Mutex};
 use std::time::SystemTime;
 
 use serde::{Deserialize, Serialize};
-use strata_mv_core::{ChannelState, Command, Project, ReadMode};
+use strata_mv_core::{ChannelState, Command, Project};
 use strata_mv_render::slate::SlateStyle;
 use strata_mv_render::Renderer;
 use tokio::sync::{broadcast, watch, Notify, RwLock};
@@ -44,18 +44,6 @@ pub enum Event {
         state: ChannelState,
         server_time: i64,
     },
-    /// Who has the Operator open, on which channel.
-    Presence {
-        present: Vec<crate::antenna::Present>,
-    },
-    /// The zones held by operators on a channel changed. `takenFrom` is the
-    /// user who lost a zone to another.
-    #[serde(rename_all = "camelCase")]
-    ZoneLocks {
-        channel_id: String,
-        locks: Vec<crate::antenna::ZoneLock>,
-        taken_from: Option<String>,
-    },
     /// A template's edit lock changed (taken, renewed after a take over,
     /// released). `takenFrom` is the designer tab that lost it.
     #[serde(rename_all = "camelCase")]
@@ -77,9 +65,6 @@ pub enum Event {
     /// The tally, UMD and audio levels of the inputs (`crate::signals`).
     Signals {
         sources: BTreeMap<String, crate::signals::SignalView>,
-    },
-    Error {
-        message: String,
     },
 }
 
@@ -139,20 +124,6 @@ impl Loaded {
     }
 }
 
-/// Messages accepted from WebSocket clients.
-#[derive(Debug, Deserialize)]
-#[serde(tag = "type", rename_all = "camelCase")]
-pub enum ClientMessage {
-    #[serde(rename_all = "camelCase")]
-    Command {
-        channel_id: String,
-        command: Command,
-    },
-    /// The Operator of this channel is open here (`None`: closed).
-    #[serde(rename_all = "camelCase")]
-    Presence { channel_id: Option<String> },
-}
-
 /// A channel as shown to clients.
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -167,23 +138,9 @@ pub struct ChannelInfo {
     pub project_id: Option<String>,
     /// What the channel goes out to: "SDI · name", "NDI · name"…
     pub outputs: Vec<String>,
-    /// Extra pictures of the channel (9:16…), each with its HTML5 page
-    /// /output/<channel>/<rendition>.
-    pub renditions: Vec<RenditionInfo>,
     /// Still picture shown while no project is loaded ("" = none).
     pub slate: String,
     /// The design shown while no project is loaded.
-    pub slate_style: SlateStyle,
-}
-
-#[derive(Debug, Clone, Serialize)]
-#[serde(rename_all = "camelCase")]
-pub struct RenditionInfo {
-    pub id: String,
-    pub name: String,
-    pub width: u32,
-    pub height: u32,
-    pub slate: String,
     pub slate_style: SlateStyle,
 }
 
@@ -197,8 +154,6 @@ pub struct ChannelRt {
     pub published: Mutex<Option<ChannelState>>,
     /// Changed since it was last saved to disk.
     pub dirty: std::sync::atomic::AtomicBool,
-    /// Zones held by operators, actions that can be undone.
-    pub ops: crate::antenna::ChannelOps,
 }
 
 /// What a channel has on air, kept on disk so a restart (or a crash) puts
@@ -304,18 +259,6 @@ impl ChannelRt {
             interlaced: c.interlaced,
             project_id: self.project_id.read().await.clone(),
             outputs,
-            renditions: c
-                .renditions
-                .iter()
-                .map(|r| RenditionInfo {
-                    id: r.id.clone(),
-                    name: r.name.clone(),
-                    width: r.width,
-                    height: r.height,
-                    slate: r.slate.clone(),
-                    slate_style: slate_style(r.slate_style, &r.slate),
-                })
-                .collect(),
             slate: c.slate.clone(),
             slate_style: slate_style(c.slate_style, &c.slate),
         }
@@ -357,8 +300,6 @@ pub struct AppState {
     pub restart: Notify,
     /// Flips to true when this cycle ends, so long-lived WebSockets close.
     pub closing: watch::Sender<bool>,
-    /// Who has the Operator open, on which channel.
-    pub presence: crate::antenna::Presence,
 }
 
 pub type Shared = Arc<AppState>;
@@ -572,12 +513,8 @@ impl AppState {
             zone: None,
             layer: None,
             template_id: id,
-            data: None,
-            rundown_id: None,
         };
-        self.command(channel_id, take, &crate::antenna::Actor::auto("multiview"))
-            .await
-            .map(|_| ())
+        self.command(channel_id, take).await.map(|_| ())
     }
 
     /// The channels showing `project_id` with nothing on air take its first
@@ -592,26 +529,6 @@ impl AppState {
             if let Err(e) = self.show_multiview(id, None).await {
                 tracing::warn!(channel = id, "cannot show the multiview: {e}");
             }
-        }
-    }
-
-    /// Re-keys graphics on air after zones of a project changed layer.
-    pub async fn move_layers(&self, project_id: &str, moves: &[(u32, u32)]) {
-        for ch in self.channels.values() {
-            if ch.project_id.read().await.as_deref() != Some(project_id) {
-                continue;
-            }
-            {
-                let mut st = ch.state.write().await;
-                let mut taken: Vec<(u32, strata_mv_core::PlayoutItem)> = moves
-                    .iter()
-                    .filter_map(|(from, to)| st.layers.remove(from).map(|i| (*to, i)))
-                    .collect();
-                for (to, item) in taken.drain(..) {
-                    st.layers.insert(to, item);
-                }
-            }
-            self.broadcast_channel(ch).await;
         }
     }
 
@@ -656,14 +573,8 @@ impl AppState {
         });
     }
 
-    /// Applies a command on air for `actor`: refused on a zone another
-    /// operator holds, kept for an undo, written to the as-run log.
-    pub async fn command(
-        &self,
-        channel_id: &str,
-        cmd: Command,
-        actor: &crate::antenna::Actor,
-    ) -> Result<ChannelState, String> {
+    /// Applies a command on air.
+    pub async fn command(&self, channel_id: &str, cmd: Command) -> Result<ChannelState, String> {
         let ch = self.channel(channel_id).ok_or("no such channel")?;
         let pid = ch
             .project_id
@@ -675,111 +586,9 @@ impl AppState {
             .project(&pid)
             .await
             .ok_or("the loaded project no longer exists")?;
-        let store = strata_mv_core::datapath::Store::default();
-        let zone = crate::antenna::command_zone(&project, &cmd);
-        if let Some(l) = zone.as_deref().and_then(|z| ch.ops.held_by_other(z, actor)) {
-            return Err(format!("{} holds this zone", l.user_name));
-        }
-        // Taking a graphic on a free zone gives it to the operator.
-        if let (Command::Take { .. }, Some(z)) = (&cmd, zone.as_deref()) {
-            if ch.ops.claim(z, actor, now_ms()) {
-                let _ = self.events.send(Event::ZoneLocks {
-                    channel_id: channel_id.into(),
-                    locks: ch.ops.locks(),
-                    taken_from: None,
-                });
-            }
-        }
-        // Everything out: but the zones others hold.
-        let others: Vec<String> = project
-            .zones
-            .iter()
-            .filter(|z| ch.ops.held_by_other(&z.id, actor).is_some())
-            .map(|z| z.id.clone())
-            .collect();
-        if let Command::Clear {
-            zone: None,
-            layer: None,
-        } = &cmd
-        {
-            if !others.is_empty() {
-                let mut last = Ok(ch.state.read().await.clone());
-                for z in project.zones.iter().filter(|z| !others.contains(&z.id)) {
-                    let one = Command::Clear {
-                        zone: Some(z.id.clone()),
-                        layer: None,
-                    };
-                    last = Box::pin(self.command(channel_id, one, actor)).await;
-                }
-                return last;
-            }
-        }
-        let action = crate::antenna::action_name(&cmd);
-        let mut values = BTreeMap::new();
         let snapshot = {
             let mut st = ch.state.write().await;
-            let before = st.clone();
-            let label = crate::antenna::command_label(&project, &before, &cmd);
-            let old = zone
-                .as_deref()
-                .and_then(|z| project.zone(z))
-                .and_then(|z| before.layers.get(&z.layer))
-                .map(|it| it.data.clone())
-                .unwrap_or_default();
-            if let Command::Update { data, .. }
-            | Command::Take {
-                data: Some(data), ..
-            } = &cmd
-            {
-                for (k, v) in data {
-                    if k.starts_with("__") || old.get(k) == Some(v) {
-                        continue;
-                    }
-                    values.insert(k.clone(), (old.get(k).cloned(), v.clone()));
-                }
-            }
-            let taken = match &cmd {
-                Command::Take { rundown_id, .. } => rundown_id.clone(),
-                _ => None,
-            };
-            let mut cmd = cmd;
-            // Values set by hand for some seconds: until when, on the server's clock.
-            if let Command::Update { data, .. }
-            | Command::Take {
-                data: Some(data), ..
-            } = &mut cmd
-            {
-                for (k, v) in data.iter_mut() {
-                    if let Some(secs) = k
-                        .ends_with("__manual")
-                        .then(|| v.strip_prefix("for:"))
-                        .flatten()
-                        .and_then(|n| n.trim().parse::<f64>().ok())
-                        .filter(|s| s.is_finite() && *s >= 0.0)
-                    {
-                        // At most a day: no overflow, and never "manual for ever" by accident.
-                        let ms = (secs.min(86_400.0) * 1000.0) as i64;
-                        *v = format!("until:{}", now_ms().saturating_add(ms));
-                    }
-                }
-            }
             st.apply(&project, cmd).map_err(|e| e.to_string())?;
-            bind_state(&project, &mut st, &store, None, taken.as_deref(), false);
-            if actor.kind != crate::antenna::ActorKind::Auto {
-                ch.ops.push_undo(crate::antenna::UndoStep {
-                    at: now_ms(),
-                    actor: actor.clone(),
-                    action: action.into(),
-                    label: label.clone(),
-                    zone: zone.clone().unwrap_or_default(),
-                    count: if action == "clear" {
-                        before.layers.len().saturating_sub(st.layers.len())
-                    } else {
-                        0
-                    },
-                    before,
-                });
-            }
             st.clone()
         };
         let _ = self.events.send(Event::Channel {
@@ -789,208 +598,11 @@ impl AppState {
         });
         Ok(snapshot)
     }
-
-    /// Puts the channel back as it was before its last action that can be
-    /// undone (the last `UNDO_STEPS` are kept).
-    pub async fn undo(
-        &self,
-        channel_id: &str,
-        actor: &crate::antenna::Actor,
-    ) -> Result<ChannelState, String> {
-        let ch = self.channel(channel_id).ok_or("no such channel")?;
-        let step = {
-            let mut undo = ch.ops.undo.lock().map_err(|_| "busy".to_string())?;
-            let last = undo.back().ok_or("nothing to undo")?;
-            // Not an action in a zone another operator holds now.
-            if let Some(l) = ch.ops.held_by_other(&last.zone, actor) {
-                return Err(format!("{} holds this zone", l.user_name));
-            }
-            undo.pop_back().ok_or("nothing to undo")?
-        };
-        let project = match ch.project_id.read().await.clone() {
-            Some(id) => self.project(&id).await,
-            None => None,
-        };
-        let snapshot = {
-            let mut st = ch.state.write().await;
-            let mut before = step.before.clone();
-            // An action in one zone: the others stay as they are now.
-            let layer = project
-                .as_ref()
-                .and_then(|p| p.zone(&step.zone))
-                .map(|z| z.layer);
-            if let Some(layer) = layer {
-                let mut only = st.clone();
-                match before.layers.remove(&layer) {
-                    Some(it) => only.layers.insert(layer, it),
-                    None => only.layers.remove(&layer),
-                };
-                before = only;
-            }
-            // Values changed on air go back without replaying the graphic.
-            if matches!(step.action.as_str(), "update" | "widget" | "row") {
-                for (layer, it) in before.layers.iter_mut() {
-                    if let Some(now) = st.layers.get(layer).filter(|n| {
-                        n.template_id == it.template_id && n.rundown_id == it.rundown_id
-                    }) {
-                        it.frame = now.frame;
-                        it.target = now.target;
-                        it.phase = now.phase;
-                        it.age = now.age;
-                        it.held = now.held;
-                        it.pause_ahead = now.pause_ahead;
-                        it.clocks = now.clocks.clone();
-                        it.advanced = now.advanced;
-                    }
-                }
-            }
-            *st = before;
-            if let Some(p) = &project {
-                bind_state(
-                    p,
-                    &mut st,
-                    &strata_mv_core::datapath::Store::default(),
-                    None,
-                    None,
-                    false,
-                );
-            }
-            st.clone()
-        };
-        let _ = self.events.send(Event::Channel {
-            channel_id: channel_id.into(),
-            state: snapshot.clone(),
-            server_time: now_ms(),
-        });
-        Ok(snapshot)
-    }
-
-    /// Frees the zones held by people who no longer have the channel's
-    /// Operator open.
-    pub fn release_absent_locks(&self) {
-        let present = self.presence.list();
-        for (id, ch) in &self.channels {
-            let here = |u: &str| {
-                present
-                    .iter()
-                    .any(|p| p.user_id == u && &p.channel_id == id)
-            };
-            if ch.ops.release_absent(&here) {
-                let _ = self.events.send(Event::ZoneLocks {
-                    channel_id: id.clone(),
-                    locks: ch.ops.locks(),
-                    taken_from: None,
-                });
-            }
-        }
-    }
-
-    /// Gives `zone` of a channel to `user` (taken from whoever held it, who
-    /// is told), or frees it.
-    pub fn set_zone_lock(
-        &self,
-        channel_id: &str,
-        zone: &str,
-        user: Option<&crate::auth::User>,
-    ) -> Result<(), String> {
-        let ch = self.channel(channel_id).ok_or("no such channel")?;
-        let mut taken_from = None;
-        {
-            let mut locks = ch.ops.locks.lock().map_err(|_| "busy".to_string())?;
-            match user {
-                Some(u) => {
-                    let me = crate::antenna::Actor::user(u);
-                    if let Some(prev) = locks.get(zone).filter(|l| l.user_id != u.id) {
-                        taken_from = Some(prev.user_id.clone());
-                    }
-                    locks.insert(
-                        zone.into(),
-                        crate::antenna::ZoneLock {
-                            zone: zone.into(),
-                            user_id: u.id.clone(),
-                            user_name: me.name,
-                            since: now_ms(),
-                        },
-                    );
-                }
-                None => {
-                    locks.remove(zone);
-                }
-            }
-        }
-        let _ = self.events.send(Event::ZoneLocks {
-            channel_id: channel_id.into(),
-            locks: ch.ops.locks(),
-            taken_from,
-        });
-        Ok(())
-    }
 }
 
-/// Fills fields bound to data sources into the graphics on air (and the
-/// ones queued); `only` limits it to templates reading that source. Items
-/// read "on take" are only filled when `taken` (the rundown item just
-/// taken), items read "manually" never: the operator saved their values.
-pub fn bind_state(
-    project: &Project,
-    st: &mut ChannelState,
-    store: &strata_mv_core::datapath::Store,
-    only: Option<&str>,
-    taken: Option<&str>,
-    live: bool,
-) -> bool {
-    let mut changed = false;
-    for item in st.layers.values_mut() {
-        let mut one =
-            |template_id: &str, rundown_id: Option<&str>, data: &mut strata_mv_core::Data| {
-                let Some(t) = project.template(template_id) else {
-                    return;
-                };
-                // Data sets always follow their source, on the row shown.
-                if only.is_none_or(|src| t.datasets.iter().any(|d| d.source == src)) {
-                    changed |= strata_mv_core::datapath::bind_datasets(t, data, store);
-                }
-                let mode = rundown_id
-                    .and_then(|id| project.rundown.iter().find(|r| r.id == id))
-                    .map(|r| r.read)
-                    .unwrap_or_default();
-                match mode {
-                    ReadMode::Live => {}
-                    ReadMode::Take if taken.is_some() && taken == rundown_id => {}
-                    _ => return,
-                }
-                if only.is_some_and(|src| !strata_mv_core::datapath::sources(t).any(|s| s == src)) {
-                    return;
-                }
-                changed |= strata_mv_core::datapath::bind(t, data, store);
-            };
-        let old = item.data.clone();
-        one(
-            &item.template_id,
-            item.rundown_id.as_deref(),
-            &mut item.data,
-        );
-        if item.data != old {
-            // New values of the sources shown as their layers say (fade,
-            // slide, count, held until the operator updates…).
-            if live {
-                strata_mv_core::playout::live_changes(project, item, &old);
-            }
-        }
-        if let Some(q) = &mut item.next {
-            one(&q.template_id, q.rundown_id.as_deref(), &mut q.data);
-        }
-    }
-    changed
-}
-
-/// The first published multiview of a project, in the Designer's order.
+/// The published page of a multiview.
 pub fn first_multiview(p: &Project) -> Option<String> {
-    p.design_order
-        .iter()
-        .find(|id| p.template(id).is_some())
-        .cloned()
-        .or_else(|| p.templates.first().map(|t| t.id.clone()))
+    p.templates.first().map(|t| t.id.clone())
 }
 
 /// What clients do with an `Event::ProjectTemplate`: the template replaces

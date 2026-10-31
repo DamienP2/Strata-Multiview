@@ -65,19 +65,6 @@ export function Networks({ info, cfg, edit, det }: { info: SystemInfo; cfg: Serv
     { key: 'ndi', label: 'NDI', cell: picker(net.ndi, (v) => set('ndi', v), t('Every interface'), 'NDI'), addr: address(net.ndi, true), port: <span className="muted">—</span> },
     { key: 'mediaRed', label: t('2110 red'), cell: picker(net.mediaRed, (v) => set('mediaRed', v), t('Not set'), t('2110 red')), addr: address(net.mediaRed, false), port: <span className="muted">—</span> },
     { key: 'mediaBlue', label: t('2110 blue'), cell: picker(net.mediaBlue, (v) => set('mediaBlue', v), t('Not set'), t('2110 blue')), addr: address(net.mediaBlue, false), port: <span className="muted">—</span> },
-    {
-      // OSC and TCP control of Bitfocus Buttons (API page), on every interface.
-      key: 'buttons',
-      label: 'OSC · TCP',
-      cell: <span className="muted">{t('Every interface')}</span>,
-      addr: address('', true),
-      port: (
-        <span className="net-ports">
-          <input type="number" min={1} max={65535} value={cfg.control?.oscPort ?? 9000} aria-label={t('OSC port')} onChange={(e) => edit((c) => void (c.control = { oscEnabled: false, tcpEnabled: false, tcpPort: 9001, allow: [], ...c.control, oscPort: +e.target.value }))} />
-          <input type="number" min={1} max={65535} value={cfg.control?.tcpPort ?? 9001} aria-label={t('TCP port')} onChange={(e) => edit((c) => void (c.control = { oscEnabled: false, oscPort: 9000, tcpEnabled: false, allow: [], ...c.control, tcpPort: +e.target.value }))} />
-        </span>
-      ),
-    },
   ];
 
   /** The roles a card carries (a role on every card counts for each). */

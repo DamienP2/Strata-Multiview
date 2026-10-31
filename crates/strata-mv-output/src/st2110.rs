@@ -25,9 +25,9 @@ use std::sync::mpsc::{sync_channel, Receiver, SyncSender, TrySendError};
 use std::sync::Arc;
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
-use strata_mv_render::Frame;
 use serde::{Deserialize, Serialize};
 use socket2::{Domain, Protocol, Socket, Type};
+use strata_mv_render::Frame;
 
 use crate::colorspace::{pack_line_4224_10, pack_line_422_10, pack_line_rgba8};
 use crate::{OutputError, OutputSink};

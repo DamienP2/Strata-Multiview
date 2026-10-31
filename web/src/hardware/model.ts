@@ -155,7 +155,7 @@ export function fillSt2110(o: St2110Output, hw: HardwareConfig) {
 export function usedHardware(c: ServerConfig): Set<string> {
   const used = new Set<string>();
   for (const ch of c.channels)
-    for (const o of [ch.outputs, ...(ch.renditions ?? []).map((r) => r.outputs)]) {
+    for (const o of [ch.outputs]) {
       for (const d of o.sdi ?? []) if (d.hardware && d.enabled !== false) used.add(d.hardware);
       for (const d of o.st2110 ?? []) if (d.hardware && d.enabled !== false) used.add(d.hardware);
     }
@@ -166,7 +166,7 @@ export function usedHardware(c: ServerConfig): Set<string> {
 export function usersOf(c: ServerConfig, id: string): string[] {
   const out: string[] = [];
   for (const ch of c.channels)
-    for (const o of [ch.outputs, ...(ch.renditions ?? []).map((r) => r.outputs), ...(ch.unwired ? [ch.unwired] : [])]) {
+    for (const o of [ch.outputs, ...(ch.unwired ? [ch.unwired] : [])]) {
       for (const d of [...(o.sdi ?? []), ...(o.st2110 ?? [])]) if (d.hardware === id) out.push(`${ch.name} › ${d.name}`);
     }
   for (const i of c.inputs ?? []) if (i.hardware === id && (i.kind === 'sdi' || i.kind === 'st2110')) out.push(i.name);
@@ -176,7 +176,7 @@ export function usersOf(c: ServerConfig, id: string): string[] {
 /** Removes the destinations and inputs naming a Hardware id (it is being deleted). */
 export function dropUsers(c: ServerConfig, id: string) {
   for (const ch of c.channels)
-    for (const o of [ch.outputs, ...(ch.renditions ?? []).map((r) => r.outputs), ...(ch.unwired ? [ch.unwired] : [])]) {
+    for (const o of [ch.outputs, ...(ch.unwired ? [ch.unwired] : [])]) {
       o.sdi = (o.sdi ?? []).filter((d) => d.hardware !== id);
       o.st2110 = (o.st2110 ?? []).filter((d) => d.hardware !== id);
     }
@@ -187,7 +187,7 @@ export function dropUsers(c: ServerConfig, id: string) {
 export function syncUsers(c: ServerConfig) {
   const hw = hardwareOf(c);
   for (const ch of c.channels)
-    for (const o of [ch.outputs, ...(ch.renditions ?? []).map((r) => r.outputs), ...(ch.unwired ? [ch.unwired] : [])]) {
+    for (const o of [ch.outputs, ...(ch.unwired ? [ch.unwired] : [])]) {
       for (const d of o.sdi ?? []) fillSdi(d, hw);
       for (const d of o.st2110 ?? []) fillSt2110(d, hw);
     }

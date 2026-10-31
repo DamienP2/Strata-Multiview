@@ -37,7 +37,7 @@ export function VideoSync({ cfg, edit, det, onRefresh }: { cfg: ServerConfig; ed
       <Card icon={<Tv size={16} />} title={t('Channels')}>
         <div className="hw-table">
           {cfg.channels.map((ch) => {
-            const sdi = [ch.outputs, ...(ch.renditions ?? []).map((r) => r.outputs)].some((o) => (o.sdi ?? []).some((d) => d.enabled !== false));
+            const sdi = [ch.outputs].some((o) => (o.sdi ?? []).some((d) => d.enabled !== false));
             const ref = ch.clock ?? sync.reference;
             return (
               <div key={ch.id} className="hw-row sync">

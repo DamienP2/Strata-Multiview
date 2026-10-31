@@ -65,7 +65,7 @@ export function useTextTokens(layerId: string | undefined, markup: string, setMa
   };
 
   // Its variables: name, value, back to text.
-  const keys = [...new Set([...markup.matchAll(/\{\{\s*(\w+)\s*\}\}/g)].map((m) => m[1]))].filter((k) => field(k) && !field(k)!.binding?.source && field(k)!.kind !== 'image');
+  const keys = [...new Set([...markup.matchAll(/\{\{\s*(\w+)\s*\}\}/g)].map((m) => m[1]))].filter((k) => field(k) && field(k)!.kind !== 'image');
   const backToText = (key: string) => {
     const f = field(key);
     if (!f) return;

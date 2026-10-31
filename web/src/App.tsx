@@ -51,7 +51,7 @@ const pageLoading = () => <div className="loading">{t('Loading…')}</div>;
 
 export function App() {
   const route = useRoute();
-  if (route.page === 'output') return <Output channelId={route.channelId ?? 'main'} rendition={route.rendition} />;
+  if (route.page === 'output') return <Output channelId={route.channelId ?? 'main'} />;
   return <Studio route={route} />;
 }
 

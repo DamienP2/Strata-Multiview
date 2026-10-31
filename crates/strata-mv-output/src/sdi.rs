@@ -24,8 +24,8 @@ use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, Condvar, Mutex};
 use std::time::{Duration, Instant, SystemTime};
 
-use strata_mv_render::Frame;
 use serde::{Deserialize, Serialize};
+use strata_mv_render::Frame;
 
 use crate::decklink::{InputHandle, Keyer, OutputHandle, Pushed};
 use crate::{FrameClock, OutputError, OutputSink};

@@ -115,11 +115,6 @@ impl User {
     pub fn can_design(&self, project: &str) -> bool {
         matches!(self.role, Role::Admin | Role::Designer) && self.sees_project(project)
     }
-    /// Edit the rundown (playlist and its data) of a project.
-    pub fn can_edit_rundown(&self, project: &str) -> bool {
-        matches!(self.role, Role::Admin | Role::Designer | Role::Operator)
-            && self.sees_project(project)
-    }
     /// Take / continue / out / update and load projects on a channel.
     pub fn can_operate(&self, channel: &str) -> bool {
         matches!(self.role, Role::Admin | Role::Designer | Role::Operator)
@@ -649,24 +644,6 @@ impl Auth {
         Ok(key)
     }
 
-    /// Who acts on air with `token`: its user, or the API key by its name
-    /// (a control surface, an automation).
-    pub fn actor_for_token(&self, token: &str) -> Option<(User, crate::antenna::Actor)> {
-        let user = self.user_for_token(token)?;
-        if token.starts_with(API_KEY_PREFIX) {
-            let hash = sha256_hex(token);
-            let key = self.api_keys_raw().into_iter().find(|k| k.hash == hash)?;
-            let actor = crate::antenna::Actor {
-                kind: crate::antenna::ActorKind::Api,
-                id: key.id,
-                name: key.name,
-            };
-            return Some((user, actor));
-        }
-        let actor = crate::antenna::Actor::user(&user);
-        Some((user, actor))
-    }
-
     fn user_for_api_key(&self, secret: &str) -> Option<User> {
         let hash = sha256_hex(secret);
         let key = self.api_keys_raw().into_iter().find(|k| k.hash == hash)?;
@@ -801,24 +778,6 @@ impl FromRequestParts<crate::state::Shared> for MaybeUser {
     }
 }
 
-/// The logged-in user and who they act as on air (themselves, or the API
-/// key they came with).
-pub struct Acting(pub User, pub crate::antenna::Actor);
-
-impl FromRequestParts<crate::state::Shared> for Acting {
-    type Rejection = (StatusCode, String);
-
-    async fn from_request_parts(
-        parts: &mut Parts,
-        s: &crate::state::Shared,
-    ) -> Result<Self, Self::Rejection> {
-        token_from(parts)
-            .and_then(|t| s.auth.actor_for_token(&t))
-            .map(|(u, a)| Acting(u, a))
-            .ok_or((StatusCode::UNAUTHORIZED, "login required".into()))
-    }
-}
-
 impl FromRequestParts<crate::state::Shared> for CurrentUser {
     type Rejection = (StatusCode, String);
 
@@ -830,88 +789,5 @@ impl FromRequestParts<crate::state::Shared> for CurrentUser {
             .and_then(|t| s.auth.user_for_token(&t))
             .map(CurrentUser)
             .ok_or((StatusCode::UNAUTHORIZED, "login required".into()))
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    fn input(name: &str, role: Role, pw: &str) -> UserInput {
-        UserInput {
-            username: name.into(),
-            display_name: String::new(),
-            role,
-            projects: None,
-            channels: None,
-            disabled: false,
-            password: pw.into(),
-        }
-    }
-
-    #[test]
-    fn users_sessions_and_rights() {
-        let dir = std::env::temp_dir().join(format!("mv-auth-{}", std::process::id()));
-        let _ = std::fs::remove_dir_all(&dir);
-        std::fs::create_dir_all(&dir).unwrap();
-        let auth = Auth::load(&dir);
-        assert!(auth.needs_setup());
-        let admin = auth
-            .create(input("admin", Role::Admin, "correct horse"))
-            .unwrap();
-        assert!(auth.create(input("x", Role::Viewer, "short")).is_err());
-        let mut op = input("op", Role::Operator, "operator pw");
-        op.channels = Some(vec!["studio-a".into()]);
-        op.projects = Some(vec!["news".into()]);
-        let op = auth.create(op).unwrap();
-
-        assert!(auth.login("admin", "wrong").is_none());
-        let (token, u) = auth.login("ADMIN", "correct horse").unwrap();
-        assert_eq!(u.id, admin.id);
-        assert_eq!(auth.user_for_token(&token).unwrap().username, "admin");
-        auth.logout(&token);
-        assert!(auth.user_for_token(&token).is_none());
-
-        assert!(op.can_operate("studio-a") && !op.can_operate("studio-b"));
-        assert!(op.can_edit_rundown("news") && !op.can_design("news") && !op.sees_project("sport"));
-
-        // API keys act as their user and die with it.
-        let (secret, key) = auth.create_api_key(&op.id, "Companion").unwrap();
-        assert!(secret.starts_with(API_KEY_PREFIX) && secret.starts_with(&key.prefix));
-        assert_eq!(auth.user_for_token(&secret).unwrap().id, op.id);
-        assert!(auth.user_for_token("smv_wrong").is_none());
-        assert!(!std::fs::read_to_string(dir.join("api_keys.json"))
-            .unwrap()
-            .contains(&secret));
-        // An admin sees it again with their password, nobody else.
-        assert_eq!(
-            auth.reveal_api_key(&key.id, &admin.id, "correct horse")
-                .unwrap(),
-            secret
-        );
-        assert_eq!(
-            auth.reveal_api_key(&key.id, &admin.id, "wrong")
-                .unwrap_err(),
-            "wrong password"
-        );
-        assert!(auth.reveal_api_key(&key.id, &op.id, "operator pw").is_err());
-        auth.delete(&op.id).unwrap();
-        assert!(auth.user_for_token(&secret).is_none() && auth.api_keys().is_empty());
-
-        // Each user keeps the language of their interface.
-        assert_eq!(admin.lang, "");
-        assert_eq!(auth.set_lang(&admin.id, "fr").unwrap().lang, "fr");
-        assert!(auth.set_lang(&admin.id, "de").is_err());
-        // …and the colour theme of it.
-        assert_eq!(admin.theme, "");
-        assert_eq!(auth.set_theme(&admin.id, "light").unwrap().theme, "light");
-        assert!(auth.set_theme(&admin.id, "pink").is_err());
-
-        // The last admin cannot be removed; data survives a reload.
-        assert!(auth.delete(&admin.id).is_err());
-        assert_eq!(Auth::load(&dir).users().len(), 1);
-        assert_eq!(Auth::load(&dir).users()[0].lang, "fr");
-        assert_eq!(Auth::load(&dir).users()[0].theme, "light");
-        std::fs::remove_dir_all(dir).unwrap();
     }
 }

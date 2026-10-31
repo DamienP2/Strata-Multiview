@@ -4,7 +4,7 @@ import { setTheme } from './theme';
 import { create } from 'zustand';
 import { designTemplates } from './engine/drafts';
 import { setSignals, type SignalView } from './engine/liveInputs';
-import type { ChannelInfo, ChannelState, Command, Project, ProjectSummary, RundownItem, Template, User, Zone } from './engine/types';
+import type { ChannelInfo, ChannelState, Project, ProjectSummary, Template, User } from './engine/types';
 
 type ServerEvent =
   | { type: 'hello'; user: User | null; serverName: string; serverTime: number; timezone: string; channels: ChannelInfo[]; projects: ProjectSummary[] }
@@ -17,25 +17,10 @@ type ServerEvent =
   | { type: 'lock'; projectId: string; templateId: string; lock: EditLock | null; takenFrom: string | null }
   | { type: 'folders'; folders: Folders }
   | { type: 'changed'; what: string }
-  | { type: 'presence'; present: Present[] }
-  | { type: 'zoneLocks'; channelId: string; locks: ZoneLock[]; takenFrom: string | null }
   | { type: 'signals'; sources: Record<string, SignalView> }
   | { type: 'error'; message: string };
 
-/** Someone with the Operator open on a channel. */
-export interface Present {
-  userId: string;
-  userName: string;
-  channelId: string;
-}
 
-/** A zone of a channel held by one operator. */
-export interface ZoneLock {
-  zone: string;
-  userId: string;
-  userName: string;
-  since: number;
-}
 
 /** Folders of the project list (one level) and the folder of each project. */
 export interface Folders {
@@ -81,9 +66,7 @@ interface AppStore {
   channelId: string | null;
   toasts: Toast[];
   /** Who has the Operator open, on which channel. */
-  presence: Present[];
   /** Zones held by operators, per channel. */
-  zoneLocks: Record<string, ZoneLock[]>;
 
   init: () => Promise<void>;
   login: (username: string, password: string) => Promise<void>;
@@ -92,14 +75,10 @@ interface AppStore {
   connect: (outputChannel?: string) => void;
   openProject: (id: string | null) => Promise<void>;
   selectChannel: (id: string | null) => void;
-  command: (cmd: Command, channelId?: string) => void;
   loadOnChannel: (channelId: string, projectId: string | null) => Promise<void>;
   /** False when not saved (already toasted). */
   /** Saved in `projectId` (default: the open project). */
   saveTemplate: (t: Template, projectId?: string) => Promise<boolean>;
-  deleteTemplate: (id: string) => Promise<void>;
-  saveRundown: (r: RundownItem[]) => Promise<void>;
-  saveZones: (z: Zone[]) => Promise<boolean>;
   saveFolders: (f: Folders) => Promise<void>;
   toast: (message: string, kind?: Toast['kind']) => void;
 }
@@ -230,8 +209,6 @@ export const useApp = create<AppStore>((set, get) => {
     project: null,
     channelId: null,
     toasts: [],
-    presence: [],
-    zoneLocks: {},
 
     async init() {
       try {
@@ -313,9 +290,9 @@ export const useApp = create<AppStore>((set, get) => {
               // A template of a project not open here: nothing to update.
               if (!project) break;
               const full = { ...get().full, [project.id]: project };
-              const { id, name, description, width, height, frameRate, rundown } = project;
+              const { id, name, description, width, height, frameRate } = project;
               const design = designTemplates(project);
-              const summary: ProjectSummary = { id, name, description: description ?? '', width, height, frameRate, templates: design.length, rundown: rundown.length, tiles: design[0]?.layers.filter((l) => l.type === 'source').length ?? 0, cover: design[0]?.id, modifiedAt: Date.now() };
+              const summary: ProjectSummary = { id, name, description: description ?? '', width, height, frameRate, templates: design.length, tiles: design[0]?.layers.filter((l) => l.type === 'source').length ?? 0, cover: design[0]?.id, modifiedAt: Date.now() };
               const projects = get().projects.some((p) => p.id === id) ? get().projects.map((p) => (p.id === id ? summary : p)) : [...get().projects, summary];
               set({ full, projects: outputChannel ? get().projects : projects, ...select(get().projectId, full) });
               break;
@@ -344,12 +321,6 @@ export const useApp = create<AppStore>((set, get) => {
             case 'lock':
               lockEvents.dispatchEvent(new CustomEvent('lock', { detail: msg }));
               break;
-            case 'presence':
-              set({ presence: msg.present });
-              break;
-            case 'zoneLocks':
-              set({ zoneLocks: { ...get().zoneLocks, [msg.channelId]: msg.locks } });
-              serverEvents.dispatchEvent(new CustomEvent('zoneLocks', { detail: msg }));
               break;
             case 'error':
               get().toast(msg.message, 'error');
@@ -379,12 +350,6 @@ export const useApp = create<AppStore>((set, get) => {
       set({ channelId: id });
     },
 
-    command(cmd, channelId = get().channelId ?? undefined) {
-      if (!channelId) return;
-      if (socket?.readyState === WebSocket.OPEN) socket.send(JSON.stringify({ type: 'command', channelId, command: cmd }));
-      else api('POST', `/api/channels/${encodeURIComponent(channelId)}/command`, cmd).catch((e) => get().toast(errText(e), 'error'));
-    },
-
     async loadOnChannel(channelId, projectId) {
       try {
         await api('PUT', `/api/channels/${encodeURIComponent(channelId)}/project`, { projectId });
@@ -401,44 +366,6 @@ export const useApp = create<AppStore>((set, get) => {
         return true;
       } catch (e) {
         get().toast(t('Save failed: {error}', { error: errText(e) }), 'error');
-        return false;
-      }
-    },
-
-    async deleteTemplate(id) {
-      const pid = get().projectId;
-      if (!pid) return;
-      await api('DELETE', `/api/projects/${encodeURIComponent(pid)}/templates/${encodeURIComponent(id)}`);
-    },
-
-    async saveRundown(r) {
-      const p = get().project;
-      if (!p) return;
-      const before = p.rundown;
-      const full = { ...get().full, [p.id]: { ...p, rundown: r } };
-      set({ full, ...select(p.id, full) });
-      try {
-        // Only this change: another operator's edits made meanwhile are kept.
-        await api('PUT', `/api/projects/${encodeURIComponent(p.id)}/rundown`, { base: before, rundown: r });
-      } catch (e) {
-        // Not saved: back to what the server has, so Take does not use it.
-        const cur = get().full[p.id];
-        if (cur && cur.rundown === r) {
-          const back = { ...get().full, [p.id]: { ...cur, rundown: before } };
-          set({ full: back, ...select(p.id, back) });
-        }
-        get().toast(t('Save failed: {error}', { error: errText(e) }), 'error');
-      }
-    },
-
-    async saveZones(zones) {
-      const p = get().project;
-      if (!p) return false;
-      try {
-        await api('PUT', `/api/projects/${encodeURIComponent(p.id)}/zones`, zones);
-        return true;
-      } catch (e) {
-        get().toast(errText(e), 'error');
         return false;
       }
     },
@@ -501,14 +428,3 @@ export const can = {
   admin: (u: User | null | undefined) => u?.role === 'admin',
 };
 
-/** A short hash of a text (FNV-1a), for versions in addresses. */
-const hashText = (s: string) => {
-  let h = 0x811c9dc5;
-  for (let i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 0x01000193);
-  return (h >>> 0).toString(36) + s.length.toString(36);
-};
-
-/** A template's thumbnail, `width` pixels wide at most (the size shown × 2 for
- * HiDPI screens). The version follows the template: browsers keep each one. */
-export const thumbnailUrl = (projectId: string, t: Template, format = 'main', draft = false, width = 480) =>
-  `/api/projects/${encodeURIComponent(projectId)}/templates/${encodeURIComponent(t.id)}/thumbnail.png?format=${encodeURIComponent(format)}${draft ? '&draft=true' : ''}&w=${width}&v=${hashText(JSON.stringify(t))}`;

@@ -11,6 +11,5 @@ serde_json.workspace = true
 tiny-skia = "0.11"
 ab_glyph = "0.2"
 fontdb = "0.23"
-qrcode = { version = "0.14", default-features = false }
 image = { version = "0.25", default-features = false, features = ["png", "jpeg", "webp", "gif"] }
 resvg = { version = "0.45", default-features = false }

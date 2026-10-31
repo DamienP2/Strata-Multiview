@@ -16,9 +16,7 @@ export function designTemplates(p: Project): Template[] {
   const drafts = new Map((p.drafts ?? []).map((t) => [t.id, t]));
   const out = p.templates.map((t) => drafts.get(t.id) ?? t);
   for (const d of p.drafts ?? []) if (!p.templates.some((t) => t.id === d.id)) out.push(d);
-  // In the Designer's order (a template missing from it keeps its place after the others).
-  const at = new Map((p.designOrder ?? []).map((id, i) => [id, i]));
-  return at.size ? out.map((t, i) => ({ t, i: at.get(t.id) ?? at.size + i })).sort((a, b) => a.i - b.i).map((x) => x.t) : out;
+  return out;
 }
 
 /** Publication state of a template. */

@@ -15,7 +15,6 @@ pub mod sequence;
 mod shadow;
 pub mod slate;
 mod sprite;
-mod strip;
 mod text;
 mod wid;
 
@@ -64,30 +63,19 @@ impl strata_mv_core::playout::TextWidth for TextWidths {
             .or_else(|| fonts.font("Inter", weight))
         {
             Some(f) => text::text_width(&f, text, size, letter_spacing),
-            None => {
-                strata_mv_core::playout::EstimatedWidth.width(family, weight, text, size, letter_spacing)
-            }
+            None => strata_mv_core::playout::EstimatedWidth.width(
+                family,
+                weight,
+                text,
+                size,
+                letter_spacing,
+            ),
         }
     }
 }
 
 pub use cache::FrameCache;
 pub use text::{fonts_changed, FontFamily, FontStore, BUNDLED_FONTS};
-pub use wid::qrcode::qr_modules_ec;
-
-/// QR modules of `content` (row-major, true = dark) and the side length,
-/// shared with the HTML5 renderer so both draw the same code.
-pub fn qr_modules(content: &str) -> Option<(usize, Vec<bool>)> {
-    let code =
-        qrcode::QrCode::with_error_correction_level(content.as_bytes(), qrcode::EcLevel::M).ok()?;
-    Some((
-        code.width(),
-        code.to_colors()
-            .into_iter()
-            .map(|c| c == qrcode::Color::Dark)
-            .collect(),
-    ))
-}
 
 /// A picture as JPEG (previews of the live inputs), at most `max_width` wide.
 pub fn jpeg(pm: &Pixmap, max_width: u32, quality: u8) -> Option<Vec<u8>> {
@@ -204,8 +192,6 @@ pub struct Renderer {
     scaled: scaled::Scaled,
     /// Masks kept from frame to frame (faded zones, `mask::Kept`).
     masks: mask::Kept,
-    /// Strips of the credits rolls (`strip`).
-    strips: strip::Strips,
     /// A frame-sized picture for the graphics drawn over what moves
     /// (`cache::top_item`), kept cleared between frames.
     over: Option<Pixmap>,
@@ -284,9 +270,6 @@ fn value_tf(
     }
 }
 
-/// Values of the layers changed by a template's logic graph, by layer id.
-type Logic = HashMap<String, std::collections::BTreeMap<Prop, Value>>;
-
 /// A graphic on air, prepared for drawing only when it is drawn (or planned).
 struct OnAir<'p> {
     layer: u32,
@@ -296,7 +279,6 @@ struct OnAir<'p> {
     template: &'p Template,
     /// Laid out for the format, with the operator's settings.
     set: std::cell::OnceCell<std::borrow::Cow<'p, Template>>,
-    logic: std::cell::OnceCell<Logic>,
     /// What the graphic's state is drawn from (`sprite`), hashed.
     key: std::cell::OnceCell<u64>,
     /// Its data as shown now (values counting on their way).
@@ -334,8 +316,6 @@ struct Ctx<'a> {
     frame: f64,
     data: &'a Data,
     time: TimeCtx<'a>,
-    /// Values of the layers changed by the template's logic graph.
-    logic: &'a Logic,
     /// The graphic on air (widget clocks the operator controls), and the
     /// project frame rate its ages are counted in.
     item: Option<&'a strata_mv_core::PlayoutItem>,
@@ -356,7 +336,6 @@ impl<'a> Ctx<'a> {
             frame,
             data: self.data,
             time: self.time,
-            logic: self.logic,
             item: self.item,
             fps: self.fps,
             lang: self.lang,
@@ -385,118 +364,6 @@ enum Enter {
     Children,
     /// To draw.
     Draw,
-}
-
-/// The graphics of `frame` keyed over a live picture (the channel's
-/// source): the picture scaled to fit the frame, centred on black, the
-/// graphics laid over it. The frame is opaque.
-pub fn over_live(frame: &Frame, live: &Pixmap) -> Frame {
-    let (w, h) = (frame.width, frame.height);
-    let mut pm = pool::pixmap(w, h);
-    if (live.width(), live.height()) == (w, h) {
-        pm.data_mut().copy_from_slice(live.data());
-    } else {
-        pm.data_mut()
-            .copy_from_slice(fit_picture(live, w, h).data());
-    }
-    scaled::composite_bytes(&mut pm, &frame.data, w, h, 0, 0, 1.0, None);
-    Frame {
-        width: w,
-        height: h,
-        data: pm.take(),
-        captured_at: frame.captured_at,
-    }
-}
-
-/// `live` fitted into a `w` × `h` picture: scaled (bilinear) to fit,
-/// centred on black. Rows are shared out over a few threads: a 720p
-/// picture into 1080 takes a few milliseconds.
-pub fn fit_picture(live: &Pixmap, w: u32, h: u32) -> Pixmap {
-    let mut out = Pixmap::new(w.max(1), h.max(1)).expect("picture size");
-    out.fill(tiny_skia::Color::BLACK);
-    let (lw, lh) = (live.width() as usize, live.height() as usize);
-    let k = (w as f64 / lw.max(1) as f64).min(h as f64 / lh.max(1) as f64);
-    let (dw, dh) = (
-        ((lw as f64 * k).round() as usize).min(w as usize),
-        ((lh as f64 * k).round() as usize).min(h as usize),
-    );
-    if lw == 0 || lh == 0 || dw == 0 || dh == 0 {
-        return out;
-    }
-    if (dw, dh) == (lw, lh) && (dw, dh) == (w as usize, h as usize) {
-        out.data_mut().copy_from_slice(live.data());
-        return out;
-    }
-    let (ox, oy) = ((w as usize - dw) / 2, (h as usize - dh) / 2);
-    // Where each output column / row samples the source: the two pixels
-    // around its centre and the weight of the second (in 1/256).
-    let taps = |n_out: usize, n_in: usize| -> Vec<(usize, usize, u32)> {
-        (0..n_out)
-            .map(|i| {
-                let x = ((i as f64 + 0.5) * n_in as f64 / n_out as f64 - 0.5).max(0.0);
-                let a = (x as usize).min(n_in - 1);
-                let b = (a + 1).min(n_in - 1);
-                (a, b, ((x - a as f64) * 256.0) as u32)
-            })
-            .collect()
-    };
-    let (cols, rows) = (taps(dw, lw), taps(dh, lh));
-    let src = live.data();
-    let stride = w as usize * 4;
-    let threads = std::thread::available_parallelism()
-        .map_or(1, |n| n.get())
-        .clamp(1, 4);
-    let band = dh.div_ceil(threads);
-    let body = &mut out.data_mut()[oy * stride..(oy + dh) * stride];
-    std::thread::scope(|s| {
-        for (t, part) in body.chunks_mut(band * stride).enumerate() {
-            let (cols, rows) = (&cols, &rows);
-            s.spawn(move || {
-                // Source rows scaled across, kept while the next output row needs them.
-                // (16-bit arithmetic all through: what SSE2 multiplies fast.)
-                let mut cache: [(usize, Vec<u8>); 2] =
-                    [(usize::MAX, vec![0; dw * 4]), (usize::MAX, vec![0; dw * 4])];
-                let across = |y: usize, row: &mut Vec<u8>| {
-                    let line = src[y * lw * 4..(y + 1) * lw * 4].as_chunks::<4>().0;
-                    for (o, &(a, b, f)) in row.as_chunks_mut::<4>().0.iter_mut().zip(cols) {
-                        let (pa, pb, f) = (line[a], line[b], f as u16);
-                        for c in 0..4 {
-                            o[c] = ((pa[c] as u16 * (256 - f) + pb[c] as u16 * f + 128) >> 8) as u8;
-                        }
-                    }
-                };
-                for (j, out_row) in part.chunks_mut(stride).enumerate() {
-                    let (a, b, f) = rows[t * band + j];
-                    // On one source row (the last one): that row alone.
-                    let f = if a == b { 0 } else { f };
-                    for (slot, y) in [(0, a), (1, b)]
-                        .into_iter()
-                        .take(if f == 0 { 1 } else { 2 })
-                    {
-                        if cache[slot].0 != y {
-                            if let Some(other) = cache.iter().position(|(r, _)| *r == y) {
-                                cache.swap(slot, other);
-                            } else {
-                                across(y, &mut cache[slot].1);
-                                cache[slot].0 = y;
-                            }
-                        }
-                    }
-                    let (ra, rb, f) = (&cache[0].1, &cache[1].1, f as u16);
-                    let g = 256 - f;
-                    let dst = &mut out_row[ox * 4..(ox + dw) * 4];
-                    if f == 0 {
-                        dst.copy_from_slice(ra);
-                        continue;
-                    }
-                    for ((d, &a), &b) in dst.iter_mut().zip(ra).zip(rb) {
-                        *d = ((a as u16 * g + b as u16 * f + 128) >> 8) as u8;
-                    }
-                }
-            });
-        }
-    });
-    out
 }
 
 /// Output raster of a channel. Projects designed for another size are
@@ -532,7 +399,6 @@ impl Renderer {
             scaled: Default::default(),
             over: None,
             masks: Default::default(),
-            strips: Default::default(),
             sprites: Default::default(),
             root_scale: 1.0,
             in_sprite: false,
@@ -579,77 +445,6 @@ impl Renderer {
             self.fonts = FontStore::new(Some(&self.assets_dir.join("fonts")));
             self.font_generation = g;
         }
-    }
-
-    /// Runs the template's logic graph; returns the layers it changed.
-    fn logic_values(&mut self, t: &Template, frame: f64, data: &Data) -> Logic {
-        if t.logic.is_empty() {
-            return HashMap::new();
-        }
-        let hold = t.hold_frame();
-        let mut values: strata_mv_core::logic::Values = t
-            .layers
-            .iter()
-            .map(|l| (l.id.clone(), resolve_layer(l, frame, data, hold).values))
-            .collect();
-        let fonts = &mut self.fonts;
-        let mut measure = |id: &str,
-                           v: &std::collections::BTreeMap<Prop, Value>,
-                           metric: strata_mv_core::logic::TextMetric|
-         -> f64 {
-            let Some(LayerKind::Text {
-                text,
-                font_family,
-                font_weight,
-                uppercase,
-                transform,
-                line_height,
-                ..
-            }) = t.layers.iter().find(|l| l.id == id).map(|l| &l.kind)
-            else {
-                return 0.0;
-            };
-            let mut content = interpolate_text(text, data);
-            content = if *uppercase {
-                content.to_uppercase()
-            } else {
-                transform.apply(&content)
-            };
-            let line_h = line_height.unwrap_or(text::LINE_HEIGHT) as f64;
-            let num = |p: Prop| v.get(&p).and_then(Value::as_number).unwrap_or(0.0);
-            let size = num(Prop::FontSize);
-            let lines = content.split('\n').count() as f64;
-            match metric {
-                strata_mv_core::logic::TextMetric::Lines => lines,
-                strata_mv_core::logic::TextMetric::Chars => content.chars().count() as f64,
-                strata_mv_core::logic::TextMetric::Height => {
-                    if content.is_empty() {
-                        0.0
-                    } else {
-                        lines * size * line_h
-                    }
-                }
-                strata_mv_core::logic::TextMetric::Width => match fonts.font(font_family, *font_weight) {
-                    Some(f) if !content.is_empty() => {
-                        text::text_width(&f, &content, size as f32, num(Prop::LetterSpacing) as f32)
-                            as f64
-                    }
-                    _ => 0.0,
-                },
-            }
-        };
-        strata_mv_core::logic::apply(&t.logic, &mut values, data, &mut measure);
-        let targeted: std::collections::HashSet<&str> = t
-            .logic
-            .nodes
-            .iter()
-            .filter_map(|n| match &n.kind {
-                strata_mv_core::logic::NodeKind::Target { layer, .. } => Some(layer.as_str()),
-                _ => None,
-            })
-            .collect();
-        values.retain(|k, _| targeted.contains(k.as_str()));
-        values
     }
 
     pub fn font_families(&mut self) -> Vec<FontFamily> {
@@ -758,7 +553,6 @@ impl Renderer {
     ) -> Arc<Frame> {
         self.refresh_fonts();
         self.scaled.frame();
-        self.strips.frame();
         self.sprites.frame();
         self.pending = false;
         self.steps = Steps::default();
@@ -802,7 +596,6 @@ impl Renderer {
                     alpha,
                     template: t,
                     set: Default::default(),
-                    logic: Default::default(),
                     key: Default::default(),
                     data: strata_mv_core::playout::shown_data(item),
                 })
@@ -813,13 +606,6 @@ impl Renderer {
             ($i:expr) => {{
                 let a = &on_air[$i];
                 let t = a.set.get_or_init(|| prepared(a.template, format, &a.data));
-                let logic = match a.logic.get() {
-                    Some(l) => l,
-                    None => {
-                        let l = self.logic_values(t, a.item.frame, &a.data);
-                        a.logic.get_or_init(|| l)
-                    }
-                };
                 Ctx {
                     template: t,
                     frame: a.item.frame,
@@ -830,7 +616,6 @@ impl Renderer {
                         default_tz,
                         fps,
                     },
-                    logic,
                     item: Some(a.item),
                     fps,
                     lang: &project.language,
@@ -1036,11 +821,9 @@ impl Renderer {
                     old_data.insert(c.key.clone(), c.from.clone());
                 }
                 let t_old = prepared(on_air[i].template, format, &old_data);
-                let logic = self.logic_values(&t_old, item.frame, &old_data);
                 let old_ctx = Ctx {
                     template: &t_old,
                     data: &old_data,
-                    logic: &logic,
                     ..ctx.at_frame(ctx.frame)
                 };
                 self.steps.anim = Some(ValueAnim { layers, old: true });
@@ -1064,11 +847,9 @@ impl Renderer {
                     let mut new = Pixmap::new(w, h).expect("valid size");
                     self.draw_children(&mut new, ctx, None, root, 1.0, zone_mask.as_ref());
                     let t_old = prepared(on_air[i].template, format, old_data);
-                    let logic = self.logic_values(&t_old, item.frame, old_data);
                     let old_ctx = Ctx {
                         template: &t_old,
                         data: old_data,
-                        logic: &logic,
                         ..ctx.at_frame(ctx.frame)
                     };
                     let mut old = Pixmap::new(w, h).expect("valid size");
@@ -1145,8 +926,8 @@ impl Renderer {
         frame
     }
 
-    /// Renders a single template at `frame` (used for thumbnails / previews).
-    /// Renders a template in one of the project formats ("main", "vertical"…).
+    /// A template at `frame`, full size (tests).
+    #[cfg(test)]
     pub fn render_template(
         &mut self,
         project: &Project,
@@ -1199,13 +980,11 @@ impl Renderer {
             default_tz: "",
             fps: project.frame_rate.as_f64().max(1.0),
         };
-        let logic = self.logic_values(template, frame, data);
         let ctx = Ctx {
             template,
             frame,
             data,
             time,
-            logic: &logic,
             item: None,
             fps: project.frame_rate.as_f64().max(1.0),
             lang: &project.language,
@@ -1333,9 +1112,6 @@ impl Renderer {
             // Styles typed by the operator too: the text without their tags.
             if let Some(runs) = strata_mv_core::rich::layer_runs(ctx.template, layer, ctx.data) {
                 r.text = Some(runs.into_iter().map(|r| r.text).collect());
-            }
-            if let Some(v) = ctx.logic.get(&layer.id) {
-                r.values = v.clone();
             }
             // Its repeated movement, on its time on air.
             if let Some(m) = &layer.motion {
@@ -1547,10 +1323,8 @@ impl Renderer {
             | LayerKind::Ellipse { .. }
             | LayerKind::Text { .. }
             | LayerKind::Image { .. }
-            | LayerKind::QrCode { .. }
             | LayerKind::Polygon { .. }
-            | LayerKind::Pen { .. }
-            | LayerKind::Web { .. } => Motion::Still,
+            | LayerKind::Pen { .. } => Motion::Still,
             // Clocks, tickers, rolls, counters… (by the time on air).
             _ => Motion::Moving,
         };
@@ -1634,10 +1408,7 @@ impl Renderer {
             matches!(
                 kind,
                 LayerKind::Pen { .. }
-                    | LayerKind::Roll { .. }
                     | LayerKind::Ticker { .. }
-                    | LayerKind::Rotator { .. }
-                    | LayerKind::Slideshow { .. }
                     | LayerKind::Group {
                         lottie: Some(_),
                         ..
@@ -1698,11 +1469,9 @@ impl Renderer {
                         continue;
                     }
                     let mut c = resolve_layer(l, ctx.frame, ctx.data, hold);
-                    if let Some(runs) = strata_mv_core::rich::layer_runs(ctx.template, l, ctx.data) {
+                    if let Some(runs) = strata_mv_core::rich::layer_runs(ctx.template, l, ctx.data)
+                    {
                         c.text = Some(runs.into_iter().map(|r| r.text).collect());
-                    }
-                    if let Some(v) = ctx.logic.get(&l.id) {
-                        c.values = v.clone();
                     }
                     for (p, v) in &c.values {
                         k.add(p);
@@ -2031,15 +1800,7 @@ impl Renderer {
         let kind = scrolling.as_ref().unwrap_or(&r.layer.kind);
         // Widgets stay inside their box.
         let boxed;
-        let mask = if matches!(
-            kind,
-            LayerKind::Clock { .. }
-                | LayerKind::Rotator { .. }
-                | LayerKind::BarChart { .. }
-                | LayerKind::Slideshow { .. }
-                | LayerKind::Ticker { .. }
-                | LayerKind::Roll { .. }
-        ) {
+        let mask = if matches!(kind, LayerKind::Clock { .. } | LayerKind::Ticker { .. }) {
             boxed = Rect::from_xywh(0.0, 0.0, w.max(1.0), h.max(1.0))
                 .map(|b| build_mask(pm, mask, b, tf));
             boxed.as_ref().or(mask)
@@ -2229,343 +1990,12 @@ impl Renderer {
                     );
                 }
             }
-            LayerKind::Roll {
-                text,
-                speed,
-                looping,
-                font,
-            } => {
-                let mut body = interpolate_text(text, ctx.data);
-                if font.uppercase {
-                    body = body.to_uppercase();
-                }
-                let size = r.num(Prop::FontSize) as f32;
-                let block = body.split('\n').count() as f32 * size * text::LINE_HEIGHT;
-                // A screen-high gap before the roll comes round again.
-                let cycle = if *looping { block + h } else { block };
-                let Some(clip) =
-                    Rect::from_xywh(0.0, 0.0, w, h).map(|rc| build_mask(pm, mask, rc, tf))
-                else {
-                    return;
-                };
-                let tops: Vec<f32> = scroll_positions(
-                    h as f64,
-                    cycle as f64,
-                    widgets::frame_speed(*speed, time.fps) * time.age_secs,
-                    *looping,
-                )
-                .into_iter()
-                .map(|y| y as f32)
-                .collect();
-                // The block drawn once in a strip, the part in the box laid each frame.
-                let key = {
-                    use std::hash::{Hash, Hasher};
-                    let mut k = std::collections::hash_map::DefaultHasher::new();
-                    format!("{body}{font:?}").hash(&mut k);
-                    [Prop::FontSize, Prop::LetterSpacing, Prop::StrokeWidth]
-                        .map(|p| r.num(p).to_bits())
-                        .hash(&mut k);
-                    [Prop::Fill, Prop::Stroke]
-                        .map(|p| r.color(p).0.map(f32::to_bits))
-                        .hash(&mut k);
-                    k.finish()
-                };
-                let mut draw = |rd: &mut Renderer, chunk: &mut Pixmap, t: Transform| {
-                    let place = (font.align, VerticalAlign::Top);
-                    rd.draw_text(
-                        chunk,
-                        r,
-                        font,
-                        &body,
-                        place,
-                        (0.0, 0.0, w, block),
-                        t,
-                        1.0,
-                        None,
-                    );
-                };
-                let rolled = strip::roll(
-                    self,
-                    pm,
-                    &r.layer.id,
-                    key,
-                    tf,
-                    (w, h),
-                    block,
-                    &tops,
-                    opacity,
-                    Some(&clip),
-                    &mut draw,
-                );
-                for y in tops.into_iter().filter(|_| !rolled) {
-                    let place = (font.align, VerticalAlign::Top);
-                    self.draw_text(
-                        pm,
-                        r,
-                        font,
-                        &body,
-                        place,
-                        (0.0, y, w, block),
-                        tf,
-                        opacity,
-                        Some(&clip),
-                    );
-                }
-            }
             LayerKind::Image { fit, .. } => {
                 if let Some(src) = r.image_src.clone() {
                     self.draw_image(pm, &src, *fit, w, h, tf, opacity, mask);
                 }
             }
-            LayerKind::AnalogClock {
-                timezone,
-                seconds,
-                accent,
-            } => {
-                let (ha, ma, sa) = widgets::clock_hands(timezone, &time);
-                let d = w.min(h);
-                let (cx, cy, rad) = (w / 2.0, h / 2.0, d / 2.0);
-                if let Some(face) = PathBuilder::from_circle(cx, cy, rad) {
-                    pm.fill_path(&face, &fill, FillRule::Winding, tf, mask);
-                }
-                let ink = paint_for(r.color(Prop::Stroke), opacity);
-                let line = |pb: &mut PathBuilder, deg: f32, r0: f32, r1: f32| {
-                    let (sn, cs) = deg.to_radians().sin_cos();
-                    pb.move_to(cx + sn * r0, cy - cs * r0);
-                    pb.line_to(cx + sn * r1, cy - cs * r1);
-                };
-                let stroke = |width: f32| Stroke {
-                    width,
-                    line_cap: tiny_skia::LineCap::Round,
-                    ..Default::default()
-                };
-                let mut ticks = PathBuilder::new();
-                for i in 0..12 {
-                    line(
-                        &mut ticks,
-                        i as f32 * 30.0,
-                        rad * if i % 3 == 0 { 0.78 } else { 0.84 },
-                        rad * 0.92,
-                    );
-                }
-                if let Some(p) = ticks.finish() {
-                    pm.stroke_path(&p, &ink, &stroke((d * 0.02).max(1.5)), tf, mask);
-                }
-                for (deg, len, width) in [(ha, 0.5, 0.06), (ma, 0.74, 0.04)] {
-                    let mut pb = PathBuilder::new();
-                    line(&mut pb, deg as f32, -rad * 0.08, rad * len);
-                    if let Some(p) = pb.finish() {
-                        pm.stroke_path(&p, &ink, &stroke(d * width), tf, mask);
-                    }
-                }
-                let accent = paint_for(Color::from_hex(accent).unwrap_or(Color::WHITE), opacity);
-                if *seconds {
-                    let mut pb = PathBuilder::new();
-                    line(&mut pb, sa as f32, -rad * 0.15, rad * 0.86);
-                    if let Some(p) = pb.finish() {
-                        pm.stroke_path(&p, &accent, &stroke((d * 0.012).max(1.0)), tf, mask);
-                    }
-                }
-                if let Some(dot) = PathBuilder::from_circle(cx, cy, d * 0.035) {
-                    pm.fill_path(
-                        &dot,
-                        if *seconds { &accent } else { &ink },
-                        FillRule::Winding,
-                        tf,
-                        mask,
-                    );
-                }
-            }
-            LayerKind::Rotator {
-                text,
-                interval,
-                fade,
-                font,
-            } => {
-                let items = widgets::lines(text, ctx.data);
-                if items.is_empty() {
-                    return;
-                }
-                let (idx, alpha) =
-                    widgets::rotator_state(items.len(), *interval, *fade, time.age_secs);
-                let item = if font.uppercase {
-                    items[idx].to_uppercase()
-                } else {
-                    items[idx].clone()
-                };
-                self.draw_text(
-                    pm,
-                    r,
-                    font,
-                    &item,
-                    (font.align, font.vertical_align),
-                    (0.0, 0.0, w, h),
-                    tf,
-                    opacity * alpha as f32,
-                    mask,
-                );
-            }
-            LayerKind::Slideshow {
-                images,
-                interval,
-                fade,
-                fit,
-            } => {
-                let list = widgets::lines(images, ctx.data);
-                if list.is_empty() {
-                    return;
-                }
-                let (cur, next, mix) =
-                    widgets::slideshow_state(list.len(), *interval, *fade, time.age_secs);
-                self.draw_image(
-                    pm,
-                    &list[cur],
-                    *fit,
-                    w,
-                    h,
-                    tf,
-                    opacity * (1.0 - mix as f32),
-                    mask,
-                );
-                if mix > 0.0 {
-                    self.draw_image(pm, &list[next], *fit, w, h, tf, opacity * mix as f32, mask);
-                }
-            }
-            // Drawn by src/wid (wid::draw returns true for them).
-            LayerKind::Polygon { .. }
-            | LayerKind::Pen { .. }
-            | LayerKind::Source { .. }
-            | LayerKind::Web { .. } => {}
-            LayerKind::QrCode {
-                data, background, ..
-            } => {
-                let content = interpolate_text(data, ctx.data);
-                let Some((n, modules)) = qr_modules(&content) else {
-                    return;
-                };
-                let side = w.min(h);
-                let cell = side / (n + 8) as f32; // 4-module quiet zone
-                let (ox, oy) = ((w - side) / 2.0 + 4.0 * cell, (h - side) / 2.0 + 4.0 * cell);
-                let bg = paint_for(Color::from_hex(background).unwrap_or(Color::WHITE), opacity);
-                if let Some(rc) = Rect::from_xywh((w - side) / 2.0, (h - side) / 2.0, side, side) {
-                    pm.fill_rect(rc, &bg, tf, mask);
-                }
-                let mut pb = PathBuilder::new();
-                for (i, dark) in modules.iter().enumerate() {
-                    if *dark {
-                        let (x, y) = ((i % n) as f32, (i / n) as f32);
-                        if let Some(rc) =
-                            Rect::from_xywh(ox + x * cell, oy + y * cell, cell + 0.02, cell + 0.02)
-                        {
-                            pb.push_rect(rc);
-                        }
-                    }
-                }
-                if let Some(p) = pb.finish() {
-                    pm.fill_path(&p, &fill, FillRule::Winding, tf, mask);
-                }
-            }
-            LayerKind::BarChart {
-                text,
-                percent,
-                duration,
-                track,
-                text_color,
-                font,
-            } => {
-                let rows = widgets::chart_rows(text, ctx.data);
-                if rows.is_empty() {
-                    return;
-                }
-                let total: f64 = rows.iter().map(|(_, v)| v.max(0.0)).sum();
-                let max = rows.iter().map(|(_, v)| *v).fold(0.0_f64, f64::max);
-                let grow = widgets::grow(*duration, time.age_secs) as f32;
-                let row_h = h / rows.len() as f32;
-                let (label_w, value_w) = (w * 0.28, w * 0.16);
-                let bar_x = label_w + w * 0.02;
-                let bar_w = (w - label_w - value_w - w * 0.04).max(0.0);
-                let track_paint = paint_for(
-                    Color::from_hex(track).unwrap_or(Color::TRANSPARENT),
-                    opacity,
-                );
-                let text_r = ResolvedLayer {
-                    values: {
-                        let mut v = r.values.clone();
-                        v.insert(
-                            Prop::Fill,
-                            Value::Color(Color::from_hex(text_color).unwrap_or(Color::WHITE)),
-                        );
-                        v.insert(Prop::StrokeWidth, Value::Number(0.0));
-                        v
-                    },
-                    ..r.clone()
-                };
-                for (i, (label, v)) in rows.iter().enumerate() {
-                    let y = i as f32 * row_h;
-                    let bh = row_h * 0.56;
-                    let by = y + (row_h - bh) / 2.0;
-                    if let Some(p) = rounded_rect(bar_w, bh, bh / 4.0) {
-                        pm.fill_path(
-                            &p,
-                            &track_paint,
-                            FillRule::Winding,
-                            tf.pre_translate(bar_x, by),
-                            mask,
-                        );
-                    }
-                    let frac = if max > 0.0 {
-                        (v / max).clamp(0.0, 1.0) as f32
-                    } else {
-                        0.0
-                    };
-                    if let Some(p) = rounded_rect(bar_w * frac * grow, bh, bh / 4.0) {
-                        pm.fill_path(
-                            &p,
-                            &fill,
-                            FillRule::Winding,
-                            tf.pre_translate(bar_x, by),
-                            mask,
-                        );
-                    }
-                    let label = if font.uppercase {
-                        label.to_uppercase()
-                    } else {
-                        label.clone()
-                    };
-                    self.draw_text(
-                        pm,
-                        &text_r,
-                        font,
-                        &label,
-                        (TextAlign::Left, VerticalAlign::Middle),
-                        (0.0, y, label_w, row_h),
-                        tf,
-                        opacity,
-                        mask,
-                    );
-                    let shown = if *percent {
-                        let pct = if total > 0.0 { v / total * 100.0 } else { 0.0 };
-                        format!("{}%", widgets::format_number(pct * grow as f64, 0, false))
-                    } else {
-                        widgets::format_number(
-                            v * grow as f64,
-                            if v.fract() == 0.0 { 0 } else { 1 },
-                            true,
-                        )
-                    };
-                    self.draw_text(
-                        pm,
-                        &text_r,
-                        font,
-                        &shown,
-                        (TextAlign::Right, VerticalAlign::Middle),
-                        (w - value_w, y, value_w, row_h),
-                        tf,
-                        opacity,
-                        mask,
-                    );
-                }
-            }
+            LayerKind::Polygon { .. } | LayerKind::Pen { .. } | LayerKind::Source { .. } => {}
         }
     }
 
@@ -2973,171 +2403,6 @@ fn rounded_rect(w: f32, h: f32, radius: f32) -> Option<tiny_skia::Path> {
 
 #[cfg(test)]
 mod tests {
-    /// Layers at rest laid from their sprites are the layers drawn straight
-    /// (to the rounding of laying premultiplied pixels twice), fractions of
-    /// positions included; moving, they are laid bilinear, close to it.
-    #[test]
-    fn sprites_draw_what_straight_drawing_does() {
-        use super::*;
-        let project = strata_mv_core::sample::demo_project();
-        let t: Template = serde_json::from_value(serde_json::json!({
-            "id": "sp", "name": "S", "duration": 100.0, "markers": [], "fields": [], "zone": "",
-            "layers": [
-                {"id": "a", "name": "Card", "type": "rect", "dropShadow": true,
-                 "props": {"x": 100.5, "y": 80.25, "width": 500.0, "height": 240.0, "fill": [0.9, 0.3, 0.2, 1.0], "cornerRadius": 18.0, "shadowBlur": 24.0, "shadowX": 0.0, "shadowY": 10.0, "shadowColor": [0.0, 0.0, 0.0, 0.6]}},
-                {"id": "b", "name": "Disc", "type": "ellipse",
-                 "props": {"x": 700.0, "y": 60.0, "width": 300.0, "height": 300.0, "fill": [0.2, 0.5, 0.9, 1.0]},
-                 "tracks": {"x": [{"frame": 0.0, "value": 700.0, "easing": {"type": "linear"}}, {"frame": 50.0, "value": 900.0, "easing": {"type": "linear"}}]}},
-                {"id": "c", "name": "Text", "type": "text", "text": "Bonjour le monde", "fontFamily": "Inter", "fontWeight": 700,
-                 "props": {"x": 120.75, "y": 400.0, "width": 800.0, "height": 120.0, "fontSize": 72.0, "fill": [1.0, 1.0, 1.0, 1.0]}},
-                {"id": "g", "name": "Group", "type": "group", "dropShadow": true,
-                 "props": {"x": 300.0, "y": 560.0, "width": 400.0, "height": 160.0, "shadowBlur": 12.0, "shadowY": 6.0, "shadowColor": [0.0, 0.0, 0.0, 0.5]}},
-                {"id": "h", "name": "In group", "type": "rect", "parent": "g",
-                 "props": {"x": 20.0, "y": 20.0, "width": 360.0, "height": 120.0, "fill": [0.3, 0.8, 0.4, 1.0]}}
-            ]
-        }))
-        .unwrap();
-        let dir = std::env::temp_dir().join("strata-mv-render-test-assets");
-        let mut with = Renderer::new(&dir);
-        let mut without = Renderer::new(&dir);
-        without.set_sprites(false);
-        let data = Data::default();
-        let diff = |frame: f64, with: &mut Renderer, without: &mut Renderer| {
-            let a = with.render_template(&project, &t, "main", frame, &data);
-            let b = without.render_template(&project, &t, "main", frame, &data);
-            let (mut max, mut n) = (0u8, 0usize);
-            for (x, y) in a.data.iter().zip(&b.data) {
-                let d = x.abs_diff(*y);
-                max = max.max(d);
-                n += usize::from(d > 1);
-            }
-            (max, n)
-        };
-        // At rest (frame 60: the disc stopped), twice (the second from the
-        // sprites kept). A few edge pixels differ by one coverage step (the
-        // path's coordinates rounded in another place).
-        for _ in 0..2 {
-            let (max, n) = diff(60.0, &mut with, &mut without);
-            assert!(
-                max <= 24 && n <= 64,
-                "at rest, sprites differ by {max} on {n} bytes"
-            );
-        }
-        assert!(with.sprites.found > 0, "sprites laid again");
-        // Moving (the disc slides): laid bilinear, close to the straight drawing.
-        let (max, n) = diff(25.0, &mut with, &mut without);
-        assert!(
-            n < 20_000,
-            "moving, {n} bytes differ by more than 1 (max {max})"
-        );
-    }
-
-    /// Over a live picture: the graphics where they draw, the picture
-    /// (scaled to fit, on black) elsewhere; opaque.
-    #[test]
-    fn a_source_of_another_size_is_fitted_on_black() {
-        // 4:3 into 16:9: bars left and right, the colour kept inside.
-        let mut live = Pixmap::new(160, 120).unwrap();
-        live.fill(tiny_skia::Color::from_rgba8(200, 100, 50, 255));
-        let out = fit_picture(&live, 320, 180);
-        let px = |x: usize, y: usize| &out.data()[(y * 320 + x) * 4..(y * 320 + x) * 4 + 4];
-        assert_eq!(px(5, 90), &[0, 0, 0, 255]);
-        assert_eq!(px(314, 90), &[0, 0, 0, 255]);
-        for (x, y) in [(40, 0), (160, 90), (279, 179)] {
-            assert_eq!(px(x, y), &[200, 100, 50, 255], "at {x},{y}");
-        }
-        // A ramp stays a ramp (no step where the bands meet).
-        let mut ramp = Pixmap::new(64, 64).unwrap();
-        for (i, p) in ramp
-            .data_mut()
-            .as_chunks_mut::<4>()
-            .0
-            .iter_mut()
-            .enumerate()
-        {
-            let v = (i / 64 * 4) as u8;
-            p.copy_from_slice(&[v, v, v, 255]);
-        }
-        let up = fit_picture(&ramp, 96, 96);
-        let col: Vec<u8> = (0..96).map(|y| up.data()[(y * 96 + 10) * 4]).collect();
-        assert!(
-            col.windows(2).all(|w| w[1] >= w[0] && w[1] - w[0] <= 4),
-            "{col:?}"
-        );
-    }
-
-    #[test]
-    fn graphics_are_keyed_over_the_live_picture() {
-        use super::*;
-        let mut g = Frame::blank(4, 2);
-        // A half-transparent red pixel at (0, 0) (premultiplied).
-        g.data[..4].copy_from_slice(&[128, 0, 0, 128]);
-        let mut live = Pixmap::new(2, 1).unwrap();
-        live.fill(tiny_skia::Color::from_rgba8(0, 0, 200, 255));
-        let f = over_live(&g, &live);
-        let px = |x: usize, y: usize| &f.data[(y * 4 + x) * 4..(y * 4 + x) * 4 + 4];
-        assert!(f.data.chunks(4).all(|p| p[3] == 255));
-        // Red over blue at (0, 0), blue elsewhere (2×1 scaled to 4×2).
-        assert_eq!(px(0, 0)[0], 128);
-        assert!(px(0, 0)[2] > 90 && px(0, 0)[2] < 110);
-        assert_eq!(px(3, 1), &[0, 0, 200, 255]);
-    }
-
-    #[test]
-    fn a_web_picture_is_read_from_its_cache() {
-        let dir = std::env::temp_dir().join(format!("strata-mv-web-{}", std::process::id()));
-        let url = "https://example.com/logo.png?v=2";
-        assert!(is_url(url) && !is_url("/assets/a.png"));
-        let path = url_cache_path(&dir, url);
-        assert!(load_image(&dir, url).is_none());
-        std::fs::create_dir_all(path.parent().unwrap()).unwrap();
-        image::RgbaImage::from_pixel(3, 2, image::Rgba([255, 0, 0, 255]))
-            .save_with_format(&path, image::ImageFormat::Png)
-            .unwrap();
-        let pm = load_image(&dir, url).expect("read from the cache");
-        assert_eq!((pm.width(), pm.height()), (3, 2));
-        let _ = std::fs::remove_dir_all(&dir);
-    }
-
-    #[test]
-    fn a_slate_fills_the_frame() {
-        let dir = std::env::temp_dir().join(format!("mv-slate-{}", std::process::id()));
-        std::fs::create_dir_all(&dir).unwrap();
-        // 4×1: red then blue halves; in a 2×2 frame it is cropped to its middle.
-        let img = image::RgbaImage::from_fn(4, 1, |x, _| {
-            if x < 2 {
-                image::Rgba([255, 0, 0, 255])
-            } else {
-                image::Rgba([0, 0, 255, 255])
-            }
-        });
-        img.save(dir.join("slate.png")).unwrap();
-        let mut r = Renderer::new(&dir);
-        let f = r.render_slate(
-            "/assets/slate.png",
-            OutputFormat {
-                width: 2,
-                height: 2,
-            },
-        );
-        assert_eq!((f.width, f.height), (2, 2));
-        assert!(
-            f.data.chunks(4).all(|p| p[3] == 255),
-            "covers the whole frame"
-        );
-        assert!(f.data[0] > 150 && f.data[6] > 150, "red left, blue right");
-        // No picture: transparent.
-        let f = r.render_slate(
-            "/assets/missing.png",
-            OutputFormat {
-                width: 2,
-                height: 2,
-            },
-        );
-        assert!(f.data.iter().all(|b| *b == 0));
-        let _ = std::fs::remove_dir_all(&dir);
-    }
-
     use super::*;
     use strata_mv_core::{sample, Command};
 
@@ -3165,9 +2430,7 @@ mod tests {
                 Command::Take {
                     zone: None,
                     layer: Some(50),
-                    template_id: "credits".into(),
-                    data: None,
-                    rundown_id: None,
+                    template_id: "full-frame".into(),
                 },
             )
             .unwrap();
@@ -3193,11 +2456,11 @@ mod tests {
             transition: strata_mv_core::ZoneTransition::Cut,
             areas: Default::default(),
         }];
-        // Every layer of the credits shown from frame 0 to 8 only.
+        // Every layer of the plate shown from frame 0 to 8 only.
         let t = project
             .templates
             .iter_mut()
-            .find(|t| t.id == "credits")
+            .find(|t| t.id == "full-frame")
             .unwrap();
         for l in &mut t.layers {
             l.span = Some(strata_mv_core::Span { from: 0.0, to: 8.0 });
@@ -3209,9 +2472,7 @@ mod tests {
                 Command::Take {
                     zone: None,
                     layer: Some(50),
-                    template_id: "credits".into(),
-                    data: None,
-                    rundown_id: None,
+                    template_id: "full-frame".into(),
                 },
             )
             .unwrap();
@@ -3231,68 +2492,12 @@ mod tests {
     }
 
     #[test]
-    fn an_update_cross_fades() {
-        let project = sample::demo_project();
-        let mut state = ChannelState::default();
-        let data =
-            |name: &str| std::collections::BTreeMap::from([("name".to_string(), name.to_string())]);
-        state
-            .apply(
-                &project,
-                Command::Take {
-                    zone: Some("lower-third".into()),
-                    layer: None,
-                    template_id: "lower-third".into(),
-                    data: Some(data("A")),
-                    rundown_id: None,
-                },
-            )
-            .unwrap();
-        for _ in 0..200 {
-            state.tick(1.0);
-        }
-        let mut r = Renderer::new(std::env::temp_dir().join("strata-mv-render-test-assets"));
-        let old = r.render_channel(&project, &state, OUT, "UTC");
-        let update = |fade| Command::Update {
-            zone: Some("lower-third".into()),
-            layer: None,
-            data: data("Wolfgang Amadeus Mozart"),
-            fade,
-        };
-        let mut cut = state.clone();
-        cut.apply(&project, update(false)).unwrap();
-        let new = r.render_channel(&project, &cut, OUT, "UTC");
-        assert_ne!(old.data, new.data);
-        // Halfway through the fade: half the old picture plus half the new one.
-        state.apply(&project, update(true)).unwrap();
-        let f = state
-            .layers
-            .values_mut()
-            .next()
-            .unwrap()
-            .fade
-            .as_mut()
-            .unwrap();
-        f.frame = f.length / 2.0;
-        let mid = r.render_channel(&project, &state, OUT, "UTC");
-        let worst = (0..mid.data.len())
-            .map(|i| (mid.data[i] as i32 - (old.data[i] as i32 + new.data[i] as i32) / 2).abs())
-            .max()
-            .unwrap();
-        assert!(worst <= 2, "off by {worst}");
-    }
-
-    #[test]
     fn a_fade_zone_draws_the_graphic_going_under_the_new_one() {
         let mut project = sample::demo_project();
-        let data =
-            |name: &str| std::collections::BTreeMap::from([("name".to_string(), name.to_string())]);
-        let take = |name: &str| Command::Take {
+        let take = |_name: &str| Command::Take {
             zone: Some("lower-third".into()),
             layer: None,
             template_id: "lower-third".into(),
-            data: Some(data(name)),
-            rundown_id: None,
         };
         let mut state = ChannelState::default();
         state.apply(&project, take("Marie Curie")).unwrap();
@@ -3344,232 +2549,13 @@ mod tests {
     }
 
     #[test]
-    fn a_timer_with_an_analog_face_draws_its_face_and_hands() {
-        let project = sample::demo_project();
-        let t: strata_mv_core::Template = serde_json::from_value(serde_json::json!({
-            "id": "ac", "name": "T", "duration": 50.0, "markers": [], "zone": "", "fields": [],
-            "layers": [{
-                "id": "c", "name": "Clock", "type": "clock", "timerMode": "countdown", "cdDuration": 11730000, "face": "analog",
-                "analog": {"face": "#0000ff", "hands": "#ffffff", "accent": "#ff0000", "ticks": "hours"},
-                "props": {"x": 0.0, "y": 0.0, "width": 400.0, "height": 400.0, "fill": [1.0, 1.0, 1.0, 1.0]}
-            }]
-        }))
-        .unwrap();
-        let mut r = Renderer::new(std::env::temp_dir().join("strata-mv-render-test-assets"));
-        let f = r.render_template(&project, &t, "main", 0.0, &Default::default());
-        let px = |x: u32, y: u32| {
-            let i = ((y * f.width + x) * 4) as usize;
-            [f.data[i], f.data[i + 1], f.data[i + 2], f.data[i + 3]]
-        };
-        // A countdown not started yet shows 3:15:30 (hands away from 12): blue face,
-        // nothing in the corner, the red dot of the second hand at the centre.
-        assert_eq!(px(200, 60), [0, 0, 255, 255]);
-        assert_eq!(px(5, 5)[3], 0);
-        assert_eq!(px(200, 200), [255, 0, 0, 255]);
-        // The 12 o'clock mark is white.
-        assert_eq!(px(200, 26), [255, 255, 255, 255]);
-    }
-
-    #[test]
-    fn a_flip_ticker_types_its_item_in() {
-        let project = sample::demo_project();
-        let t: strata_mv_core::Template = serde_json::from_value(serde_json::json!({
-            "id": "tk", "name": "T", "duration": 500.0, "markers": [], "zone": "", "fields": [],
-            "layers": [{
-                "id": "k", "name": "Ticker", "type": "ticker", "text": "", "separator": "", "speed": 100.0,
-                "fontFamily": "Inter", "mode": "flip", "trans": "type", "transDur": 2.0, "itemDur": 8.0,
-                "items": [{"cat": "", "text": "MMMMMMMM", "on": true}],
-                "props": {"x": 0.0, "y": 0.0, "width": 1200.0, "height": 100.0, "fill": [1.0, 1.0, 1.0, 1.0], "fontSize": 60.0}
-            }]
-        }))
-        .unwrap();
-        let mut r = Renderer::new(std::env::temp_dir().join("strata-mv-render-test-assets"));
-        let fps = project.frame_rate.as_f64();
-        // Ink along the middle line of the ticker.
-        let mut ink = |frame: f64| {
-            let f = r.render_template(&project, &t, "main", frame, &Default::default());
-            (0..f.width)
-                .filter(|&x| f.data[((50 * f.width + x) * 4 + 3) as usize] > 128)
-                .count()
-        };
-        let quarter = ink(fps * 0.5);
-        let typed = ink(fps * 3.0);
-        assert!(typed > 100, "the whole item once typed ({typed} px)");
-        assert!(
-            quarter * 2 < typed,
-            "a quarter of it half a second in ({quarter} px of {typed})"
-        );
-    }
-
-    #[test]
-    fn a_drop_shadow_falls_under_the_layer_and_its_children() {
-        let project = sample::demo_project();
-        let shadow = serde_json::json!({"shadowColor": [0.0, 0.0, 1.0, 1.0], "shadowX": 20.0, "shadowY": 30.0, "shadowBlur": 0.0});
-        let props = |x: f64, y: f64, extra: &serde_json::Value| {
-            let mut p = serde_json::json!({"x": x, "y": y, "width": 200.0, "height": 100.0, "fill": [1.0, 0.0, 0.0, 1.0]});
-            for (k, v) in extra.as_object().unwrap() {
-                p[k] = v.clone();
-            }
-            p
-        };
-        let t: strata_mv_core::Template = serde_json::from_value(serde_json::json!({
-            "id": "sh", "name": "T", "duration": 10.0, "markers": [], "zone": "", "fields": [],
-            "layers": [
-                {"id": "a", "name": "Rect", "type": "rect", "dropShadow": true, "props": props(100.0, 100.0, &shadow)},
-                {"id": "e", "name": "Ellipse", "type": "ellipse", "dropShadow": true, "fillStyle": {"kind": "solid"}, "props": props(600.0, 100.0, &shadow)},
-                // A group's shadow is its children's.
-                {"id": "g", "name": "Group", "type": "group", "dropShadow": true, "props": {"x": 100.0, "y": 400.0, "width": 200.0, "height": 100.0, "shadowColor": [0.0, 0.0, 1.0, 1.0], "shadowX": 20.0, "shadowY": 30.0, "shadowBlur": 0.0}},
-                {"id": "c", "name": "Child", "type": "rect", "parent": "g", "props": props(0.0, 0.0, &serde_json::json!({}))},
-                // Blurred, and at half opacity.
-                {"id": "b", "name": "Soft", "type": "rect", "dropShadow": true, "props": props(1100.0, 100.0, &serde_json::json!({"shadowColor": [0.0, 0.0, 1.0, 1.0], "shadowY": 30.0, "shadowBlur": 20.0, "opacity": 0.5}))},
-                // A Text keeps its own shadow: no layer shadow.
-                {"id": "t", "name": "Text", "type": "text", "text": "████", "fontFamily": "Inter", "dropShadow": true, "props": props(600.0, 400.0, &shadow)}
-            ]
-        }))
-        .unwrap();
-        let mut r = Renderer::new(std::env::temp_dir().join("strata-mv-render-test-assets"));
-        let f = r.render_template(&project, &t, "main", 0.0, &Default::default());
-        let px = |x: u32, y: u32| {
-            let i = ((y * f.width + x) * 4) as usize;
-            [f.data[i], f.data[i + 1], f.data[i + 2], f.data[i + 3]]
-        };
-        // The rectangle over its shadow, the shadow 20 px right and 30 px down.
-        assert_eq!(px(110, 110), [255, 0, 0, 255]);
-        assert_eq!(px(310, 215), [0, 0, 255, 255]);
-        assert_eq!(px(90, 90)[3], 0);
-        assert_eq!(px(325, 215)[3], 0);
-        // The ellipse's shadow is round too (its box corner stays empty).
-        assert_eq!(px(700, 150), [255, 0, 0, 255]);
-        assert_eq!(px(720, 225), [0, 0, 255, 255]);
-        assert_eq!(px(816, 228)[3], 0);
-        // The group's child casts it.
-        assert_eq!(px(310, 515), [0, 0, 255, 255]);
-        // Blurred: soft at the edge, at the layer's opacity.
-        let mid = px(1200, 215);
-        assert!(mid[2] > 100 && mid[3] < 140 && mid[3] > 100, "{mid:?}");
-        let edge = px(1200, 245);
-        assert!(edge[3] > 0 && edge[3] < mid[3], "{edge:?}");
-        // No shadow for the Text.
-        assert_eq!(px(810, 520)[3], 0);
-    }
-
-    #[test]
-    fn an_ellipse_arc_and_inner_radius_animate() {
-        let project = sample::demo_project();
-        // A ring (inner 50 % from its settings) whose end goes 0° → 360°
-        // over 10 frames, and whose inner radius goes to 0 at frame 20.
-        let t: strata_mv_core::Template = serde_json::from_value(serde_json::json!({
-            "id": "el", "name": "T", "duration": 30.0, "markers": [], "zone": "", "fields": [],
-            "layers": [{
-                "id": "e", "name": "Ring", "type": "ellipse", "circle": true, "inner": 50.0,
-                "fillStyle": {"kind": "solid"},
-                "props": {"x": 0.0, "y": 0.0, "width": 400.0, "height": 400.0, "fill": [1.0, 0.0, 0.0, 1.0]},
-                "tracks": {
-                    "arcEnd": [
-                        {"frame": 0.0, "value": 0.0, "easing": {"type": "linear"}},
-                        {"frame": 10.0, "value": 360.0, "easing": {"type": "linear"}}
-                    ],
-                    "innerRadius": [
-                        {"frame": 10.0, "value": 50.0, "easing": {"type": "linear"}},
-                        {"frame": 20.0, "value": 0.0, "easing": {"type": "linear"}}
-                    ]
-                }
-            }]
-        }))
-        .unwrap();
-        let mut r = Renderer::new(std::env::temp_dir().join("strata-mv-render-test-assets"));
-        let at = |r: &mut Renderer, frame: f64| {
-            let f = r.render_template(&project, &t, "main", frame, &Default::default());
-            move |x: u32, y: u32| f.data[((y * f.width + x) * 4 + 3) as usize]
-        };
-        // Frame 0: no sweep, nothing drawn.
-        let a = at(&mut r, 0.0);
-        assert_eq!(a(350, 200), 0);
-        // Frame 5: the right half of the ring (0° → 180°), not the left one.
-        let a = at(&mut r, 5.0);
-        assert_eq!(a(350, 200), 255);
-        assert_eq!(a(50, 200), 0);
-        // Inside the 50 % hole: empty.
-        assert_eq!(a(230, 200), 0);
-        // Frame 20: a full disc (no hole any more).
-        let a = at(&mut r, 20.0);
-        assert_eq!(a(50, 200), 255);
-        assert_eq!(a(230, 200), 255);
-    }
-
-    #[test]
-    fn a_scrolling_text_comes_in_from_the_right_with_its_looks() {
-        let project = sample::demo_project();
-        let t: strata_mv_core::Template = serde_json::from_value(serde_json::json!({
-            "id": "sc", "name": "T", "duration": 500.0, "markers": [], "zone": "", "fields": [],
-            "layers": [{
-                "id": "t", "name": "Ticker", "type": "text", "fontFamily": "Inter",
-                "text": "Breaking <c=#00ff00>news</c>\nSecond line", "scroll": "horizontal", "speed": 600.0,
-                "band": true, "bandColor": "#0000ff",
-                "props": {"x": 0.0, "y": 0.0, "width": 1920.0, "height": 120.0, "fontSize": 60.0, "fill": [1.0, 0.0, 0.0, 1.0]}
-            }]
-        }))
-        .unwrap();
-        let mut r = Renderer::new(std::env::temp_dir().join("strata-mv-render-test-assets"));
-        let fps = project.frame_rate.as_f64();
-        let seen = |f: &Frame| f.data.chunks(4).filter(|p| p[3] > 200).count();
-        let count = |f: &Frame, want: [u8; 3]| {
-            f.data
-                .chunks(4)
-                .filter(|p| p[3] == 255 && p[..3] == want)
-                .count()
-        };
-        // At the take it starts beyond the right edge.
-        assert_eq!(
-            seen(&r.render_template(&project, &t, "main", 0.0, &Default::default())),
-            0
-        );
-        // Two seconds later: on screen, with its band and its green part.
-        let f = r.render_template(&project, &t, "main", 2.0 * fps, &Default::default());
-        assert!(count(&f, [0, 0, 255]) > 1000, "band");
-        assert!(count(&f, [0, 255, 0]) > 200, "rich text");
-        assert!(count(&f, [255, 0, 0]) > 200, "text");
-    }
-
-    #[test]
-    fn styled_parts_of_a_text_have_their_colour() {
-        let project = sample::demo_project();
-        let t: strata_mv_core::Template = serde_json::from_value(serde_json::json!({
-            "id": "rt", "name": "T", "duration": 10.0, "markers": [], "zone": "",
-            "fields": [{"key": "v", "label": "V", "kind": "text", "default": ""}],
-            "layers": [{
-                "id": "t", "name": "Text", "type": "text", "fontFamily": "Inter",
-                "text": "MMMM <c=#00ff00>MMMM</c> {{v}}",
-                "props": {"x": 0.0, "y": 0.0, "width": 1600.0, "height": 200.0, "fontSize": 120.0, "fill": [1.0, 0.0, 0.0, 1.0]}
-            }]
-        }))
-        .unwrap();
-        let mut r = Renderer::new(std::env::temp_dir().join("strata-mv-render-test-assets"));
-        let count = |f: &Frame, want: [u8; 3]| {
-            f.data
-                .chunks(4)
-                .filter(|p| p[3] == 255 && p[..3] == want)
-                .count()
-        };
-        // The operator's value is styled too (a typed field).
-        let data: Data = [("v".to_string(), "<c=#0000ff>MMMM</c>".to_string())].into();
-        let f = r.render_template(&project, &t, "main", 5.0, &data);
-        assert!(count(&f, [255, 0, 0]) > 500, "the text's own colour");
-        assert!(count(&f, [0, 255, 0]) > 500, "the green part");
-        assert!(count(&f, [0, 0, 255]) > 500, "the operator's blue part");
-    }
-
-    #[test]
     fn widgets_render_and_scale() {
         let project = sample::demo_project();
         let mut state = ChannelState::default();
         for (layer, id) in [
             (30, "clock"),
-            (31, "analog-clock"),
             (40, "ticker"),
-            (50, "credits"),
-            (60, "poll"),
-            (70, "qr-code"),
+            (50, "full-frame"),
             (80, "countdown"),
         ] {
             state
@@ -3579,8 +2565,6 @@ mod tests {
                         zone: None,
                         layer: Some(layer),
                         template_id: id.into(),
-                        data: None,
-                        rundown_id: None,
                     },
                 )
                 .unwrap();
@@ -3621,8 +2605,6 @@ mod tests {
                     zone: None,
                     layer: Some(1),
                     template_id: "lower-third".into(),
-                    data: None,
-                    rundown_id: None,
                 },
             )
             .unwrap();
@@ -3641,55 +2623,5 @@ mod tests {
         if let Ok(path) = std::env::var("STRATA_MV_DUMP_PNG") {
             std::fs::write(path, f.to_png()).unwrap();
         }
-    }
-
-    #[test]
-    fn a_paused_lottie_freezes_while_the_template_plays_on() {
-        let mut project = sample::demo_project();
-        // A Lottie group whose square moves 0 → 1000 px over the 100 frames of the In.
-        let t: strata_mv_core::Template = serde_json::from_value(serde_json::json!({
-            "id": "lot", "name": "T", "duration": 100.0, "markers": [], "zone": "", "fields": [],
-            "layers": [
-                {"id": "g", "name": "Anim", "type": "group", "lottie": "/assets/a.json",
-                 "props": {"x": 0.0, "y": 0.0, "width": 1920.0, "height": 1080.0}},
-                {"id": "r", "name": "Square", "type": "rect", "parent": "g",
-                 "props": {"y": 0.0, "width": 100.0, "height": 100.0, "fill": [1.0, 0.0, 0.0, 1.0]},
-                 "tracks": {"x": [
-                     {"frame": 0.0, "value": 0.0, "easing": {"type": "linear"}},
-                     {"frame": 100.0, "value": 1000.0, "easing": {"type": "linear"}}
-                 ]}}
-            ]
-        }))
-        .unwrap();
-        project.templates.push(t);
-        // Taken in the full-screen zone.
-        let mut state = ChannelState::default();
-        let take = Command::Take {
-            zone: None,
-            layer: Some(50),
-            template_id: "lot".into(),
-            data: None,
-            rundown_id: None,
-        };
-        state.apply(&project, take).unwrap();
-        for _ in 0..50 {
-            state.tick(1.0);
-        }
-        let pause = Command::Widget {
-            zone: None,
-            layer: Some(50),
-            target: "Anim".into(),
-            control: strata_mv_core::WidgetControl::Pause,
-        };
-        state.apply(&project, pause).unwrap();
-        for _ in 0..30 {
-            state.tick(1.0);
-        }
-        let mut r = Renderer::new(std::env::temp_dir().join("strata-mv-render-test-assets"));
-        let f = r.render_channel(&project, &state, OUT, "UTC");
-        let alpha = |x: usize, y: usize| f.data[(y * 1920 + x) * 4 + 3];
-        // Frozen at frame 50 (x = 500) while the template is at frame 80.
-        assert_eq!(alpha(550, 50), 255);
-        assert_eq!(alpha(850, 50), 0);
     }
 }

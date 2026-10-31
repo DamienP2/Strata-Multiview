@@ -42,8 +42,3 @@ export async function loadFonts(): Promise<void> {
   }
 }
 
-/** Closest available weight of a family (what both renderers will use). */
-export function nearestWeight(f: FontFamily | undefined, w: number): number {
-  if (!f?.weights.length) return w;
-  return f.weights.reduce((a, b) => (Math.abs(b - w) < Math.abs(a - w) ? b : a));
-}

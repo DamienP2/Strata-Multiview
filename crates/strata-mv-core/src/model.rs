@@ -253,7 +253,6 @@ impl LayerKind {
             scroll,
             speed,
             separator,
-            looping,
             ..
         } = self
         else {
@@ -275,12 +274,7 @@ impl LayerKind {
                 speed: *speed,
                 font,
             }),
-            TextScroll::Vertical => Some(LayerKind::Roll {
-                text: text.clone(),
-                speed: *speed,
-                looping: *looping,
-                font,
-            }),
+            TextScroll::Vertical => None,
         }
     }
 }
@@ -306,9 +300,27 @@ impl TextTransform {
             TextTransform::None => t.to_string(),
             TextTransform::Upper => t.to_uppercase(),
             TextTransform::Lower => t.to_lowercase(),
-            TextTransform::Capitalize => crate::datapath::filter(t, &DataFilter::Capitalize),
+            TextTransform::Capitalize => capitalize(t),
         }
     }
+}
+
+/// "jean-pierre dupont" → "Jean-Pierre Dupont".
+fn capitalize(text: &str) -> String {
+    let mut out = String::with_capacity(text.len());
+    let mut start = true;
+    for c in text.chars() {
+        if start && c.is_alphabetic() {
+            out.extend(c.to_uppercase());
+            start = false;
+        } else {
+            out.push(c);
+            if c.is_whitespace() || c == '-' {
+                start = true;
+            }
+        }
+    }
+    out
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
@@ -464,86 +476,6 @@ pub enum LayerKind {
         #[serde(flatten)]
         x: crate::wid::ticker::Config,
     },
-    /// Vertical roll (credits, lists): lines scroll upwards.
-    #[serde(rename_all = "camelCase")]
-    Roll {
-        text: String,
-        #[serde(default = "default_roll_speed")]
-        speed: f64,
-        /// Start again from the bottom once everything has scrolled past.
-        #[serde(default = "yes", rename = "loop")]
-        looping: bool,
-        #[serde(flatten)]
-        font: FontStyle,
-    },
-    /// Clock face with hands.
-    #[serde(rename_all = "camelCase")]
-    AnalogClock {
-        /// IANA time zone; empty = the server's zone.
-        #[serde(default)]
-        timezone: String,
-        #[serde(default = "yes")]
-        seconds: bool,
-        /// Second hand colour (face = fill, hands and ticks = stroke).
-        #[serde(default = "default_accent")]
-        accent: String,
-    },
-    /// Shows the lines of `text` one after another with a cross-fade.
-    #[serde(rename_all = "camelCase")]
-    Rotator {
-        text: String,
-        /// Seconds per line.
-        #[serde(default = "default_four")]
-        interval: f64,
-        #[serde(default = "default_half")]
-        fade: f64,
-        #[serde(flatten)]
-        font: FontStyle,
-    },
-    /// Cycles through images (one asset path per line) with a cross-fade.
-    #[serde(rename_all = "camelCase")]
-    Slideshow {
-        images: String,
-        #[serde(default = "default_five")]
-        interval: f64,
-        #[serde(default = "default_fade")]
-        fade: f64,
-        #[serde(default)]
-        fit: ImageFit,
-    },
-    /// QR code of `data` (URL, text…); modules use the fill colour.
-    #[serde(rename_all = "camelCase")]
-    QrCode {
-        data: String,
-        #[serde(default = "default_white")]
-        background: String,
-        /// Settings of the spec widget (`wid::qrcode`).
-        #[serde(flatten)]
-        x: Box<crate::wid::qrcode::Config>,
-    },
-    /// A web page or HTML (shown by browsers only: HTML5 outputs, previews).
-    #[serde(rename_all = "camelCase")]
-    Web {
-        #[serde(flatten)]
-        x: crate::wid::web::Config,
-    },
-    /// Horizontal bar chart / poll: one "Label: value" per line.
-    #[serde(rename_all = "camelCase")]
-    BarChart {
-        text: String,
-        /// Show values as a percentage of the total.
-        #[serde(default = "yes")]
-        percent: bool,
-        #[serde(default = "default_one")]
-        duration: f64,
-        #[serde(default = "default_track")]
-        track: String,
-        /// Labels and values (the bars use the fill colour).
-        #[serde(default = "default_white")]
-        text_color: String,
-        #[serde(flatten)]
-        font: FontStyle,
-    },
     /// Regular, triangle or free polygon.
     #[serde(rename_all = "camelCase")]
     Polygon {
@@ -565,31 +497,6 @@ pub enum LayerKind {
         #[serde(flatten)]
         x: crate::wid::pen::Config,
     },
-}
-
-fn default_accent() -> String {
-    "#ff3b5c".into()
-}
-fn default_track() -> String {
-    "#ffffff33".into()
-}
-fn default_white() -> String {
-    "#ffffff".into()
-}
-fn default_half() -> f64 {
-    0.5
-}
-fn default_one() -> f64 {
-    1.0
-}
-fn default_four() -> f64 {
-    4.0
-}
-fn default_five() -> f64 {
-    5.0
-}
-fn default_fade() -> f64 {
-    0.8
 }
 
 /// Font settings shared by the text-based widgets.
@@ -637,9 +544,6 @@ fn default_separator() -> String {
 }
 fn default_ticker_speed() -> f64 {
     180.0
-}
-fn default_roll_speed() -> f64 {
-    60.0
 }
 
 fn default_weight() -> u16 {
@@ -1010,10 +914,6 @@ pub struct Field {
     pub kind: FieldKind,
     #[serde(default)]
     pub default: String,
-    /// Live value from a data source (see [`crate::datapath`]); it
-    /// replaces what the operator types while the source has a value.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub binding: Option<FieldBinding>,
     /// Range of a number (slider in the editors).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub min: Option<f64>,
@@ -1022,35 +922,6 @@ pub struct Field {
     /// Choices of an exposed setting (value, label): the Operator picks one.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub options: Vec<(String, String)>,
-}
-
-/// Where a field takes its value: a data source and a path in it.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct FieldBinding {
-    pub source: String,
-    /// `items[0].title`, `rows[{row}].name`, `players[number={num}].name`,
-    /// `items[*].title` (all, one per line), `items.length`.
-    pub path: String,
-    /// Applied in order to the value read (see [`crate::datapath::filter`]).
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    pub filters: Vec<DataFilter>,
-    /// Sorts a list of the source before the path reads it.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub sort: Option<DataSort>,
-    /// Table pipeline (the Data canvas): the list read as rows (dotted
-    /// keys, "" = the root), then `steps`. When set, `path`, `filters`
-    /// and `sort` are not used (see [`crate::datapath::pipeline`]).
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub list: Option<String>,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    pub steps: Vec<DataStep>,
-    /// How a new value of the source shows on air (at once when unset).
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub change: Option<ValueChange>,
-    /// Length of that change, in seconds (0.6 when unset).
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub change_secs: Option<f64>,
 }
 
 /// How a value its data source changed shows on air.
@@ -1073,99 +944,6 @@ pub enum ValueChange {
     /// Not on air by itself: the value shown stays until the operator
     /// takes or updates the graphic.
     Hold,
-}
-
-/// Rows of a source (after its steps) shown one at a time: the value of
-/// each column of the current row is in the data under
-/// [`DataSet::column_key`], the row number (1 = first) under
-/// [`DataSet::row_key`].
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct DataSet {
-    /// Data keys start with it (`standings` → `standings_team`).
-    pub key: String,
-    #[serde(default)]
-    pub name: String,
-    pub source: String,
-    #[serde(default)]
-    pub list: String,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    pub steps: Vec<DataStep>,
-    /// How the graphic on air goes from one row to the next.
-    #[serde(default)]
-    pub change: RowChange,
-}
-
-impl DataSet {
-    pub fn row_key(&self) -> String {
-        format!("{}__row", self.key)
-    }
-    pub fn count_key(&self) -> String {
-        format!("{}__count", self.key)
-    }
-    /// All its rows, for widgets showing a table: JSON `[[header…], [cells…], …]`.
-    pub fn table_key(&self) -> String {
-        format!("{}__table", self.key)
-    }
-    /// Its rows as text, a line per row, for a Text (only the current row when `one_key` is "1").
-    pub fn lines_key(&self) -> String {
-        format!("{}__lines", self.key)
-    }
-    /// "1": the Text shows one entry (the current row), chosen by the operator.
-    pub fn one_key(&self) -> String {
-        format!("{}__one", self.key)
-    }
-    /// Seconds between rows when the rows go on by themselves (empty: off).
-    pub fn auto_key(&self) -> String {
-        format!("{}__auto", self.key)
-    }
-    /// "1": after the last row, the first again.
-    pub fn loop_key(&self) -> String {
-        format!("{}__loop", self.key)
-    }
-    /// Age on air (frames) when the row last changed without going out.
-    pub fn shown_key(&self) -> String {
-        format!("{}__shown", self.key)
-    }
-    /// How the row changes, chosen by the operator ("outIn", "fade", "cut");
-    /// unset = the data set's own setting.
-    pub fn change_key(&self) -> String {
-        format!("{}__change", self.key)
-    }
-    /// The way rows change for this graphic.
-    pub fn change_in(&self, data: &crate::anim::Data) -> RowChange {
-        match data.get(&self.change_key()).map(|s| s.trim()) {
-            Some("outIn") => RowChange::OutIn,
-            Some("fade") => RowChange::Fade,
-            Some("cut") => RowChange::Cut,
-            _ => self.change,
-        }
-    }
-    /// Rows the operator added: JSON `[{"at": 3, "cells": {"team": "Nice"}}]`
-    /// (`at`: the row number it takes, none = at the end).
-    pub fn added_key(&self) -> String {
-        format!("{}__added", self.key)
-    }
-    /// Data key of a column: letters, digits and `_` only.
-    pub fn column_key(&self, column: &str) -> String {
-        let c: String = column
-            .chars()
-            .map(|c| if c.is_ascii_alphanumeric() { c } else { '_' })
-            .collect();
-        format!("{}_{}", self.key, c)
-    }
-}
-
-#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub enum RowChange {
-    /// The graphic plays its out animation, then comes in with the new row.
-    #[default]
-    OutIn,
-    /// The new row fades over the old one.
-    Fade,
-    /// The values change at once.
-    Cut,
 }
 
 /// What a text does when it is too long for its box.
@@ -1193,153 +971,6 @@ fn default_warn_below() -> f32 {
     0.8
 }
 
-/// One node of the table pipeline between a source and a field.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-#[serde(tag = "type", rename_all = "camelCase")]
-pub enum DataStep {
-    /// Keeps the rows matching the conditions (all of them, or any with
-    /// `any`), then rows `from` (1 = first, negative = from the end),
-    /// `count` of them (0 = all), then the `columns` (empty = all).
-    Filter {
-        #[serde(default, rename = "where")]
-        conditions: Vec<Condition>,
-        #[serde(default)]
-        any: bool,
-        #[serde(default)]
-        from: i64,
-        #[serde(default)]
-        count: usize,
-        #[serde(default)]
-        columns: Vec<String>,
-    },
-    /// Orders the rows by the keys, the first key first.
-    Sort {
-        #[serde(default)]
-        keys: Vec<SortKey>,
-    },
-    /// Text operations on the cells of `columns` (empty = all). `join`
-    /// makes the whole table one text, `default` fills an empty table.
-    Transform {
-        #[serde(default)]
-        columns: Vec<String>,
-        #[serde(default)]
-        ops: Vec<DataFilter>,
-    },
-}
-
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct Condition {
-    pub column: String,
-    pub op: CondOp,
-    /// Compared value; `{key}` is replaced by the item's data.
-    #[serde(default)]
-    pub value: String,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub enum CondOp {
-    Eq,
-    Ne,
-    Contains,
-    NotContains,
-    StartsWith,
-    Gt,
-    Ge,
-    Lt,
-    Le,
-    Empty,
-    NotEmpty,
-}
-
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct SortKey {
-    pub column: String,
-    #[serde(default)]
-    pub descending: bool,
-    #[serde(default)]
-    pub numeric: bool,
-}
-
-/// Sorts the list at `list` (dotted keys from the root, "" = the root) by
-/// the value of `by` in each element.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct DataSort {
-    #[serde(default)]
-    pub list: String,
-    pub by: String,
-    #[serde(default)]
-    pub descending: bool,
-    /// Compare as numbers (else as text).
-    #[serde(default)]
-    pub numeric: bool,
-}
-
-/// A step between a data source and a field: changes the text read.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-#[serde(tag = "type", rename_all = "camelCase")]
-pub enum DataFilter {
-    Upper,
-    Lower,
-    /// First letter of each word in capitals.
-    Capitalize,
-    Trim,
-    Prefix {
-        text: String,
-    },
-    Suffix {
-        text: String,
-    },
-    Replace {
-        find: String,
-        with: String,
-    },
-    /// At most `max` characters, then "…".
-    Truncate {
-        max: usize,
-    },
-    /// Lines `from` (1 = first, negative = from the end), `count` of them (0 = all).
-    Lines {
-        from: i64,
-        count: usize,
-    },
-    /// The lines joined with `separator` (a list on one line).
-    Join {
-        separator: String,
-    },
-    /// A number with `decimals` and thousands grouping.
-    Number {
-        decimals: u8,
-        grouping: bool,
-    },
-    /// A number: value `op` operand.
-    Math {
-        op: FilterOp,
-        value: f64,
-    },
-    /// `text` when the value is empty (or missing).
-    Default {
-        text: String,
-    },
-    /// `then` when the value equals `when`, else unchanged.
-    Map {
-        when: String,
-        then: String,
-    },
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub enum FilterOp {
-    Add,
-    Sub,
-    Mul,
-    Div,
-}
-
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Template {
@@ -1357,22 +988,6 @@ pub struct Template {
     /// Zone the template plays in by default (see [`Zone`]).
     #[serde(default)]
     pub zone: String,
-    /// Relations between values (node graph), see [`crate::logic`].
-    #[serde(default, skip_serializing_if = "crate::logic::Logic::is_empty")]
-    pub logic: crate::logic::Logic,
-    /// What happens on air (events → out, a pause playing on, a trigger…),
-    /// the same kind of graph, evaluated by the server, see [`crate::logic`].
-    #[serde(default, skip_serializing_if = "crate::logic::Logic::is_empty")]
-    pub triggers: crate::logic::Logic,
-    /// The Data canvas graph (sources, filters, sorts, transforms and their
-    /// wires), kept as the editor wrote it; the fields' bindings are
-    /// compiled from it.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub dataflow: Option<serde_json::Value>,
-    /// Tables whose rows the operator steps through (compiled from the
-    /// Data canvas); see [`crate::datapath::bind_datasets`].
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    pub datasets: Vec<DataSet>,
     /// Published revision (1, 2…); 0 for a template never published.
     #[serde(default)]
     pub revision: u32,
@@ -1419,10 +1034,6 @@ impl Template {
             fields: Vec::new(),
             layers: Vec::new(),
             zone: zone.into(),
-            logic: Default::default(),
-            triggers: Default::default(),
-            dataflow: None,
-            datasets: vec![],
             revision: 0,
             marker_model: MARKER_MODEL,
         }
@@ -1527,7 +1138,6 @@ impl Template {
                     label: format!("Variable {n}"),
                     kind: FieldKind::Text,
                     default: typed.to_string(),
-                    binding: None,
                     min: None,
                     max: None,
                     options: Vec::new(),
@@ -1593,50 +1203,6 @@ impl Template {
                     x.start_mode = StartMode::Auto;
                     changed = true;
                 }
-            }
-            // The analog clock is now a Timer with an analog face.
-            if let LayerKind::AnalogClock {
-                timezone,
-                seconds,
-                accent,
-            } = &l.kind
-            {
-                let color = |p: Prop, or: &str| {
-                    l.props
-                        .get(&p)
-                        .and_then(Value::as_color)
-                        .map(Color::to_hex)
-                        .unwrap_or_else(|| or.into())
-                };
-                use crate::wid::timer::{Analog, Config, Face, Ticks, TimerMode};
-                let x = Config {
-                    timer_mode: Some(TimerMode::Clock),
-                    face: Face::Analog,
-                    analog: Analog {
-                        seconds: *seconds,
-                        ticks: Ticks::Hours,
-                        face: color(Prop::Fill, "#0f1222e6"),
-                        hands: color(Prop::Stroke, "#ffffff"),
-                        accent: accent.clone(),
-                        ..Analog::default()
-                    },
-                    ..Config::default()
-                };
-                l.kind = LayerKind::Clock {
-                    mode: ClockMode::Time,
-                    format: "HH:mm:ss".into(),
-                    timezone: timezone.clone(),
-                    target: String::new(),
-                    font: FontStyle {
-                        font_family: default_font(),
-                        font_weight: default_weight(),
-                        align: TextAlign::Center,
-                        vertical_align: VerticalAlign::Middle,
-                        uppercase: false,
-                    },
-                    x: Box::new(x),
-                };
-                changed = true;
             }
         }
         changed
@@ -1760,136 +1326,6 @@ impl Template {
             .map(|f| (f.key.clone(), f.default.clone()))
             .collect()
     }
-}
-
-/// Applies what one client changed (`base` → `next`) to the rundown as it
-/// is now (`current`), so two operators editing at the same time keep each
-/// other's changes: items removed, edited, added or moved by this client
-/// are applied; the others stay as they are.
-pub fn merge_rundown(
-    current: &[RundownItem],
-    base: &[RundownItem],
-    next: &[RundownItem],
-) -> Vec<RundownItem> {
-    use std::collections::HashSet;
-    let ids = |v: &[RundownItem]| v.iter().map(|r| r.id.clone()).collect::<HashSet<_>>();
-    let (in_base, in_next) = (ids(base), ids(next));
-    let mut out: Vec<RundownItem> = current
-        .iter()
-        .filter(|r| !(in_base.contains(&r.id) && !in_next.contains(&r.id)))
-        .cloned()
-        .collect();
-    // Edited by this client.
-    for n in next {
-        if let (Some(b), Some(o)) = (
-            base.iter().find(|b| b.id == n.id),
-            out.iter_mut().find(|o| o.id == n.id),
-        ) {
-            if b != n {
-                *o = n.clone();
-            }
-        }
-    }
-    // Moved by this client: its order, others' new items after.
-    let common = |v: &[RundownItem]| {
-        v.iter()
-            .filter(|r| in_base.contains(&r.id) && in_next.contains(&r.id))
-            .map(|r| r.id.clone())
-            .collect::<Vec<_>>()
-    };
-    if common(base) != common(next) {
-        let mut ordered: Vec<RundownItem> = next
-            .iter()
-            .filter_map(|n| {
-                if in_base.contains(&n.id) {
-                    out.iter().find(|o| o.id == n.id).cloned()
-                } else {
-                    Some(n.clone())
-                }
-            })
-            .collect();
-        let placed = ids(&ordered);
-        ordered.extend(out.into_iter().filter(|o| !placed.contains(&o.id)));
-        return ordered;
-    }
-    // Added by this client: after the item before it.
-    for (i, n) in next.iter().enumerate() {
-        if in_base.contains(&n.id) || out.iter().any(|o| o.id == n.id) {
-            continue;
-        }
-        let at = next[..i]
-            .iter()
-            .rev()
-            .find_map(|p| out.iter().position(|o| o.id == p.id))
-            .map_or(0, |p| p + 1);
-        out.insert(at, n.clone());
-    }
-    out
-}
-
-/// An entry of the operator rundown (playlist).
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct RundownItem {
-    pub id: String,
-    pub name: String,
-    pub template_id: String,
-    /// Zone the item plays in ("" = the template's zone).
-    #[serde(default)]
-    pub zone: String,
-    /// Playlist (rundown section) the item belongs to.
-    #[serde(default)]
-    pub playlist: String,
-    /// Playout layer of pre-zone projects; replaced by `zone` on load.
-    #[serde(default)]
-    pub layer: u32,
-    #[serde(default)]
-    pub data: BTreeMap<String, String>,
-    /// When the fields bound to data sources are read.
-    #[serde(default, skip_serializing_if = "ReadMode::is_live")]
-    pub read: ReadMode,
-    /// Auto next (its playlist set to auto next): seconds on air, from the
-    /// take, before the next graphic of the playlist is taken; none = the
-    /// operator takes the next one.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub auto_secs: Option<f64>,
-    /// Stays on air when the next graphic is taken (in another zone).
-    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
-    pub hold: bool,
-}
-
-/// When a rundown item reads its data sources.
-#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub enum ReadMode {
-    /// On take, then on every change of the source, also on air.
-    #[default]
-    Live,
-    /// Once, when the item is taken.
-    Take,
-    /// Only when the operator asks (the values are saved in the item).
-    Manual,
-}
-
-impl ReadMode {
-    pub fn is_live(&self) -> bool {
-        *self == ReadMode::Live
-    }
-}
-
-/// A named list of rundown items (show segment, sport block, breaking news…).
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct Playlist {
-    pub id: String,
-    pub name: String,
-    /// The graphics go on to the next one by themselves (see
-    /// [`RundownItem::auto_secs`]).
-    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
-    pub auto_next: bool,
-    /// After the last graphic, the first again.
-    #[serde(default, rename = "loop", skip_serializing_if = "std::ops::Not::not")]
-    pub looping: bool,
 }
 
 /// What happens when a graphic is taken in a zone that is already on air.
@@ -2023,14 +1459,9 @@ pub struct Project {
     pub frame_rate: FrameRate,
     #[serde(default)]
     pub templates: Vec<Template>,
-    #[serde(default)]
-    pub rundown: Vec<RundownItem>,
     /// Screen zones, one graphic on air at a time in each.
     #[serde(default)]
     pub zones: Vec<Zone>,
-    /// Sections of the rundown, in display order.
-    #[serde(default)]
-    pub playlists: Vec<Playlist>,
     /// Alternative layouts (the main one is width × height).
     #[serde(default)]
     pub formats: Vec<Format>,
@@ -2039,24 +1470,12 @@ pub struct Project {
     /// there. A draft without a published template is a new template.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub drafts: Vec<Template>,
-    /// The empty template a new project starts with: removed at a publish
-    /// while it still has no layer ([`Project::drop_empty_starter`]).
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub starter: Option<String>,
     /// Designer aids: guides, safe areas, areas to keep clear.
     #[serde(default, skip_serializing_if = "Guides::is_default")]
     pub guides: Guides,
-    /// The Designer's order of the templates (ids); the operator keeps its own.
-    /// Templates missing from it follow, in their order.
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    pub design_order: Vec<String>,
     /// Language of the texts (hyphenation rules, French spaces): "fr", "en"…
     #[serde(default = "default_language")]
     pub language: String,
-    /// Length of a new template (its IN and OUT), seconds; each one is then
-    /// set on its own in the timeline. None: one second.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub template_secs: Option<f64>,
     /// The project's own palette (the shared ones are in the Library).
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub colors: Vec<NamedColor>,
@@ -2112,64 +1531,13 @@ impl Project {
         self.zones.iter().find(|z| z.layer == layer)
     }
 
-    /// Zone of a rundown item: its own, else its template's.
-    pub fn item_zone(&self, item: &RundownItem) -> Option<&Zone> {
-        self.zone(&item.zone).or_else(|| {
-            self.template(&item.template_id)
-                .and_then(|t| self.zone(&t.zone))
-        })
-    }
-
-    /// Gives every rundown item and template a zone. Pre-zone projects get
-    /// one zone per playout layer they used. Returns true if anything changed.
+    /// Gives the project a zone and every template a zone, and brings the
+    /// templates up to date. Returns true if anything changed.
     pub fn ensure_zones(&mut self) -> bool {
-        // Also brings the templates to the current marker model.
         let mut changed = false;
         for t in self.templates.iter_mut().chain(self.drafts.iter_mut()) {
             changed |= t.normalize_markers();
             changed |= t.upgrade_layers();
-        }
-        // "Hold anyway" is gone: those graphics now wait for the operator.
-        for r in self.rundown.iter_mut().filter(|r| r.hold) {
-            r.hold = false;
-            r.auto_secs = None;
-            changed = true;
-        }
-        for i in 0..self.rundown.len() {
-            if self.zone(&self.rundown[i].zone).is_some() {
-                continue;
-            }
-            // No zone given ("the template's zone"): the template's, not a new one.
-            if self.rundown[i].zone.is_empty() {
-                let tz = self
-                    .template(&self.rundown[i].template_id)
-                    .map(|t| t.zone.clone())
-                    .filter(|z| self.zone(z).is_some());
-                if let Some(tz) = tz {
-                    self.rundown[i].zone = tz;
-                    changed = true;
-                    continue;
-                }
-            }
-            let layer = self.rundown[i].layer;
-            let id = match self.zone_at(layer) {
-                Some(z) => z.id.clone(),
-                None => {
-                    let z = Zone {
-                        id: format!("layer-{layer}"),
-                        name: format!("Calque {}", i64::from(layer) + 1),
-                        layer,
-                        color: ZONE_COLORS[self.zones.len() % ZONE_COLORS.len()].into(),
-                        transition: ZoneTransition::Sequential,
-                        areas: Default::default(),
-                    };
-                    let id = z.id.clone();
-                    self.zones.push(z);
-                    id
-                }
-            };
-            self.rundown[i].zone = id;
-            changed = true;
         }
         if self.zones.is_empty() {
             self.zones.push(Zone {
@@ -2182,81 +1550,15 @@ impl Project {
             });
             changed = true;
         }
-        for t in 0..self.templates.len() {
-            if self.zone(&self.templates[t].zone).is_some() {
-                continue;
-            }
-            let tid = self.templates[t].id.clone();
-            let zone = self
-                .rundown
-                .iter()
-                .find(|r| r.template_id == tid)
-                .map(|r| r.zone.clone())
-                .unwrap_or_else(|| self.zones[0].id.clone());
-            self.templates[t].zone = zone;
-            changed = true;
-        }
-        // Keep the legacy layer number in step for older clients.
-        for i in 0..self.rundown.len() {
-            if let Some(l) = self.zone(&self.rundown[i].zone).map(|z| z.layer) {
-                if self.rundown[i].layer != l {
-                    self.rundown[i].layer = l;
-                    changed = true;
-                }
-            }
-        }
-        self.zones.sort_by_key(|z| z.layer);
-        changed | self.ensure_playlists()
-    }
-
-    /// At least one playlist, and every rundown item in an existing one.
-    pub fn ensure_playlists(&mut self) -> bool {
-        let mut changed = false;
-        if self.playlists.is_empty() {
-            self.playlists.push(Playlist {
-                id: "main".into(),
-                name: "Principal".into(),
-                auto_next: Default::default(),
-                looping: Default::default(),
-            });
-            changed = true;
-        }
-        let first = self.playlists[0].id.clone();
-        for r in &mut self.rundown {
-            if !self.playlists.iter().any(|p| p.id == r.playlist) {
-                r.playlist = first.clone();
+        let first = self.zones[0].id.clone();
+        for t in self.templates.iter_mut().chain(self.drafts.iter_mut()) {
+            if !self.zones.iter().any(|z| z.id == t.zone) {
+                t.zone = first.clone();
                 changed = true;
             }
         }
+        self.zones.sort_by_key(|z| z.layer);
         changed
-    }
-
-    pub fn validate_zones(zones: &[Zone]) -> Result<(), String> {
-        let mut ids = std::collections::HashSet::new();
-        let mut layers = std::collections::HashSet::new();
-        for z in zones {
-            let valid = !z.id.is_empty()
-                && z.id.len() <= 64
-                && z.id
-                    .chars()
-                    .all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_');
-            if !valid || !ids.insert(z.id.as_str()) {
-                return Err(format!(
-                    "zone ids must be unique and use letters, digits, - or _ (`{}`)",
-                    z.id
-                ));
-            }
-            if z.name.trim().is_empty() {
-                return Err("every zone needs a name".into());
-            }
-            if !layers.insert(z.layer) {
-                return Err(format!("two zones share the stacking position {}", z.layer));
-            }
-        }
-        if zones.is_empty() {
-            return Err("a project needs at least one zone".into());
-        }
-        Ok(())
     }
 
     /// The published template (what goes on air).
@@ -2304,36 +1606,6 @@ impl Project {
         Some(rev)
     }
 
-    /// The empty template the project started with goes once another one is
-    /// published, if it still has no layer (its draft neither); once it has
-    /// layers it is an ordinary template. Returns the id removed.
-    pub fn drop_empty_starter(&mut self) -> Option<String> {
-        let id = self.starter.clone()?;
-        let versions: Vec<&Template> = self
-            .templates
-            .iter()
-            .chain(self.drafts.iter())
-            .filter(|t| t.id == id)
-            .collect();
-        if versions.is_empty() {
-            self.starter = None;
-            return None;
-        }
-        if versions.iter().any(|t| !t.layers.is_empty()) {
-            self.starter = None;
-            return None;
-        }
-        // Never the last template of the project.
-        if !self.design_templates().any(|t| t.id != id) {
-            return None;
-        }
-        self.templates.retain(|t| t.id != id);
-        self.drafts.retain(|t| t.id != id);
-        self.rundown.retain(|r| r.template_id != id);
-        self.starter = None;
-        Some(id)
-    }
-
     /// Every template the designer lists: published ones (or their draft),
     /// then new drafts.
     pub fn design_templates(&self) -> impl Iterator<Item = &Template> {
@@ -2355,19 +1627,6 @@ pub fn new_id() -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn an_analog_clock_becomes_a_timer_with_an_analog_face() {
-        let mut t = crate::sample::analog_clock();
-        let LayerKind::Clock { x, timezone, .. } = &t.layers[0].kind else {
-            panic!("not a timer: {:?}", t.layers[0].kind);
-        };
-        assert_eq!(x.face, crate::wid::timer::Face::Analog);
-        assert_eq!(x.analog.face, "#0f1222e6");
-        assert_eq!(x.analog.hands, "#ffffff");
-        assert!(x.analog.seconds && timezone.is_empty());
-        assert!(!t.upgrade_layers());
-    }
 
     #[test]
     fn legacy_markers_become_one_on_air_marker() {
@@ -2472,53 +1731,6 @@ fn set_setting(root: &mut serde_json::Value, path: &str, raw: &str) {
     };
     if let Some(v) = new {
         *slot = v;
-    }
-}
-
-#[cfg(test)]
-mod merge_tests {
-    use super::*;
-
-    fn item(id: &str, name: &str) -> RundownItem {
-        serde_json::from_value(serde_json::json!({"id": id, "name": name, "templateId": "t"}))
-            .unwrap()
-    }
-    fn names(v: &[RundownItem]) -> Vec<String> {
-        v.iter().map(|r| format!("{}:{}", r.id, r.name)).collect()
-    }
-
-    #[test]
-    fn two_operators_keep_each_others_changes() {
-        let base = vec![item("a", "A"), item("b", "B"), item("c", "C")];
-        // Someone else renamed b and added d meanwhile.
-        let current = vec![
-            item("a", "A"),
-            item("b", "B2"),
-            item("c", "C"),
-            item("d", "D"),
-        ];
-        // This client renamed a.
-        let next = vec![item("a", "A1"), item("b", "B"), item("c", "C")];
-        assert_eq!(
-            names(&merge_rundown(&current, &base, &next)),
-            ["a:A1", "b:B2", "c:C", "d:D"]
-        );
-        // This client deleted c and added e after a.
-        let next = vec![item("a", "A"), item("e", "E"), item("b", "B")];
-        assert_eq!(
-            names(&merge_rundown(&current, &base, &next)),
-            ["a:A", "e:E", "b:B2", "d:D"]
-        );
-        // This client moved c first.
-        let next = vec![item("c", "C"), item("a", "A"), item("b", "B")];
-        assert_eq!(
-            names(&merge_rundown(&current, &base, &next)),
-            ["c:C", "a:A", "b:B2", "d:D"]
-        );
-        // An item deleted by someone else is not brought back by an edit.
-        let current = vec![item("a", "A")];
-        let next = vec![item("a", "A"), item("b", "B9"), item("c", "C")];
-        assert_eq!(names(&merge_rundown(&current, &base, &next)), ["a:A"]);
     }
 }
 
@@ -2642,41 +1854,4 @@ mod setting_tests {
             .unwrap();
         assert_eq!(out.resume, Resume::After { seconds: 3.0 });
     }
-
-    #[test]
-    fn the_empty_starter_template_goes_at_a_publish() {
-        let mut p = crate::sample::demo_project();
-        p.templates.clear();
-        p.drafts.clear();
-        p.rundown.clear();
-        let starter = Template::blank("Template 1", "", 50.0);
-        let sid = starter.id.clone();
-        p.templates.push(starter);
-        p.starter = Some(sid.clone());
-        // Alone: it stays.
-        assert_eq!(p.drop_empty_starter(), None);
-        assert_eq!(p.starter.as_deref(), Some(sid.as_str()));
-        // Another template published while it is still empty: it goes.
-        let mut other = Template::blank("Lower third", "", 50.0);
-        other
-            .layers
-            .push(serde_json::from_str(r#"{"id":"a","name":"A","type":"rect"}"#).unwrap());
-        let oid = other.id.clone();
-        p.save_draft(other);
-        p.publish(&oid);
-        assert_eq!(p.drop_empty_starter(), Some(sid.clone()));
-        assert!(p.template(&sid).is_none() && p.starter.is_none());
-        assert!(p.template(&oid).is_some());
-        // Given layers (even only in its draft), it is kept for good.
-        let mut q = crate::sample::demo_project();
-        let mut s = Template::blank("Template 1", "", 50.0);
-        q.starter = Some(s.id.clone());
-        q.templates.push(s.clone());
-        s.layers
-            .push(serde_json::from_str(r#"{"id":"b","name":"B","type":"rect"}"#).unwrap());
-        q.save_draft(s.clone());
-        assert_eq!(q.drop_empty_starter(), None);
-        assert!(q.starter.is_none() && q.template(&s.id).is_some());
-    }
-
 }

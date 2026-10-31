@@ -459,7 +459,7 @@ export function useExposable(path: string | undefined, value: string | undefined
   const layer = obj as { id?: string; name?: string };
   const single = /^\{\{(\w+)\}\}$/.exec(raw.trim());
   const field = single ? template?.fields.find((f) => f.key === single[1]) : undefined;
-  const exposed = !!field && !field.binding?.source;
+  const exposed = !!field;
   const wired = wiredKeys(raw).length > 0 && !exposed;
   const shown = exposed ? field!.default : raw;
   const change = (x: string) => (exposed ? update((t) => void (t.fields.find((f) => f.key === field!.key)!.default = x), `field-${field!.key}`) : set(x, true));
@@ -519,13 +519,13 @@ export function Content(p: {
   const { obj } = useContext(BindContext);
   const vars = useTextTokens(p.vars && !exposed ? (obj as { id?: string }).id : undefined, raw, change);
   // Its variables are typed by the Operator: edited here; read from data: shown, read only.
-  const wired = anyKey && (!p.vars || wiredKeys(raw).some((k) => !tpl?.fields.some((f) => f.key === k && !f.binding?.source)));
+  const wired = anyKey && (!p.vars || wiredKeys(raw).some((k) => !tpl?.fields.some((f) => f.key === k)));
   if (wired) return <DataValue label={p.label} value={plainText(interpolateText(raw, data))} multiline={p.multiline} />;
   const inline = p.label === undefined;
   // The whole text exposed: its variables go back to their text (asked first).
   const expose = async () => {
     if (exposed || !p.vars || !tpl) return toggleExpose();
-    const keys = [...new Set([...raw.matchAll(/\{\{\s*(\w+)\s*\}\}/g)].map((m) => m[1]))].filter((k) => tpl.fields.some((f) => f.key === k && !f.binding?.source));
+    const keys = [...new Set([...raw.matchAll(/\{\{\s*(\w+)\s*\}\}/g)].map((m) => m[1]))].filter((k) => tpl.fields.some((f) => f.key === k));
     if (keys.length) {
       const ok = await confirmDialog({
         title: t('Expose the whole text?'),

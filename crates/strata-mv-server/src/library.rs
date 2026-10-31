@@ -31,7 +31,6 @@ pub struct ProjectSummary {
     pub height: u32,
     pub frame_rate: strata_mv_core::FrameRate,
     pub templates: usize,
-    pub rundown: usize,
     /// The Source tiles of the multiview.
     pub tiles: usize,
     /// Template shown on the project's card (the first one).
@@ -52,7 +51,6 @@ impl From<&Project> for ProjectSummary {
             height: p.height,
             frame_rate: p.frame_rate,
             templates: p.design_templates().count(),
-            rundown: p.rundown.len(),
             tiles: p.design_templates().next().map_or(0, |t| {
                 t.layers
                     .iter()

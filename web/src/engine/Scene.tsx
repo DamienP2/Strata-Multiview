@@ -7,21 +7,19 @@ import { Sparkles } from 'lucide-react';
 import { t } from '../i18n';
 import { withSettings } from './settings';
 import { ValueMotionContext, valueTransform } from './valueMotion';
-import { createContext, memo, useContext, useEffect, useMemo, useReducer, type CSSProperties } from 'react';
+import { createContext, memo, useContext, useMemo, type CSSProperties } from 'react';
 import { TimeContext, useLayerTime, type Motion } from './LiveTime';
-import { col, cssColor, holdFrame, interpolateText, num, transformText, parseHex, resolveLayer, type Resolved } from './evaluate';
+import { col, cssColor, holdFrame, interpolateText, num, transformText, resolveLayer, type Resolved } from './evaluate';
 import type { Data, FontStyle, Layer, LayerType, Template, TextAlign, VerticalAlign } from './types';
 import * as W from './widgets';
-import { applyLogic, measureLayer } from './logic';
 import { fitText, type Fitted } from './textFit';
 import { applyMotion } from './motion';
-import { useFonts } from './fonts';
 import { widgetOf } from '../widgets';
 
 export { TimeContext } from './LiveTime';
 
 /** Layers whose look depends on the clock: they alone are redrawn on each frame (useLayerTime). */
-export const LIVE_TYPES: ReadonlySet<LayerType> = new Set(['clock', 'ticker', 'roll', 'rotator', 'slideshow', 'barChart']);
+export const LIVE_TYPES: ReadonlySet<LayerType> = new Set(['clock', 'ticker']);
 
 interface SceneProps {
   template: Template;
@@ -34,8 +32,6 @@ interface SceneProps {
 export const LINE_HEIGHT = 1.2;
 
 /** Layers changed by the template's logic graph (resolved values). */
-const NO_LOGIC = new Map<string, Resolved>();
-const LogicContext = createContext<Map<string, Resolved>>(NO_LOGIC);
 
 /** How a legacy widget moves (see Motion): a clock with the wall clock, the others with their time on air. */
 const legacyMotion = (l: Layer): Motion => (l.type === 'clock' ? 'wall' : LIVE_TYPES.has(l.type) ? 'age' : false);
@@ -169,7 +165,7 @@ function layerStyle(layer: Layer, frame: number, data: Data, hold: number, logic
       return { style, src: interpolateText(layer.src, data) };
     default:
       // Widgets draw their own content (see WidgetContent), inside their box.
-      if (layer.type !== 'qrCode') style.overflow = 'hidden';
+      style.overflow = 'hidden';
       return { style };
   }
 }
@@ -181,11 +177,6 @@ export function layerShadow(layer: Layer, r: Resolved): string | undefined {
   if (c[3] <= 0) return undefined;
   return `drop-shadow(${num(r.shadowX)}px ${num(r.shadowY)}px ${Math.max(0, num(r.shadowBlur))}px ${cssColor(c)})`;
 }
-
-const hexColor = (s: string, fallback = 'transparent') => {
-  const c = parseHex(s);
-  return c ? cssColor(c) : fallback;
-};
 
 const justify = (v: VerticalAlign) => (v === 'top' ? 'flex-start' : v === 'bottom' ? 'flex-end' : 'center');
 
@@ -225,33 +216,13 @@ function TextBox({ text, font, r, align, valign, box, color, stroke = true, opac
   );
 }
 
-function QrCode({ content, w, h, fill, background }: { content: string; w: number; h: number; fill: string; background: string }) {
-  const [, rerender] = useReducer((x: number) => x + 1, 0);
-  useEffect(() => W.onQrLoaded(rerender), []);
-  const side = Math.min(w, h);
-  const qr = content ? W.qrModules(content) : null;
-  const rects: React.ReactNode[] = [];
-  if (qr) {
-    for (let i = 0; i < qr.modules.length; i++) {
-      if (qr.modules[i] === '1') rects.push(<rect key={i} x={(i % qr.size) + 4} y={Math.floor(i / qr.size) + 4} width={1.02} height={1.02} />);
-    }
-  }
-  const n = (qr?.size ?? 21) + 8;
-  return (
-    <svg style={{ position: 'absolute', left: (w - side) / 2, top: (h - side) / 2, width: side, height: side }} viewBox={`0 0 ${n} ${n}`} shapeRendering="crispEdges">
-      <rect width={n} height={n} fill={background} />
-      <g fill={fill}>{rects}</g>
-    </svg>
-  );
-}
-
 /** Content of a widget layer; reads the time context so only it re-renders. */
 function WidgetContent({ layer, frame, data, hold }: { layer: Layer; frame: number; data: Data; hold: number }) {
   const base = useLayerTime(legacyMotion(layer));
   const time = base.layerAge ? { ...base, ageSecs: base.layerAge(layer) } : base;
   // Resolved once per frame of the timeline, not on each redraw of a moving widget.
   const resolved = useMemo(() => resolveLayer(layer, frame, data, hold), [layer, frame, data, hold]);
-  const r = useContext(LogicContext).get(layer.id) ?? resolved;
+  const r = resolved;
   const w = num(r.width);
   const h = num(r.height);
   const age = time.ageSecs;
@@ -260,12 +231,6 @@ function WidgetContent({ layer, frame, data, hold }: { layer: Layer; frame: numb
   switch (layer.type) {
     case 'clock':
       return <TextBox text={up(W.clockText(layer.mode, layer.format, layer.timezone, layer.target, data, time), layer)} font={layer} r={r} align={layer.align} valign={layer.verticalAlign} box={[0, 0, w, h]} />;
-    case 'rotator': {
-      const items = W.lines(layer.text, data);
-      if (!items.length) return null;
-      const [idx, alpha] = W.rotatorState(items.length, layer.interval, layer.fade, age);
-      return <TextBox text={up(items[idx], layer)} font={layer} r={r} align={layer.align} valign={layer.verticalAlign} box={[0, 0, w, h]} opacity={alpha} />;
-    }
     case 'ticker': {
       const items = W.lines(layer.text, data);
       if (!items.length) return null;
@@ -278,63 +243,6 @@ function WidgetContent({ layer, frame, data, hold }: { layer: Layer; frame: numb
             <TextBox key={i} text={strip} font={layer} r={r} align="left" valign={layer.verticalAlign} box={[x, 0, cycle, h]} />
           ))}
         </div>
-      );
-    }
-    case 'roll': {
-      const body = up(interpolateText(layer.text, data), layer);
-      const block = body.split('\n').length * num(r.fontSize) * LINE_HEIGHT;
-      const cycle = layer.loop ? block + h : block;
-      return (
-        <div style={clip}>
-          {W.scrollPositions(h, cycle, layer.speed * age, layer.loop).map((y, i) => (
-            <TextBox key={i} text={body} font={layer} r={r} align={layer.align} valign="top" box={[0, y, w, block]} />
-          ))}
-        </div>
-      );
-    }
-    case 'slideshow': {
-      const list = W.lines(layer.images, data);
-      if (!list.length) return null;
-      const [cur, next, mix] = W.slideshowState(list.length, layer.interval, layer.fade, age);
-      const img = (src: string, opacity: number) => <img key={src + opacity} src={src} alt="" draggable={false} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: layer.fit === 'stretch' ? 'fill' : layer.fit, opacity }} />;
-      return (
-        <>
-          {img(list[cur], 1 - mix)}
-          {mix > 0 && img(list[next], mix)}
-        </>
-      );
-    }
-    case 'qrCode':
-      return <QrCode content={interpolateText(layer.data, data)} w={w} h={h} fill={cssColor(col(r.fill))} background={hexColor(layer.background, 'white')} />;
-    case 'barChart': {
-      const rows = W.chartRows(layer.text, data);
-      if (!rows.length) return null;
-      const total = rows.reduce((a, [, v]) => a + Math.max(0, v), 0);
-      const max = rows.reduce((a, [, v]) => Math.max(a, v), 0);
-      const g = W.grow(layer.duration, age);
-      const rowH = h / rows.length;
-      const [labelW, valueW] = [w * 0.28, w * 0.16];
-      const barX = labelW + w * 0.02;
-      const barW = Math.max(0, w - labelW - valueW - w * 0.04);
-      const color = hexColor(layer.textColor, 'white');
-      return (
-        <>
-          {rows.map(([label, v], i) => {
-            const y = i * rowH;
-            const bh = rowH * 0.56;
-            const by = y + (rowH - bh) / 2;
-            const frac = max > 0 ? Math.min(1, Math.max(0, v / max)) : 0;
-            const shown = layer.percent ? `${W.formatNumber((total > 0 ? (v / total) * 100 : 0) * g, 0, false)}%` : W.formatNumber(v * g, Number.isInteger(v) ? 0 : 1, true);
-            return (
-              <div key={i}>
-                <div style={{ position: 'absolute', left: barX, top: by, width: barW, height: bh, background: hexColor(layer.track), borderRadius: bh / 4 }} />
-                <div style={{ position: 'absolute', left: barX, top: by, width: barW * frac * g, height: bh, background: cssColor(col(r.fill)), borderRadius: bh / 4 }} />
-                <TextBox text={up(label, layer)} font={layer} r={r} align="left" valign="middle" box={[0, y, labelW, rowH]} color={color} stroke={false} />
-                <TextBox text={shown} font={layer} r={r} align="right" valign="middle" box={[w - valueW, y, valueW, rowH]} color={color} stroke={false} />
-              </div>
-            );
-          })}
-        </>
       );
     }
     default:
@@ -351,7 +259,7 @@ function SpecWidget({ layer, frame, data, hold, interactive }: { layer: Layer; f
   const time = base.layerAge ? { ...base, ageSecs: base.layerAge(layer) } : base;
   // Resolved once per frame of the timeline, not on each redraw of a moving widget.
   const resolved = useMemo(() => resolveLayer(layer, frame, data, hold), [layer, frame, data, hold]);
-  const r = useContext(LogicContext).get(layer.id) ?? resolved;
+  const r = resolved;
   const Render = def.Render!;
   return (
     <Boundary resetKey={layer}>
@@ -361,10 +269,9 @@ function SpecWidget({ layer, frame, data, hold, interactive }: { layer: Layer; f
 }
 
 const LayerNode = memo(function LayerNode({ layer, childrenOf, frame, data, hold, interactive }: { layer: Layer; childrenOf: Map<string | null, Layer[]>; frame: number; data: Data; hold: number; interactive?: boolean }) {
-  const logic0 = useContext(LogicContext).get(layer.id);
   // A repeated movement (Layer.motion): follows the layer's age, also while it holds on air (the rest stands still).
   const lt = useLayerTime(layer.motion ? 'wall' : false);
-  const logic = layer.motion ? applyMotion(logic0 ?? resolveLayer(layer, frame, data, hold), layer.motion, frame, lt.fps ?? 50, lt.layerAge ? lt.layerAge(layer) : lt.ageSecs) : logic0;
+  const logic = layer.motion ? applyMotion(resolveLayer(layer, frame, data, hold), layer.motion, frame, lt.fps ?? 50, lt.layerAge ? lt.layerAge(layer) : lt.ageSecs) : undefined;
   const framed = useContext(FramedContext);
   const motion = useContext(ValueMotionContext);
   const moving = motion?.layers.get(layer.id);
@@ -386,7 +293,7 @@ const LayerNode = memo(function LayerNode({ layer, childrenOf, frame, data, hold
     <>
       {lines && (squeeze < 1 ? <div style={{ width: `${100 / squeeze}%`, transform: `scaleX(${squeeze})`, transformOrigin: '0 0' }}>{lines}</div> : lines)}
       {src && layer.type === 'image' && <img src={src} alt="" draggable={false} style={{ width: '100%', height: '100%', objectFit: layer.fit === 'stretch' ? 'fill' : layer.fit, display: 'block' }} />}
-      {widgetOf(layer)?.Render ? <SpecWidget layer={layer} frame={frame} data={data} hold={hold} interactive={interactive} /> : LIVE_TYPES.has(layer.type) || layer.type === 'qrCode' ? <WidgetContent layer={layer} frame={frame} data={data} hold={hold} /> : null}
+      {widgetOf(layer)?.Render ? <SpecWidget layer={layer} frame={frame} data={data} hold={hold} interactive={interactive} /> : LIVE_TYPES.has(layer.type) ? <WidgetContent layer={layer} frame={frame} data={data} hold={hold} /> : null}
       {layer.type === 'group' && layer.lottie !== undefined ? (
         <LottieKids group={layer} kids={kids} childrenOf={childrenOf} frame={frame} data={data} hold={hold} interactive={interactive} />
       ) : (
@@ -432,17 +339,16 @@ function LottiePlaceholder() {
   );
 }
 
-/** The layers whose look changes with the playhead: animated properties, a pen drawing in, a Lottie, a logic target, or one of these inside. */
+/** The layers whose look changes with the playhead: animated properties, a pen drawing in, a Lottie, or one of these inside. */
 const FramedContext = createContext<ReadonlySet<string>>(new Set());
 
-function framedLayers(layers: Layer[], childrenOf: Map<string | null, Layer[]>, logic: Template['logic']): Set<string> {
-  const targets = new Set(logic?.nodes.flatMap((n) => (n.type === 'target' ? [n.layer] : [])) ?? []);
+function framedLayers(layers: Layer[], childrenOf: Map<string | null, Layer[]>): Set<string> {
   const out = new Set<string>();
   const seen = new Set<string>();
   const visit = (l: Layer): boolean => {
     if (seen.has(l.id)) return out.has(l.id);
     seen.add(l.id);
-    let on = l.type === 'pen' || (l.type === 'group' && l.lottie !== undefined) || targets.has(l.id) || !!l.span || Object.values(l.tracks ?? {}).some((t) => (t?.length ?? 0) > 0);
+    let on = l.type === 'pen' || (l.type === 'group' && l.lottie !== undefined) || !!l.span || Object.values(l.tracks ?? {}).some((t) => (t?.length ?? 0) > 0);
     for (const k of childrenOf.get(l.id) ?? []) on = visit(k) || on;
     if (on) out.add(l.id);
     return on;
@@ -470,31 +376,18 @@ export const Scene = memo(function Scene({ template, frame, data, interactive }:
   template = withSettings(template, data);
   // Kept from one frame to the next: the layers that do not change are not drawn again.
   const childrenOf = useMemo(() => childrenMap(template.layers), [template.layers]);
-  const framed = useMemo(() => framedLayers(template.layers, childrenOf, template.logic), [template.layers, childrenOf, template.logic]);
+  const framed = useMemo(() => framedLayers(template.layers, childrenOf), [template.layers, childrenOf]);
   const hold = holdFrame(template);
-  // Text measured by the logic changes when fonts finish loading.
-  const fontsReady = useFonts((s) => s.ready);
-  // Relations: resolve every layer, run the graph, keep the changed ones.
-  const logic = useMemo(() => {
-    if (!template.logic?.nodes.length) return NO_LOGIC;
-    const out = new Map<string, Resolved>();
-    const values = new Map(template.layers.map((l) => [l.id, resolveLayer(l, frame, data, hold)]));
-    applyLogic(template.logic, values, data, measureLayer(template.layers, data, interpolateText));
-    for (const n of template.logic.nodes) if (n.type === 'target' && values.has(n.layer)) out.set(n.layer, values.get(n.layer)!);
-    return out;
-  }, [template, frame, data, hold, fontsReady]); // eslint-disable-line react-hooks/exhaustive-deps
   const rich = useMemo(() => typedKeys(template), [template.fields]);
   return (
     <RichKeys.Provider value={rich}>
       <SceneLayers.Provider value={template.layers}>
-      <LogicContext.Provider value={logic}>
       <FramedContext.Provider value={framed}>
         {(childrenOf.get(null) ?? []).map((l) => (
           // A layer that does not change with the playhead (nor anything inside it) is drawn once, not on each frame of the timeline.
           <LayerNode key={l.id} layer={l} childrenOf={childrenOf} frame={framed.has(l.id) ? frame : hold} data={data} hold={hold} interactive={interactive} />
         ))}
       </FramedContext.Provider>
-      </LogicContext.Provider>
       </SceneLayers.Provider>
     </RichKeys.Provider>
   );

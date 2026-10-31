@@ -247,15 +247,6 @@ pub fn grow(duration: f64, age: f64) -> f64 {
     }
 }
 
-fn number(raw: &str, data: &Data) -> f64 {
-    interpolate_text(raw, data)
-        .trim()
-        .replace(',', ".")
-        .replace(' ', "")
-        .parse()
-        .unwrap_or(0.0)
-}
-
 /// Formats `v` with `decimals` and an optional thin-space thousands separator.
 pub fn format_number(v: f64, decimals: u8, grouping: bool) -> String {
     let s = format!("{:.*}", decimals as usize, v.abs());
@@ -285,39 +276,6 @@ pub fn format_number(v: f64, decimals: u8, grouping: bool) -> String {
         Some(f) => format!("{sign}{int},{f}"),
         None => format!("{sign}{int}"),
     }
-}
-
-#[allow(clippy::too_many_arguments)]
-pub fn counter_text(
-    from: &str,
-    to: &str,
-    duration: f64,
-    decimals: u8,
-    prefix: &str,
-    suffix: &str,
-    grouping: bool,
-    data: &Data,
-    age: f64,
-) -> String {
-    let (a, b) = (number(from, data), number(to, data));
-    let v = a + (b - a) * grow(duration, age);
-    format!(
-        "{}{}{}",
-        interpolate_text(prefix, data),
-        format_number(v, decimals, grouping),
-        interpolate_text(suffix, data)
-    )
-}
-
-/// Filled fraction of a progress bar.
-pub fn progress_ratio(value: &str, max: &str, duration: f64, data: &Data, age: f64) -> f64 {
-    let max = number(max, data);
-    let ratio = if max > 0.0 {
-        (number(value, data) / max).clamp(0.0, 1.0)
-    } else {
-        0.0
-    };
-    ratio * grow(duration, age)
 }
 
 /// Non-empty lines of a multi-line widget text after data substitution.
@@ -366,18 +324,6 @@ pub fn slideshow_state(n: usize, interval: f64, fade: f64, age: f64) -> (usize, 
         0.0
     };
     (idx, (idx + 1) % n, mix)
-}
-
-/// Text revealed so far, with a blinking cursor.
-pub fn typewriter_text(text: &str, speed: f64, cursor: bool, data: &Data, age: f64) -> String {
-    let full = interpolate_text(text, data);
-    let total = full.chars().count();
-    let shown = ((age * speed).floor().max(0.0) as usize).min(total);
-    let mut out: String = full.chars().take(shown).collect();
-    if cursor && (shown < total || (age * 2.0).floor() as i64 % 2 == 0) {
-        out.push('|');
-    }
-    out
 }
 
 /// "Label: value" lines of a bar chart.
@@ -519,37 +465,6 @@ mod tests {
         assert_eq!(
             clock_text(ClockMode::Timer, "m:ss", "", "2:00", &d, &ctx(ms, 500.0)),
             "0:00"
-        );
-    }
-
-    #[test]
-    fn animated_values() {
-        let d = Data::new();
-        assert_eq!(
-            counter_text("0", "1234567", 2.0, 0, "", " €", true, &d, 5.0),
-            "1\u{202f}234\u{202f}567 €"
-        );
-        assert_eq!(
-            counter_text("0", "50", 2.0, 1, "", "%", false, &d, 0.0),
-            "0,0%"
-        );
-        assert!((progress_ratio("50", "200", 1.0, &d, 3.0) - 0.25).abs() < 1e-9);
-        assert_eq!(rotator_state(3, 4.0, 0.5, 9.0), (2, 1.0));
-        assert_eq!(rotator_state(3, 4.0, 0.5, 7.75).1, 0.5);
-        assert_eq!(slideshow_state(2, 5.0, 1.0, 4.5), (0, 1, 0.5));
-        assert_eq!(typewriter_text("Hello", 2.0, false, &d, 1.6), "Hel");
-        assert_eq!(
-            chart_rows("Yes: 60\nNo: 40,5\nBlank", &d),
-            vec![
-                ("Yes".into(), 60.0),
-                ("No".into(), 40.5),
-                ("Blank".into(), 0.0)
-            ]
-        );
-        let (h, m, sec) = clock_hands("", &ctx(1_792_137_909_300, 0.0));
-        assert_eq!(
-            (h, m, sec),
-            ((8.0 + 5.0 / 60.0) * 30.0, (5.0 + 9.0 / 60.0) * 6.0, 54.0)
         );
     }
 

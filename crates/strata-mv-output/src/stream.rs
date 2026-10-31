@@ -15,8 +15,8 @@ use std::sync::mpsc::{self, Receiver, RecvTimeoutError, SyncSender, TrySendError
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
-use strata_mv_render::Frame;
 use serde::{Deserialize, Serialize};
+use strata_mv_render::Frame;
 
 use crate::{ffmpeg, OutputError, OutputSink};
 
@@ -323,30 +323,6 @@ pub fn args(
         }
     }
     Ok(a)
-}
-
-/// The premultiplied RGBA picture over `bg`, as RGB.
-pub fn over_background(frame: &Frame, bg: [u8; 3], out: &mut Vec<u8>) {
-    out.resize(frame.data.len() / 4 * 3, 0);
-    over_background_into(&frame.data, bg, out);
-}
-
-/// The same into `out`, which holds the conversion of `from` (when Some):
-/// only the rows that differ from it are converted again.
-pub fn over_background_from(frame: &Frame, from: Option<&Frame>, bg: [u8; 3], out: &mut Vec<u8>) {
-    let len = frame.data.len() / 4 * 3;
-    let rows = crate::changed_rows(frame, from).filter(|_| out.len() == len);
-    let Some(rows) = rows else {
-        return over_background(frame, bg, out);
-    };
-    let (w, w3) = (frame.width as usize * 4, frame.width as usize * 3);
-    for (y, _) in rows.iter().enumerate().filter(|(_, c)| **c) {
-        over_background_into(
-            &frame.data[y * w..(y + 1) * w],
-            bg,
-            &mut out[y * w3..(y + 1) * w3],
-        );
-    }
 }
 
 /// The same for pixels `rgba` into `out` (3 bytes a pixel).
@@ -783,25 +759,6 @@ mod tests {
         f
     }
 
-    #[test]
-    fn only_rows_that_changed_are_converted_again() {
-        let old = picture(33, 9, 1);
-        let mut new = old.clone();
-        for b in &mut new.data[33 * 4 * 3..33 * 4 * 5] {
-            *b /= 2;
-        }
-        let mut got = Vec::new();
-        over_background(&old, [10, 20, 30], &mut got);
-        let mut want = Vec::new();
-        over_background(&new, [10, 20, 30], &mut want);
-        over_background_from(&new, Some(&old), [10, 20, 30], &mut got);
-        assert_eq!(got, want);
-        // A buffer of another size, or of no known picture: converted whole.
-        let mut other = vec![7; 3];
-        over_background_from(&new, Some(&old), [10, 20, 30], &mut other);
-        assert_eq!(other, want);
-    }
-
     /// BT.709 video levels, as ffmpeg's own conversion (one level off at most).
     #[test]
     fn yuv420_is_bt709_video_levels() {
@@ -908,21 +865,6 @@ mod tests {
                 && has(["-pix_fmt", "nv12"])
         );
         assert!(has(["-b:v", "6000k"]) && !a.iter().any(|x| x == "zerolatency"));
-    }
-
-    #[test]
-    fn graphics_over_the_background() {
-        let f = Frame {
-            width: 3,
-            height: 1,
-            // Half-transparent red (premultiplied), nothing, opaque grey.
-            data: vec![128, 0, 0, 128, 0, 0, 0, 0, 9, 9, 9, 255],
-            captured_at: std::time::SystemTime::now(),
-        };
-        // A used buffer of another size comes back right.
-        let mut out = vec![7; 20];
-        over_background(&f, [0, 0, 255], &mut out);
-        assert_eq!(out, vec![128, 0, 127, 0, 0, 255, 9, 9, 9]);
     }
 
     /// A listener nobody called does not read its pictures: closing the

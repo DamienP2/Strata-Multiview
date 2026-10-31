@@ -14,20 +14,19 @@ use axum::routing::{get, post, put};
 use axum::{Json, Router};
 use futures_util::{SinkExt, StreamExt};
 use serde::{Deserialize, Serialize};
-use strata_mv_core::{Command, FrameRate, Project, RundownItem, Template};
+use strata_mv_core::{FrameRate, Project, Template};
 use strata_mv_render::slate::{Slate, SlateStyle};
 
 use crate::auth::{self, CurrentUser, MaybeUser, PublicUser, Role, User, UserInput};
 use crate::config::ServerConfig;
 use crate::library::{valid_id, ProjectSummary};
-use crate::state::{now_ms, ChannelInfo, ClientMessage, Event, Shared};
+use crate::state::{now_ms, ChannelInfo, Event, Shared};
 
 pub fn router() -> Router<Shared> {
     Router::new()
         .merge(crate::media::router())
         .merge(crate::iconlib::router())
         .merge(crate::health::router())
-        .merge(crate::apiv1::router())
         .merge(crate::tally::api::router())
         .route("/api/auth/state", get(auth_state))
         .route("/api/auth/setup", post(auth_setup))
@@ -43,7 +42,6 @@ pub fn router() -> Router<Shared> {
             "/api/me/display",
             get(crate::prefs::get_display).patch(crate::prefs::patch_display),
         )
-        .route("/api/web/proxy", get(crate::webproxy::proxy))
         .route("/api/inputs", get(crate::inputs::list))
         .route("/api/inputs/ndi-sources", get(crate::inputs::ndi_sources))
         .route("/api/inputs/ndi-preview", get(crate::inputs::ndi_preview))
@@ -68,12 +66,7 @@ pub fn router() -> Router<Shared> {
         )
         .route("/api/projects/{id}/export", get(export_project))
         .route("/api/projects/{id}/locks", get(project_locks))
-        .route("/api/projects/{id}/rundown", put(put_rundown))
-        .route("/api/projects/{id}/zones", put(put_zones))
-        .route("/api/projects/{id}/playlists", put(put_playlists))
-        .route("/api/projects/{id}/formats", put(put_formats))
         .route("/api/projects/{id}/guides", put(put_guides))
-        .route("/api/projects/{id}/design-order", put(put_design_order))
         .route("/api/projects/{id}/publish", post(publish_project))
         .route(
             "/api/projects/{id}/versions",
@@ -83,10 +76,7 @@ pub fn router() -> Router<Shared> {
             "/api/projects/{id}/versions/{vid}/restore",
             post(restore_version),
         )
-        .route(
-            "/api/projects/{id}/templates/{tid}",
-            put(put_template).delete(delete_template),
-        )
+        .route("/api/projects/{id}/templates/{tid}", put(put_template))
         .route(
             "/api/projects/{id}/templates/{tid}/publish",
             post(publish_template),
@@ -106,21 +96,7 @@ pub fn router() -> Router<Shared> {
         .route("/api/channels", get(list_channels))
         .route("/api/channels/{id}/state", get(channel_state))
         .route("/api/channels/{id}/project", put(load_project))
-        .route("/api/channels/{id}/command", post(channel_command))
         .route("/api/channels/{id}/multiview", put(put_multiview))
-        .route(
-            "/api/channels/{id}/undo",
-            get(channel_undo_list).post(channel_undo),
-        )
-        .route("/api/channels/{id}/locks", get(zone_locks))
-        .route(
-            "/api/channels/{id}/zones/{zone}/lock",
-            put(take_zone).delete(free_zone),
-        )
-        .route(
-            "/api/channels/{id}/items/{item}/{action}",
-            post(item_command),
-        )
         .route("/api/channels/{id}/preview.png", get(channel_preview))
         .route("/api/channels/{id}/slate.png", get(channel_slate))
         .route("/api/slate.png", get(slate_preview))
@@ -141,7 +117,6 @@ pub fn router() -> Router<Shared> {
         .route("/api/assets", get(list_assets))
         .route("/api/assets/{name}", put(put_asset))
         .route("/api/health", get(health))
-        .route("/api/qr", get(qr))
         .route("/api/system", get(get_system))
         .route("/api/system/metrics", get(crate::perf::metrics))
         .route("/api/system/logs", get(crate::perf::logs))
@@ -569,18 +544,10 @@ async fn create_project(
         return Err(bad("a project needs a name"));
     }
     let mut p = match &n.from {
-        Some(src) => {
-            let mut p = (*visible_project(&s, &me, src).await?).clone();
-            p.rundown
-                .iter_mut()
-                .for_each(|r| r.id = strata_mv_core::new_id());
-            p
-        }
+        Some(src) => (*visible_project(&s, &me, src).await?).clone(),
         None => Project {
             guides: Default::default(),
-            design_order: Vec::new(),
             language: "fr".into(),
-            template_secs: None,
             colors: Vec::new(),
             id: String::new(),
             name: String::new(),
@@ -589,12 +556,9 @@ async fn create_project(
             height: 1080,
             frame_rate: FrameRate::new(50, 1),
             templates: Vec::new(),
-            rundown: Vec::new(),
             zones: strata_mv_core::Zone::defaults(),
-            playlists: Vec::new(),
             formats: Vec::new(),
             drafts: Vec::new(),
-            starter: None,
         },
     };
     p.id = strata_mv_core::new_id();
@@ -614,12 +578,8 @@ async fn create_project(
         // A project is one multiview: its page, already published, so a
         // channel can show it right away.
         let zone = p.zones.first().map(|z| z.id.clone()).unwrap_or_default();
-        let blank = strata_mv_core::Template::blank_secs(
-            &p.name,
-            &zone,
-            p.frame_rate.as_f64(),
-            p.template_secs.unwrap_or(1.0),
-        );
+        let blank =
+            strata_mv_core::Template::blank_secs(&p.name, &zone, p.frame_rate.as_f64(), 1.0);
         let id = blank.id.clone();
         p.drafts.push(blank);
         p.publish(&id);
@@ -708,9 +668,6 @@ struct ProjectMeta {
     /// Texts' language; unchanged when absent.
     #[serde(default)]
     language: Option<String>,
-    /// Length of new templates, seconds; unchanged when absent.
-    #[serde(default)]
-    template_secs: Option<f64>,
 }
 
 async fn put_project_meta(
@@ -730,9 +687,6 @@ async fn put_project_meta(
     p.frame_rate = m.frame_rate;
     if let Some(l) = m.language.filter(|l| !l.trim().is_empty()) {
         p.language = l.trim().to_string();
-    }
-    if let Some(secs) = m.template_secs.filter(|s| s.is_finite() && *s > 0.0) {
-        p.template_secs = Some(secs.clamp(0.1, 600.0));
     }
     s.save_project(p).await.map_err(internal)?;
     Ok(StatusCode::NO_CONTENT)
@@ -777,7 +731,6 @@ async fn put_template(
     p.save_draft(t);
     if q.publish {
         p.publish(&tid);
-        p.drop_empty_starter();
     }
     s.save_project(p).await.map_err(internal)?;
     Ok(StatusCode::NO_CONTENT)
@@ -884,7 +837,6 @@ async fn publish_template(
         None => return Err(not_found("template")),
     };
     let name = p.template(&tid).map(|t| t.name.clone()).unwrap_or_default();
-    p.drop_empty_starter();
     let p = s.save_project(p).await.map_err(internal)?;
     // Every publish is a version the designer can go back to.
     let note = format!("Published “{name}” (revision {rev})");
@@ -925,9 +877,6 @@ async fn publish_project(
     }
     if out.is_empty() {
         return Ok(Json(out));
-    }
-    if let Some(gone) = p.drop_empty_starter() {
-        out.retain(|x| x.id != gone);
     }
     let p = s.save_project(p).await.map_err(internal)?;
     let names: Vec<&str> = out.iter().map(|x| x.name.as_str()).collect();
@@ -1034,135 +983,6 @@ async fn discard_draft(
     Ok(StatusCode::NO_CONTENT)
 }
 
-async fn delete_template(
-    State(s): State<Shared>,
-    CurrentUser(me): CurrentUser,
-    Path((id, tid)): Path<(String, String)>,
-) -> ApiResult<StatusCode> {
-    let _edit = s.edits.lock().await;
-    require(me.can_design(&id))?;
-    let mut p = (*visible_project(&s, &me, &id).await?).clone();
-    if p.design_templates().all(|t| t.id == tid) {
-        return Err((
-            StatusCode::CONFLICT,
-            "a project keeps at least one template".into(),
-        ));
-    }
-    let before = p.templates.len() + p.drafts.len();
-    p.templates.retain(|t| t.id != tid);
-    p.drafts.retain(|t| t.id != tid);
-    if p.templates.len() + p.drafts.len() == before {
-        return Err(not_found("template"));
-    }
-    p.rundown.retain(|r| r.template_id != tid);
-    s.save_project(p).await.map_err(internal)?;
-    Ok(StatusCode::NO_CONTENT)
-}
-
-/// A whole rundown, or what a client changed (`base` → `rundown`): only
-/// that change is applied, over edits made meanwhile by others.
-#[derive(Deserialize)]
-#[serde(untagged)]
-enum RundownPut {
-    Full(Vec<RundownItem>),
-    Change {
-        base: Vec<RundownItem>,
-        rundown: Vec<RundownItem>,
-    },
-}
-
-async fn put_rundown(
-    State(s): State<Shared>,
-    CurrentUser(me): CurrentUser,
-    Path(id): Path<String>,
-    Json(r): Json<RundownPut>,
-) -> ApiResult<StatusCode> {
-    let _edit = s.edits.lock().await;
-    require(me.can_edit_rundown(&id))?;
-    let mut p = (*visible_project(&s, &me, &id).await?).clone();
-    p.rundown = match r {
-        RundownPut::Full(r) => r,
-        RundownPut::Change { base, rundown } => {
-            strata_mv_core::merge_rundown(&p.rundown, &base, &rundown)
-        }
-    };
-    s.save_project(p).await.map_err(internal)?;
-    Ok(StatusCode::NO_CONTENT)
-}
-
-/// Replaces the zones of a project. Zones still used by templates or the
-/// rundown cannot be removed; graphics on air follow their zone's new layer.
-async fn put_zones(
-    State(s): State<Shared>,
-    CurrentUser(me): CurrentUser,
-    Path(id): Path<String>,
-    Json(zones): Json<Vec<strata_mv_core::Zone>>,
-) -> ApiResult<StatusCode> {
-    let _edit = s.edits.lock().await;
-    require(me.can_design(&id))?;
-    Project::validate_zones(&zones).map_err(bad)?;
-    let mut p = (*visible_project(&s, &me, &id).await?).clone();
-    // Only zones removed now count: a draft already pointing to an unknown
-    // zone (it plays in the default one) does not block every zone change.
-    let kept = |z: &str| zones.iter().any(|x| x.id == z) || !p.zones.iter().any(|x| x.id == z);
-    if let Some(t) = p.templates.iter().chain(&p.drafts).find(|t| !kept(&t.zone)) {
-        return Err(bad(format!(
-            "template “{}” still plays in a removed zone; move it first",
-            t.name
-        )));
-    }
-    if let Some(r) = p
-        .rundown
-        .iter()
-        .find(|r| !r.zone.is_empty() && !kept(&r.zone))
-    {
-        return Err(bad(format!(
-            "rundown item “{}” still plays in a removed zone; move it first",
-            r.name
-        )));
-    }
-    let moves: Vec<(u32, u32)> = p
-        .zones
-        .iter()
-        .filter_map(|old| {
-            zones
-                .iter()
-                .find(|n| n.id == old.id && n.layer != old.layer)
-                .map(|n| (old.layer, n.layer))
-        })
-        .collect();
-    p.zones = zones;
-    s.save_project(p).await.map_err(internal)?;
-    if !moves.is_empty() {
-        s.move_layers(&id, &moves).await;
-    }
-    Ok(StatusCode::NO_CONTENT)
-}
-
-/// Replaces the playlists (rundown sections). Items of a removed playlist
-/// move to the first one.
-async fn put_playlists(
-    State(s): State<Shared>,
-    CurrentUser(me): CurrentUser,
-    Path(id): Path<String>,
-    Json(lists): Json<Vec<strata_mv_core::Playlist>>,
-) -> ApiResult<StatusCode> {
-    let _edit = s.edits.lock().await;
-    require(me.can_edit_rundown(&id))?;
-    let mut ids = std::collections::HashSet::new();
-    if lists.is_empty()
-        || lists
-            .iter()
-            .any(|l| l.name.trim().is_empty() || !valid_id(&l.id) || !ids.insert(l.id.clone()))
-    {
-        return Err(bad("playlists need a unique id and a name"));
-    }
-    let mut p = (*visible_project(&s, &me, &id).await?).clone();
-    p.playlists = lists;
-    s.save_project(p).await.map_err(internal)?;
-    Ok(StatusCode::NO_CONTENT)
-}
-
 /// Replaces the alternative formats (9:16, 1:1…). Removing a format drops
 /// its layer overrides.
 async fn put_guides(
@@ -1190,52 +1010,6 @@ async fn put_guides(
     }
     let mut p = (*visible_project(&s, &me, &id).await?).clone();
     p.guides = g;
-    s.save_project(p).await.map_err(internal)?;
-    Ok(StatusCode::NO_CONTENT)
-}
-
-/// The Designer's order of the templates.
-async fn put_design_order(
-    State(s): State<Shared>,
-    CurrentUser(me): CurrentUser,
-    Path(id): Path<String>,
-    Json(order): Json<Vec<String>>,
-) -> ApiResult<StatusCode> {
-    let _edit = s.edits.lock().await;
-    require(me.can_design(&id))?;
-    let mut p = (*visible_project(&s, &me, &id).await?).clone();
-    let known = |t: &String| p.templates.iter().chain(&p.drafts).any(|x| &x.id == t);
-    let mut seen = std::collections::HashSet::new();
-    p.design_order = order
-        .into_iter()
-        .filter(|t| known(t) && seen.insert(t.clone()))
-        .collect();
-    s.save_project(p).await.map_err(internal)?;
-    Ok(StatusCode::NO_CONTENT)
-}
-
-async fn put_formats(
-    State(s): State<Shared>,
-    CurrentUser(me): CurrentUser,
-    Path(id): Path<String>,
-    Json(formats): Json<Vec<strata_mv_core::Format>>,
-) -> ApiResult<StatusCode> {
-    let _edit = s.edits.lock().await;
-    require(me.can_design(&id))?;
-    let mut ids = std::collections::HashSet::from([strata_mv_core::MAIN_FORMAT.to_string()]);
-    for f in &formats {
-        if !valid_id(&f.id) || !ids.insert(f.id.clone()) || f.name.trim().is_empty() {
-            return Err(bad("formats need a unique id and a name"));
-        }
-        check_format(f.width, f.height, FrameRate::new(1, 1))?;
-    }
-    let mut p = (*visible_project(&s, &me, &id).await?).clone();
-    for t in p.templates.iter_mut().chain(p.drafts.iter_mut()) {
-        for l in &mut t.layers {
-            l.overrides.retain(|k, _| ids.contains(k));
-        }
-    }
-    p.formats = formats;
     s.save_project(p).await.map_err(internal)?;
     Ok(StatusCode::NO_CONTENT)
 }
@@ -1301,12 +1075,6 @@ async fn template_thumbnail(
     {
         data.extend(extra);
     }
-    // Data sets show their row (the first, or the one asked).
-    strata_mv_core::datapath::bind_datasets(
-        &template,
-        &mut data,
-        &strata_mv_core::datapath::Store::default(),
-    );
     let width = q.w.unwrap_or(u32::MAX).clamp(16, 7680);
     let format = q
         .format
@@ -1445,156 +1213,6 @@ async fn put_multiview(
         .await
         .map_err(bad)?;
     Ok(StatusCode::NO_CONTENT)
-}
-
-async fn channel_command(
-    State(s): State<Shared>,
-    auth::Acting(me, actor): auth::Acting,
-    Path(id): Path<String>,
-    Json(cmd): Json<Command>,
-) -> ApiResult<impl IntoResponse> {
-    visible_channel(&me, &id)?;
-    require(me.can_operate(&id))?;
-    sees_loaded(&s, &me, &id).await?;
-    s.command(&id, cmd, &actor).await.map(Json).map_err(locked)
-}
-
-/// A command refused: on a zone another operator holds (409), or wrong.
-fn locked(e: String) -> (StatusCode, String) {
-    if e.ends_with("holds this zone") {
-        (StatusCode::CONFLICT, e)
-    } else {
-        bad(e)
-    }
-}
-
-/// The last actions of a channel that can be undone, latest first.
-async fn channel_undo_list(
-    State(s): State<Shared>,
-    CurrentUser(me): CurrentUser,
-    Path(id): Path<String>,
-) -> ApiResult<Json<Vec<crate::antenna::UndoStep>>> {
-    visible_channel(&me, &id)?;
-    let ch = s.channel(&id).ok_or_else(|| not_found("channel"))?;
-    Ok(Json(ch.ops.undo_list()))
-}
-
-/// Undoes the last action of a channel.
-async fn channel_undo(
-    State(s): State<Shared>,
-    auth::Acting(me, actor): auth::Acting,
-    Path(id): Path<String>,
-) -> ApiResult<impl IntoResponse> {
-    visible_channel(&me, &id)?;
-    require(me.can_operate(&id))?;
-    sees_loaded(&s, &me, &id).await?;
-    s.undo(&id, &actor).await.map(Json).map_err(bad)
-}
-
-/// The zones of a channel held by operators.
-async fn zone_locks(
-    State(s): State<Shared>,
-    CurrentUser(me): CurrentUser,
-    Path(id): Path<String>,
-) -> ApiResult<Json<Vec<crate::antenna::ZoneLock>>> {
-    visible_channel(&me, &id)?;
-    let ch = s.channel(&id).ok_or_else(|| not_found("channel"))?;
-    Ok(Json(ch.ops.locks()))
-}
-
-/// Takes a zone of a channel (from whoever held it, who is told).
-async fn take_zone(
-    State(s): State<Shared>,
-    CurrentUser(me): CurrentUser,
-    Path((id, zone)): Path<(String, String)>,
-) -> ApiResult<StatusCode> {
-    visible_channel(&me, &id)?;
-    require(me.can_operate(&id))?;
-    s.set_zone_lock(&id, &zone, Some(&me)).map_err(bad)?;
-    Ok(StatusCode::NO_CONTENT)
-}
-
-/// Frees a zone of a channel (its holder, or an admin).
-async fn free_zone(
-    State(s): State<Shared>,
-    CurrentUser(me): CurrentUser,
-    Path((id, zone)): Path<(String, String)>,
-) -> ApiResult<StatusCode> {
-    visible_channel(&me, &id)?;
-    require(me.can_operate(&id))?;
-    let ch = s.channel(&id).ok_or_else(|| not_found("channel"))?;
-    let holder = ch.ops.locks().into_iter().find(|l| l.zone == zone);
-    require(holder.is_none_or(|l| l.user_id == me.id || me.role == Role::Admin))?;
-    s.set_zone_lock(&id, &zone, None).map_err(bad)?;
-    Ok(StatusCode::NO_CONTENT)
-}
-
-#[derive(Deserialize, Default)]
-struct ItemBody {
-    #[serde(default)]
-    data: Option<BTreeMap<String, String>>,
-    /// `update`: the new values cross-fade in (half a second) instead of a cut.
-    #[serde(default)]
-    fade: bool,
-}
-
-/// Plays a rundown item of the project loaded on the channel, by id: what a
-/// Stream Deck button or a newsroom system needs (`take`, `continue`,
-/// `out`, `update`, `clear`).
-async fn item_command(
-    State(s): State<Shared>,
-    auth::Acting(me, actor): auth::Acting,
-    Path((id, item, action)): Path<(String, String, String)>,
-    body: Option<Json<ItemBody>>,
-) -> ApiResult<impl IntoResponse> {
-    visible_channel(&me, &id)?;
-    require(me.can_operate(&id))?;
-    sees_loaded(&s, &me, &id).await?;
-    let ch = s.channel(&id).ok_or_else(|| not_found("channel"))?;
-    let pid = ch
-        .project_id
-        .read()
-        .await
-        .clone()
-        .ok_or_else(|| bad("no project loaded on this channel"))?;
-    let project = s.project(&pid).await.ok_or_else(|| not_found("project"))?;
-    let it = project
-        .rundown
-        .iter()
-        .find(|r| r.id == item || r.name.eq_ignore_ascii_case(&item))
-        .ok_or_else(|| not_found("rundown item"))?;
-    let zone = project.item_zone(it).map(|z| z.id.clone());
-    let fade = body.as_ref().is_some_and(|b| b.0.fade);
-    let data = body.and_then(|b| b.0.data);
-    let cmd = match action.as_str() {
-        "take" => {
-            let mut merged = it.data.clone();
-            merged.extend(data.unwrap_or_default());
-            Command::Take {
-                zone,
-                layer: None,
-                template_id: it.template_id.clone(),
-                data: Some(merged),
-                rundown_id: Some(it.id.clone()),
-            }
-        }
-        "continue" => Command::Continue { zone, layer: None },
-        "out" => Command::TakeOut { zone, layer: None },
-        "update" => Command::Update {
-            zone,
-            layer: None,
-            data: data.unwrap_or_else(|| it.data.clone()),
-            fade,
-        },
-        "clear" => Command::Clear { zone, layer: None },
-        _ => {
-            return Err((
-                StatusCode::NOT_FOUND,
-                "actions: take, continue, out, update, clear".into(),
-            ))
-        }
-    };
-    s.command(&id, cmd, &actor).await.map(Json).map_err(locked)
 }
 
 #[derive(Deserialize)]
@@ -2087,27 +1705,6 @@ async fn health(State(s): State<Shared>) -> Json<serde_json::Value> {
     }))
 }
 
-#[derive(Deserialize)]
-struct QrQuery {
-    data: String,
-    /// Error correction (L, M, Q, H; M by default).
-    #[serde(default)]
-    ec: Option<strata_mv_core::wid::qrcode::Ecl>,
-}
-
-/// QR modules for the HTML5 renderer (public: output pages need it).
-async fn qr(Query(q): Query<QrQuery>) -> ApiResult<Json<serde_json::Value>> {
-    if q.data.len() > 2048 {
-        return Err(bad("too long for a QR code"));
-    }
-    let (size, modules) = strata_mv_render::qr_modules_ec(&q.data, q.ec.unwrap_or_default())
-        .ok_or_else(|| bad("cannot encode"))?;
-    let modules: String = modules.iter().map(|d| if *d { '1' } else { '0' }).collect();
-    Ok(Json(
-        serde_json::json!({ "size": size, "modules": modules }),
-    ))
-}
-
 /// `/output` without a channel: the first channel (tray app, old links).
 async fn output_redirect(State(s): State<Shared>) -> Response {
     match s.channels.keys().next() {
@@ -2464,28 +2061,10 @@ async fn ws_upgrade(
 }
 
 async fn ws_session(s: Shared, socket: WebSocket, viewer: Viewer) {
-    let socket_id = s.presence.connect();
-    ws_session_on(&s, socket, &viewer, socket_id).await;
-    // Gone: no longer on any channel.
-    if s.presence.set(socket_id, None) {
-        let _ = s.events.send(Event::Presence {
-            present: s.presence.list(),
-        });
-        release_locks_later(&s);
-    }
+    ws_session_on(&s, socket, &viewer).await;
 }
 
-/// The zones of someone who left the Operator are freed after a while (a
-/// page reloaded comes back before).
-fn release_locks_later(s: &Shared) {
-    let s = s.clone();
-    tokio::spawn(async move {
-        tokio::time::sleep(std::time::Duration::from_secs(15)).await;
-        s.release_absent_locks();
-    });
-}
-
-async fn ws_session_on(s: &Shared, socket: WebSocket, viewer: &Viewer, socket_id: u64) {
+async fn ws_session_on(s: &Shared, socket: WebSocket, viewer: &Viewer) {
     let s = s.clone();
     let (mut tx, mut rx) = socket.split();
     let mut events = s.events.subscribe();
@@ -2575,8 +2154,6 @@ async fn ws_session_on(s: &Shared, socket: WebSocket, viewer: &Viewer, socket_id
                     },
                     Event::ProjectDeleted { id } => viewer.user.as_ref().is_some_and(|u| u.sees_project(id)),
                     Event::Channel { channel_id, .. } => viewer.sees_channel(channel_id),
-                    Event::Presence { .. } => viewer.user.is_some(),
-                    Event::ZoneLocks { channel_id, .. } => viewer.user.is_some() && viewer.sees_channel(channel_id),
                     // Signed-in users (designer, operator, settings), not output pages.
                     Event::Folders { .. } => viewer.user.is_some(),
                     Event::Changed { what } => viewer.user.as_ref().is_some_and(|u| what.strip_prefix("media:").is_none_or(|p| u.sees_project(p))),
@@ -2595,7 +2172,6 @@ async fn ws_session_on(s: &Shared, socket: WebSocket, viewer: &Viewer, socket_id
                     }
                     // Signed-in users and output pages (the Source widget).
                     Event::Signals { .. } => true,
-                    Event::Error { .. } => false,
                 };
                 if !visible {
                     continue;
@@ -2604,7 +2180,6 @@ async fn ws_session_on(s: &Shared, socket: WebSocket, viewer: &Viewer, socket_id
                 // JSON written once for every client is sent).
                 let own = match ev {
                     Event::Channels { channels } if !channels.iter().all(|c| viewer.sees_channel(&c.id)) => Some(Event::Channels { channels: channels.iter().filter(|c| viewer.sees_channel(&c.id)).cloned().collect() }),
-                    Event::Presence { present } if !present.iter().all(|p| viewer.sees_channel(&p.channel_id)) => Some(Event::Presence { present: present.iter().filter(|p| viewer.sees_channel(&p.channel_id)).cloned().collect() }),
                     _ => None,
                 };
                 if let Some(x) = extra {
@@ -2620,30 +2195,6 @@ async fn ws_session_on(s: &Shared, socket: WebSocket, viewer: &Viewer, socket_id
                 if sent.is_err() { break }
             },
             msg = rx.next() => match msg {
-                Some(Ok(Message::Text(text))) => {
-                    let reply = match serde_json::from_str::<ClientMessage>(&text) {
-                        Ok(ClientMessage::Command { channel_id, command }) => match &viewer.user {
-                            Some(u) if u.can_operate(&channel_id) => s.command(&channel_id, command, &crate::antenna::Actor::user(u)).await.err(),
-                            _ => Some("you do not have the rights to operate this channel".into()),
-                        },
-                        Ok(ClientMessage::Presence { channel_id }) => {
-                            let at = viewer.user.as_ref().zip(channel_id.filter(|c| viewer.sees_channel(c))).map(|(u, c)| crate::antenna::Present {
-                                user_id: u.id.clone(),
-                                user_name: crate::antenna::Actor::user(u).name,
-                                channel_id: c,
-                            });
-                            if s.presence.set(socket_id, at) {
-                                let _ = s.events.send(Event::Presence { present: s.presence.list() });
-                                release_locks_later(&s);
-                            }
-                            None
-                        }
-                        Err(e) => Some(e.to_string()),
-                    };
-                    if let Some(message) = reply {
-                        if send(&mut tx, &Event::Error { message }).await.is_err() { break }
-                    }
-                }
                 Some(Ok(Message::Close(_))) | None | Some(Err(_)) => break,
                 _ => {}
             },

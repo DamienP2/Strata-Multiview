@@ -287,7 +287,7 @@ export function align(rs: Run[], lines: string[]): [string, number][][] {
 
 /** Keys whose values the operator types (they may have styles). */
 export const typedKeys = (t: Pick<Template, 'fields'> | null | undefined) => {
-  const keys = new Set((t?.fields ?? []).filter((f) => !f.binding).map((f) => f.key));
+  const keys = new Set((t?.fields ?? []).map((f) => f.key));
   return (k: string) => keys.has(k);
 };
 

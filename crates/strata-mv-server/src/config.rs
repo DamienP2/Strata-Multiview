@@ -100,26 +100,6 @@ pub struct Location {
     pub name: String,
 }
 
-/// Another shape of the same program (e.g. 9:16 for social media): same
-/// playout, its own size and outputs. The project format closest in aspect
-/// ratio is used, so one take drives every rendition.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct Rendition {
-    pub id: String,
-    pub name: String,
-    pub width: u32,
-    pub height: u32,
-    #[serde(default)]
-    pub outputs: OutputsConfig,
-    /// Still picture (`/assets/…`) its outputs show while no project is loaded.
-    #[serde(default, skip_serializing_if = "String::is_empty")]
-    pub slate: String,
-    /// The design shown while no project is loaded (see [`slate_style`]).
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub slate_style: Option<SlateStyle>,
-}
-
 /// One independent output channel (a studio, a control room…): its own
 /// playout clock, video format, baseband outputs and HTML5 output page.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -139,9 +119,6 @@ pub struct ChannelConfig {
     pub project_id: Option<String>,
     #[serde(default)]
     pub outputs: OutputsConfig,
-    /// Extra renditions (9:16, 1:1…) driven by the same playout.
-    #[serde(default)]
-    pub renditions: Vec<Rendition>,
     /// Location id ("" = none).
     #[serde(default)]
     pub location: String,
@@ -158,22 +135,6 @@ pub struct ChannelConfig {
     /// What the channel clock follows (none: the Hardware page default).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub clock: Option<crate::hardware::ClockReference>,
-    /// The live input under the graphics (the source wired after the
-    /// program in Output streams): the pictures fed through it are the
-    /// graphics keyed over it.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub background: Option<String>,
-    /// Pictures ("main", rendition ids) wired straight to the program:
-    /// graphics only, no source under them.
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    pub graphics_only: Vec<String>,
-    /// The source format the user chose to convert live ("1080p25"): the
-    /// source node stays quiet while the source keeps that format.
-    #[serde(default, skip_serializing_if = "String::is_empty")]
-    pub source_convert: String,
-    /// The live inputs placed as sources in the Video streams canvas.
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    pub sources: Vec<String>,
     /// Destinations wired to no picture (their wire was removed): kept,
     /// not started.
     #[serde(default, skip_serializing_if = "OutputsConfig::is_empty")]
@@ -195,27 +156,19 @@ pub fn slate_style(style: Option<SlateStyle>, image: &str) -> SlateStyle {
 }
 
 impl ChannelConfig {
-    /// (rendition id, width, height, outputs): the main picture ("main")
-    /// then the extra renditions.
+    /// (picture id, width, height, outputs): the main picture ("main").
     pub fn pictures(&self) -> Vec<(&str, u32, u32, &OutputsConfig)> {
-        std::iter::once(("main", self.width, self.height, &self.outputs))
-            .chain(
-                self.renditions
-                    .iter()
-                    .map(|r| (r.id.as_str(), r.width, r.height, &r.outputs)),
-            )
-            .collect()
+        vec![("main", self.width, self.height, &self.outputs)]
     }
 
     /// What a picture of the channel shows while no project is loaded
     /// (`None`: no such picture).
     pub fn slate_of(&self, picture: &str) -> Option<Slate> {
-        let (width, height, image, style) = if picture == "main" {
-            (self.width, self.height, &self.slate, self.slate_style)
-        } else {
-            let r = self.renditions.iter().find(|r| r.id == picture)?;
-            (r.width, r.height, &r.slate, r.slate_style)
-        };
+        if picture != "main" {
+            return None;
+        }
+        let (width, height, image, style) =
+            (self.width, self.height, &self.slate, self.slate_style);
         Some(Slate {
             style: slate_style(style, image),
             image: image.trim().to_string(),
@@ -234,13 +187,8 @@ impl ChannelConfig {
             height: 1080,
             frame_rate: FrameRate::new(50, 1),
             interlaced: false,
-            background: None,
-            graphics_only: Vec::new(),
-            source_convert: String::new(),
-            sources: Vec::new(),
             project_id: None,
             outputs: OutputsConfig::default(),
-            renditions: Vec::new(),
             location: String::new(),
             slate: String::new(),
             slate_style: None,
@@ -254,56 +202,12 @@ impl ChannelConfig {
     pub fn ensure_ids(&mut self) {
         let mut taken = HashSet::new();
         self.outputs.ensure_ids(&mut taken);
-        for r in &mut self.renditions {
-            r.outputs.ensure_ids(&mut taken);
-        }
         self.unwired.ensure_ids(&mut taken);
     }
 
     /// Every destination list: the pictures', then the unwired ones.
     fn all_outputs_mut(&mut self) -> impl Iterator<Item = &mut OutputsConfig> {
-        std::iter::once(&mut self.outputs)
-            .chain(self.renditions.iter_mut().map(|r| &mut r.outputs))
-            .chain(std::iter::once(&mut self.unwired))
-    }
-}
-
-/// OSC (UDP) and TCP text control of the playout (`crate::apiv1`): no
-/// login on these, so they are off until enabled and can be limited to
-/// some machines.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct ControlConfig {
-    #[serde(default)]
-    pub osc_enabled: bool,
-    #[serde(default = "default_osc_port")]
-    pub osc_port: u16,
-    #[serde(default)]
-    pub tcp_enabled: bool,
-    #[serde(default = "default_tcp_port")]
-    pub tcp_port: u16,
-    /// Addresses (or networks `10.0.0.0/24`) allowed to send commands;
-    /// empty = any.
-    #[serde(default)]
-    pub allow: Vec<String>,
-}
-
-fn default_osc_port() -> u16 {
-    9000
-}
-fn default_tcp_port() -> u16 {
-    9001
-}
-
-impl Default for ControlConfig {
-    fn default() -> Self {
-        Self {
-            osc_enabled: false,
-            osc_port: default_osc_port(),
-            tcp_enabled: false,
-            tcp_port: default_tcp_port(),
-            allow: Vec::new(),
-        }
+        std::iter::once(&mut self.outputs).chain(std::iter::once(&mut self.unwired))
     }
 }
 
@@ -340,9 +244,6 @@ pub struct ServerConfig {
     /// DeckLink cards and ST 2110 flows (Hardware page).
     #[serde(default)]
     pub hardware: HardwareConfig,
-    /// Control surfaces without HTTP (Bitfocus Buttons over OSC or TCP).
-    #[serde(default)]
-    pub control: ControlConfig,
     /// Pre-0.2 single-channel outputs, moved into the first channel on load.
     #[serde(default, skip_serializing)]
     outputs: Option<OutputsConfig>,
@@ -369,7 +270,6 @@ impl Default for ServerConfig {
             channels: Vec::new(),
             inputs: Vec::new(),
             hardware: HardwareConfig::default(),
-            control: ControlConfig::default(),
             outputs: None,
         }
     }
@@ -637,22 +537,6 @@ impl ServerConfig {
             if ch.frame_rate.num == 0 || ch.frame_rate.den == 0 || ch.frame_rate.as_f64() > 120.0 {
                 return Err(format!("channel `{}`: invalid frame rate", ch.name));
             }
-            let mut rendition_ids = HashSet::from(["main"]);
-            for r in &ch.renditions {
-                let ok = !r.id.is_empty()
-                    && r.id
-                        .chars()
-                        .all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_');
-                if !ok || !rendition_ids.insert(r.id.as_str()) {
-                    return Err(format!(
-                        "channel `{}`: rendition ids must be unique (letters, digits, - or _)",
-                        ch.name
-                    ));
-                }
-                if !(16..=7680).contains(&r.width) || !(16..=7680).contains(&r.height) {
-                    return Err(format!("rendition `{}`: invalid resolution", r.name));
-                }
-            }
             let mut out_ids: HashSet<&str> = ch.unwired.ids().collect();
             for (_, _, _, outputs) in ch.pictures() {
                 for id in outputs.ids() {
@@ -781,11 +665,9 @@ mod tests {
     }
 
     #[test]
-    fn slates_default_to_the_first_design_or_the_picture_set() {
+    fn slates_default_to_the_first_design() {
         let ch: ChannelConfig = serde_json::from_str(
-            r#"{"id":"a","name":"Studio","width":1920,"height":1080,"frameRate":{"num":25,"den":1},
-            "renditions":[{"id":"v","name":"9:16","width":1080,"height":1920,"slate":"/assets/v.png"},
-            {"id":"s","name":"1:1","width":1080,"height":1080,"slate":"/assets/s.png","slateStyle":"lines"}]}"#,
+            r#"{"id":"a","name":"Studio","width":1920,"height":1080,"frameRate":{"num":25,"den":1}}"#,
         )
         .unwrap();
         let main = ch.slate_of("main").unwrap();
@@ -794,16 +676,9 @@ mod tests {
             (main.channel.as_str(), main.width, main.rate),
             ("Studio", 1920, (25, 1))
         );
-        let v = ch.slate_of("v").unwrap();
-        assert_eq!(
-            (v.style, v.image.as_str(), v.height),
-            (SlateStyle::Custom, "/assets/v.png", 1920)
-        );
-        assert_eq!(ch.slate_of("s").unwrap().style, SlateStyle::Lines);
         assert!(ch.slate_of("nope").is_none());
         // Saved as read: an unset design stays unset.
         let json = serde_json::to_value(&ch).unwrap();
         assert!(json.get("slateStyle").is_none());
-        assert_eq!(json["renditions"][1]["slateStyle"], "lines");
     }
 }

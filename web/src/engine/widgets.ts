@@ -26,14 +26,6 @@ export interface TimeCtx {
   lang?: string;
 }
 
-/** A scrolling text, as the ticker or roll it behaves like (mirrors LayerKind::scrolling_as). */
-export function scrollingAs(l: Layer): Layer | null {
-  if (l.type !== 'text' || !l.scroll || l.scroll === 'none') return null;
-  const font = { fontFamily: l.fontFamily, fontWeight: l.fontWeight, align: l.align, verticalAlign: l.verticalAlign, uppercase: l.uppercase || l.transform === 'upper' };
-  const base = { ...l, ...font };
-  return l.scroll === 'horizontal' ? ({ ...base, type: 'ticker', text: l.text, separator: l.separator ?? '   •   ', speed: l.speed ?? 120 } as Layer) : ({ ...base, type: 'roll', text: l.text, speed: l.speed ?? 120, loop: !!l.looping } as Layer);
-}
-
 /** Widgets whose animation follows the time on air (mirrors playout::is_timed). */
 export function isTimed(l: Layer): boolean {
   switch (l.type) {
@@ -42,12 +34,7 @@ export function isTimed(l: Layer): boolean {
     case 'clock':
       return l.mode === 'elapsed' || l.mode === 'timer';
     case 'ticker':
-    case 'roll':
-    case 'rotator':
-    case 'slideshow':
-    case 'barChart':
       return true;
-    // A Lottie animation: the operator pauses, plays and restarts it.
     case 'group':
       return l.lottie !== undefined;
     default:
@@ -296,57 +283,11 @@ export function grow(duration: number, age: number): number {
   return 1 - Math.pow(1 - t, 3);
 }
 
-export function formatNumber(v: number, decimals: number, grouping: boolean): string {
-  const s = Math.abs(v).toFixed(decimals);
-  let [int, frac] = s.split('.');
-  if (grouping) int = int.replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
-  const sign = v < 0 && Math.abs(v) >= 0.5 * Math.pow(10, -decimals) ? '-' : '';
-  return frac !== undefined ? `${sign}${int},${frac}` : `${sign}${int}`;
-}
-
 export function lines(text: string, data: Data): string[] {
   return interpolateText(text, data)
     .split('\n')
     .map((l) => l.trim())
     .filter((l) => l !== '');
-}
-
-export function rotatorState(n: number, interval: number, fade: number, age: number): [number, number] {
-  if (n <= 1 || interval <= 0) return [0, 1];
-  const idx = Math.floor(Math.max(0, Math.floor(age / interval))) % n;
-  const t = remEuclid(age, interval);
-  fade = Math.min(interval / 2, Math.max(0, fade));
-  let opacity = fade <= 0 ? 1 : Math.min(1, Math.max(0, Math.min(t / fade, (interval - t) / fade)));
-  if (age < interval && t < fade) opacity = 1;
-  return [idx, opacity];
-}
-
-export function slideshowState(n: number, interval: number, fade: number, age: number): [number, number, number] {
-  if (n <= 1 || interval <= 0) return [0, 0, 0];
-  const idx = Math.max(0, Math.floor(age / interval)) % n;
-  const t = remEuclid(age, interval);
-  fade = Math.min(interval, Math.max(0, fade));
-  const mix = fade > 0 && t > interval - fade ? (t - (interval - fade)) / fade : 0;
-  return [idx, (idx + 1) % n, mix];
-}
-
-export function chartRows(text: string, data: Data): [string, number][] {
-  return lines(text, data).map((l) => {
-    const i = l.lastIndexOf(':');
-    if (i < 0) return [l, 0];
-    const v = parseFloat(
-      l
-        .slice(i + 1)
-        .trim()
-        .replace(',', '.'),
-    );
-    return [l.slice(0, i).trim(), Number.isFinite(v) ? v : 0];
-  });
-}
-
-export function clockHands(timezone: string, ctx: TimeCtx): [number, number, number] {
-  const f = zonedFields(ctx.nowMs, zoneName(timezone, ctx.defaultTz));
-  return [((f.hour % 12) + f.minute / 60) * 30, (f.minute + f.second / 60) * 6, f.second * 6];
 }
 
 // --- text measurement (ticker strip length) ---------------------------------
@@ -362,31 +303,4 @@ let canvasOk: boolean | undefined;
 const hasCanvas = () => (canvasOk ??= !!document.createElement('canvas').getContext('2d'));
 
 // --- QR codes (modules computed by the server so both renderers match) -----
-
-type Qr = { size: number; modules: string };
-const qrCache = new Map<string, Qr | null | Promise<void>>();
-const qrListeners = new Set<() => void>();
-
-export function onQrLoaded(fn: () => void): () => void {
-  qrListeners.add(fn);
-  return () => void qrListeners.delete(fn);
-}
-
-export function qrModules(content: string): Qr | null {
-  const hit = qrCache.get(content);
-  if (hit === undefined) {
-    qrCache.set(
-      content,
-      fetch(`/api/qr?data=${encodeURIComponent(content)}`)
-        .then((r) => (r.ok ? (r.json() as Promise<Qr>) : null))
-        .catch(() => null)
-        .then((q) => {
-          qrCache.set(content, q);
-          qrListeners.forEach((f) => f());
-        }),
-    );
-    return null;
-  }
-  return hit instanceof Promise ? null : hit;
-}
 

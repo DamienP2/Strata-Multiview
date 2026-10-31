@@ -12,10 +12,10 @@ export type Route =
   | { page: 'settings' }
   | { page: 'api' }
   | { page: 'project'; projectId: string }
-  | { page: 'output'; channelId: string | null; rendition: string | null };
+  | { page: 'output'; channelId: string | null };
 
 export function parseRoute(path = location.pathname): Route {
-  const [first, second, third] = path.split('/').filter(Boolean).map(decodeURIComponent);
+  const [first, second] = path.split('/').filter(Boolean).map(decodeURIComponent);
   switch (first) {
     case 'project':
       if (!second) return { page: 'projects' };
@@ -41,11 +41,7 @@ export function parseRoute(path = location.pathname): Route {
     case 'api-docs':
       return { page: 'api' };
     case 'output':
-      return {
-        page: 'output',
-        channelId: second ?? null,
-        rendition: third ?? null,
-      };
+      return { page: 'output', channelId: second ?? null };
     default:
       return { page: 'projects' };
   }
@@ -56,58 +52,14 @@ export function projectPath(projectId: string) {
   return `/project/${encodeURIComponent(projectId)}`;
 }
 
-/** Browser tab of a project: opening it again focuses the same tab. */
-export const projectTab = (projectId: string) => `strata-mv-project-${projectId}`;
-
 function go(path: string, replace: boolean) {
   if (replace) history.replaceState(null, '', path);
   else history.pushState(null, '', path);
-  navigating = true;
   dispatchEvent(new PopStateEvent('popstate'));
-  navigating = false;
 }
 
 export function navigate(path: string, replace = false) {
   if (path === location.pathname) return;
-  const g = guard;
-  if (g?.leaves(path)) {
-    void g.ask().then((ok) => ok && go(path, replace));
-    return;
-  }
   go(path, replace);
 }
 
-/**
- * Asks before leaving a page (unpublished changes…): `leaves(path)` tells
- * whether going there leaves it, `ask()` resolves true to go anyway. Also
- * covers the Back button and, with the browser's own question, closing or
- * reloading the tab. Returns the function that removes it.
- */
-export function setLeaveGuard(leaves: (path: string) => boolean, ask: () => Promise<boolean>) {
-  const g: Guard = { leaves, ask, at: location.pathname };
-  guard = g;
-  const unload = (e: BeforeUnloadEvent) => {
-    e.preventDefault();
-    e.returnValue = '';
-  };
-  addEventListener('beforeunload', unload);
-  return () => {
-    removeEventListener('beforeunload', unload);
-    if (guard === g) guard = null;
-  };
-}
-
-type Guard = { leaves: (path: string) => boolean; ask: () => Promise<boolean>; at: string };
-let guard: Guard | null = null;
-let navigating = false;
-
-// Back / forward: come back first, then go if confirmed. Registered before
-// the app's own listener, so the page does not change meanwhile.
-addEventListener('popstate', (e) => {
-  const g = guard;
-  if (navigating || !g || !g.leaves(location.pathname)) return;
-  e.stopImmediatePropagation();
-  const to = location.pathname;
-  history.pushState(null, '', g.at);
-  void g.ask().then((ok) => ok && go(to, false));
-});

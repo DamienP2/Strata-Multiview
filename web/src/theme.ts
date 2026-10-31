@@ -9,8 +9,6 @@
 import { create } from 'zustand';
 
 export type ThemePref = 'dark' | 'light' | 'system';
-export const THEMES: ThemePref[] = ['dark', 'light', 'system'];
-
 const KEY = 'strata.theme';
 const isTheme = (v: unknown): v is ThemePref => v === 'dark' || v === 'light' || v === 'system';
 

@@ -166,7 +166,7 @@ export function InputsMode({ cfg, saved, edit }: { cfg: ServerConfig; saved: Ser
     while (ids.has(`input-${n}`)) n++;
     const id = `input-${n}`;
     // An SRT listener on a port nothing else uses.
-    const urls = [...inputs.map((i) => i.url), ...cfg.channels.flatMap((ch) => [ch.outputs, ...(ch.renditions ?? []).map((r) => r.outputs)].flatMap((o) => (o.streams ?? []).map((s) => s.url)))];
+    const urls = [...inputs.map((i) => i.url), ...cfg.channels.flatMap((ch) => [ch.outputs].flatMap((o) => (o.streams ?? []).map((s) => s.url)))];
     let port = 10000;
     while (urls.some((u) => new RegExp(`:${port}(?:[/?]|$)`).test(u))) port++;
     for (const i of inputs) if (byPort(i)) urls.push(`:${portOf(i)}`);

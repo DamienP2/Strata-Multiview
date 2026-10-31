@@ -5,7 +5,7 @@ import { FontPick } from '../ui/FontPick';
 import { AssetPicker } from './AssetPicker';
 import { Database, RotateCcw, AlignCenter, AlignLeft, AlignRight, ChevronDown, Link as LinkIcon, LayoutTemplate, MonitorPlay, Settings2, Unlink } from 'lucide-react';
 import { createContext, Fragment, useContext, useEffect, useMemo, useRef, useState } from 'react';
-import { col, holdFrame, interpolateText, num, parseHex, propValue, resolveLayer, toHex } from '../engine/evaluate';
+import { col, holdFrame, interpolateText, num, propValue, resolveLayer, toHex } from '../engine/evaluate';
 import { MAIN_FORMAT, TEXT_LIKE, type TextOverflow, type FontStyle, type Layer, type LayerType, type Prop, type Template, type Value } from '../engine/types';
 import { useApp } from '../store';
 import { ColorField, NumberField, Segmented, TextInput } from '../ui/fields';
@@ -278,21 +278,6 @@ export function ColorGroupRow({ layer, prop, label }: { layer: Layer; prop: 'fil
   );
 }
 
-/** Field key from a label: "Name plate X" -> "namePlateX". */
-export function fieldKey(label: string, taken: Set<string>): string {
-  const words = label
-    .normalize('NFD')
-    .replace(/[^A-Za-z0-9 ]/g, ' ')
-    .trim()
-    .split(/\s+/)
-    .filter(Boolean);
-  let key = words.map((w, i) => (i ? w[0].toUpperCase() + w.slice(1).toLowerCase() : w.toLowerCase())).join('') || 'field';
-  if (/^\d/.test(key)) key = `f${key}`;
-  let k = key;
-  for (let n = 2; taken.has(k); n++) k = `${key}${n}`;
-  return k;
-}
-
 /** Dot on a property changed in the current format; click to inherit again. */
 function OverrideMark({ layer, prop }: { layer: Layer; prop: Prop }) {
   const { format, updateBase } = useDesigner(useShallow((s) => ({ format: s.format, updateBase: s.updateBase })));
@@ -343,23 +328,12 @@ function ZoneInput({ value, onChange }: { value: string; onChange: (v: string) =
   );
 }
 
-function HexInput({ value, onChange }: { value: string; onChange: (v: string) => void }) {
-  const c = parseHex(value) ?? [0, 0, 0, 0];
-  return <ColorField value={c} onChange={(v) => onChange(toHex(v, v[3] < 1))} />;
-}
-
 /** Settings of prefab widgets. */
 export function WidgetSettings({ layer, set, data = {} }: { layer: Layer; set: (key: string, v: unknown, coalesce?: boolean) => void; data?: Record<string, string> }) {
   const a = layer as unknown as Attrs;
   // Content wired in the Data canvas: the data's value, greyed and read only.
   const text = (key: string, multiline = false, placeholder?: string) =>
     wiredKeys(String(a[key] ?? '')).length ? <WiredValue value={interpolateText(String(a[key]), data)} multiline={multiline} /> : <TextInput multiline={multiline} value={String(a[key] ?? '')} placeholder={placeholder} onChange={(v) => set(key, v, true)} />;
-  const check = (key: string, label: string) => (
-    <label className="check">
-      <input type="checkbox" checked={!!a[key]} onChange={(e) => set(key, e.target.checked)} />
-      {label}
-    </label>
-  );
   switch (layer.type) {
     case 'clock':
       return (
@@ -414,82 +388,6 @@ export function WidgetSettings({ layer, set, data = {} }: { layer: Layer; set: (
           </Row>
           <Row label={t('Speed')}>
             <Num value={layer.speed} onChange={(v) => set('speed', v, true)} min={1} suffix=" px/s" />
-          </Row>
-        </>
-      );
-    case 'roll':
-      return (
-        <>
-          <span className="prop-label">{t('Text (scrolls upwards)')}</span>
-          {text('text', true)}
-          <Row label={t('Speed')}>
-            <Num value={layer.speed} onChange={(v) => set('speed', v, true)} min={1} suffix=" px/s" />
-          </Row>
-          {check('loop', t('Loop'))}
-        </>
-      );
-    case 'rotator':
-      return (
-        <>
-          <span className="prop-label">{t('Lines (shown one after another)')}</span>
-          {text('text', true)}
-          <Row label={t('Each')}>
-            <Num value={layer.interval} onChange={(v) => set('interval', v, true)} min={0.5} step={0.1} precision={1} suffix=" s" />
-          </Row>
-          <Row label={t('Fade')}>
-            <Num value={layer.fade} onChange={(v) => set('fade', v, true)} min={0} step={0.1} precision={1} suffix=" s" />
-          </Row>
-        </>
-      );
-    case 'slideshow':
-      return (
-        <>
-          <span className="prop-label">{t('Images (one asset per line)')}</span>
-          {text('images', true, '/assets/photo1.jpg')}
-          <AssetPicker value="" onChange={(v) => v && set('images', `${layer.images.trim() ? layer.images.trim() + '\n' : ''}${v}`)} />
-          <Row label={t('Each')}>
-            <Num value={layer.interval} onChange={(v) => set('interval', v, true)} min={0.5} step={0.1} precision={1} suffix=" s" />
-          </Row>
-          <Row label={t('Fade')}>
-            <Num value={layer.fade} onChange={(v) => set('fade', v, true)} min={0} step={0.1} precision={1} suffix=" s" />
-          </Row>
-          <Row label={t('Fit')}>
-            <Segmented
-              value={layer.fit}
-              onChange={(v) => set('fit', v)}
-              options={[
-                { value: 'contain', label: t('Contain') },
-                { value: 'cover', label: t('Cover') },
-                { value: 'stretch', label: t('Stretch') },
-              ]}
-            />
-          </Row>
-        </>
-      );
-    case 'qrCode':
-      return (
-        <>
-          <span className="prop-label">{t('Content (URL, text…)')}</span>
-          {text('data')}
-          <Row label={t('Background')}>
-            <HexInput value={layer.background} onChange={(v) => set('background', v, true)} />
-          </Row>
-        </>
-      );
-    case 'barChart':
-      return (
-        <>
-          <span className="prop-label">{t('Rows — “Label: value”, one per line')}</span>
-          {text('text', true)}
-          {check('percent', t('Show as % of total'))}
-          <Row label={t('Animation')}>
-            <Num value={layer.duration} onChange={(v) => set('duration', v, true)} min={0} step={0.1} precision={1} suffix=" s" />
-          </Row>
-          <Row label={t('Track')}>
-            <HexInput value={layer.track} onChange={(v) => set('track', v, true)} />
-          </Row>
-          <Row label={t('Labels')}>
-            <HexInput value={layer.textColor} onChange={(v) => set('textColor', v, true)} />
           </Row>
         </>
       );
@@ -580,10 +478,7 @@ export function FontControls({ layer, set }: { layer: Layer & FontStyle; set: (k
   );
 }
 
-const FILL_LABEL: Partial<Record<LayerType, string>> = {
-  barChart: 'Bars',
-  qrCode: 'Modules',
-};
+const FILL_LABEL: Partial<Record<LayerType, string>> = {};
 
 /** In another format than main: what is specific to it, and a reset. */
 function FormatNote({ layer }: { layer: Layer }) {
@@ -790,7 +685,7 @@ function LayerInspector({ layer }: { layer: Layer }) {
   const textLike = TEXT_LIKE.has(layer.type);
   const radius = layer.type === 'rect' || layer.type === 'group';
   const Icon = layerIcon(layer);
-  const hasLook = layer.type !== 'image' && layer.type !== 'slideshow' && !widgetOf(layer)?.ownsLook;
+  const hasLook = layer.type !== 'image' && !widgetOf(layer)?.ownsLook;
   const driven = useDrivenValues(layer);
   const spec = widgetOf(layer);
   return (
@@ -822,9 +717,9 @@ function LayerInspector({ layer }: { layer: Layer }) {
         {(hasLook || layer.type === 'group' || (layer.type === 'image' && !spec?.Inspector)) && (
           <Group id="contents" title={t('Contents')} level={2}>
             {hasLook && <ColorGroupRow layer={layer} prop="fill" label={FILL_LABEL[layer.type] ?? (textLike ? 'Color' : 'Fill')} />}
-            {hasLook && layer.type !== 'qrCode' && <ColorGroupRow layer={layer} prop="stroke" label="Stroke" />}
+            {hasLook && <ColorGroupRow layer={layer} prop="stroke" label="Stroke" />}
             {hasLook &&
-              STYLE.filter((st) => (st.prop === 'cornerRadius' ? radius : layer.type !== 'qrCode')).map((st) => (
+              STYLE.filter((st) => (st.prop === 'cornerRadius' ? radius : true)).map((st) => (
                 <GroupRow
                   key={st.prop}
                   layer={layer}

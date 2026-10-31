@@ -1,6 +1,6 @@
 // The tools of the Designer's toolbar that add to the multiview: a Source tile first, then the
 // shapes and texts on hand, the other widgets behind « + ».
-import { Circle, Code, Image, Minus, MonitorPlay, PenTool, Pentagon, Pilcrow, Plus, Square, Type, Video } from 'lucide-react';
+import { Circle, Image, Minus, MonitorPlay, PenTool, Pentagon, Pilcrow, Plus, Square, Type, Video } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import type { LayerType } from '../engine/types';
 import { WIDGET_LIST } from '../widgets';
@@ -103,9 +103,6 @@ const MENU: { type?: LayerType; widget?: string; label: string; soon?: typeof Vi
   { type: 'ticker', label: 'Ticker' },
   { widget: 'clock', label: 'Clock' },
   { widget: 'time', label: 'Time' },
-  { type: 'qrCode', label: 'QR code' },
-  { label: 'Video', soon: Video, action: 'video', hint: 'A video file (mp4, mov, webm…; alpha kept) played as frames, at most a minute' },
-  { type: 'web', label: 'Iframe', soon: Code, hint: 'A web page or your HTML code (HTML5 outputs)' },
 ];
 type Menu = MenuItem & { action?: 'video' };
 const menu = (): Menu[] =>

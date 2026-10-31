@@ -1,6 +1,6 @@
-import { Check, Lock, RotateCcw, Upload } from 'lucide-react';
+import { Lock, Upload } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
-import { draftOf, publishState } from '../engine/drafts';
+import { draftOf } from '../engine/drafts';
 import type { ChannelState, Project } from '../engine/types';
 import { api, clientId, lockEvents, useApp, type EditLock } from '../store';
 import { useDesigner } from './designerStore';
@@ -230,51 +230,3 @@ export function TopPublish({ project, saving, readOnly }: { project: Project; sa
   );
 }
 
-/** Draft / published state of the open template, and the Publish button. */
-export function PublishButton({ project, readOnly }: { project: Project; readOnly: boolean }) {
-  const base = useDesigner((s) => s.base);
-  const saveTemplate = useApp((s) => s.saveTemplate);
-  const toast = useApp((s) => s.toast);
-  const [busy, setBusy] = useState(false);
-  if (!base) return null;
-  const { published, draft } = publishState(project, base.id);
-  const changed = draft || !published;
-  const url = `/api/projects/${encodeURIComponent(project.id)}/templates/${encodeURIComponent(base.id)}`;
-  const publish = async () => {
-    setBusy(true);
-    try {
-      // The latest edits first (autosave may still be pending).
-      if (!(await saveTemplate(useDesigner.getState().base!))) return;
-      const r = await api<{ revision: number }>('POST', `${url}/publish`);
-      toast(t('“{name}” v{rev} is live on the outputs', { name: base.name, rev: r.revision }), 'info');
-    } catch (e) {
-      toast((e as Error).message, 'error');
-    } finally {
-      setBusy(false);
-    }
-  };
-  const discard = async () => {
-    if (!published || !(await confirmDialog({ title: t('Discard the unpublished changes?'), message: t('“{name}” goes back to v{rev}, the version the outputs use.', { name: base.name, rev: published.revision ?? 1 }), confirm: t('Discard'), danger: true }))) return;
-    await api('DELETE', `${url}/draft`).catch((e) => toast((e as Error).message, 'error'));
-    useDesigner.getState().load(published);
-  };
-  if (!changed)
-    return (
-      <span className="publish-state" title={t('The outputs use this version')}>
-        <Check size={13} /> {t('Live on the outputs')}
-        {published?.revision ? ` · v${published.revision}` : ''}
-      </span>
-    );
-  return (
-    <div className="publish">
-      {published && draft && !readOnly && (
-        <button className="icon-btn ghost" title={t('Discard unpublished changes (back to v{rev})', { rev: published.revision || 1 })} onClick={discard}>
-          <RotateCcw size={13} />
-        </button>
-      )}
-      <button className="btn small primary" disabled={busy || readOnly} title={published ? t('The outputs use v{rev} until you publish', { rev: published.revision || 1 }) : t('New multiview: the outputs do not get it until you publish')} onClick={publish}>
-        <Upload size={13} /> {published ? t('Publish to the outputs') : t('Publish (new)')}
-      </button>
-    </div>
-  );
-}

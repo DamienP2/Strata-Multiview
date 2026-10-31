@@ -448,7 +448,7 @@ function Inspector({ layer, template, edit }: { layer: TextLayer; data: Data; te
   // The variables set in the text (typed by the Operator): each may have its own looks.
   const vars = [...new Set([...layer.text.matchAll(/\{\{\s*(\w+)\s*\}\}/g)].map((m) => m[1]))]
     .map((key) => template.fields.find((f) => f.key === key))
-    .filter((f): f is NonNullable<typeof f> => !!f && !f.binding?.source && (f.kind === 'text' || f.kind === 'multiline'));
+    .filter((f): f is NonNullable<typeof f> => !!f && (f.kind === 'text' || f.kind === 'multiline'));
   const [typoFor, setTypoFor] = useState('');
   const [colourFor, setColourFor] = useState('');
   const typoVar = vars.some((f) => f.key === typoFor) ? typoFor : '';

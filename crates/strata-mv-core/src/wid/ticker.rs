@@ -311,7 +311,7 @@ pub fn expand(items: &[Item], data: &Data) -> Vec<Item> {
                     let (text, cat) = match &v {
                         serde_json::Value::String(s) => (s.clone(), it.cat.clone()),
                         serde_json::Value::Object(o) if !it.format.is_empty() => (
-                            formatted(&it.format, &|k| o.get(k).map(crate::datapath::text)),
+                            formatted(&it.format, &|k| o.get(k).map(json_text)),
                             o.get("cat")
                                 .or_else(|| o.get("category"))
                                 .and_then(|x| x.as_str())
@@ -1062,6 +1062,19 @@ pub fn act(
         },
     );
     Ok(())
+}
+
+/// A JSON value as text: strings as they are, whole numbers without ".0".
+fn json_text(v: &serde_json::Value) -> String {
+    match v {
+        serde_json::Value::String(s) => s.clone(),
+        serde_json::Value::Null => String::new(),
+        serde_json::Value::Number(n) => match n.as_f64() {
+            Some(f) if f.fract() == 0.0 && f.abs() < 1e15 => format!("{}", f as i64),
+            _ => n.to_string(),
+        },
+        other => other.to_string(),
+    }
 }
 
 #[cfg(test)]

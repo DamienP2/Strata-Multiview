@@ -3,9 +3,9 @@ import { widgetOf } from '../widgets';
 import { api, useApp } from '../store';
 import { replaceColor } from '../colors';
 import { create } from 'zustand';
-import { DEFAULTS, defaultData, newId, propValue } from '../engine/evaluate';
+import { DEFAULTS, defaultData, newId } from '../engine/evaluate';
 import { fromFormatView, inFormat } from '../engine/formats';
-import { MAIN_FORMAT, MARKER_MODEL, type Data, type FontStyle, type Keyframe, type Layer, type LayerType, type Prop, type Template, type Value } from '../engine/types';
+import { MAIN_FORMAT, type Data, type FontStyle, type Keyframe, type Layer, type LayerType, type Prop, type Template, type Value } from '../engine/types';
 import { t, tc } from '../i18n';
 
 export interface KeyRef {
@@ -263,16 +263,6 @@ function nearestEasing(track: Keyframe[], f: number) {
   return before?.easing ?? { type: 'easeInOut' as const };
 }
 
-/** The AE stopwatch: enable/disable animation of a property. */
-export function toggleStopwatch(l: Layer, p: Prop, frame: number) {
-  if (isAnimated(l, p)) {
-    l.props[p] = propValue(l, p, frame);
-    delete l.tracks[p];
-  } else {
-    l.tracks[p] = [{ frame: Math.round(frame), value: propValue(l, p, frame), easing: { type: 'easeInOut' } }];
-  }
-}
-
 export function descendants(t: Template, id: string): string[] {
   const out: string[] = [];
   const walk = (pid: string) => {
@@ -292,14 +282,8 @@ export const LABELS: Record<LayerType, string> = {
   image: 'Image',
   clock: 'Clock',
   ticker: 'Ticker',
-  roll: 'Credits roll',
-  rotator: 'Rotator',
-  slideshow: 'Slideshow',
-  qrCode: 'QR code',
-  barChart: 'Bar chart / poll',
   polygon: 'Polygon',
   pen: 'Pen',
-  web: 'Iframe',
 };
 
 /** Widget presets offered in the toolbar menu (a type plus overrides). */
@@ -309,9 +293,6 @@ export const WIDGET_PRESETS: { key: string; label: string; hint: string; type: L
   { key: 'countdown', label: 'Countdown', hint: 'To a time of day or a date', type: 'clock', patch: { mode: 'countdown', target: '20:00', format: 'HH:mm:ss' } },
   { key: 'timer', label: 'Timer', hint: 'Counts down a duration once on air', type: 'clock', patch: { mode: 'timer', target: '5:00', format: 'mm:ss' } },
   { key: 'elapsed', label: 'Stopwatch', hint: 'Time since the take', type: 'clock', patch: { mode: 'elapsed', format: 'mm:ss.f' } },
-  { key: 'barChart', label: 'Bar chart / poll', hint: 'Label: value lines', type: 'barChart' },
-  { key: 'slideshow', label: 'Slideshow', hint: 'Images with cross-fade', type: 'slideshow' },
-  { key: 'qrCode', label: 'QR code', hint: 'URL or text', type: 'qrCode' },
 ];
 
 const font = (align: FontStyle['align'] = 'left', weight = 700): FontStyle => ({ fontFamily: 'Inter', fontWeight: weight, align, verticalAlign: 'middle', uppercase: false });
@@ -372,53 +353,9 @@ export function makeLayer(type: LayerType, width: number, height: number, parent
         ...font('left', 600),
         props: { x: 0, y: parent ? 0 : height - 140, width: parent ? 1000 : width, height: 64, fontSize: 36, fill: DEFAULTS.fill },
       };
-    case 'roll':
-      return {
-        ...base,
-        type,
-        text: 'PRESENTED BY\nJane Doe\n\nDIRECTED BY\nJohn Smith\n\nPRODUCED BY\nStrata',
-        speed: 60,
-        loop: true,
-        ...font('center', 600),
-        props: { ...centered(900, 800), fontSize: 44, fill: DEFAULTS.fill },
-      };
-    case 'rotator':
-      return { ...base, type, text: 'First message\nSecond message\nThird message', interval: 4, fade: 0.5, ...font('left', 600), props: { ...centered(900, 80), fontSize: 48, fill: DEFAULTS.fill } };
-    case 'slideshow':
-      return { ...base, type, images: '', interval: 5, fade: 0.8, fit: 'cover', props: centered(640, 360) };
-    case 'qrCode':
-      return { ...base, type, data: 'https://example.com', background: '#ffffff', props: { ...centered(260, 260), fill: [0.05, 0.05, 0.08, 1] } };
-    case 'barChart':
-      return {
-        ...base,
-        type,
-        text: 'Yes: 58\nNo: 34\nNo opinion: 8',
-        percent: true,
-        duration: 1.2,
-        track: '#ffffff22',
-        textColor: '#ffffff',
-        ...font('left', 600),
-        props: { ...centered(900, 260), fontSize: 36, fill: [0.486, 0.361, 1, 1] },
-      };
     default:
       return { ...base, type, props: centered(600, 400) } as Layer;
   }
-}
-
-/** A new template: 1 s long (`fps` frames), on air at half of it. */
-export function newTemplate(name: string, zone = '', fps = 25, secs = 1): Template {
-  const len = Math.max(2, Math.round(fps * Math.min(600, Math.max(0.1, secs))));
-  return {
-    id: newId(),
-    name,
-    zone,
-    duration: len,
-    // Animate in up to the On air point, out from there to the end.
-    markers: [{ id: newId(), frame: Math.round(len / 2), name: 'On air', kind: 'out' }],
-    fields: [],
-    layers: [],
-    markerModel: MARKER_MODEL,
-  };
 }
 
 /** Duplicates layers (with their children) just above the originals and selects the copies. */

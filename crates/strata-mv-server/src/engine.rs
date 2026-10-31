@@ -283,8 +283,6 @@ struct Picture {
     last: Option<(u64, Arc<Frame>)>,
     stats: Arc<PictureStats>,
     outputs: Vec<OutputThread>,
-    /// The live source under the graphics (it then holds the outputs).
-    mixer: Option<Mixer>,
     renders: Vec<std::thread::JoinHandle<()>>,
     /// The frame clock of its first output that has one (a DeckLink card).
     card: Option<Arc<dyn FrameClock>>,
@@ -317,9 +315,6 @@ impl Picture {
             }
         }
         if let Some((_, frame)) = &self.last {
-            if let Some(m) = &self.mixer {
-                m.send(frame.clone(), at);
-            }
             for o in &self.outputs {
                 o.send(frame.clone(), at);
             }
@@ -336,94 +331,9 @@ impl Picture {
         for r in self.renders {
             let _ = r.join();
         }
-        if let Some(m) = self.mixer {
-            m.close();
-        }
         for o in self.outputs {
             o.close();
         }
-    }
-}
-
-/// Keys a picture's graphics over the newest picture of a live source as
-/// each frame goes out, on a thread of its own (the clock never waits): the
-/// video is not delayed by the frames rendered ahead, only by the keying.
-struct Mixer {
-    frames: mpsc::SyncSender<(Arc<Frame>, SystemTime)>,
-    thread: std::thread::JoinHandle<()>,
-}
-
-impl Mixer {
-    fn start(
-        name: String,
-        source: String,
-        inputs: Arc<crate::inputs::Inputs>,
-        outputs: Vec<OutputThread>,
-    ) -> Self {
-        let (frames, rx) = mpsc::sync_channel::<(Arc<Frame>, SystemTime)>(2);
-        let thread = std::thread::Builder::new()
-            .name(name)
-            .spawn(move || {
-                crate::rt::prioritize(crate::rt::Work::Render);
-                use strata_mv_render::LiveInputs;
-                // The last keyed frame, with the graphics and video it came from.
-                let mut last: Option<(Arc<Frame>, Arc<tiny_skia::Pixmap>, Arc<Frame>)> = None;
-                // A source of another size, fitted to the picture (once per source picture).
-                let mut fitted: Option<(Arc<tiny_skia::Pixmap>, Arc<tiny_skia::Pixmap>)> = None;
-                while let Ok((frame, at)) = rx.recv() {
-                    let video = inputs.picture(&source).map(|live| {
-                        if (live.width(), live.height()) == (frame.width, frame.height) {
-                            return live;
-                        }
-                        match &fitted {
-                            Some((from, f)) if Arc::ptr_eq(from, &live) => f.clone(),
-                            _ => {
-                                let f = Arc::new(strata_mv_render::fit_picture(
-                                    &live,
-                                    frame.width,
-                                    frame.height,
-                                ));
-                                fitted = Some((live, f.clone()));
-                                f
-                            }
-                        }
-                    });
-                    let out = match video {
-                        Some(live) => match &last {
-                            Some((g, v, keyed))
-                                if Arc::ptr_eq(g, &frame) && Arc::ptr_eq(v, &live) =>
-                            {
-                                keyed.clone()
-                            }
-                            _ => {
-                                let keyed = Arc::new(strata_mv_render::over_live(&frame, &live));
-                                last = Some((frame, live, keyed.clone()));
-                                keyed
-                            }
-                        },
-                        None => frame,
-                    };
-                    for o in &outputs {
-                        o.send(out.clone(), at);
-                    }
-                }
-                for o in outputs {
-                    o.close();
-                }
-            })
-            .expect("spawn mixer thread");
-        Self { frames, thread }
-    }
-
-    /// Hands over a frame to go out (dropped when the keying is behind:
-    /// the outputs then repeat the last one).
-    fn send(&self, frame: Arc<Frame>, at: SystemTime) {
-        let _ = self.frames.try_send((frame, at));
-    }
-
-    fn close(self) {
-        drop(self.frames);
-        let _ = self.thread.join();
     }
 }
 
@@ -491,12 +401,7 @@ fn start_pictures(state: &Shared, cfg: &ChannelConfig) -> Vec<Picture> {
         if opened.is_empty() {
             continue;
         }
-        let name = cfg
-            .renditions
-            .iter()
-            .find(|r| r.id == id)
-            .map_or("Principal", |r| r.name.as_str());
-        let stats = state.perf.picture(&cfg.id, id, name, width, height);
+        let stats = state.perf.picture(&cfg.id, id, "Principal", width, height);
         let card = opened.iter().find_map(|o| o.sink.frame_clock());
         let outputs = opened
             .into_iter()
@@ -531,18 +436,6 @@ fn start_pictures(state: &Shared, cfg: &ChannelConfig) -> Vec<Picture> {
                     .expect("spawn render thread")
             })
             .collect();
-        // A picture fed through the channel's source gets the live video
-        // under its graphics as each frame goes out.
-        let (outputs, mixer) = match cfg.background.clone() {
-            Some(source) if !cfg.graphics_only.iter().any(|p| p == id) => {
-                let name = format!("mv-mix-{}-{id}", cfg.id);
-                (
-                    Vec::new(),
-                    Some(Mixer::start(name, source, state.inputs.clone(), outputs)),
-                )
-            }
-            _ => (outputs, None),
-        };
         pictures.push(Picture {
             jobs,
             done,
@@ -550,7 +443,6 @@ fn start_pictures(state: &Shared, cfg: &ChannelConfig) -> Vec<Picture> {
             last: None,
             stats,
             outputs,
-            mixer,
             renders,
             card,
         });
@@ -960,55 +852,7 @@ async fn advance(
         .unwrap_or(1.0);
     let (changed, snapshot) = {
         let mut st = ch.state.write().await;
-        let mut changed = st.tick(step);
-        if let Some(p) = &project {
-            if st.auto_resume(p) {
-                changed = true;
-            }
-            // Auto next between the graphics of a playlist.
-            if let Some(taken) = st.auto_next_taken(p) {
-                let store = strata_mv_core::datapath::Store::default();
-                crate::state::bind_state(p, &mut st, &store, None, None, false);
-                // Items reading their sources "on take" read them now.
-                for id in &taken {
-                    crate::state::bind_state(p, &mut st, &store, None, Some(id), false);
-                }
-                changed = true;
-            }
-            // Countdowns at zero firing their trigger.
-            for name in st.zero_triggers(p, &state.config.timezone) {
-                let _ = st.apply(p, strata_mv_core::playout::Command::Trigger { name });
-                changed = true;
-            }
-            // Pauses and on-air points waiting for an event that happened.
-            let fired = {
-                static WIDTHS: std::sync::OnceLock<std::sync::Mutex<strata_mv_render::TextWidths>> =
-                    std::sync::OnceLock::new();
-                let widths = WIDTHS.get_or_init(|| {
-                    std::sync::Mutex::new(strata_mv_render::TextWidths::new(state.assets_dir()))
-                });
-                let mut w = widths.lock().unwrap_or_else(|e| e.into_inner());
-                st.event_resumes(p, &state.config.timezone, &mut *w)
-            };
-            if !fired.is_empty() {
-                changed = true;
-            }
-            // Rows going on by themselves, values set by hand for a time:
-            // the data is read again for them.
-            let rows = st.auto_rows(p);
-            let freed = st.expire_manual(crate::state::now_ms().max(0) as u64);
-            if rows || freed {
-                crate::state::bind_state(
-                    p,
-                    &mut st,
-                    &strata_mv_core::datapath::Store::default(),
-                    None,
-                    None,
-                    false,
-                );
-                changed = true;
-            }
-        }
+        let changed = st.tick(step);
         (changed, st.clone())
     };
     if changed {
@@ -1115,7 +959,6 @@ mod tests {
             last: None,
             stats,
             outputs: vec![out],
-            mixer: None,
             renders: Vec::new(),
             card: None,
         };

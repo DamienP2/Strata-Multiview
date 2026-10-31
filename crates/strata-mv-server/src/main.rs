@@ -1,6 +1,4 @@
-mod antenna;
 mod api;
-mod apiv1;
 mod auth;
 mod colors;
 mod config;
@@ -29,7 +27,6 @@ mod timectl;
 mod update;
 mod web;
 mod webimages;
-mod webproxy;
 
 use std::collections::BTreeMap;
 use std::future::Future;
@@ -524,7 +521,6 @@ pub async fn serve(
                     project_id: RwLock::new(pid),
                     published: Default::default(),
                     dirty: Default::default(),
-                    ops: Default::default(),
                 }),
             );
         }
@@ -550,7 +546,6 @@ pub async fn serve(
             started_at,
             restart: Notify::new(),
             closing,
-            presence: Default::default(),
         });
         shared.inputs.apply(&shared.config.inputs);
         shared
@@ -560,8 +555,6 @@ pub async fn serve(
             .set_live(shared.inputs.clone());
         let channels = engine::start(&shared);
         let engine = vec![
-            // OSC and TCP control (Bitfocus Buttons…), when enabled.
-            tokio::spawn(apiv1::serve(shared.clone())),
             // The picture library's updates, looked for once a week.
             tokio::spawn(iconlib::run(shared.clone())),
             tokio::spawn(engine::give_back_memory()),

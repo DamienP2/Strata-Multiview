@@ -28,8 +28,8 @@ mod decklink {
         match try_build() {
             Ok(()) => println!("cargo:rustc-cfg=decklink_shim"),
             Err(e) => {
-                let required =
-                    env::var("STRATA_MV_DECKLINK_REQUIRED").is_ok_and(|v| !v.is_empty() && v != "0");
+                let required = env::var("STRATA_MV_DECKLINK_REQUIRED")
+                    .is_ok_and(|v| !v.is_empty() && v != "0");
                 if required {
                     panic!("cannot build the DeckLink shim: {e}");
                 }
@@ -61,14 +61,16 @@ mod decklink {
             "linux" => {
                 b.include(sdk.join("linux"))
                     .file(sdk.join("linux/DeckLinkAPIDispatch.cpp"));
-                b.try_compile("strata_mv_decklink").map_err(|e| e.to_string())?;
+                b.try_compile("strata_mv_decklink")
+                    .map_err(|e| e.to_string())?;
                 println!("cargo:rustc-link-lib=dl");
                 println!("cargo:rustc-link-lib=pthread");
             }
             "macos" => {
                 b.include(sdk.join("mac"))
                     .file(sdk.join("mac/DeckLinkAPIDispatch.cpp"));
-                b.try_compile("strata_mv_decklink").map_err(|e| e.to_string())?;
+                b.try_compile("strata_mv_decklink")
+                    .map_err(|e| e.to_string())?;
                 println!("cargo:rustc-link-lib=framework=CoreFoundation");
             }
             "windows" => {
@@ -80,7 +82,8 @@ mod decklink {
                 std::fs::create_dir_all(&gen).map_err(|e| e.to_string())?;
                 midl(&sdk.join("win"), &gen)?;
                 b.include(&gen).include(sdk.join("win"));
-                b.try_compile("strata_mv_decklink").map_err(|e| e.to_string())?;
+                b.try_compile("strata_mv_decklink")
+                    .map_err(|e| e.to_string())?;
                 println!("cargo:rustc-link-lib=ole32");
                 println!("cargo:rustc-link-lib=oleaut32");
             }

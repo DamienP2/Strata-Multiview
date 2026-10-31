@@ -124,7 +124,7 @@ const unwiredOf = (ch: ChannelConfig): Picture => ({ ...UNWIRED, outputs: ch.unw
 /** The destination list of a format, or of the unwired destinations (""). */
 const outputsOf = (c: ChannelConfig, picture: string): OutputsConfig => {
   if (!picture) return (c.unwired ??= { st2110: [], sdi: [], ndi: [], html5: [], streams: [] });
-  return picture === 'main' ? c.outputs : (c.renditions ?? []).find((r) => r.id === picture)!.outputs;
+  return c.outputs;
 };
 
 const isOn = (d: Dest) => (d.value as { enabled?: boolean }).enabled !== false;
@@ -451,18 +451,12 @@ export function Outputs({ mode }: { mode: Mode }) {
     });
   const editDest = <T,>(fn: (d: T) => void) => selDest && editDestById<T>(selDest.value.id, fn);
   const setOn = (id: string, on: boolean) => editDestById<{ enabled?: boolean }>(id, (d) => void (d.enabled = on));
-  const setSlate = (picture: string, src: string) =>
+  const setSlate = (_picture: string, src: string) =>
     editCh((c) => {
-      const target = picture === 'main' ? c : (c.renditions ?? []).find((r) => r.id === picture);
-      if (!target) return;
-      if (src) Object.assign(target, { slate: src, slateStyle: 'custom' });
-      else delete target.slate;
+      if (src) Object.assign(c, { slate: src, slateStyle: 'custom' });
+      else delete c.slate;
     });
-  const setSlateStyle = (picture: string, style: SlateStyle) =>
-    editCh((c) => {
-      const target = picture === 'main' ? c : (c.renditions ?? []).find((r) => r.id === picture);
-      if (target) target.slateStyle = style;
-    });
+  const setSlateStyle = (_picture: string, style: SlateStyle) => editCh((c) => void (c.slateStyle = style));
 
   const addLocation = async () => {
     const name = await promptDialog({ title: t('New location'), label: t('Name'), placeholder: t('A studio, a truck, the web desk…'), confirm: t('Add') });
@@ -497,7 +491,7 @@ export function Outputs({ mode }: { mode: Mode }) {
     const id = `channel-${n}`;
     edit((c) => {
       c.locations = c.locations?.length ? c.locations : [...locations];
-      c.channels.push({ id, name: t('Channel {n}', { n }), width: first?.width ?? 1920, height: first?.height ?? 1080, frameRate: first?.frameRate ?? { num: 50, den: 1 }, projectId: null, location: loc, outputs: { st2110: [], sdi: [], ndi: [], html5: [{ id: 'html5-1', name: t('Web page'), background: '' }], streams: [] }, renditions: [] });
+      c.channels.push({ id, name: t('Channel {n}', { n }), width: first?.width ?? 1920, height: first?.height ?? 1080, frameRate: first?.frameRate ?? { num: 50, den: 1 }, projectId: null, location: loc, outputs: { st2110: [], sdi: [], ndi: [], html5: [{ id: 'html5-1', name: t('Web page'), background: '' }], streams: [] } });
     });
     setCurrent(id);
     setSel('program');

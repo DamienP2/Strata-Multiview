@@ -11,8 +11,8 @@
 use std::ffi::{c_char, c_void, CString};
 use std::sync::{Arc, Mutex, OnceLock};
 
-use strata_mv_render::Frame;
 use serde::{Deserialize, Serialize};
+use strata_mv_render::Frame;
 
 use crate::{OutputError, OutputSink};
 

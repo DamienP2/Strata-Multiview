@@ -10,14 +10,12 @@ pub mod ellipse;
 pub mod image;
 pub mod pen;
 pub mod polygon;
-pub mod qrcode;
 pub mod quad;
 pub mod shape;
 pub mod source;
 pub mod text;
 pub mod ticker;
 pub mod timer;
-pub mod web;
 
 use serde_json::Value;
 
@@ -49,8 +47,6 @@ pub fn widget_id(kind: &LayerKind) -> Option<&'static str> {
         LayerKind::Pen { .. } => "pen",
         LayerKind::Clock { .. } => "timer",
         LayerKind::Ticker { .. } => "ticker",
-        LayerKind::QrCode { .. } => "qrcode",
-        LayerKind::Web { .. } => "web",
         LayerKind::Source { .. } => "source",
         _ => return None,
     })
@@ -81,8 +77,6 @@ pub fn act(
         LayerKind::Pen { .. } => go!(pen),
         LayerKind::Clock { .. } => go!(timer),
         LayerKind::Ticker { .. } => go!(ticker),
-        LayerKind::QrCode { .. } => go!(qrcode),
-        LayerKind::Web { .. } => go!(web),
         _ => Err("this layer has no operator actions".into()),
     }
 }
@@ -140,4 +134,3 @@ pub fn on_trigger(layer: &Layer, state: &mut Value, name: &str, ctx: &ActCtx) ->
 pub fn same_trigger(a: &str, b: &str) -> bool {
     !a.trim().is_empty() && a.trim().eq_ignore_ascii_case(b.trim())
 }
-

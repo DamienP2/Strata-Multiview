@@ -66,12 +66,6 @@ export type LayerKind =
   | ({ type: 'image'; src: string; fit: ImageFit } & import('../widgets/image').Config)
   | (({ type: 'clock'; mode: ClockMode; format: string; timezone: string; target: string } & FontStyle) & import('../widgets/timer').Config)
   | (({ type: 'ticker'; text: string; separator: string; speed: number } & FontStyle) & import('../widgets/ticker').Config)
-  | ({ type: 'roll'; text: string; speed: number; loop: boolean } & FontStyle)
-  | ({ type: 'rotator'; text: string; interval: number; fade: number } & FontStyle)
-  | { type: 'slideshow'; images: string; interval: number; fade: number; fit: ImageFit }
-  | ({ type: 'qrCode'; data: string; background: string } & import('../widgets/qrcode').Config)
-  | ({ type: 'web' } & import('../widgets/web').Config)
-  | ({ type: 'barChart'; text: string; percent: boolean; duration: number; track: string; textColor: string } & FontStyle)
   | ({ type: 'polygon' } & import('../widgets/polygon').Config)
   | ({ type: 'pen' } & import('../widgets/pen').Config)
   | ({ type: 'source' } & import('../widgets/source').Config);
@@ -141,17 +135,6 @@ export interface Marker {
 }
 
 export type Resume = { type: 'manual' } | { type: 'after'; seconds: number } | { type: 'trigger'; name: string } | { type: 'triggers' };
-/** What an event node of the Triggers watches on air (the server). */
-export type TriggerEvent =
-  | { kind: 'scrollEnd'; layer: string; passes?: number }
-  | { kind: 'timerZero'; layer: string }
-  | { kind: 'timerAt'; layer: string; seconds: number }
-  | { kind: 'videoEnd'; layer: string }
-  | { kind: 'lastRow'; dataset: string }
-  | { kind: 'dataChange'; key: string }
-  | { kind: 'dataIs'; key: string; op: string; value: string }
-  | { kind: 'graphic'; template: string; out?: boolean };
-
 /** Marker model of templates made by this version (see Template.markerModel). */
 export const MARKER_MODEL = 2;
 
@@ -162,30 +145,11 @@ export interface Field {
   label: string;
   kind: FieldKind;
   default: string;
-  /** Live value from a data source. */
-  binding?: FieldBinding | null;
   /** Range of a number (slider). */
   min?: number;
   max?: number;
   /** Choices of an exposed setting (value, label): the Operator picks one. */
   options?: [string, string][];
-}
-
-/** A data source and a path in its value (`rows[{row}].name`, `items[*].title`…). */
-export interface FieldBinding {
-  source: string;
-  path: string;
-  /** Applied in order to the value read (mirror of model::DataFilter). */
-  filters?: DataFilter[];
-  /** Sorts a list of the source before the path reads it. */
-  sort?: DataSort;
-  /** Table pipeline (compiled from the Data canvas): the list read as rows, then the steps. */
-  list?: string;
-  steps?: DataStep[];
-  /** How a new value of the source shows on air, set before it was the layers' (Layer.liveChange wins). */
-  change?: ValueChange;
-  /** Length of that change, in seconds (0.6 when unset). */
-  changeSecs?: number;
 }
 
 /** How a value its data source changed shows on air (mirror of model::ValueChange). */
@@ -207,70 +171,8 @@ export interface ValueMove {
   length: number;
 }
 
-/** A step of the table pipeline (mirror of model::DataStep). */
-export type DataStep = { type: 'filter'; where: Condition[]; any?: boolean; from: number; count: number; columns: string[] } | { type: 'sort'; keys: SortKey[] } | { type: 'transform'; columns: string[]; ops: DataFilter[] };
-
-export type CondOp = 'eq' | 'ne' | 'contains' | 'notContains' | 'startsWith' | 'gt' | 'ge' | 'lt' | 'le' | 'empty' | 'notEmpty';
-export interface Condition {
-  column: string;
-  op: CondOp;
-  value: string;
-}
-export interface SortKey {
-  column: string;
-  descending?: boolean;
-  numeric?: boolean;
-}
-
 /** Too long for its box: narrower then smaller, "…", cut, or drawn outside. */
 export type TextOverflow = 'fit' | 'ellipsis' | 'clip' | 'visible';
-
-/** How the graphic on air goes from one row of a data set to the next. */
-export type RowChange = 'outIn' | 'fade' | 'cut';
-
-/** Rows the operator steps through (mirror of model::DataSet); compiled from a Data set node. */
-export interface DataSet {
-  key: string;
-  name: string;
-  source: string;
-  list: string;
-  steps?: DataStep[];
-  change?: RowChange;
-}
-
-/** A node of the Data canvas graph: a source's list, a step, or a data set. */
-export type FlowNode = { id: string; x: number; y: number } & ({ type: 'source'; source: string; list: string } | DataStep | { type: 'dataset'; key: string; name: string; change: RowChange });
-/** The Data canvas graph; an edge goes to a node id or to `field:<key>`. */
-export interface DataFlow {
-  nodes: FlowNode[];
-  edges: { from: string; to: string }[];
-}
-
-/** Sorts the list at `list` (dotted keys, "" = the root) by `by` (mirror of model::DataSort). */
-export interface DataSort {
-  list: string;
-  by: string;
-  descending?: boolean;
-  numeric?: boolean;
-}
-
-export type FilterOp = 'add' | 'sub' | 'mul' | 'div';
-
-export type DataFilter =
-  | { type: 'upper' }
-  | { type: 'lower' }
-  | { type: 'capitalize' }
-  | { type: 'trim' }
-  | { type: 'prefix'; text: string }
-  | { type: 'suffix'; text: string }
-  | { type: 'replace'; find: string; with: string }
-  | { type: 'truncate'; max: number }
-  | { type: 'lines'; from: number; count: number }
-  | { type: 'join'; separator: string }
-  | { type: 'number'; decimals: number; grouping: boolean }
-  | { type: 'math'; op: FilterOp; value: number }
-  | { type: 'default'; text: string }
-  | { type: 'map'; when: string; then: string };
 
 export interface Template {
   id: string;
@@ -281,53 +183,10 @@ export interface Template {
   layers: Layer[];
   /** Default zone (id). */
   zone: string;
-  /** Relations between values (node graph). */
-  logic?: Logic;
-  /** What happens on air: events → out, a pause playing on, a trigger, the next row (the server runs it). */
-  triggers?: Logic;
-  /** The Data canvas graph; the fields' bindings and the data sets are compiled from it. */
-  dataflow?: DataFlow;
-  datasets?: DataSet[];
   /** Published revision (0: never published). */
   revision?: number;
   /** Marker model (MARKER_MODEL); older templates are converted by the server. */
   markerModel?: number;
-}
-
-export type TextMetric = 'width' | 'height' | 'lines' | 'chars';
-export type MathOp = 'add' | 'sub' | 'mul' | 'div' | 'min' | 'max' | 'abs' | 'round' | 'floor' | 'ceil';
-export type Cmp = 'gt' | 'ge' | 'lt' | 'le' | 'eq' | 'ne' | 'empty' | 'notEmpty';
-export type TargetMode = 'set' | 'add' | 'multiply';
-
-export type LogicNodeKind =
-  | { type: 'layerProp'; layer: string; prop: Prop }
-  | { type: 'textSize'; layer: string; metric: TextMetric }
-  | { type: 'field'; key: string }
-  | { type: 'constant'; value: number }
-  | { type: 'math'; op: MathOp }
-  | { type: 'clamp'; min: number; max: number }
-  | { type: 'condition'; cmp: Cmp }
-  | { type: 'target'; layer: string; prop: Prop; mode: TargetMode }
-  | { type: 'text'; value: string }
-  | { type: 'event'; on: TriggerEvent }
-  | { type: 'bool'; op: 'and' | 'or' }
-  | { type: 'out' }
-  | { type: 'resume'; marker: string }
-  | { type: 'fire'; name: string }
-  | { type: 'nextRow'; dataset: string };
-
-export type LogicNode = LogicNodeKind & { id: string; x: number; y: number };
-
-export interface LogicEdge {
-  from: string;
-  to: string;
-  /** Input port of `to`: a, b, in, then, else. */
-  port: string;
-}
-
-export interface Logic {
-  nodes: LogicNode[];
-  edges: LogicEdge[];
 }
 
 export type ZoneTransition = 'sequential' | 'cut' | 'fade';
@@ -351,28 +210,6 @@ export interface Area {
   height: number;
 }
 
-export interface RundownItem {
-  id: string;
-  name: string;
-  templateId: string;
-  /** Zone id ("" = the template's zone). */
-  zone: string;
-  /** Playlist (rundown section) id. */
-  playlist: string;
-  /** Legacy playout layer, kept in step with the zone by the server. */
-  layer: number;
-  data: Record<string, string>;
-  /** When bound fields read their source (default: live). */
-  read?: ReadMode;
-  /** Auto next (playlist set to auto next): seconds on air before the next graphic; none = the operator takes it. */
-  autoSecs?: number;
-  /** Stays on air when the next graphic is taken (in another zone). */
-  hold?: boolean;
-}
-
-/** `live`: on take and on every change of the source; `take`: once, on take; `manual`: when the operator asks. */
-export type ReadMode = 'live' | 'take' | 'manual';
-
 export interface FrameRate {
   num: number;
   den: number;
@@ -387,23 +224,15 @@ export interface Project {
   frameRate: FrameRate;
   /** Language of the texts (hyphenation, French spaces), "fr" by default. */
   language?: string;
-  /** Length of a new template (its IN and OUT), seconds; each one is then set in the timeline. None: 1 s. */
-  templateSecs?: number;
   /** The project's own palette (the shared ones are in the Library). */
   colors?: NamedColor[];
   templates: Template[];
-  rundown: RundownItem[];
   zones: Zone[];
-  playlists: Playlist[];
   formats: Format[];
   /** Designer drafts not yet published (the operator uses `templates`). */
   drafts?: Template[];
-  /** The empty template a new project starts with: the server removes it at a publish while it has no layer. */
-  starter?: string;
   /** Designer aids (mirror of model::Guides). */
   guides?: Guides;
-  /** The Designer's order of the templates (ids); the others follow. */
-  designOrder?: string[];
 }
 
 /** Guides, safe areas and areas to keep clear; fractions of the picture (0..1). */
@@ -425,15 +254,6 @@ export interface Exclusion {
   y: number;
   width: number;
   height: number;
-}
-
-export interface Playlist {
-  id: string;
-  name: string;
-  /** The graphics go on to the next one by themselves (RundownItem.autoSecs). */
-  autoNext?: boolean;
-  /** After the last graphic, the first again. */
-  loop?: boolean;
 }
 
 export type Phase = 'playing' | 'holding' | 'out' | 'outHold';
@@ -469,8 +289,6 @@ export interface LayerClock {
   pausedAt?: number | null;
 }
 
-export type WidgetControl = 'start' | 'pause' | 'toggle' | 'reset' | 'restart';
-
 export interface ChannelState {
   layers: Record<string, PlayoutItem>;
 }
@@ -478,18 +296,7 @@ export interface ChannelState {
 /** Commands address a zone by id, or a raw playout layer. */
 type Target = { zone?: string; layer?: number };
 
-export type Command =
-  | ({ action: 'take'; templateId: string; data?: Record<string, string>; rundownId?: string } & Target)
-  | ({ action: 'continue' } & Target)
-  | ({ action: 'takeOut' } & Target)
-  | ({ action: 'update'; data: Record<string, string>; fade?: boolean } & Target)
-  | ({ action: 'widget'; target: string; control: WidgetControl } & Target)
-  /** An operator action on a spec widget of the graphic on air (see web/src/widgets). */
-  | ({ action: 'act'; target: string; op: string; args?: unknown } & Target)
-  /** Another row of a data set of the graphic on air (1 = first). */
-  | ({ action: 'row'; dataset: string; row: number } & Target)
-  | ({ action: 'clear' } & Target)
-  | { action: 'trigger'; name: string };
+export type Command = ({ action: 'take'; templateId: string } & Target) | ({ action: 'clear' } & Target);
 
 export type Data = Record<string, string>;
 
@@ -501,7 +308,6 @@ export interface ProjectSummary {
   height: number;
   frameRate: FrameRate;
   templates: number;
-  rundown: number;
   /** The Source tiles of the multiview. */
   tiles: number;
   /** Template shown on the card. */
@@ -521,7 +327,6 @@ export interface ChannelInfo {
   projectId: string | null;
   /** What the channel goes out to: "SDI · name", "NDI · name"… */
   outputs: string[];
-  renditions: { id: string; name: string; width: number; height: number; slate?: string; slateStyle?: string }[];
   /** Still picture the outputs show while no project is loaded ("" = none). */
   slate?: string;
   /** The design shown while no project is loaded ("custom": the still picture). */
@@ -545,7 +350,7 @@ export interface User {
 }
 
 /** Layer types whose text is styled with a FontStyle. */
-export const TEXT_LIKE = new Set<LayerType>(['text', 'clock', 'ticker', 'roll', 'rotator', 'barChart']);
+export const TEXT_LIKE = new Set<LayerType>(['text', 'clock', 'ticker']);
 
 /** A colour of a palette: the layers using its value follow it when it changes. */
 export interface NamedColor {

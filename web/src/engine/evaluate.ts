@@ -254,12 +254,6 @@ export function outFrame(t: Template): number | undefined {
   return t.markers.find((m) => m.kind === 'out')?.frame;
 }
 
-/** Where playback stops next after `frame`: a pause, the On air point, else the end. */
-export function nextStopAfter(t: Template, frame: number): number {
-  const stops = t.markers.filter((m) => (m.kind === 'pause' || m.kind === 'out') && m.frame > frame + 1e-6).map((m) => m.frame);
-  return Math.min(t.duration, ...stops);
-}
-
 /** The On air frame (what the graphic looks like on air), for previews and thumbnails. */
 export function holdFrame(t: Template): number {
   return outFrame(t) ?? t.duration;

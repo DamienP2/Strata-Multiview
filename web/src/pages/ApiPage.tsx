@@ -1,14 +1,13 @@
-import { BookOpen, FileJson, Hash, KeyRound, LayoutGrid } from 'lucide-react';
+import { BookOpen, FileJson, Hash, KeyRound } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { t, tc, tn } from '../i18n';
 import { InfoTip } from '../ui/InfoTip';
 import { api } from '../store';
-import { ApiButtons } from './ApiButtons';
 import { ApiOverview, ApiTag, useApiSpec } from './ApiDocs';
 import { ApiKeys, type ApiKey } from './ApiKeys';
 import { NavItem, NavSection, PageHead, SidePage } from './SidePage';
 
-type View = { kind: 'keys' } | { kind: 'buttons' } | { kind: 'overview' } | { kind: 'tag'; name: string };
+type View = { kind: 'keys' } | { kind: 'overview' } | { kind: 'tag'; name: string };
 
 /** Automation: API keys and the documentation of the API. */
 export function ApiPage() {
@@ -22,7 +21,6 @@ export function ApiPage() {
     <>
       <NavSection>{t('Access')}</NavSection>
       <NavItem on={view.kind === 'keys'} icon={<KeyRound size={15} />} label={t('API keys')} count={keys.length} onClick={() => setView({ kind: 'keys' })} />
-      <NavItem on={view.kind === 'buttons'} icon={<LayoutGrid size={15} />} label="Bitfocus Buttons" onClick={() => setView({ kind: 'buttons' })} />
       <NavSection>{t('Documentation')}</NavSection>
       <NavItem on={view.kind === 'overview'} icon={<BookOpen size={15} />} label={t('Overview')} onClick={() => setView({ kind: 'overview' })} />
       {spec?.tags.map((tag) => (
@@ -44,16 +42,14 @@ export function ApiPage() {
           title={t('API keys')}
           sub={
             <>
-              {t('Permanent keys for Companion, newsroom systems and scripts.')}
-              <InfoTip text={`${t('For automation (Companion / Stream Deck, tally systems, scripts): send')} Authorization: Bearer smv_…. ${t('A key acts with the rights of its user — create a dedicated operator account scoped to the right channels for each system.')}`} />
+              {t('Permanent keys for tally systems, automation and scripts.')}
+              <InfoTip text={`${t('For automation (tally systems, scripts): send')} Authorization: Bearer smv_…. ${t('A key acts with the rights of its user — create a dedicated operator account scoped to the right channels for each system.')}`} />
             </>
           }
         />
         <ApiKeys keys={keys} reload={loadKeys} />
       </>
     );
-  } else if (view.kind === 'buttons') {
-    body = <ApiButtons keys={keys} onCreateKey={() => setView({ kind: 'keys' })} />;
   } else if (!spec) body = <div className="loading">{t('Loading the API description…')}</div>;
   else if (view.kind === 'overview') {
     body = (
