@@ -127,8 +127,8 @@ pub struct Pull {
     pub url: Option<String>,
     /// Options of the input (its headers).
     pub input: Vec<String>,
-    /// The variant of a master playlist (ffmpeg's program).
-    pub program: Option<usize>,
+    /// The sound read apart (a master playlist's audio rendition).
+    pub audio: Option<String>,
     /// Where ffmpeg sends the sound to be listened to (a local port).
     pub pcm: Option<u16>,
 }
@@ -289,10 +289,14 @@ impl InputConfig {
         } else {
             a.extend(pull.input.iter().cloned());
             a.extend(["-i".into(), url]);
+            // The sound apart: a second input.
+            if let Some(au) = &pull.audio {
+                a.extend(pull.input.iter().cloned());
+                a.extend(["-i".into(), au.clone()]);
+            }
         }
-        // Of a master playlist, its variant only (the others are not fetched).
-        let from = pull.program.map_or("0".to_string(), |p| format!("0:p:{p}"));
-        a.extend(["-map".into(), format!("{from}:v:0")]);
+        let from = if pull.audio.is_some() { "1" } else { "0" };
+        a.extend(["-map".into(), "0:v:0".into()]);
         if info {
             a.extend(["-vf", "showinfo=checksum=0"].map(String::from));
         }
@@ -1000,6 +1004,27 @@ pub async fn audio(
 }
 
 #[derive(Deserialize)]
+pub struct WebCheckQuery {
+    url: String,
+    #[serde(default)]
+    height: Option<u32>,
+}
+
+/// `GET /api/inputs/web-check?url=…`: looks for the stream of a live's page
+/// now, and says how it went.
+pub async fn web_check(
+    CurrentUser(me): CurrentUser,
+    Query(q): Query<WebCheckQuery>,
+) -> ApiResult<Json<crate::weblive::Check>> {
+    require(me.is_admin())?;
+    let height = q.height.unwrap_or(1080);
+    tokio::task::spawn_blocking(move || crate::weblive::check(q.url.trim(), height))
+        .await
+        .map(Json)
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))
+}
+
+#[derive(Deserialize)]
 pub struct PlaylistQuery {
     url: String,
 }
@@ -1427,7 +1452,12 @@ fn prepare(l: &Live) -> Result<Pull, String> {
     };
     if listed && (lower.starts_with("http://") || lower.starts_with("https://")) {
         match weblive::playlist(url, c.height) {
-            Ok(Playlist::Master { variant, .. }) => pull.program = Some(variant),
+            // Its variant read directly (the others are never fetched), and
+            // its sound apart when it is.
+            Ok(Playlist::Master { video, audio, .. }) => {
+                pull.url = Some(video);
+                pull.audio = audio;
+            }
             Ok(Playlist::Channels(list)) => {
                 return Err(format!(
                     "This address is a list of {} channels: choose one",

@@ -49,6 +49,7 @@ pub fn router() -> Router<Shared> {
             "/api/inputs/playlist",
             get(crate::inputs::playlist_channels),
         )
+        .route("/api/inputs/web-check", get(crate::inputs::web_check))
         .route(
             "/api/inputs/{id}/snapshot.jpg",
             get(crate::inputs::snapshot),

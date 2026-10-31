@@ -705,3 +705,45 @@
   max-height: 20px;
   object-fit: contain;
 }
+
+/* « Test the link » of a web live (outputs/WebCheck.tsx). */
+.wc {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 8px;
+}
+.wc-res {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+.wc-res b {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.wc-res.ok b {
+  color: #2bd96b;
+}
+.wc-res.bad b {
+  color: #ff6b6b;
+}
+.wc-res .mono {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+}
+.wc-res .dim {
+  color: var(--text-2);
+}
+.wc-err {
+  white-space: pre-wrap;
+}

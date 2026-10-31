@@ -253,7 +253,7 @@ fn run(cmd: &mut Command, limit: Duration) -> Result<(String, String, bool), Str
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .spawn()
-        .map_err(|e| e.to_string())?;
+        .map_err(|e| format!("yt-dlp could not start ({e})"))?;
     let (mut out, mut err) = (child.stdout.take(), child.stderr.take());
     let o = std::thread::spawn(move || {
         let mut s = String::new();
@@ -272,12 +272,15 @@ fn run(cmd: &mut Command, limit: Duration) -> Result<(String, String, bool), Str
     let start = Instant::now();
     let ok = loop {
         if let Ok(Some(st)) = child.try_wait() {
+            if !st.success() {
+                tracing::debug!("{:?} ended: {st}", cmd.get_program());
+            }
             break st.success();
         }
         if start.elapsed() > limit {
             let _ = child.kill();
             let _ = child.wait();
-            return Err("no answer in time".into());
+            return Err("yt-dlp gave no answer in 90 s".into());
         }
         std::thread::sleep(Duration::from_millis(100));
     };
@@ -430,13 +433,72 @@ pub fn resolve(page: &str, height: u32) -> Result<Resolved, String> {
     }
     let (out, err, ok) = answer;
     if !ok || out.trim().is_empty() {
-        return Err(error_of(&err));
+        let why = if err.trim().is_empty() {
+            // Stopped without a word: killed by the system (a binary it refuses?).
+            "yt-dlp stopped without an answer (the system may refuse to run it)".to_string()
+        } else {
+            error_of(&err)
+        };
+        tracing::warn!(page, "web live: {why}\n{}", err.trim());
+        return Err(why);
     }
     let r = parse(&out, page)?;
     if r.url.is_empty() {
         return Err("no stream found on this page".into());
     }
     Ok(r)
+}
+
+/// What « Test the link » tells: the stream found, or why there is none, and
+/// the tools used.
+#[derive(Debug, Clone, Default, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Check {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub found: Option<Resolved>,
+    #[serde(skip_serializing_if = "String::is_empty")]
+    pub error: String,
+    /// yt-dlp's version and where it is ("" when it could not be had).
+    pub ytdlp: String,
+    pub ytdlp_path: String,
+    /// Deno's (YouTube only).
+    #[serde(skip_serializing_if = "String::is_empty")]
+    pub deno: String,
+    /// Seconds it took.
+    pub seconds: f64,
+}
+
+/// Looks for the stream of a page and says how it went (the input page's
+/// « Test the link »).
+pub fn check(page: &str, height: u32) -> Check {
+    let start = Instant::now();
+    let mut c = Check::default();
+    match ytdlp() {
+        Ok(p) => {
+            c.ytdlp_path = p.display().to_string();
+            c.ytdlp = run(Command::new(&p).arg("--version"), Duration::from_secs(60))
+                .map(|(o, e, ok)| {
+                    if ok {
+                        o.trim().to_string()
+                    } else {
+                        format!("? ({})", e.trim())
+                    }
+                })
+                .unwrap_or_else(|e| e);
+        }
+        Err(e) => c.error = e,
+    }
+    if c.error.is_empty() {
+        if platform(page) == Some("YouTube") {
+            c.deno = deno().map_or_else(|| "absent".into(), |p| p.display().to_string());
+        }
+        match resolve(page, height) {
+            Ok(r) => c.found = Some(r),
+            Err(e) => c.error = e,
+        }
+    }
+    c.seconds = start.elapsed().as_secs_f64();
+    c
 }
 
 /// The ffmpeg options that send a stream's headers.
@@ -475,9 +537,15 @@ pub struct Channel {
 pub enum Playlist {
     /// A media playlist: read as it is.
     Media,
-    /// A master playlist: the variant (its number, a program for ffmpeg) to
-    /// decode, and its height.
-    Master { variant: usize, height: u32 },
+    /// A master playlist: the variant to decode (its number, its height),
+    /// its own playlist, and the playlist of its sound when it comes apart
+    /// (an audio rendition).
+    Master {
+        variant: usize,
+        height: u32,
+        video: String,
+        audio: Option<String>,
+    },
     /// A list of channels: one is to be chosen.
     Channels(Vec<Channel>),
 }
@@ -495,11 +563,22 @@ fn attribute(line: &str, key: &str) -> String {
 /// smallest when all are taller).
 pub fn read(base: &str, text: &str, height: u32) -> Playlist {
     if text.contains("#EXT-X-STREAM-INF") {
-        // Height and bandwidth of each variant, in order (ffmpeg's programs).
-        let mut variants: Vec<(u32, u64)> = Vec::new();
+        // Each variant: its height, its bandwidth, its playlist, its audio group.
+        let mut variants: Vec<(u32, u64, String, String)> = Vec::new();
+        // The audio renditions: group, default, playlist.
+        let mut renditions: Vec<(String, bool, String)> = Vec::new();
         let mut lines = text.lines().map(str::trim);
         while let Some(l) = lines.next() {
-            if let Some(attrs) = l.strip_prefix("#EXT-X-STREAM-INF:") {
+            if let Some(attrs) = l.strip_prefix("#EXT-X-MEDIA:") {
+                let uri = attribute(attrs, "URI");
+                if attrs.contains("TYPE=AUDIO") && !uri.is_empty() {
+                    renditions.push((
+                        attribute(attrs, "GROUP-ID"),
+                        attrs.contains("DEFAULT=YES"),
+                        crate::probe::hls::resolve(base, &uri),
+                    ));
+                }
+            } else if let Some(attrs) = l.strip_prefix("#EXT-X-STREAM-INF:") {
                 let h = attrs
                     .split("RESOLUTION=")
                     .nth(1)
@@ -513,28 +592,46 @@ pub fn read(base: &str, text: &str, height: u32) -> Playlist {
                     .and_then(|b| b.trim().parse().ok())
                     .unwrap_or(0);
                 // Its address on the next line that is not a tag.
-                if lines.by_ref().any(|u| !u.is_empty() && !u.starts_with('#')) {
-                    variants.push((h, bw));
+                if let Some(uri) = lines
+                    .by_ref()
+                    .find(|u| !u.is_empty() && !u.starts_with('#'))
+                {
+                    variants.push((
+                        h,
+                        bw,
+                        crate::probe::hls::resolve(base, uri),
+                        attribute(attrs, "AUDIO"),
+                    ));
                 }
             }
         }
-        let fits = |&(h, _): &(u32, u64)| h == 0 || h <= height;
+        let fits = |v: &&(u32, u64, String, String)| v.0 == 0 || v.0 <= height;
         let pick = variants
             .iter()
             .enumerate()
             .filter(|(_, v)| fits(v))
-            .max_by_key(|(_, (h, bw))| (*h, *bw))
-            .or_else(|| {
-                variants
-                    .iter()
-                    .enumerate()
-                    .min_by_key(|(_, (h, bw))| (*h, *bw))
-            })
-            .map_or((0, 0), |(i, (h, _))| (i, *h));
-        return Playlist::Master {
-            variant: pick.0,
-            height: pick.1,
-        };
+            .max_by_key(|(_, v)| (v.0, v.1))
+            .or_else(|| variants.iter().enumerate().min_by_key(|(_, v)| (v.0, v.1)));
+        if let Some((i, (h, _, video, group))) = pick {
+            // Its sound apart: the group's default rendition, else its first.
+            let in_group: Vec<_> = renditions.iter().filter(|r| &r.0 == group).collect();
+            let audio = (!group.is_empty())
+                .then(|| {
+                    in_group
+                        .iter()
+                        .find(|r| r.1)
+                        .or(in_group.first())
+                        .map(|r| r.2.clone())
+                })
+                .flatten();
+            return Playlist::Master {
+                variant: i,
+                height: *h,
+                video: video.clone(),
+                audio,
+            };
+        }
+        return Playlist::Media;
     }
     if text.contains("#EXT-X-TARGETDURATION") || !text.contains("#EXTINF") {
         return Playlist::Media;
@@ -623,21 +720,27 @@ v2/index.m3u8
             read("https://a/m.m3u8", master, 1080),
             Playlist::Master {
                 variant: 1,
-                height: 1080
+                height: 1080,
+                video: "https://a/v1/index.m3u8".into(),
+                audio: None
             }
         );
         assert_eq!(
             read("https://a/m.m3u8", master, 720),
             Playlist::Master {
                 variant: 0,
-                height: 720
+                height: 720,
+                video: "https://a/v0/index.m3u8".into(),
+                audio: None
             }
         );
         assert_eq!(
             read("https://a/m.m3u8", master, 200),
             Playlist::Master {
                 variant: 2,
-                height: 360
+                height: 360,
+                video: "https://a/v2/index.m3u8".into(),
+                audio: None
             }
         );
         assert_eq!(
@@ -647,6 +750,27 @@ v2/index.m3u8
                 1080
             ),
             Playlist::Media
+        );
+    }
+
+    #[test]
+    fn a_variant_with_its_sound_apart() {
+        let master = "#EXTM3U
+#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID=\"aud\",NAME=\"en\",URI=\"a/en.m3u8\"
+#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID=\"aud\",NAME=\"fr\",DEFAULT=YES,URI=\"a/fr.m3u8\"
+#EXT-X-STREAM-INF:BANDWIDTH=5000000,RESOLUTION=1920x1080,AUDIO=\"aud\"
+https://cdn/v1080.m3u8
+#EXT-X-STREAM-INF:BANDWIDTH=1000000,RESOLUTION=640x360,AUDIO=\"aud\"
+v360.m3u8
+";
+        assert_eq!(
+            read("https://h/live/master.m3u8", master, 540),
+            Playlist::Master {
+                variant: 1,
+                height: 360,
+                video: "https://h/live/v360.m3u8".into(),
+                audio: Some("https://h/live/a/fr.m3u8".into())
+            }
         );
     }
 

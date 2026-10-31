@@ -13,6 +13,7 @@ import { navigate } from '../router';
 import { OnSwitch } from './OnSwitch';
 import { NdiPicker } from './NdiPicker';
 import { ChannelPicker } from './ChannelPicker';
+import { WebCheck } from './WebCheck';
 import { InputAnalysis } from './InputAnalysis';
 
 /*
@@ -481,6 +482,7 @@ function Inspector({
                   </button>
                 )}
               </div>
+              {i.kind === 'web' && <WebCheck url={i.url} height={i.height || 1080} />}
               {listing && (
                 <ChannelPicker
                   url={i.url.trim()}
