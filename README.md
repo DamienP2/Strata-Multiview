@@ -1,10 +1,10 @@
 # Strata Multiview
 
-**Multiviewer broadcast logiciel.** Strata Multiview compose des mosaïques de sources vidéo (multiviews) dans le navigateur : les images des entrées en direct avec leur **tally**, leur **UMD** et leurs **vu-mètres**, des horloges, des logos et des textes. Il envoie le résultat vers les sorties du studio : HTML5, NDI, flux SRT / RTMP / HLS, SDI (DeckLink) et SMPTE ST 2110.
+**Multiviewer broadcast logiciel pour la régie de diffusion.** Strata Multiview compose des mosaïques de sources vidéo (multiviews) dans le navigateur : les images des entrées en direct avec leur **tally**, leur **UMD**, leurs **vu-mètres**, leur **loudness EBU R128** et leur **timecode**, les **alarmes** (perte, noir, image figée, silence, niveau), l'état **PTP / NTP**, le journal des défauts, des horloges et des logos. Il envoie le résultat vers les sorties du studio : HTML5, NDI, flux SRT / RTMP / HLS, SDI (DeckLink) et SMPTE ST 2110.
 
 Strata Multiview reprend le design, le Designer et le moteur de rendu de Strata Graphics. Les deux applications sont indépendantes et tournent côte à côte sur la même machine. Un seul exécutable par plateforme, un moteur de rendu en Rust, une interface web.
 
-![Un multiview à l'antenne : tally, UMD et vu-mètres](docs/screenshots/output.png)
+![Le modèle « Régie finale » à l'antenne : tally, UMD, timecode, loudness, alarmes, 16 canaux audio et mire sur les entrées absentes](docs/screenshots/output.png)
 
 ## Sommaire
 
@@ -14,7 +14,7 @@ Strata Multiview reprend le design, le Designer et le moteur de rendu de Strata 
 4. [Designer](#4-designer)
 5. [La tuile Source](#5-la-tuile-source)
 6. [Tally et UMD](#6-tally-et-umd)
-7. [Audio et vu-mètres](#7-audio-et-vu-mètres)
+7. [Audio, loudness et alarmes](#7-audio-loudness-et-alarmes)
 8. [Diffusion](#8-diffusion)
 9. [Système](#9-système)
 10. [API](#10-api)
@@ -28,7 +28,7 @@ Strata Multiview reprend le design, le Designer et le moteur de rendu de Strata 
 ### 1.1 La chaîne
 
 ```
- Entrées en direct ──► image, audio (niveaux par canal)
+ Entrées en direct ──► image, audio (niveaux, loudness R128), timecode, alarmes
  (SRT, UDP, RTMP, HLS, RTSP, NDI, SDI)        │
                                                ▼
  Régie (TSL 3.1 / 5.0, ATEM, GPI, API) ──► tally et UMD de chaque entrée
@@ -37,9 +37,9 @@ Strata Multiview reprend le design, le Designer et le moteur de rendu de Strata 
  Designer ──► multiviews publiés ──► chaîne ──► sorties (HTML5 · NDI · Stream · SDI · ST 2110)
 ```
 
-- Les **entrées en direct** sont décodées en continu ; leur audio est mesuré canal par canal.
+- Les **entrées en direct** sont décodées en continu ; leur audio est mesuré canal par canal et en loudness EBU R128 ; leur image est surveillée (noir, image figée) ; une entrée qui tombe lève une alarme.
 - Le **tally** et les **UMD** viennent des mélangeurs et des contrôleurs de tally, aiguillés vers les entrées.
-- Le **Designer** compose les multiviews : une **disposition** (2 × 2, 3 × 3, 1 + 5…) de **tuiles Source**, et autant d'horloges, de logos et de textes que voulu.
+- Le **Designer** compose les multiviews : un des **dix modèles** de régie de diffusion ou une **disposition** (2 × 2, 3 × 3, 1 + 5…) de **tuiles Source**, puis les widgets de supervision (vu-mètres 16 canaux, loudness, timecode, état, journal des alarmes), des horloges, des logos et des textes.
 - Une **chaîne** montre un multiview publié et l'envoie vers ses destinations.
 
 ### 1.2 Les pages
@@ -62,7 +62,7 @@ Un multiview s'ouvre directement dans le **Designer**, dans son propre onglet.
 | **Operator** | choisir le multiview à l'antenne d'une chaîne ; régler le tally par l'API |
 | **Viewer** | consulter les multiviews et les sorties |
 
-L'interface est en **français ou en anglais**, au choix de chaque utilisateur. Les textes que le multiview écrit lui-même (« PAS DE SIGNAL ») suivent la langue du multiview.
+L'interface est en **français ou en anglais**, au choix de chaque utilisateur. Les textes que le multiview écrit lui-même (« PAS DE SIGNAL », « IMAGE FIGÉE ») suivent la langue du multiview.
 
 ---
 
@@ -96,8 +96,8 @@ Guide complet, dossiers de données, pare-feu, proxy : [`docs/INSTALL.md`](docs/
 
 1. Ouvrez `http://<serveur>:8090`. Sur le serveur lui-même, la page propose de **créer le compte administrateur** ; à distance, utilisez `strata-mv-server user add admin`.
 2. **Diffusion › Entrées vidéo** : déclarez les sources (caméras en SDI, flux SRT d'un encodeur, sources NDI du réseau…).
-3. **Multiviews › Nouveau multiview** : nommez-le, choisissez sa résolution et une **disposition** (2 × 2, 1 + 5, 4 × 4…). Les tuiles sont créées, reçoivent les entrées dans l'ordre, et le multiview s'ouvre dans le **Designer**.
-4. Ajustez les tuiles (entrée, UMD, vu-mètres), ajoutez une horloge, un logo, un titre, puis **Publiez**.
+3. **Multiviews › Nouveau multiview** : nommez-le, choisissez sa résolution puis un **modèle** (régie finale, 16 chaînes, retours antenne…) ou une simple **disposition** (2 × 2, 1 + 5, 4 × 4…). Les tuiles et les widgets sont créés, les tuiles reçoivent les entrées dans l'ordre, et le multiview s'ouvre dans le **Designer**.
+4. Ajustez les tuiles (entrée, UMD, vu-mètres, timecode, loudness), ajoutez des widgets, un logo, un titre, puis **Publiez**.
 5. **Diffusion › Flux vidéo** : choisissez le **multiview à l'antenne** de la chaîne : il passe aussitôt à l'antenne. Ajoutez les destinations (HTML5, NDI, SDI, ST 2110, flux).
 6. **Diffusion › Tally et UMD** : ajoutez la régie (TSL, ATEM ou GPI) et reliez ses afficheurs aux entrées.
 
@@ -109,19 +109,42 @@ La sortie HTML5 de la chaîne principale est sur `http://<serveur>:8090/output/m
 
 ## 4. Designer
 
-![Designer : un multiview 2 × 2, une tuile sélectionnée](docs/screenshots/designer.png)
+![Designer : le modèle « Régie finale », la tuile PGM sélectionnée](docs/screenshots/designer.png)
 
 ### 4.1 L'espace de travail
 
 - **En haut** : le nom du multiview, annuler / rétablir, l'historique des versions et **Publier**.
-- **Au centre** : la **scène** (règles, repères, zones de sécurité, fond) avec la barre d'outils : **Disposition**, **Source** (une tuile), les formes et les textes, **+** (bandeau, horloge, temps, QR code, vidéo, iframe), **Affichage**, zoom. Les tuiles y montrent les entrées en direct, leur tally et leurs vu-mètres. Un clic sélectionne, un glisser déplace ; clic droit : copier, couper, coller, dupliquer, ordre, supprimer.
+- **Au centre** : la **scène** (règles, repères, zones de sécurité, fond) avec la barre d'outils : **Disposition**, **Source** (une tuile), les formes et les textes, **+** (vu-mètres, loudness, timecode, état, journal des alarmes, bandeau, horloge, temps), **Affichage**, zoom. Les tuiles y montrent les entrées en direct, leur tally et leurs vu-mètres. Un clic sélectionne, un glisser déplace ; clic droit : copier, couper, coller, dupliquer, ordre, supprimer.
 - **À droite** : l'inspecteur de l'élément sélectionné ; sans sélection, le multiview lui-même (résolution, ses tuiles, ses réglages).
 
-Un multiview s'édite directement : ni modèles, ni calques, ni timeline, ni animation. Ce qui bouge vient des sources (images, tally, vu-mètres) et des widgets eux-mêmes (horloges, bandeau défilant).
+Un multiview s'édite directement : une seule page, ni calques, ni timeline, ni animation. Ce qui bouge vient des sources (images, tally, vu-mètres, loudness, alarmes) et des widgets eux-mêmes (timecode, horloges, bandeau défilant).
 
-### 4.2 Dispositions
+### 4.2 Modèles
 
-![Nouveau multiview : la disposition](docs/screenshots/new-multiview.png)
+![Nouveau multiview : les modèles](docs/screenshots/new-multiview.png)
+
+**Nouveau multiview** propose dix modèles dessinés pour la **régie de diffusion** (pas de production). Chacun est un point de départ : tout y reste modifiable dans le Designer.
+
+| Modèle | Contenu |
+| --- | --- |
+| **Régie finale d'une chaîne** | PGM (timecode, loudness, alarmes), PVW, playout A et B, quatre retours, 16 canaux audio, loudness, état, journal |
+| **Seize chaînes** | 4 × 4 chaînes avec leur loudness et leurs alarmes, l'état de l'installation et le journal |
+| **Main et backup** | quatre chaînes, leur main et leur backup côte à côte, avec leur audio |
+| **Retours antenne** | le programme face à ses retours (TNT, satellite, IPTV, OTT), loudness et journal |
+| **Audio, 16 canaux** | les 16 canaux et le loudness d'une entrée, quatre autres entrées, avec ou sans image |
+| **IP, PTP et synchro** | neuf sources ST 2110, PTP et NTP, le timecode station et le journal |
+| **Contributions** | six arrivées avec leur timecode et leur loudness, le journal |
+| **Nuit, 25 sources** | 5 × 5 sources où seules les alarmes ressortent, le journal à côté |
+| **Habillage et sous-titres** | le programme avant et après habillage, son loudness, son audio et le journal |
+| **UHD HDR et SDR** | le programme UHD et sa conversion SDR, le loudness, 16 canaux, l'état de l'installation |
+
+Les modèles sont dessinés en 1920 × 1080 et mis à l'échelle de la résolution choisie ; leurs tuiles prennent les entrées dans l'ordre.
+
+![Le modèle « Régie finale » rendu par le moteur Rust](docs/screenshots/model-final.png)
+
+![Le modèle « Seize chaînes » : les entrées absentes montrent la mire](docs/screenshots/model-sixteen.png)
+
+### 4.3 Dispositions
 
 Une **disposition** place les tuiles Source sur une grille, avec un **espace** entre elles et une **marge** autour :
 
@@ -132,17 +155,19 @@ Une **disposition** place les tuiles Source sur une grille, avec un **espace** e
 | **2 + 8** | deux grandes en haut, huit petites en dessous |
 | **1 + 12** | une grande au centre, douze autour |
 
-Elle se choisit à la création d'un multiview, ou s'applique ensuite par le bouton **Disposition** : les tuiles existantes sont replacées dans l'ordre de lecture, les manquantes sont ajoutées avec les entrées qu'aucune tuile ne montre encore. Chaque tuile reste ensuite libre (position, taille, réglages).
+Elle se choisit à la création d'un multiview (« Une disposition seule »), ou s'applique ensuite par le bouton **Disposition** : les tuiles existantes sont replacées dans l'ordre de lecture, les manquantes sont ajoutées avec les entrées qu'aucune tuile ne montre encore. Chaque tuile reste ensuite libre (position, taille, réglages).
 
-### 4.3 Les autres éléments
+### 4.4 Les widgets
 
-Tous les widgets de Strata Graphics utiles à un multiview restent disponibles, rendus à l'identique en HTML5 et par le moteur Rust :
+Tous les widgets sont rendus à l'identique en HTML5 et par le moteur Rust (la géométrie est calculée dans `strata-mv-core`, chaque moteur ne fait que dessiner) :
 
 | Pour | Widgets |
 | --- | --- |
-| **Horloges** | Horloge (heure, date, n'importe quel fuseau, cadran analogique), Temps (chronomètre, compte à rebours) |
-| **Logos** | Image (PNG, JPEG, SVG, GIF, vidéo en boucle) |
-| **Labels** | Texte (styles, ombre, ajustement), bandeau défilant (Ticker), QR code, page web |
+| **Audio** | **Vu-mètres** : jusqu'à 16 canaux d'une entrée, avec ou sans image ; noms des canaux (« L, R, C, LFE… »), échelle en dBFS, valeurs, crêtes, ligne de loudness |
+| **Loudness** | **Loudness** EBU R128 d'une entrée : intégré en grand, momentary, short-term, LRA, true peak ; courbe short-term des deux dernières minutes ; couleurs selon la cible (−23 LUFS ± 1, true peak −1 dBTP) |
+| **Temps** | **Timecode** : celui de la station (heure locale à la cadence de la chaîne) ou d'une entrée (NDI) ; Horloge (heure, date, fuseau, cadran analogique) ; Temps (chronomètre, compte à rebours) |
+| **Supervision** | **État** : PTP (verrouillage, domaine, écart), NTP, alarmes en cours ; **Journal des alarmes** : les défauts des entrées, les plus récents d'abord, avec leur début et leur fin |
+| **Labels et logos** | Texte, bandeau défilant (Ticker), Image (PNG, JPEG, SVG, GIF, vidéo en boucle) |
 | **Habillage** | rectangle, ellipse, polygone, plume, groupes, masques, dégradés |
 
 La **publication** envoie les multiviews vers les sorties ; tant qu'un multiview n'est pas publié, les chaînes gardent la version précédente.
@@ -155,11 +180,15 @@ Une tuile **Source** montre une entrée en direct et tout ce qu'elle porte :
 
 | Élément | Réglages |
 | --- | --- |
-| **Image** | l'entrée ; ajustement *Contenir* (bandes noires), *Couvrir* ou *Étirer* ; couleur de fond ; « PAS DE SIGNAL » (texte modifiable) quand l'image manque |
+| **Image** | l'entrée ; ajustement *Contenir* (bandes noires), *Couvrir* ou *Étirer* ; couleur de fond |
+| **Perte de signal** | *Mire* : barres SMPTE avec le logo **F AudioVisuel** et « PAS DE SIGNAL » qui rebondissent dessus (chaque tuile ailleurs) ; ou *Simple* : fond uni et texte modifiable |
 | **Cadre de tally** | épaisseur ; couleurs *À l'antenne* (rouge), *Préparation* (vert), *Aux* (jaune), *Sans tally* ; le cadre peut ne pas suivre le tally |
 | **UMD** | en bas, en haut ou sans ; sur l'image ou à côté ; hauteur ; texte (vide : celui de la régie, sinon le nom de l'entrée ; `{{clé}}` remplacées) ; police, alignement, couleurs ; **lampes** de tally aux deux bouts (antenne à gauche, préparation à droite) |
 | **Vu-mètres** | à droite, à gauche ou sans ; un par canal reçu (ou au plus *n*) ; largeur, espace, marge ; échelle en dBFS, jaune et rouge à partir de seuils ; maintien des crêtes |
 | **Format** | le format du signal (« 1080i50 ») en haut à gauche |
+| **Timecode** | sans, celui de l'entrée ou celui de la station, en haut à droite |
+| **Loudness** | le loudness short-term de l'entrée en bas à droite, coloré selon la cible |
+| **Alarmes** | cadre rouge clignotant (critique) ou ambre (alerte) et bandeau du défaut (« IMAGE FIGÉE », « PERTE DU SIGNAL »…), avec le nombre d'autres défauts |
 
 Les réglages et la géométrie sont communs aux deux moteurs (`strata-mv-core/src/wid/source.rs`, `web/src/widgets/source.tsx`) : la sortie HTML5 et les sorties du moteur Rust montrent la même image.
 
@@ -211,17 +240,40 @@ La clé d'API (Système › API) agit avec les droits de son utilisateur : un co
 
 ---
 
-## 7. Audio et vu-mètres
+## 7. Audio, loudness et alarmes
+
+### 7.1 Niveaux
 
 L'audio de chaque entrée est mesuré à la réception, canal par canal : **crête** et **puissance moyenne** toutes les 40 ms environ. Les vu-mètres montent aussitôt, redescendent de 24 dB par seconde et gardent leur crête deux secondes.
 
 | Entrée | Audio mesuré |
 | --- | --- |
-| **Flux** (SRT, UDP, RTMP, HLS, RTSP, URL) | la première piste audio, tous ses canaux (filtre `astats` d'ffmpeg) ; une source sans audio est reconnue et décodée sans mesure |
+| **Flux** (SRT, UDP, RTMP, HLS, RTSP, URL) | la première piste audio, tous ses canaux (filtres `ebur128` et `astats` d'ffmpeg) ; une source sans audio est reconnue et décodée sans mesure |
 | **NDI** | l'audio de la source, tous ses canaux |
 | **SDI** (DeckLink) | l'audio embarqué : 16, 8 ou 2 canaux selon la carte, 48 kHz |
 
 Les niveaux arrivent au moteur et aux navigateurs (une douzaine de fois par seconde) avec le tally. Une entrée sans audio depuis trois secondes n'a plus de vu-mètres.
+
+### 7.2 Loudness et timecode
+
+Le **loudness EBU R128** de chaque entrée est mesuré en continu : momentary (400 ms), short-term (3 s), intégré, LRA et true peak. Les flux passent par le filtre `ebur128` d'ffmpeg, NDI et SDI par la même mesure en Rust. La cible est **−23 LUFS ± 1** et **−1 dBTP**. L'historique short-term (une valeur par seconde, deux minutes) nourrit la courbe du widget Loudness.
+
+Le **timecode** d'une entrée est celui de NDI ; le **timecode station** est l'heure locale du serveur à la cadence de la chaîne.
+
+### 7.3 Alarmes et journal
+
+Chaque entrée est surveillée en permanence :
+
+| Alarme | Gravité | Quand |
+| --- | --- | --- |
+| **Perte du signal** | critique | plus d'image reçue |
+| **Noir** | critique | image noire depuis 3 s |
+| **Image figée** | critique | image identique depuis 4 s |
+| **Silence** | alerte | audio sous −60 dBFS depuis 5 s |
+| **Trop fort** | alerte | short-term au-dessus de la cible de plus de 3 LU depuis 10 s |
+| **Crête** | alerte | true peak au-dessus de −1 dBTP (tenue 3 s) |
+
+Les alarmes s'affichent sur les tuiles (cadre et bandeau), dans le widget **État** et dans le **journal** (200 lignes, début et fin de chaque défaut). L'état **PTP** (ptp4l) et **NTP** de la machine accompagne les signaux.
 
 ---
 
@@ -285,7 +337,7 @@ La page **Système › API** documente toute l'API (OpenAPI 3.1, aussi sur `/api
 | `GET` `PUT` `DELETE` | `/api/tally` · `/api/tally/config` · `/api/tally/inputs/{entrée}` · `/api/tally/gpi/{source}/{contact}/{on\|off}` | tally et UMD |
 | `GET` | `/api/inputs` · `/api/inputs/{id}/live.mjpeg` | entrées et leurs images |
 | `GET` | `/api/outputs/status` · `/api/system/metrics` · `/api/health` | supervision |
-| `WS` | `/ws` · `/ws?channel={id}` | évènements temps réel (multiviews, chaînes, signaux des entrées) |
+| `WS` | `/ws` · `/ws?channel={id}` | évènements temps réel (multiviews, chaînes ; signaux des entrées : niveaux, loudness, timecode, alarmes ; état PTP / NTP et journal) |
 
 ```bash
 curl -X PUT http://localhost:8090/api/channels/main/multiview -H "Authorization: Bearer smv_…" \

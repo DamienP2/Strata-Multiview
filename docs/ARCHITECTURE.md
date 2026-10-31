@@ -35,8 +35,9 @@
 
 ### `strata-mv-core` : le contrat
 - **Modèle** (`model.rs`) : un multiview est un `Project` dont l'unique `Template` est la page, faite de `Layer` (group, rect, ellipse, text, image et les widgets), avec ses `props` statiques et ses `tracks` de keyframes. Le modèle est sérialisé en JSON camelCase ; il a un miroir TypeScript dans `web/src/engine/types.ts`.
-- **Tuile Source** (`wid/source.rs`) : réglages (entrée, ajustement, cadre de tally, UMD, vu-mètres, format) et **géométrie** (`layout`) : où vont l'image, la barre d'UMD, ses lampes, son texte et chaque barre de vu-mètre. Les deux moteurs la suivent ; miroir TypeScript : `web/src/widgets/source.tsx`.
-- **Signaux** (`signal.rs`) : ce qu'une entrée porte en plus de son image, tel que la tuile le dessine : `Tally` (antenne, préparation, aux, texte d'UMD), `Level` (crête, puissance, maintien en dBFS par canal), `SourceView`.
+- **Tuile Source** (`wid/source.rs`) : réglages (entrée, ajustement, cadre de tally, UMD, vu-mètres, format, timecode, loudness, alarmes) et **géométrie** (`layout`, `overlay`) : où vont l'image, la barre d'UMD, ses lampes, son texte, chaque barre de vu-mètre et les incrustations. La perte de signal : les barres SMPTE (`BARS`, EG 1-1990) et la carte F AudioVisuel (`no_signal_card`), dont la position est une fonction de l'heure du serveur et de la place de la tuile. Miroir TypeScript : `web/src/widgets/source.tsx`.
+- **Widgets broadcast** (`wid/broadcast.rs`) : vu-mètres, loudness, timecode, état, journal des alarmes. Chacun produit une liste d'éléments (`Item::Rect`, `Item::Text`) que les deux moteurs dessinent tels quels ; miroir TypeScript : `web/src/widgets/broadcast.tsx`.
+- **Signaux** (`signal.rs`) : ce qu'une entrée porte en plus de son image : `Tally` (antenne, préparation, aux, texte d'UMD), `Level` (crête, puissance, maintien en dBFS par canal), `Loudness` (EBU R128 : momentary, short-term, intégré, LRA, true peak) et son historique, le timecode, les `Alarm` en cours (`AlarmKind`, `Severity`), réunis dans `SourceView` ; pour la machine, `SystemView` (PTP, NTP, journal des alarmes).
 - **Playout** (`playout.rs`) : un multiview est un modèle à l'antenne sur la couche de sa zone. Le Designer ne crée ni images clés ni animation ; le moteur (`anim.rs`) résout simplement les propriétés de chaque calque.
 - **Widgets** (`wid/`) : chaque widget est une fonction pure de ses réglages, de l'heure du serveur et du temps à l'antenne : les rendus Rust et HTML5 sont identiques.
 
@@ -59,8 +60,8 @@ Rasteriseur CPU (tiny-skia) : headless, déterministe. Le texte est converti en 
 Le serveur repose sur axum et tokio.
 
 - **Chaînes** : chaque chaîne a sa tâche d'horloge, son `ChannelState` et son thread de rendu. Charger un multiview (`PUT /api/channels/{id}/project`) met sa page publiée à l'antenne (`show_multiview`) ; une publication met à l'antenne des chaînes qui attendaient.
-- **Entrées** (`inputs.rs`) : un fil par entrée. Les flux passent par ffmpeg : l'image en RGBA sur sa sortie standard, l'audio de la première piste mesuré par `astats` dont les valeurs sont lues dans son journal (`MeterLog`) ; une source sans audio est relancée sans mesure. NDI et SDI mesurent leur audio eux-mêmes.
-- **Signaux** (`signals.rs`) : tally et niveaux par entrée ; les vu-mètres montent aussitôt, descendent de 24 dB/s, maintiennent la crête 2 s. Le moteur les lit par `Inputs::source` ; les navigateurs les reçoivent en évènements `signals` (toutes les 80 ms au plus, quand ils changent).
+- **Entrées** (`inputs.rs`) : un fil par entrée. Les flux passent par ffmpeg : l'image en RGBA sur sa sortie standard, l'audio de la première piste mesuré par `ebur128` puis `astats`, dont les valeurs sont lues dans son journal (`MeterLog`) ; une source sans audio est relancée sans mesure. NDI et SDI mesurent leur audio eux-mêmes (le loudness par la crate `ebur128`) ; NDI donne aussi son timecode.
+- **Signaux** (`signals.rs`) : tally, niveaux, loudness et timecode par entrée ; les vu-mètres montent aussitôt, descendent de 24 dB/s, maintiennent la crête 2 s. Chaque image reçue laisse une empreinte de luminance 8 × 8 qui détecte le noir et l'image figée ; `evaluate` lève et clôt les alarmes (perte, noir, figée, silence, trop fort, crête) et tient le journal (200 lignes). PTP et NTP viennent de la supervision de la synchro. Le moteur les lit par `Inputs::source` et `Inputs::system` ; les navigateurs les reçoivent en évènements `signals` (`{sources, system}`, toutes les 80 ms au plus, quand ils changent).
 - **Tally** (`tally/`) : une tâche par source (TSL en UDP, TCP en écoute ou en client ; ATEM en UDP 9910 ; GPI par l'API), l'état de leurs afficheurs, l'aiguillage vers les entrées et les consignes de l'API. Réglages dans `tally.json`, appliqués à chaud ; le tally vit en dehors du cycle du moteur et survit à ses redémarrages.
 - **Multiviews** : la bibliothèque `data/projects/<id>.json` est écrite de façon atomique ; un nouveau multiview naît avec sa page, déjà publiée. Le multiview chargé sur chaque chaîne est mémorisé dans `config.json`.
 - **Utilisateurs** : `users.json` stocke des hachages Argon2. Chaque route vérifie le rôle de l'appelant et son périmètre de multiviews et de chaînes.
@@ -68,8 +69,9 @@ Le serveur repose sur axum et tokio.
 
 ## Feuille de route
 
-- [ ] Plusieurs pistes audio par flux (aujourd'hui la première, tous ses canaux) ; mesure LUFS.
+- [ ] Plusieurs pistes audio par flux (aujourd'hui la première, tous ses canaux).
 - [ ] Entrées ST 2110 (image et audio 2110-30).
 - [ ] Sources de tally supplémentaires : Ross RossTalk, protocoles propriétaires de routeurs (Probel, Quartz) pour les UMD dynamiques.
 - [ ] Tuile pilotée par un routeur (l'entrée d'une tuile suit une destination de grille).
-- [ ] Alarmes : silence, image figée, noir, perte de signal, sur la tuile et dans Performances.
+- [ ] Timecode des flux (SEI, LTC dans l'audio) et du SDI (VITC, RP 188).
+- [ ] Alarmes envoyées vers l'extérieur (SNMP, webhook, GPO).
