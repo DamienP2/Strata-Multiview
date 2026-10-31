@@ -83,7 +83,7 @@ export interface OutputsConfig {
   streams?: StreamOutput[];
 }
 
-export type InputKind = 'srt' | 'udp' | 'rtmp' | 'hls' | 'rtsp' | 'url' | 'ndi' | 'sdi' | 'st2110';
+export type InputKind = 'srt' | 'udp' | 'rtmp' | 'hls' | 'rtsp' | 'url' | 'web' | 'ndi' | 'sdi' | 'st2110';
 
 /** A live video input (crates/strata-mv-server/src/inputs.rs). */
 export interface InputConfig {

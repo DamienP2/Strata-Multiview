@@ -46,6 +46,10 @@ pub fn router() -> Router<Shared> {
         .route("/api/inputs/ndi-sources", get(crate::inputs::ndi_sources))
         .route("/api/inputs/ndi-preview", get(crate::inputs::ndi_preview))
         .route(
+            "/api/inputs/playlist",
+            get(crate::inputs::playlist_channels),
+        )
+        .route(
             "/api/inputs/{id}/snapshot.jpg",
             get(crate::inputs::snapshot),
         )

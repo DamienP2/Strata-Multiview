@@ -303,7 +303,7 @@ Quand aucun multiview n'est chargé, la chaîne envoie une **mire**. Une **avanc
 
 ### 8.2 Entrées vidéo
 
-Les **entrées en direct** : SRT, UDP, RTMP, HLS, RTSP, toute URL lue par ffmpeg, **NDI** (sources découvertes sur le réseau) et **SDI** (DeckLink). Chaque entrée est décodée à la taille et à la cadence de la source, avec un tampon de lissage réglable ; la page montre une vignette, l'état, les images reçues et les pertes. Une entrée qui tombe se reconnecte seule.
+Les **entrées en direct** : SRT, UDP, RTMP, HLS, RTSP, toute URL lue par ffmpeg, les **directs web** (YouTube, TikTok, Twitch, Facebook, Instagram, Kick, Dailymotion, X, Vimeo, Rumble… : le simple lien du direct suffit), **NDI** (sources découvertes sur le réseau) et **SDI** (DeckLink). Chaque entrée est décodée à la taille et à la cadence de la source, avec un tampon de lissage réglable ; la page montre une vignette, l'état, les images reçues et les pertes. Une entrée qui tombe se reconnecte seule.
 
 ### 8.3 Contenu du signal
 
@@ -322,7 +322,7 @@ Sous les vignettes, le **contenu du signal** de l'entrée choisie, quelle que so
 | **NDI** | format, rapport d'image, balayage, timecode, audio, métadonnées XML de la source et des trames |
 | **SDI** | format, signal détecté (YCbCr 4:2:2 / RGB 4:4:4, profondeur), balayage, couleurs, HDR, timecode RP 188 / VITC, audio embarqué, **paquets auxiliaires** (ANC : DID/SDID, ligne, nature : CEA-708, AFD, SCTE-104, OP-47, timecode ATC…) |
 
-Les entrées **SRT, UDP et TCP** passent par un relais : un premier ffmpeg reçoit le flux tel quel, Strata lit son flux de transport au passage (tables, EPG, SCTE-35, TR 101 290) et le transmet au décodeur. Une entrée **HLS** est lue par ses listes de lecture et le dernier segment de sa première variante (relu à la demande, au plus toutes les 30 s). **RTMP** et **RTSP** n'ont pas de flux de transport : leur contenu vient du décodeur.
+Les entrées **SRT, UDP et TCP** passent par un relais : un premier ffmpeg reçoit le flux tel quel, Strata lit son flux de transport au passage (tables, EPG, SCTE-35, TR 101 290) et le transmet au décodeur. Une entrée **HLS** est décodée dans la variante de la playlist maître la plus proche de sa taille de décodage (les autres ne sont pas téléchargées) ; une **liste de chaînes IPTV** (M3U) est reconnue et le bouton **Chaînes…** en choisit une. Un **direct web** est trouvé sur sa page par [yt-dlp](https://github.com/yt-dlp/yt-dlp), que le serveur télécharge au premier usage dans `<données>/tools` (avec [Deno](https://deno.com) pour YouTube) et tient à jour ; seule l'image et le son sont gardés, plein cadre, et l'adresse du flux, qui expire, est redemandée à chaque reprise. L'entrée HLS est analysée par ses listes de lecture et le dernier segment de sa première variante (relu à la demande, au plus toutes les 30 s). **RTMP** et **RTSP** n'ont pas de flux de transport : leur contenu vient du décodeur.
 
 ![Contenu du signal : transport et TR 101 290](docs/screenshots/analysis-ts.png)
 

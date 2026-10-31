@@ -33,7 +33,14 @@ export function inputMessage(m: string): string {
   if (x) return t('Connecting to {source}…', { source: x[1] });
   x = /^Stopped: (.*) — trying again$/.exec(m);
   if (x) return t('Stopped: {reason} — trying again', { reason: x[1] });
+  x = /^This address is a list of (\d+) channels: choose one$/.exec(m);
+  if (x) return t('This address is a list of {n} channels: choose one', { n: x[1] });
+  x = /^yt-dlp could not be fetched \((.*)\)$/.exec(m);
+  if (x) return t('yt-dlp could not be downloaded ({reason})', { reason: x[1] });
+  if (/will begin|not currently live|is offline|not live|has ended|premieres in|is not live/i.test(m)) return t('Not live right now — {reason}', { reason: m });
   switch (m) {
+    case 'Looking for the stream on the page…':
+      return t('Looking for the stream on the page…');
     case 'Starting…':
       return t('Starting…');
     case 'Waiting for the sender…':

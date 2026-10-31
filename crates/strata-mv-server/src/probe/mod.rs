@@ -211,6 +211,9 @@ pub struct Report {
     pub ndi: Option<NdiView>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub sdi: Option<SdiView>,
+    /// A web platform's live: the page and the stream found on it.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub web: Option<crate::weblive::Resolved>,
 }
 
 /// What a running input has told so far.
@@ -225,15 +228,18 @@ pub struct Facts {
     pub sdi: Option<SdiView>,
     /// The playlists of an HLS input, read when asked (at most every few seconds).
     pub hls: Option<(Instant, hls::HlsView, Option<ts::TsView>)>,
+    /// A web platform's live: the stream found on its page.
+    pub web: Option<crate::weblive::Resolved>,
 }
 
 impl Facts {
     /// Starts again (a new connection).
     pub fn reset(&mut self, relayed: bool) {
-        let hls = self.hls.take();
+        let (hls, web) = (self.hls.take(), self.web.take());
         *self = Facts {
             ts: relayed.then(|| ts::TsMonitor::new(true)),
             hls,
+            web,
             ..Default::default()
         };
     }
@@ -264,7 +270,10 @@ impl Facts {
 
     /// The report: the decoder's view, completed by the transport's.
     pub fn report(&self, now: Instant) -> Report {
-        let mut r = Report::default();
+        let mut r = Report {
+            web: self.web.clone(),
+            ..Default::default()
+        };
         if let Some(b) = &self.banner {
             r.how.push("ffmpeg (ouverture de l’entrée)".into());
             r.container = Some(Container {

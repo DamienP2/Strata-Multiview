@@ -6,7 +6,7 @@
 | --- | --- |
 | Création | Designer dans le navigateur : un multiview s'édite directement (dispositions, tuiles Source, horloges, logos, textes) et se publie ; ni modèles, ni calques, ni timeline, ni animation |
 | Rendu | **Un seul modèle de scène, deux moteurs** : Rust (baseband) et DOM (HTML5) |
-| Entrées | SRT, UDP, RTMP, HLS, RTSP, URL (ffmpeg), NDI, SDI (DeckLink) ; image et audio (niveaux par canal) |
+| Entrées | SRT, UDP, RTMP, HLS, RTSP, URL (ffmpeg), direct web (yt-dlp : YouTube, TikTok, Twitch…), NDI, SDI (DeckLink) ; image et audio (niveaux par canal) |
 | Signaux | Tally et UMD : TSL UMD 3.1 et 5.0, Blackmagic ATEM, GPI, API |
 | Sorties | HTML5, NDI, Stream (SRT, RTMP, HLS), SDI (DeckLink), ST 2110-20 |
 

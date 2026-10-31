@@ -1,4 +1,4 @@
-import { Cpu, Plus, Search, Trash2, Video, VideoOff } from 'lucide-react';
+import { Cpu, ListVideo, Plus, Search, Trash2, Video, VideoOff } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { api } from '../store';
 import { t, tc, tn } from '../i18n';
@@ -12,6 +12,7 @@ import { deviceOf, hardwareOf } from '../hardware/model';
 import { navigate } from '../router';
 import { OnSwitch } from './OnSwitch';
 import { NdiPicker } from './NdiPicker';
+import { ChannelPicker } from './ChannelPicker';
 import { InputAnalysis } from './InputAnalysis';
 
 /*
@@ -31,12 +32,34 @@ const KINDS: { value: InputKind; label: string; badge: string }[] = [
   { value: 'hls', label: 'HLS', badge: 'HLS' },
   { value: 'rtsp', label: 'RTSP', badge: 'RTSP' },
   { value: 'url', label: 'Address / file', badge: 'URL' },
+  { value: 'web', label: 'Web live (YouTube, TikTok…)', badge: 'WEB' },
   { value: 'ndi', label: 'NDI', badge: 'NDI' },
   { value: 'sdi', label: 'SDI', badge: 'SDI' },
   { value: 'st2110', label: 'ST 2110', badge: 'ST 2110' },
 ];
 const badgeOf = (k: InputKind) => KINDS.find((x) => x.value === k)?.badge ?? k.toUpperCase();
-const SCHEMES: Partial<Record<InputKind, RegExp>> = { srt: /^srt:/i, udp: /^udp:/i, rtmp: /^rtmps?:/i, hls: /^https?:/i, rtsp: /^rtsps?:/i };
+const SCHEMES: Partial<Record<InputKind, RegExp>> = { srt: /^srt:/i, udp: /^udp:/i, rtmp: /^rtmps?:/i, hls: /^https?:/i, rtsp: /^rtsps?:/i, web: /^https?:/i };
+/** The platform of a live page's address (mirrors weblive::platform). */
+const PLATFORMS: [RegExp, string][] = [
+  [/(^|\.)(youtube\.com|youtu\.be)$/, 'YouTube'],
+  [/(^|\.)tiktok\.com$/, 'TikTok'],
+  [/(^|\.)twitch\.tv$/, 'Twitch'],
+  [/(^|\.)(facebook\.com|fb\.watch)$/, 'Facebook'],
+  [/(^|\.)instagram\.com$/, 'Instagram'],
+  [/(^|\.)kick\.com$/, 'Kick'],
+  [/(^|\.)(dailymotion\.com|dai\.ly)$/, 'Dailymotion'],
+  [/(^|\.)(x\.com|twitter\.com)$/, 'X'],
+  [/(^|\.)vimeo\.com$/, 'Vimeo'],
+  [/(^|\.)rumble\.com$/, 'Rumble'],
+  [/(^|\.)france\.tv$/, 'france.tv'],
+  [/(^|\.)arte\.tv$/, 'Arte'],
+];
+function platformOf(url: string): string | null {
+  const host = /^https?:\/\/([^/?#]+)/i.exec(url.trim())?.[1]?.split('@').pop()?.toLowerCase();
+  return (host && PLATFORMS.find(([re]) => re.test(host))?.[1]) || null;
+}
+/** A playlist that may list channels (an IPTV M3U). */
+const mayList = (c: Pick<InputConfig, 'kind' | 'url'>) => (c.kind === 'hls' || c.kind === 'url') && /^https?:\/\/.+\.m3u8?($|[?#])/i.test(c.url.trim());
 const isStream = (k: InputKind) => k !== 'ndi' && k !== 'sdi' && k !== 'st2110';
 /** Inputs that receive something Hardware declares. */
 const needsHardware = (k: InputKind) => k === 'sdi' || k === 'st2110';
@@ -81,6 +104,8 @@ function placeholder(c: Pick<InputConfig, 'kind' | 'listen'>): string {
       return 'https://…/index.m3u8';
     case 'rtsp':
       return 'rtsp://camera/stream';
+    case 'web':
+      return 'https://www.youtube.com/watch?v=… · https://www.tiktok.com/@…/live';
     default:
       return 'https://… · /path/to/clip.mp4';
   }
@@ -103,7 +128,9 @@ function addressHint(c: InputConfig): string {
     case 'rtmp':
       return c.listen ? t('Senders push to rtmp://{host}:1935/live/cam1: set the address to rtmp://0.0.0.0:1935/live/cam1.', { host }) : t('The stream to pull, e.g. rtmp://server/app/key.');
     case 'hls':
-      return t('The playlist, e.g. https://…/index.m3u8.');
+      return t('The playlist, e.g. https://…/index.m3u8: of a master playlist, the variant nearest the decoded size. A list of channels (IPTV): choose one.');
+    case 'web':
+      return t('The page of the live, as shared: YouTube, TikTok, Twitch, Facebook, Instagram, Kick, Dailymotion, X, Vimeo, Rumble… Only its picture and sound are kept, full frame; the stream is found again when it restarts.');
     case 'rtsp':
       return t("The camera's stream, e.g. rtsp://camera/stream.");
     default:
@@ -113,7 +140,7 @@ function addressHint(c: InputConfig): string {
 
 
 /** Waiting is not failing. */
-const WAITING = /^(Starting…|Waiting for the sender…|Connecting…|Connecting to .*…|Not started.*|Waiting for a signal .*…|Off)$/;
+const WAITING = /^(Starting…|Waiting for the sender…|Connecting…|Connecting to .*…|Not started.*|Waiting for a signal .*…|Looking for the stream on the page…|Off)$/;
 
 type Tone = 'ok' | 'warn' | 'idle';
 
@@ -331,6 +358,8 @@ function Inspector({
 }) {
   const listId = `vs-ndi-${i.id}`;
   const [picking, setPicking] = useState(false);
+  const [listing, setListing] = useState(false);
+  const live = i.kind === 'web' ? platformOf(i.url) : null;
   const choices = hwChoices(i.kind);
   const port = portOf(i);
   return (
@@ -431,8 +460,40 @@ function Inspector({
               <input type="number" min={1} max={65535} value={port} onChange={(e) => editInput((x) => void ((x.port = Math.max(1, Math.min(65535, Math.round(+e.target.value) || 0))), (x.url = '')))} />
             </Field>
           ) : (
-            <Field label={t('Address')} hint={addressHint(i)}>
-              <input value={i.url} placeholder={placeholder(i)} spellCheck={false} onChange={(e) => editInput((x) => void (x.url = e.target.value))} />
+            <Field label={i.kind === 'web' ? t('Page of the live') : t('Address')} hint={addressHint(i)}>
+              <div className="vs-row">
+                <input
+                  value={i.url}
+                  placeholder={placeholder(i)}
+                  spellCheck={false}
+                  onChange={(e) =>
+                    editInput((x) => {
+                      x.url = e.target.value;
+                      // A platform's page pasted as an address: its live.
+                      if ((x.kind === 'url' || x.kind === 'hls') && platformOf(x.url)) x.kind = 'web';
+                    })
+                  }
+                />
+                {i.kind === 'web' && <span className={`vs-platform ${live ? 'on' : ''}`}>{live ?? t('Other site')}</span>}
+                {mayList(i) && (
+                  <button type="button" className="btn small" title={t('Choose a channel of an IPTV list (M3U)')} onClick={() => setListing(true)}>
+                    <ListVideo size={13} /> {t('Channels…')}
+                  </button>
+                )}
+              </div>
+              {listing && (
+                <ChannelPicker
+                  url={i.url.trim()}
+                  onClose={() => setListing(false)}
+                  onChoose={(ch) => {
+                    editInput((x) => {
+                      x.url = ch.url;
+                      if (/^(Input|Entrée) \d+$/.test(x.name)) x.name = ch.name;
+                    });
+                    setListing(false);
+                  }}
+                />
+              )}
             </Field>
           )}
           {i.kind === 'srt' && (

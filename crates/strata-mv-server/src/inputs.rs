@@ -41,6 +41,9 @@ pub enum InputKind {
     Rtsp,
     /// Any address or file ffmpeg reads.
     Url,
+    /// The live of a web platform (YouTube, TikTok, Twitch…): its page's
+    /// address, the stream found by yt-dlp (`weblive`).
+    Web,
     Ndi,
     Sdi,
     /// An ST 2110 flow of the Hardware settings (not received yet).
@@ -117,6 +120,17 @@ fn default_fps() -> u32 {
 /// written to its log (read by [`MeterLog`]).
 const METER_FILTER: &str = "ebur128=metadata=1:peak=true,asetnsamples=n=1920:p=0,astats=metadata=1:reset=1:measure_overall=none:measure_perchannel=Peak_level+RMS_level,ametadata=mode=print";
 
+/// Where a stream is read from, once looked up (`prepare`).
+#[derive(Debug, Default, Clone)]
+pub struct Pull {
+    /// The address read instead of the configured one (a web page's stream).
+    pub url: Option<String>,
+    /// Options of the input (its headers).
+    pub input: Vec<String>,
+    /// The variant of a master playlist (ffmpeg's program).
+    pub program: Option<usize>,
+}
+
 /// The ffmpeg commands of a stream input.
 #[derive(Debug, Default)]
 pub struct StreamArgs {
@@ -145,9 +159,21 @@ impl InputConfig {
     /// measure its first audio track (`audio`) and tell each picture in the
     /// log (`info`: the `showinfo` filter).
     pub fn ffmpeg_args(&self, audio: bool, info: bool) -> Result<StreamArgs, String> {
+        self.ffmpeg_args_from(&Pull::default(), audio, info)
+    }
+
+    /// `ffmpeg_args`, reading where `pull` says.
+    pub fn ffmpeg_args_from(
+        &self,
+        pull: &Pull,
+        audio: bool,
+        info: bool,
+    ) -> Result<StreamArgs, String> {
         // An SRT listener needs only its port.
         let own;
-        let url = if self.kind == InputKind::Srt && self.listen && self.port > 0 {
+        let url = if let Some(u) = &pull.url {
+            u.as_str()
+        } else if self.kind == InputKind::Srt && self.listen && self.port > 0 {
             own = format!("srt://0.0.0.0:{}", self.port);
             own.as_str()
         } else {
@@ -217,6 +243,7 @@ impl InputConfig {
                 a.extend(["-rtsp_transport", "tcp"].map(String::from));
             }
             InputKind::Url => {}
+            InputKind::Web => need(&["http://", "https://"])?,
             InputKind::Ndi | InputKind::Sdi | InputKind::St2110 => {
                 return Err("not a stream".into())
             }
@@ -255,15 +282,19 @@ impl InputConfig {
         if relay.is_some() {
             a.extend(["-f", "mpegts", "-i", "pipe:0"].map(String::from));
         } else {
+            a.extend(pull.input.iter().cloned());
             a.extend(["-i".into(), url]);
         }
-        a.extend(["-map", "0:v:0"].map(String::from));
+        // Of a master playlist, its variant only (the others are not fetched).
+        let from = pull.program.map_or("0".to_string(), |p| format!("0:p:{p}"));
+        a.extend(["-map".into(), format!("{from}:v:0")]);
         if info {
             a.extend(["-vf", "showinfo=checksum=0"].map(String::from));
         }
         a.extend(["-pix_fmt", "rgba", "-f", "rawvideo", "pipe:1"].map(String::from));
         if audio {
-            a.extend(["-map", "0:a:0", "-af", METER_FILTER, "-f", "null", "-"].map(String::from));
+            a.extend(["-map".into(), format!("{from}:a:0")]);
+            a.extend(["-af", METER_FILTER, "-f", "null", "-"].map(String::from));
         }
         Ok(StreamArgs { decode: a, relay })
     }
@@ -677,6 +708,7 @@ impl Inputs {
             InputKind::Hls => "HLS",
             InputKind::Rtsp => "RTSP",
             InputKind::Url => "Adresse",
+            InputKind::Web => "Direct web",
             InputKind::Ndi => "NDI",
             InputKind::Sdi => "SDI (DeckLink)",
             InputKind::St2110 => "SMPTE ST 2110",
@@ -870,6 +902,35 @@ pub async fn list(
             })
             .collect(),
     ))
+}
+
+#[derive(Deserialize)]
+pub struct PlaylistQuery {
+    url: String,
+}
+
+/// `GET /api/inputs/playlist?url=…`: the channels of a list (IPTV M3U),
+/// empty for a stream's own playlist.
+pub async fn playlist_channels(
+    CurrentUser(me): CurrentUser,
+    Query(q): Query<PlaylistQuery>,
+) -> ApiResult<Json<Vec<crate::weblive::Channel>>> {
+    require(me.is_admin())?;
+    let url = q.url.trim().to_string();
+    if !(url.starts_with("http://") || url.starts_with("https://")) {
+        return Err((
+            StatusCode::BAD_REQUEST,
+            "the address must start with http:// or https://".into(),
+        ));
+    }
+    let read = tokio::task::spawn_blocking(move || crate::weblive::playlist(&url, 1080))
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+    match read {
+        Ok(crate::weblive::Playlist::Channels(c)) => Ok(Json(c)),
+        Ok(_) => Ok(Json(Vec::new())),
+        Err(e) => Err((StatusCode::BAD_GATEWAY, e)),
+    }
 }
 
 /// `GET /api/inputs/ndi-sources`: the NDI sources seen on the network.
@@ -1246,15 +1307,81 @@ impl R128 {
 }
 
 /// A stream through ffmpeg, started again 2 s after it stops.
+/// Where a stream is read from: a web page's stream (looked for again at
+/// each start: it expires), the variant of a master playlist.
+fn prepare(l: &Live) -> Result<Pull, String> {
+    use crate::weblive::{self, Playlist};
+    let c = &l.config;
+    let url = c.url.trim();
+    let mut pull = Pull::default();
+    let lower = url.to_ascii_lowercase();
+    let listed = match c.kind {
+        InputKind::Web => {
+            l.say("Looking for the stream on the page…");
+            let r = weblive::resolve(url, c.height)?;
+            pull.url = Some(r.url.clone());
+            pull.input = weblive::header_args(&r.headers);
+            l.facts().web = Some(r);
+            false
+        }
+        InputKind::Hls => true,
+        InputKind::Url => {
+            lower.contains(".m3u8") || lower.split('?').next().is_some_and(|p| p.ends_with(".m3u"))
+        }
+        _ => false,
+    };
+    if listed && (lower.starts_with("http://") || lower.starts_with("https://")) {
+        match weblive::playlist(url, c.height) {
+            Ok(Playlist::Master { variant, .. }) => pull.program = Some(variant),
+            Ok(Playlist::Channels(list)) => {
+                return Err(format!(
+                    "This address is a list of {} channels: choose one",
+                    list.len()
+                ))
+            }
+            // Unreadable here: ffmpeg tells why.
+            Ok(Playlist::Media) | Err(_) => {}
+        }
+    }
+    Ok(pull)
+}
+
 fn run_stream(l: &Live) {
     let c = &l.config;
     if let Err(e) = c.ffmpeg_args(false, false) {
         return l.say(e);
     }
+    // A stream that stops at once, again and again: asked less and less
+    // often (a web page is not read every two seconds).
+    let (mut started, mut tries) = (None::<Instant>, 0u64);
     while !l.stopped() {
+        if started.is_some_and(|t| t.elapsed() < Duration::from_secs(30)) {
+            tries += 1;
+            let wait = if c.kind == InputKind::Web {
+                (5 * tries).min(120)
+            } else {
+                (tries - 1).min(8)
+            };
+            if wait > 0 && !l.pause(Duration::from_secs(wait)) {
+                return;
+            }
+        } else {
+            tries = 0;
+        }
+        started = Some(Instant::now());
+        let pull = match prepare(l) {
+            Ok(p) => p,
+            Err(e) => {
+                l.say(e);
+                if !l.pause(Duration::from_secs(10)) {
+                    return;
+                }
+                continue;
+            }
+        };
         let audio = !l.no_audio.load(Ordering::Relaxed);
         let info = !l.no_info.load(Ordering::Relaxed);
-        let args = c.ffmpeg_args(audio, info).unwrap_or_default();
+        let args = c.ffmpeg_args_from(&pull, audio, info).unwrap_or_default();
         let log = Arc::new(Mutex::new(String::new()));
         // The relay first: the decoder reads what it writes.
         let mut relay = None;

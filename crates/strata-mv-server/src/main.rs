@@ -29,6 +29,7 @@ mod timectl;
 mod update;
 mod web;
 mod webimages;
+mod weblive;
 
 use std::collections::BTreeMap;
 use std::future::Future;
@@ -402,6 +403,8 @@ pub async fn serve(
     tracing::info!(version = env!("CARGO_PKG_VERSION"), data_dir = %data_dir.display(), "starting Strata Multiview");
     // The journal on disk, crash reports, the last run's unexpected stop.
     health::start(&data_dir);
+    // yt-dlp and Deno, for the lives of the web platforms.
+    weblive::set_tools_dir(data_dir.join("tools"));
 
     let (stop_tx, stop_rx) = watch::channel(false);
     tokio::spawn(async move {

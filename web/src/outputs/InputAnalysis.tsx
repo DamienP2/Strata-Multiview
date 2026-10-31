@@ -291,6 +291,8 @@ export interface Report {
   ts?: Ts;
   hls?: Hls;
   ndi?: Ndi;
+  /** A web platform's live: the stream found on its page. */
+  web?: { platform: string; title: string; channel?: string; live: boolean; width: number; height: number; fps?: number; protocol: string };
   sdi?: Sdi;
 }
 
@@ -452,6 +454,7 @@ function Summary({ r }: { r: Report }) {
   return (
     <>
       <div className="ia-tiles">
+        {r.web && <Tile label={r.web.platform || t('Web live')} value={r.web.title || '—'} sub={[r.web.channel, r.web.live ? t('Live') : t('Not live'), r.web.height ? `${r.web.height}p${r.web.fps ? r.web.fps : ''}` : '', r.web.protocol].filter(Boolean).join(' · ')} />}
         <Tile label={t('Container')} value={r.container?.formatName || r.container?.format || r.kind} sub={r.ts ? kbps(r.ts.kbps) : r.container?.bitrateKbps ? kbps(r.container.bitrateKbps) : ''} />
         {video.map((v) => (
           <Tile key={v.index} label={t('Video')} value={`${v.codecName || v.codec}${v.profile ? ` ${v.profile}` : ''}`} sub={videoLine(v)} />

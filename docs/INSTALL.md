@@ -159,6 +159,8 @@ strata-mv-server service install --bind 0.0.0.0:8090 --data-dir <dossier>
 
 Les sorties **Stream** (SRT, UDP, RTMP, HLS), les **entrées en direct** (sauf NDI) et la conversion des vidéos passent par **ffmpeg**. Les installateurs et les archives l'embarquent dans `bin/` à côté du serveur (`C:\Program Files\Strata Multiview\bin\ffmpeg.exe`, `/usr/local/strata-multiview/bin/ffmpeg`, `/opt/strata-multiview/bin/ffmpeg`). Une installation antérieure le reçoit avec sa prochaine mise à jour par le web.
 
+Les entrées **Direct web** (YouTube, TikTok, Twitch…) utilisent **yt-dlp** : le serveur le télécharge depuis GitHub au premier usage dans `<dossier de données>/tools/` (et **Deno**, le moteur JavaScript dont YouTube a besoin), puis le met à jour lui-même quand un direct ne se lit plus. Un poste sans accès à github.com peut y déposer ces outils à la main, ou les désigner par les variables `STRATA_YTDLP` et `STRATA_DENO`.
+
 Le serveur cherche ffmpeg dans cet ordre : la variable `FFMPEG_PATH`, `ffmpeg` ou `bin/ffmpeg` à côté de `strata-mv-server`, puis le `PATH`. Il le relit à chaque lancement : inutile de redémarrer, cliquez sur *Appliquer* dans **Flux vidéo** (les entrées réessayent seules).
 
 Il faut un ffmpeg avec **libx264** (et libx265 pour le HEVC) et les protocoles **srt** et **rtmp**. Pour vérifier :
