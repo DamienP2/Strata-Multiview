@@ -121,6 +121,10 @@ export interface InputConfig {
   failoverAfter?: number;
   /** Seconds of steady pictures before coming back (10; 0 = by hand). */
   failbackAfter?: number;
+  /** Streams: the audio track measured and listened to (0: the first). */
+  audioTrack?: number;
+  /** Listened to: 0 the track mixed down to stereo, 1 channels 1-2 as they are, 2 channels 3-4… */
+  listenPair?: number;
 }
 
 /** `GET /api/inputs`. */

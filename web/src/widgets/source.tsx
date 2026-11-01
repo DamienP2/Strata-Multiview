@@ -54,6 +54,8 @@ export interface Vu {
   hold: boolean;
   /** At most this many channels (0: all). */
   max: number;
+  /** The first channel shown (1: from the first). Mirrors Vu::first. */
+  first: number;
 }
 
 export interface Config {
@@ -162,7 +164,7 @@ export function markerLines(m: Markers, p: Area, afd: number | undefined, size: 
 
 const D_TALLY: TallyLook = { border: true, program: '#e5212b', preview: '#17b14a', aux: '#f2b705', off: '#262a33' };
 const D_UMD: Umd = { position: 'bottom', size: 11, outside: false, text: '', font: 'Inter', weight: 600, align: 'center', color: '#ffffff', background: '#000000b3', lamps: true };
-const D_VU: Vu = { position: 'right', width: 6, gap: 2, margin: 6, min: -60, yellow: -18, red: -9, hold: true, max: 0 };
+const D_VU: Vu = { position: 'right', width: 6, gap: 2, margin: 6, min: -60, yellow: -18, red: -9, hold: true, max: 0, first: 1 };
 const D = { input: '', fit: 'contain' as Fit, background: '#0b0d12', border: 4, badge: false, noSignal: '', noSignalLook: 'bars' as 'bars' | 'plain', timecode: 'off' as 'off' | 'input' | 'station', loudness: false, alarms: true };
 
 export type Full = typeof D & { tally: TallyLook; umd: Umd; vu: Vu; markers: Markers };
@@ -393,7 +395,7 @@ function SourceView({ layer, w, h, data, designer, lang, nowMs, tz, fps, seed }:
   const ownInfo = own ? inputs.find((i) => i.id === own) : undefined;
   const levels = info ? (signal.levels ?? []) : [];
   // The meters always show (two channels at rest without audio): the tile looks the same with or without sound.
-  const l = layout(c, w, h, Math.max(levels.length, SILENT_CHANNELS));
+  const l = layout(c, w, h, Math.max(levels.slice(Math.max(1, c.vu.first) - 1).length, SILENT_CHANNELS));
   const tally: Tally = (info && signal.tally) || {};
   const v = l.video;
   const dpr = typeof window === 'undefined' ? 1 : window.devicePixelRatio || 1;
@@ -613,6 +615,7 @@ export default defineWidget({
             <>
               <Flags label={t('Show')} items={[{ icon: <ArrowUpToLine size={14} />, title: t('Peak hold'), value: c.vu.hold, onChange: (v) => set('vu.hold', v) }]} />
               <Num label={t('Channels')} value={c.vu.max} min={0} max={16} onChange={(v) => set('vu.max', v)} />
+              <Num label={t('From channel')} value={c.vu.first} min={1} max={16} onChange={(v) => set('vu.first', v)} />
               <Num label={t('Bar width')} value={c.vu.width} min={1} max={60} unit=" px" onChange={(v) => set('vu.width', v)} />
               <Num label={t('Gap')} value={c.vu.gap} min={0} max={40} unit=" px" onChange={(v) => set('vu.gap', v)} />
               <Num label={t('Margin')} value={c.vu.margin} min={0} max={100} unit=" px" onChange={(v) => set('vu.margin', v)} />

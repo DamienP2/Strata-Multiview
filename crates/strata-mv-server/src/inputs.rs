@@ -107,6 +107,17 @@ pub struct InputConfig {
     /// backup until switched back by hand).
     #[serde(default = "default_failback")]
     pub failback_after: u32,
+    /// Streams: the audio track measured and listened to (0: the first).
+    #[serde(default, skip_serializing_if = "is_zero")]
+    pub audio_track: u32,
+    /// What is listened to: 0 the track mixed down to stereo (a 5.1), 1
+    /// channels 1-2 as they are, 2 channels 3-4…
+    #[serde(default, skip_serializing_if = "is_zero")]
+    pub listen_pair: u32,
+}
+
+fn is_zero(v: &u32) -> bool {
+    *v == 0
 }
 
 fn default_failover() -> u32 {
@@ -369,27 +380,31 @@ impl InputConfig {
         }
         a.extend(["-pix_fmt", "rgba", "-f", "rawvideo", "pipe:1"].map(String::from));
         if audio {
-            a.extend(["-map".into(), format!("{from}:a:0")]);
+            let track = format!("{from}:a:{}", self.audio_track);
+            a.extend(["-map".into(), track.clone()]);
             a.extend(["-af", METER_FILTER, "-f", "null", "-"].map(String::from));
             // The sound, to be listened to (Strata reads it on that port).
             if let Some(port) = pull.pcm {
-                a.extend(["-map".into(), format!("{from}:a:0")]);
+                a.extend(["-map".into(), track]);
+                // What is listened to: the track mixed down to stereo, or
+                // channels 2n-1 and 2n as they are (silence if the track has
+                // fewer).
+                let pair = self.listen_pair.min(32);
+                let af = if pair == 0 {
+                    a.extend(["-ac", "2"].map(String::from));
+                    "aresample=48000:async=1".to_string()
+                } else {
+                    format!(
+                        "pan=stereo|c0=c{}|c1=c{},aresample=48000:async=1",
+                        2 * pair - 2,
+                        2 * pair - 1
+                    )
+                };
                 // Each packet written at once (not 170 ms at a time); a frame
                 // lost on the way leaves silence in its place, so the count of
                 // samples stays the sound's own time.
-                a.extend(
-                    [
-                        "-ac",
-                        "2",
-                        "-af",
-                        "aresample=48000:async=1",
-                        "-flush_packets",
-                        "1",
-                        "-f",
-                        "s16le",
-                    ]
-                    .map(String::from),
-                );
+                a.extend(["-af".to_string(), af]);
+                a.extend(["-flush_packets", "1", "-f", "s16le"].map(String::from));
                 a.push(format!("tcp://127.0.0.1:{port}"));
             }
         }
@@ -3422,6 +3437,8 @@ mod tests {
             backup: String::new(),
             failover_after: 2,
             failback_after: 10,
+            audio_track: 0,
+            listen_pair: 0,
         }
     }
 
@@ -3644,6 +3661,21 @@ mod tests {
             .decode
             .iter()
             .any(|x| x == "0:a:0"));
+        // Another track, another pair listened to.
+        let pull = Pull {
+            pcm: Some(9),
+            ..Pull::default()
+        };
+        let mut two = input(InputKind::Udp, "udp://@239.1.1.1:5000", false);
+        (two.audio_track, two.listen_pair) = (1, 2);
+        let d = two.ffmpeg_args_from(&pull, true, false).unwrap().decode;
+        assert!(d.windows(2).any(|w| w == ["-map", "0:a:1"]));
+        assert!(d.iter().any(|x| x.starts_with("pan=stereo|c0=c2|c1=c3,")));
+        let d = input(InputKind::Udp, "udp://@239.1.1.1:5000", false)
+            .ffmpeg_args_from(&pull, true, false)
+            .unwrap()
+            .decode;
+        assert!(d.windows(2).any(|w| w == ["-ac", "2"]));
         // RTP: its packets need its demuxer, not a relay.
         assert!(input(InputKind::Udp, "rtp://239.1.1.1:5000", false)
             .ffmpeg_args(true, false)

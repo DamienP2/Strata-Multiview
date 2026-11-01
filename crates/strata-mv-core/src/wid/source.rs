@@ -155,6 +155,8 @@ pub struct Vu {
     pub hold: bool,
     /// At most this many channels (0: all of them).
     pub max: u32,
+    /// The first channel shown (1: from the first; 3: channels 3, 4…).
+    pub first: u32,
 }
 
 impl Default for Vu {
@@ -169,6 +171,7 @@ impl Default for Vu {
             red: -9.0,
             hold: true,
             max: 0,
+            first: 1,
         }
     }
 }
@@ -712,6 +715,12 @@ pub fn no_signal_card(video: Area, now_ms: i64, seed: f32) -> Option<Card> {
 }
 
 /// A level on the scale: 0 at `min`, 1 at full scale.
+/// The channels a tile's meters show, of the input's `levels`.
+pub fn shown<'a, T>(c: &Vu, levels: &'a [T]) -> &'a [T] {
+    let from = (c.first.max(1) as usize - 1).min(levels.len());
+    &levels[from..]
+}
+
 pub fn scale(c: &Vu, db: f32) -> f32 {
     let min = c.min.min(-1.0);
     ((db - min) / -min).clamp(0.0, 1.0)

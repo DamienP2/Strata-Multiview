@@ -1,7 +1,7 @@
 import { Headphones, Volume2, VolumeX } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { formatFor, inFormat } from '../engine/formats';
-import { listen, setVolume, useListening } from '../engine/listen';
+import { listen, setListenMode, setVolume, useListening, type ListenMode } from '../engine/listen';
 import type { Project } from '../engine/types';
 import type { Live } from '../store';
 import { t } from '../i18n';
@@ -21,7 +21,7 @@ interface Tile {
  * hide, so the picture stays clean.
  */
 export function ListenControls({ project, live, width, height, scale }: { project: Project; live: Live | undefined; width: number; height: number; scale: number }) {
-  const { id: heard, volume } = useListening();
+  const { id: heard, volume, mode } = useListening();
   const [shown, setShown] = useState(false);
   const [menu, setMenu] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
@@ -87,6 +87,20 @@ export function ListenControls({ project, live, width, height, scale }: { projec
             <>
               <VolumeX size={13} className="lsn-dim" />
               <input type="range" min={0} max={1} step={0.01} value={volume} title={t('Volume')} onChange={(e) => setVolume(+e.target.value)} />
+              <span className="lsn-modes">
+                {(
+                  [
+                    ['left', 'L', t('Left alone, in both ears')],
+                    ['stereo', 'L R', t('Stereo')],
+                    ['right', 'R', t('Right alone, in both ears')],
+                    ['mono', 'M', t('Mono: left and right mixed')],
+                  ] as [ListenMode, string, string][]
+                ).map(([m, l, tip]) => (
+                  <button key={m} className={mode === m ? 'on' : ''} title={tip} onClick={() => setListenMode(m)}>
+                    {l}
+                  </button>
+                ))}
+              </span>
             </>
           )}
           {menu && (

@@ -76,4 +76,18 @@ export const ops: Record<string, string> = {
   Fri: 'Ven',
   Sat: 'Sam',
   Sun: 'Dim',
+  'Left alone, in both ears': 'La gauche seule, dans les deux oreilles',
+  Stereo: 'Stéréo',
+  'Right alone, in both ears': 'La droite seule, dans les deux oreilles',
+  'Mono: left and right mixed': 'Mono : gauche et droite mélangées',
+  'Audio track': 'Piste audio',
+  'The track of the stream whose levels, loudness and sound the server measures and sends (a stream can carry several languages).':
+    'La piste du flux dont le serveur mesure les niveaux et le loudness et envoie le son (un flux peut porter plusieurs langues).',
+  'Track {n}': 'Piste {n}',
+  'Pair listened to': 'Paire écoutée',
+  'What is heard when this input is listened to: the whole track mixed down to stereo (a 5.1), or one pair of channels as it is (the pairs of a multichannel track).':
+    'Ce qu’on entend en écoutant cette entrée : toute la piste réduite en stéréo (un 5.1), ou une paire de voies telle quelle (les paires d’une piste multicanal).',
+  'Mixed down to stereo': 'Mixage stéréo',
+  'Channels {a}-{b}': 'Voies {a}-{b}',
+  'From channel': 'À partir de la voie',
 };

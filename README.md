@@ -354,6 +354,8 @@ Le son est fabriqué image par image, au nombre d'échantillons exact de chaque 
 
 Les **entrées en direct** : SRT, UDP, RTMP, HLS, RTSP, toute URL lue par ffmpeg, les **directs web** (YouTube, TikTok, Twitch, Facebook, Instagram, Kick, Dailymotion, X, Vimeo, Rumble… : le simple lien du direct suffit), **NDI** (sources découvertes sur le réseau) et **SDI** (DeckLink). Chaque entrée est décodée à la taille et à la cadence de la source, avec un tampon de lissage réglable ; la page montre une vignette, l'état, les images reçues et les pertes. Une entrée qui tombe se reconnecte seule.
 
+**Audio des entrées** (page Entrées, flux) : **piste audio** mesurée et écoutée (un flux peut porter plusieurs langues) et **ce qu'on écoute** : toute la piste réduite en stéréo, ou une paire de voies telle quelle (1-2, 3-4… d'une piste multicanal). À l'écoute (pages de sortie), **L / L R / R / M** : gauche seule, stéréo, droite seule, mono. Sur la tuile, les vu-mètres peuvent partir d'une autre voie (« À partir de la voie »), pour montrer par exemple les voies 3-4 d'une piste 8 voies.
+
 **Entrée de secours** (page Entrées) : une entrée peut en désigner une autre comme secours. Sans image depuis le délai réglé (2 s par défaut) et le secours vivant, ses tuiles montrent l'image, le son et les alarmes du secours, avec son nom et son tally ; l'alarme **Sur secours** se lève. Retour automatique après une image stable pendant le délai de retour (10 s ; 0 : retour à la main). Bascule manuelle depuis la page Entrées ou par `PUT /api/inputs/{id}/backup` (`{"backup": true}`, tenue jusqu'au retour manuel).
 
 ### 8.3 Contenu du signal

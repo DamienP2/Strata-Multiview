@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { api } from '../store';
 import { t, tc, tn } from '../i18n';
 import { InfoTip } from '../ui/InfoTip';
-import { inputMessage as messageText, useLiveFrame } from '../engine/liveInputs';
+import { inputMessage as messageText, useLiveFrame, useSignal } from '../engine/liveInputs';
 import type { InputConfig, InputInfo, InputKind, ServerConfig } from './types';
 import { useMetrics, type InputMetrics } from '../engine/metrics';
 import { corePct, fps as fpsText, fpsTone, inputTone, num } from '../perf/format';
@@ -366,6 +366,7 @@ function Inspector({
   const live = i.kind === 'web' ? platformOf(i.url) : null;
   const choices = hwChoices(i.kind);
   const port = portOf(i);
+  const tracks = useSignal(i.id).video?.audio ?? [];
   return (
     <>
       <div className="oc-ins-head" style={{ ['--k' as string]: COLOR }}>
@@ -581,6 +582,31 @@ function Inspector({
             ))}
           </div>
         </Group>
+      )}
+
+      {isStream(i.kind) && (
+        <Field label={t('Audio track')} hint={t('The track of the stream whose levels, loudness and sound the server measures and sends (a stream can carry several languages).')}>
+          <select value={i.audioTrack ?? 0} onChange={(e) => editInput((x) => void (x.audioTrack = +e.target.value))}>
+            {Array.from({ length: Math.max(tracks.length, (i.audioTrack ?? 0) + 1, 1) }, (_, n) => (
+              <option key={n} value={n}>
+                {t('Track {n}', { n: n + 1 })}
+                {tracks[n] ? ` · ${[tracks[n].language, tracks[n].codec, tracks[n].layout].filter(Boolean).join(' · ')}` : ''}
+              </option>
+            ))}
+          </select>
+        </Field>
+      )}
+      {isStream(i.kind) && (
+        <Field label={t('Pair listened to')} hint={t('What is heard when this input is listened to: the whole track mixed down to stereo (a 5.1), or one pair of channels as it is (the pairs of a multichannel track).')}>
+          <select value={i.listenPair ?? 0} onChange={(e) => editInput((x) => void (x.listenPair = +e.target.value))}>
+            <option value={0}>{t('Mixed down to stereo')}</option>
+            {Array.from({ length: 8 }, (_, n) => (
+              <option key={n} value={n + 1}>
+                {t('Channels {a}-{b}', { a: 2 * n + 1, b: 2 * n + 2 })}
+              </option>
+            ))}
+          </select>
+        </Field>
       )}
 
       <Field label={t('Backup input')} hint={t('Shown in its tiles when this input loses its signal: picture, sound and faults of the backup, with the name and tally of this input. The alarm « On backup » is raised.')}>

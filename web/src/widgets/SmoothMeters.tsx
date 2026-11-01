@@ -19,7 +19,7 @@ export function SmoothMeters({ id, areas, vu }: { id: string; areas: Area[]; vu:
   useEffect(() => {
     return onPaint(() => {
       const { areas, vu } = geo.current;
-      const levels = smoothLevels(id);
+      const levels = smoothLevels(id).slice(Math.max(1, vu.first ?? 1) - 1);
       const y = scale(vu, vu.yellow);
       const r = scale(vu, Math.max(vu.red, vu.yellow));
       areas.forEach((a, i) => {

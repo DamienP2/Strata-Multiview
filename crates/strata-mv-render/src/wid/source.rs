@@ -169,7 +169,9 @@ pub(crate) fn draw(d: &mut Draw) -> bool {
     // tile's layout the same with or without sound.
     let channels = view
         .as_ref()
-        .map_or(0, |v| v.levels.len())
+        .map_or(0, |v| {
+            strata_mv_core::wid::source::shown(&c.vu, &v.levels).len()
+        })
         .max(SILENT_CHANNELS);
     let l = layout(c, d.w, d.h, channels);
     let tally = view.as_ref().map(|v| v.tally.clone()).unwrap_or_default();
@@ -296,7 +298,9 @@ pub(crate) fn draw(d: &mut Draw) -> bool {
     // The meters.
     {
         let none: &[strata_mv_core::signal::Level] = &[];
-        let levels = view.as_ref().map_or(none, |v| v.levels.as_slice());
+        let levels = view.as_ref().map_or(none, |v| {
+            strata_mv_core::wid::source::shown(&c.vu, &v.levels)
+        });
         for (i, a) in l.meters.iter().enumerate() {
             fill_area(d, *a, 0.0, Draw::hex(TRACK), bm);
             // A channel without sound: its track only.

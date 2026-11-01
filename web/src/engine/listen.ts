@@ -13,6 +13,9 @@ let ctx: AudioContext | null = null;
 let gain: GainNode | null = null;
 let current: { id: string; abort: AbortController } | null = null;
 let volume = 1;
+/** What is heard of the pair: both, the left or right alone (in both ears), or both mixed. */
+export type ListenMode = 'stereo' | 'left' | 'right' | 'mono';
+let mode: ListenMode = 'stereo';
 const subs = new Set<() => void>();
 const changed = () => subs.forEach((f) => f());
 
@@ -61,8 +64,11 @@ async function play(id: string, abort: AbortController) {
           const l = buf.getChannelData(0);
           const rr = buf.getChannelData(1);
           for (let i = 0; i < frames; i++) {
-            l[i] = view.getInt16(i * 4, true) / 32768;
-            rr[i] = view.getInt16(i * 4 + 2, true) / 32768;
+            const a = view.getInt16(i * 4, true) / 32768;
+            const b = view.getInt16(i * 4 + 2, true) / 32768;
+            const [x, y] = mode === 'left' ? [a, a] : mode === 'right' ? [b, b] : mode === 'mono' ? [(a + b) / 2, (a + b) / 2] : [a, b];
+            l[i] = x;
+            rr[i] = y;
           }
           // When it plays: on the timeline, heard when it comes out of the speakers.
           const latency = ctx.outputLatency || ctx.baseLatency || 0;
@@ -106,8 +112,14 @@ export function setVolume(v: number) {
   changed();
 }
 
+/** What is heard of the pair. */
+export function setListenMode(m: ListenMode) {
+  mode = m;
+  changed();
+}
+
 /** The input listened to, and the volume. */
-export function useListening(): { id: string | null; volume: number } {
+export function useListening(): { id: string | null; volume: number; mode: ListenMode } {
   const id = useSyncExternalStore(
     (f) => (subs.add(f), () => void subs.delete(f)),
     () => current?.id ?? null,
@@ -116,5 +128,9 @@ export function useListening(): { id: string | null; volume: number } {
     (f) => (subs.add(f), () => void subs.delete(f)),
     () => volume,
   );
-  return { id, volume: v };
+  const m = useSyncExternalStore(
+    (f) => (subs.add(f), () => void subs.delete(f)),
+    () => mode,
+  );
+  return { id, volume: v, mode: m };
 }

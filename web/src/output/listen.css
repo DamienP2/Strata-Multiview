@@ -108,3 +108,20 @@
 .lsn-menu button.on {
   color: #2bd96b;
 }
+.lsn-modes {
+  display: inline-flex;
+  gap: 2px;
+}
+.lsn-modes button {
+  font: 600 11px var(--mono, monospace);
+  padding: 3px 6px;
+  border-radius: 5px;
+  border: 1px solid #ffffff2e;
+  background: transparent;
+  color: #ffffffb3;
+  cursor: pointer;
+}
+.lsn-modes button.on {
+  background: #ffffff26;
+  color: #fff;
+}
