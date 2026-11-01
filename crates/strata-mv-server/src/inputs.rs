@@ -986,8 +986,10 @@ impl Live {
         let mut out: Vec<i16> = Vec::new();
         for (_, data) in h.iter().rev().filter(|(t, _)| *t <= due) {
             let mut chunk: Vec<i16> = data
-                .chunks_exact(2)
-                .map(|b| i16::from_le_bytes([b[0], b[1]]))
+                .as_chunks::<2>()
+                .0
+                .iter()
+                .map(|b| i16::from_le_bytes(*b))
                 .collect();
             chunk.extend_from_slice(&out);
             out = chunk;
@@ -1012,7 +1014,7 @@ impl Live {
         }
         let s = self.heard(Duration::from_millis(300));
         let (mut lr, mut ll, mut rr) = (0.0f64, 0.0f64, 0.0f64);
-        for c in s.chunks_exact(2) {
+        for c in s.as_chunks::<2>().0 {
             let (l, r) = (c[0] as f64, c[1] as f64);
             lr += l * r;
             ll += l * l;
