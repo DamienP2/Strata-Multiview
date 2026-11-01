@@ -848,6 +848,20 @@ export function Outputs({ mode }: { mode: Mode }) {
                     </div>
                   )}
                   {selDest && !selDest.picture && note(t('Not connected: this destination is kept but not started. Drag a wire from the program to its input to send it again.'))}
+                  {selDest && selDest.kind !== 'html5' && (
+                    <WallRegion
+                      ch={ch}
+                      id={selDest.value.id}
+                      onChange={(r) =>
+                        editCh((c) => {
+                          const all = { ...(c.regions ?? {}) };
+                          if (r) all[selDest.value.id] = r;
+                          else delete all[selDest.value.id];
+                          c.regions = all;
+                        })
+                      }
+                    />
+                  )}
 
                   {selNode?.kind === 'program' && (
                     <>
@@ -1449,6 +1463,52 @@ function destSub(d: Dest, ch: ChannelConfig, hw: HardwareConfig): string {
 }
 
 const bitrateLabel = (kbps: number) => (kbps >= 1000 ? `${+(kbps / 1000).toFixed(1)} Mbit/s` : `${kbps} kbit/s`);
+
+type Region = [number, number, number, number];
+
+/** Video wall: the part of the channel's picture an output sends. */
+function WallRegion({ ch, id, onChange }: { ch: ChannelConfig; id: string; onChange: (r: Region | null) => void }) {
+  const { width: W, height: H } = ch;
+  const r = ch.regions?.[id] ?? null;
+  const even = (v: number) => Math.max(0, Math.round(v / 2) * 2);
+  const part = (x: number, y: number, w: number, h: number): Region => [even(W * x), even(H * y), even(W * w), even(H * h)];
+  const presets: [string, Region | null][] = [
+    [t('All of it'), null],
+    [t('Left half'), part(0, 0, 0.5, 1)],
+    [t('Right half'), part(0.5, 0, 0.5, 1)],
+    [t('Top half'), part(0, 0, 1, 0.5)],
+    [t('Bottom half'), part(0, 0.5, 1, 0.5)],
+    ...[0, 1, 2, 3].map((k): [string, Region] => [t('Quarter {n}', { n: k + 1 }), part((k % 2) * 0.5, Math.floor(k / 2) * 0.5, 0.5, 0.5)]),
+    ...[0, 1, 2].map((k): [string, Region] => [t('Third {n}', { n: k + 1 }), part(k / 3, 0, 1 / 3, 1)]),
+  ];
+  const same = (a: Region | null, b: Region | null) => JSON.stringify(a) === JSON.stringify(b);
+  const cur = presets.find(([, p]) => same(p, r));
+  const set = (k: number, v: number) => onChange((r ?? [0, 0, W, H]).map((x, i) => (i === k ? even(v) : x)) as Region);
+  return (
+    <>
+      <Field label={t('Video wall')} hint={t('The part of the channel’s picture this output sends: a large channel (3840×1080…) split over several screens. The output takes the size of its part.')}>
+        <select value={cur ? cur[0] : 'custom'} onChange={(e) => onChange(presets.find(([l]) => l === e.target.value)?.[1] ?? r ?? [0, 0, W, H])}>
+          {presets.map(([l]) => (
+            <option key={l} value={l}>
+              {l}
+            </option>
+          ))}
+          {!cur && <option value="custom">{t('Custom')}</option>}
+        </select>
+      </Field>
+      {r && (
+        <div className="set-grid two">
+          {(['X', 'Y', t('Width'), t('Height')] as string[]).map((l, k) => (
+            <Field key={l} label={l}>
+              <input type="number" min={0} step={2} value={r[k]} onChange={(e) => set(k, Number(e.target.value) || 0)} />
+            </Field>
+          ))}
+          <p className="muted">{t('Sends {w}×{h} from ({x}, {y}) of the {W}×{H} picture.', { w: r[2], h: r[3], x: r[0], y: r[1], W, H })}</p>
+        </div>
+      )}
+    </>
+  );
+}
 
 function Field({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
   return (

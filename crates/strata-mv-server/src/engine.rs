@@ -42,6 +42,55 @@ struct Opened {
     sink: Box<dyn OutputSink>,
 }
 
+/// A video wall's output: the part of the picture it sends.
+struct Cropped {
+    inner: Box<dyn OutputSink>,
+    region: [u32; 4],
+}
+
+impl Cropped {
+    fn crop(&self, f: &Frame) -> Frame {
+        let [x, y, w, h] = self.region;
+        let (x, y) = (
+            x.min(f.width.saturating_sub(1)),
+            y.min(f.height.saturating_sub(1)),
+        );
+        let (w, h) = (w.min(f.width - x), h.min(f.height - y));
+        let mut data = Vec::with_capacity((w * h * 4) as usize);
+        let stride = f.width as usize * 4;
+        for row in 0..h as usize {
+            let from = (y as usize + row) * stride + x as usize * 4;
+            data.extend_from_slice(&f.data[from..from + w as usize * 4]);
+        }
+        Frame {
+            width: w,
+            height: h,
+            data,
+            captured_at: f.captured_at,
+            audio: f.audio.clone(),
+        }
+    }
+}
+
+impl OutputSink for Cropped {
+    fn name(&self) -> &str {
+        self.inner.name()
+    }
+    fn push(&mut self, frame: &Arc<Frame>, at: SystemTime) -> Result<(), OutputError> {
+        let part = Arc::new(self.crop(frame));
+        self.inner.push(&part, at)
+    }
+    fn process(&self) -> Option<u32> {
+        self.inner.process()
+    }
+    fn work_time(&self) -> Option<Duration> {
+        self.inner.work_time()
+    }
+    fn frame_clock(&self) -> Option<Arc<dyn strata_mv_output::FrameClock>> {
+        self.inner.frame_clock()
+    }
+}
+
 fn open_outputs(
     inputs: &Arc<crate::inputs::Inputs>,
     cfg: &ChannelConfig,
@@ -59,6 +108,14 @@ fn open_outputs(
                       kind: &'static str,
                       r: Result<Box<dyn OutputSink>, OutputError>| match r {
         Ok(sink) => {
+            // A video wall's output: its part of the picture.
+            let sink: Box<dyn OutputSink> = match cfg.regions.get(id) {
+                Some(&region) if region != [0, 0, size.0, size.1] => Box::new(Cropped {
+                    inner: sink,
+                    region,
+                }),
+                _ => sink,
+            };
             status.set(&cfg.id, id, true, "Running");
             sinks.push(Opened {
                 id: id.to_string(),
@@ -89,10 +146,11 @@ fn open_outputs(
             off(&o.id);
             continue;
         }
+        let (w, h) = cfg.size_of(&o.id, size);
         let r = DeckLinkOutput::open(
             o.clone(),
-            size.0,
-            size.1,
+            w,
+            h,
             (cfg.frame_rate.num, cfg.frame_rate.den),
             cfg.interlaced,
         )
@@ -130,7 +188,8 @@ fn open_outputs(
         }
         let hls =
             (o.protocol == strata_mv_output::stream::Protocol::Hls).then(|| hls_root.join(&o.id));
-        let r = StreamSender::open(o.clone(), size.0, size.1, rate, hls)
+        let (w, h) = cfg.size_of(&o.id, size);
+        let r = StreamSender::open(o.clone(), w, h, rate, hls)
             .map(|s| Box::new(s) as Box<dyn OutputSink>);
         opened(&o.id, &o.name, "stream", r);
     }

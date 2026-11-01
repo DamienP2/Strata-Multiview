@@ -1,6 +1,6 @@
 //! Server settings editable from the web UI (`<data>/config.json`).
 
-use std::collections::HashSet;
+use std::collections::{BTreeMap, HashSet};
 use std::net::SocketAddr;
 use std::path::Path;
 
@@ -142,6 +142,10 @@ pub struct ChannelConfig {
     /// not started.
     #[serde(default, skip_serializing_if = "OutputsConfig::is_empty")]
     pub unwired: OutputsConfig,
+    /// Video wall: the part of the picture each output sends, by output id
+    /// ([x, y, width, height] in the channel's pixels; absent: all of it).
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub regions: BTreeMap<String, [u32; 4]>,
     /// The test generator: when on, the outputs send it instead of the
     /// multiview (changed at once, the outputs going on).
     #[serde(default)]
@@ -163,6 +167,11 @@ pub fn slate_style(style: Option<SlateStyle>, image: &str) -> SlateStyle {
 }
 
 impl ChannelConfig {
+    /// The size an output sends: its region's, or the picture's.
+    pub fn size_of(&self, output: &str, picture: (u32, u32)) -> (u32, u32) {
+        self.regions.get(output).map_or(picture, |r| (r[2], r[3]))
+    }
+
     /// (picture id, width, height, outputs): the main picture ("main").
     pub fn pictures(&self) -> Vec<(&str, u32, u32, &OutputsConfig)> {
         vec![("main", self.width, self.height, &self.outputs)]
@@ -202,6 +211,7 @@ impl ChannelConfig {
             render_ahead: default_render_ahead(),
             clock: None,
             unwired: OutputsConfig::default(),
+            regions: BTreeMap::new(),
             generator: Default::default(),
         }
     }
@@ -543,6 +553,24 @@ impl ServerConfig {
             }
         }
         self.validate_hardware()?;
+        for ch in &self.channels {
+            for (out, r) in &ch.regions {
+                let fits =
+                    r[2] >= 16 && r[3] >= 16 && r[0] + r[2] <= ch.width && r[1] + r[3] <= ch.height;
+                if !fits {
+                    return Err(format!(
+                        "channel `{}`: the region of output `{out}` goes out of its {}×{} picture",
+                        ch.name, ch.width, ch.height
+                    ));
+                }
+                if r[2] % 2 != 0 || r[3] % 2 != 0 {
+                    return Err(format!(
+                        "channel `{}`: the region of output `{out}` needs an even width and height",
+                        ch.name
+                    ));
+                }
+            }
+        }
         let mut ndi_names = HashSet::new();
         let mut ids = HashSet::new();
         // The web pages' addresses: one channel each, not another channel's id.

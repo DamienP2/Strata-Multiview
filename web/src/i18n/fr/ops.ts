@@ -90,4 +90,15 @@ export const ops: Record<string, string> = {
   'Mixed down to stereo': 'Mixage stéréo',
   'Channels {a}-{b}': 'Voies {a}-{b}',
   'From channel': 'À partir de la voie',
+  'All of it': 'Toute l’image',
+  'Left half': 'Moitié gauche',
+  'Right half': 'Moitié droite',
+  'Top half': 'Moitié haute',
+  'Bottom half': 'Moitié basse',
+  'Quarter {n}': 'Quart {n}',
+  'Third {n}': 'Tiers {n}',
+  'Video wall': 'Mur d’écrans',
+  'The part of the channel’s picture this output sends: a large channel (3840×1080…) split over several screens. The output takes the size of its part.':
+    'La partie de l’image de la chaîne que cette sortie envoie : une grande chaîne (3840×1080…) répartie sur plusieurs écrans. La sortie prend la taille de sa partie.',
+  'Sends {w}×{h} from ({x}, {y}) of the {W}×{H} picture.': 'Envoie {w}×{h} depuis ({x}, {y}) de l’image {W}×{H}.',
 };

@@ -1873,7 +1873,10 @@ async fn get_sdp(
                 .st2110
                 .iter()
                 .find(|o| o.id == name || o.name == name)
-                .map(|o| (w, h, o))
+                .map(|o| {
+                    let (w, h) = c.size_of(&o.id, (w, h));
+                    (w, h, o)
+                })
         })
         .ok_or_else(|| not_found("output"))?;
     let key = match essence.as_str() {

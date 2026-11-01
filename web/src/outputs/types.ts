@@ -169,6 +169,8 @@ export interface ChannelConfig {
   unwired?: OutputsConfig;
   /** What the channel clock follows (none: the Hardware default). */
   clock?: ClockReference | null;
+  /** Video wall: the part of the picture each output sends, by output id ([x, y, width, height]). */
+  regions?: Record<string, [number, number, number, number]>;
 }
 
 export interface Location {

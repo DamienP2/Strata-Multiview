@@ -388,6 +388,10 @@ Les entrées **SRT, UDP et TCP** passent par un relais : un premier ffmpeg reço
 
 ---
 
+### Murs d'écrans
+
+Une chaîne peut être plus grande qu'un écran (3840×1080, 5760×1080, 3840×2160…) : chaque sortie (SDI, NDI, flux, ST 2110) peut n'en envoyer qu'une **partie** — moitié, quart, tiers ou zone libre (page Flux de sortie › la sortie › Mur d'écrans). La sortie prend la taille de sa partie (une sortie SDI 1080p par écran d'un mur 3840×1080), son fichier SDP et sa description NMOS aussi. Les pages web (HTML5) montrent toujours toute l'image.
+
 ### 8.5 Salvos
 
 **Diffusion › Salvos** : plusieurs actions d'un coup — le multiview de chaque chaîne (ou son carton), le générateur de test allumé ou éteint, le secours d'une entrée, l'acquittement de toutes les alarmes. Un salvo se lance :

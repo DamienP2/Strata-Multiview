@@ -298,7 +298,7 @@ fn model(s: &AppState) -> Model {
                         core(&source_id, &label, "Multiview picture"),
                         json!({ "format": "urn:x-nmos:format:video", "caps": {}, "device_id": device_id, "parents": [], "clock_name": "clk0", "grain_rate": rate }),
                     ));
-                    let (w, h) = (width, height);
+                    let (w, h) = c.size_of(&o.id, (width, height));
                     let components = match st.essence {
                         strata_mv_output::st2110::Essence::Fill => json!([
                             { "name": "Y", "width": w, "height": h, "bit_depth": 10 },
@@ -1000,18 +1000,19 @@ async fn single(s: &Shared, method: &Method, kind: Kind, p: &[&str], body: &Byte
             let Some((r, _)) = m.senders.iter().find(|(_, v)| v["id"] == id) else {
                 return error(StatusCode::NOT_FOUND, "no such sender");
             };
-            let sdp =
-                s.config
-                    .channels
-                    .iter()
-                    .find(|c| c.id == r.channel)
-                    .and_then(|c| {
-                        c.pictures().into_iter().find_map(|(_, w, h, outs)| {
-                            outs.st2110.iter().find(|o| o.id == r.output).and_then(|o| {
-                                o.sdp(w, h, (c.frame_rate.num, c.frame_rate.den), r.key)
-                            })
+            let sdp = s
+                .config
+                .channels
+                .iter()
+                .find(|c| c.id == r.channel)
+                .and_then(|c| {
+                    c.pictures().into_iter().find_map(|(_, w, h, outs)| {
+                        outs.st2110.iter().find(|o| o.id == r.output).and_then(|o| {
+                            let (w, h) = c.size_of(&o.id, (w, h));
+                            o.sdp(w, h, (c.frame_rate.num, c.frame_rate.den), r.key)
                         })
-                    });
+                    })
+                });
             match sdp {
                 Some(t) => ([(header::CONTENT_TYPE, "application/sdp")], t).into_response(),
                 None => error(StatusCode::NOT_FOUND, "no transport file"),
