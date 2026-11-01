@@ -132,6 +132,22 @@ pub(crate) fn draw(d: &mut Draw) -> bool {
             let s = d.rd.live_system();
             status(x, w, h, &s, lang)
         }
+        LayerKind::Value { x } => {
+            let s = d.rd.live_system();
+            let v = (!x.kind.plant() && !x.input.trim().is_empty())
+                .then(|| d.rd.live_source(x.input.trim()))
+                .flatten();
+            let fps = if d.time.fps > 0.0 { d.time.fps } else { d.fps };
+            let f = strata_mv_core::wid::value::Facts {
+                source: v.as_ref(),
+                system: &s,
+                now_ms: d.time.now_ms,
+                tz: d.time.default_tz,
+                fps,
+                lang,
+            };
+            strata_mv_core::wid::value::value_items(x, w, h, &f)
+        }
         LayerKind::Chart { x } => {
             let s = d.rd.live_system();
             let v = (!x.input.trim().is_empty())

@@ -518,7 +518,7 @@ function LayerGeneral({ layer }: { layer: Layer }) {
             <>
               <div className="row">
                 <span className="prop-label">{t('Speed')}</span>
-                <NumberField value={layer.speed ?? 120} min={1} max={2000} suffix="px/s" onChange={(v) => edit((l) => void (l.type === 'text' && (l.speed = v)), `speed-${layer.id}`)} />
+                <SliderNum value={layer.speed ?? 120} min={1} max={2000} unit="px/s" onChange={(v) => edit((l) => void (l.type === 'text' && (l.speed = v)), `speed-${layer.id}`)} />
               </div>
               {layer.scroll === 'horizontal' ? (
                 <div className="row">
@@ -552,7 +552,7 @@ function LayerGeneral({ layer }: { layer: Layer }) {
           {layer.type === 'text' && (
             <div className="row">
               <span className="prop-label">{t('Line height')}</span>
-              <NumberField value={layer.lineHeight ?? 1.2} min={0.5} max={4} step={0.05} precision={2} suffix="×" onChange={(v) => edit((l) => void (l.type === 'text' && (l.lineHeight = Math.abs(v - 1.2) < 1e-6 ? undefined : v)), `lh-${layer.id}`)} />
+              <SliderNum value={layer.lineHeight ?? 1.2} min={0.5} max={4} step={0.05} precision={2} unit="×" onChange={(v) => edit((l) => void (l.type === 'text' && (l.lineHeight = Math.abs(v - 1.2) < 1e-6 ? undefined : v)), `lh-${layer.id}`)} />
             </div>
           )}
         </div>
@@ -597,9 +597,9 @@ function SpecInspector({ layer }: { layer: Layer }) {
 }
 
 /** Widgets with a frame (fill, border, corners); those with their own background colour; those with texts of their own. */
-const FRAMED = new Set(['source', 'audioMeter', 'loudness', 'timecode', 'status', 'alarmLog', 'scope', 'signalInfo', 'chart', 'clock', 'text', 'image']);
-const OWN_BACKGROUND = new Set(['source', 'audioMeter', 'loudness', 'timecode', 'status', 'alarmLog', 'scope', 'signalInfo', 'chart']);
-const TYPED = new Set(['audioMeter', 'loudness', 'timecode', 'status', 'alarmLog', 'scope', 'signalInfo', 'chart']);
+const FRAMED = new Set(['source', 'audioMeter', 'loudness', 'timecode', 'status', 'alarmLog', 'scope', 'signalInfo', 'chart', 'value', 'clock', 'text', 'image']);
+const OWN_BACKGROUND = new Set(['source', 'audioMeter', 'loudness', 'timecode', 'status', 'alarmLog', 'scope', 'signalInfo', 'chart', 'value']);
+const TYPED = new Set(['audioMeter', 'loudness', 'timecode', 'status', 'alarmLog', 'scope', 'signalInfo', 'chart', 'value']);
 
 /** The frame of a widget and the typography of its texts (model::Panel), the same for every widget. */
 function LookSections({ layer, set }: { layer: Layer; set: (path: string, v: unknown, coalesce?: boolean) => void }) {

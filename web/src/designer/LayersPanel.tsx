@@ -1,4 +1,4 @@
-import { Activity, AudioLines, BellRing, ScanEye, FileVideo, ChartLine, Circle, Clock, Folder, Gauge, Image, MonitorPlay, Pentagon, Pilcrow, Sparkles, Square, Timer, Type, Video } from 'lucide-react';
+import { Activity, AudioLines, BellRing, ScanEye, FileVideo, ChartLine, Variable, Circle, Clock, Folder, Gauge, Image, MonitorPlay, Pentagon, Pilcrow, Sparkles, Square, Timer, Type, Video } from 'lucide-react';
 import type { Layer, LayerType, Template } from '../engine/types';
 import { descendants, findLayer } from './designerStore';
 import { num, propValue } from '../engine/evaluate';
@@ -16,6 +16,7 @@ export const ICONS: Record<LayerType, typeof Square> = {
   scope: ScanEye,
   signalInfo: FileVideo,
   chart: ChartLine,
+  value: Variable,
   rect: Square,
   ellipse: Circle,
   text: Type,

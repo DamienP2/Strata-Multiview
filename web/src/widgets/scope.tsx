@@ -4,13 +4,13 @@
 // (engine/scopes.ts, one WebSocket for every scope of the page), screen blended over the background; the graticule and labels are laid out
 // as in crates/strata-mv-core/src/wid/scope.rs (mirrored here: keep in sync) and drawn as items, as
 // the Rust engine does (crates/strata-mv-render/src/wid/scope.rs).
-import { ScanEye } from 'lucide-react';
+import { ChartColumn, Columns3, Diamond, Grid3x3, Layers, Palette, Radar, Ruler, ScanEye, Triangle, Waves } from 'lucide-react';
 import { useInputs, useSignal } from '../engine/liveInputs';
 import { useScope } from '../engine/scopes';
 import type { Panel } from '../engine/types';
 import { t } from '../i18n';
 import { circle, Items, path, rect, text, type Item } from './broadcast';
-import { ColorPick, defineWidget, Num, Section, Select, Toggle, withDefaults } from './kit';
+import { ColorPick, defineWidget, Flags, Num, Section, Seg, Select, withDefaults } from './kit';
 
 type Area = [number, number, number, number];
 type Pt = [number, number];
@@ -73,7 +73,7 @@ export function traceArea(c: Required<ScopeConfig>, w: number, h: number): Area 
 /** The goniometer's correlation meter height (mirrors correlation_height). */
 const correlationHeight = (h: number) => clamp(h * 0.12, 16, 44);
 /** Out of phase red, wide amber, in phase green (mirrors correlation_color). */
-const correlationColor = (v: number) => (v < 0 ? '#ff3b3b' : v < 0.3 ? '#fbbf24' : '#2bd96b');
+export const correlationColor = (v: number) => (v < 0 ? '#ff3b3b' : v < 0.3 ? '#fbbf24' : '#2bd96b');
 
 /** The parades' three panels (mirrors panels). */
 export function panels(a: Area): [Area, Area, Area] {
@@ -279,6 +279,17 @@ const KINDS: [ScopeKind, string][] = [
   ['goniometer', 'Goniometer and phase'],
 ];
 
+const KIND_ICONS: Record<ScopeKind, React.ReactNode> = {
+  waveform: <Waves size={14} />,
+  parade: <Columns3 size={14} />,
+  ycbcrParade: <Layers size={14} />,
+  vector: <Radar size={14} />,
+  histogram: <ChartColumn size={14} />,
+  cie: <Triangle size={14} />,
+  falseColor: <Palette size={14} />,
+  goniometer: <Diamond size={14} />,
+};
+
 export const scopeWidget = defineWidget({
   id: 'scope',
   type: 'scope',
@@ -295,12 +306,16 @@ export const scopeWidget = defineWidget({
     return (
       <Section id="scope" title={t('Scope')}>
         <Select label={t('Input')} value={c.input} onChange={(v) => set('input', v)} options={[['', t('None')] as [string, string], ...inputs.map((i) => [i.id, i.name] as [string, string])]} />
-        <Select label={t('Tool')} value={c.kind} onChange={(v) => set('kind', v)} options={KINDS.map(([k, l]) => [k, t(l)] as [ScopeKind, string])} />
-        <Toggle label={t('Graticule')} value={c.graticule} onChange={(v) => set('graticule', v)} />
-        <Toggle label={t('Values')} text={t('The scale and its unit')} value={c.labels} onChange={(v) => set('labels', v)} />
+        <Seg label={t('Tool')} value={c.kind} onChange={(v) => set('kind', v)} options={KINDS.map(([k, l]) => [k, KIND_ICONS[k], t(l)] as const)} />
+        <Flags
+          label={t('Show')}
+          items={[
+            { icon: <Grid3x3 size={14} />, title: t('Graticule'), value: c.graticule, onChange: (v) => set('graticule', v) },
+            { icon: <Ruler size={14} />, title: t('Values: the scale and its unit'), value: c.labels, onChange: (v) => set('labels', v) },
+          ]}
+        />
         <Num label={t('Intensity')} value={c.intensity} min={0.25} max={4} step={0.05} precision={2} onChange={(v) => set('intensity', v)} />
         <ColorPick label={t('Trace')} value={c.color} onChange={(v) => set('color', v)} />
-        <ColorPick label={t('Background')} value={c.background} onChange={(v) => set('background', v)} />
       </Section>
     );
   },

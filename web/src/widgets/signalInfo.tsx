@@ -2,12 +2,12 @@
 // transfer, range, HDR (HDR10, HLG, Dolby Vision, HDR10+) and its metadata (ST 2086, MaxCLL /
 // MaxFALL), its sound tracks (Dolby Digital, Digital Plus, Atmos…). Laid out as items, mirroring
 // crates/strata-mv-core/src/wid/signal_info.rs (keep in sync); the Rust engine draws the same list.
-import { FileVideo } from 'lucide-react';
+import { AudioLines, FileVideo, Film, Palette, Sun } from 'lucide-react';
 import { useInputs, useSignal, type VideoInfo } from '../engine/liveInputs';
 import type { Panel } from '../engine/types';
 import { t } from '../i18n';
 import { Items, rect, text, type Item } from './broadcast';
-import { defineWidget, Section, Select, Toggle, withDefaults } from './kit';
+import { defineWidget, Flags, Section, Select, withDefaults } from './kit';
 import { formatName } from './source';
 
 export interface SignalConfig {
@@ -26,8 +26,8 @@ const WHITE = '#ffffff';
 const clamp = (v: number, a: number, b: number) => Math.min(b, Math.max(a, v));
 const padOf = (w: number, h: number) => Math.round(clamp(Math.min(w, h) * 0.04, 3, 14));
 
-const MATRIX: Record<string, string> = { bt709: 'BT.709', bt2020nc: 'BT.2020 NCL', bt2020c: 'BT.2020 CL', smpte170m: 'BT.601 (525)', bt470bg: 'BT.601 (625)', ictcp: 'ICtCp', rgb: 'RGB', gbr: 'RGB', '': DASH };
-const PRIMARIES: Record<string, string> = { bt709: 'BT.709', bt2020: 'BT.2020', smpte432: 'P3 D65', smpte431: 'DCI-P3', smpte170m: 'BT.601 (525)', bt470bg: 'BT.601 (625)', '': DASH };
+export const MATRIX: Record<string, string> = { bt709: 'BT.709', bt2020nc: 'BT.2020 NCL', bt2020c: 'BT.2020 CL', smpte170m: 'BT.601 (525)', bt470bg: 'BT.601 (625)', ictcp: 'ICtCp', rgb: 'RGB', gbr: 'RGB', '': DASH };
+export const PRIMARIES: Record<string, string> = { bt709: 'BT.709', bt2020: 'BT.2020', smpte432: 'P3 D65', smpte431: 'DCI-P3', smpte170m: 'BT.601 (525)', bt470bg: 'BT.601 (625)', '': DASH };
 const TRANSFER: Record<string, string> = {
   bt709: 'BT.709 (SDR)',
   bt1361e: 'BT.709 (SDR)',
@@ -40,14 +40,14 @@ const TRANSFER: Record<string, string> = {
   linear: 'Linéaire',
   '': DASH,
 };
-const named = (map: Record<string, string>, k: string) => map[k] ?? k;
+export const named = (map: Record<string, string>, k: string) => map[k] ?? k;
 
 /** SDR, HDR10, HLG… (mirrors VideoInfo::dynamic). */
 export const dynamicOf = (v: Partial<VideoInfo>) =>
   v.dolbyVision ? 'Dolby Vision' : v.hdr10Plus ? 'HDR10+' : (v.transfer ?? '').includes('2084') ? 'HDR10' : (v.transfer ?? '').includes('b67') ? 'HLG' : v.hdr || 'SDR';
 
 /** A dynamic's badge colours (mirrors dynamic_colors). */
-const dynamicColors = (d: string): [string, string] =>
+export const dynamicColors = (d: string): [string, string] =>
   d === 'Dolby Vision' ? ['#8b5cf6', '#ffffff'] : d === 'HDR10+' ? ['#f97316', '#1c0d00'] : d === 'HDR10' ? ['#f59e0b', '#1c1300'] : d === 'HLG' ? ['#22c55e', '#04130a'] : ['#4b5563', '#ffffff'];
 
 /** ST 2086 → "P3 · 0.0001–1000 nits" (mirrors mastering_text). */
@@ -82,7 +82,7 @@ export function levelsText(v: Partial<VideoInfo>, fr: boolean): [string, string]
   return [s, lo < -1 || hi > 103 || illegal > 1 ? '#fbbf24' : WHITE];
 }
 
-const audioLine = (a: VideoInfo['audio'][number]) =>
+export const audioLine = (a: VideoInfo['audio'][number]) =>
   [a.codec, a.layout, a.rate > 0 ? `${a.rate / 1000} kHz` : '', a.language && a.language !== 'und' ? a.language : ''].filter(Boolean).join(' · ');
 
 /** The lines shown (mirrors lines). */
@@ -201,10 +201,15 @@ export const signalInfoWidget = defineWidget({
     return (
       <Section id="signalInfo" title={t('Signal')}>
         <Select label={t('Input')} value={c.input} onChange={(v) => set('input', v)} options={[['', t('None')] as [string, string], ...inputs.map((i) => [i.id, i.name] as [string, string])]} />
-        <Toggle label={t('Video')} text={t('Codec, size, sampling')} value={c.video} onChange={(v) => set('video', v)} />
-        <Toggle label={t('Colour')} text={t('Colour space, transfer, range')} value={c.color} onChange={(v) => set('color', v)} />
-        <Toggle label="HDR" text={t('Mastering display, MaxCLL / MaxFALL')} value={c.hdr} onChange={(v) => set('hdr', v)} />
-        <Toggle label={t('Sound')} text={t('Tracks, Dolby, Atmos')} value={c.audio} onChange={(v) => set('audio', v)} />
+        <Flags
+          label={t('Show')}
+          items={[
+            { icon: <Film size={14} />, title: t('Video: codec, size, sampling'), value: c.video, onChange: (v) => set('video', v) },
+            { icon: <Palette size={14} />, title: t('Colour: colour space, transfer, range, levels'), value: c.color, onChange: (v) => set('color', v) },
+            { icon: <Sun size={14} />, title: t('HDR: mastering display, MaxCLL / MaxFALL'), value: c.hdr, onChange: (v) => set('hdr', v) },
+            { icon: <AudioLines size={14} />, title: t('Sound: tracks, Dolby, Atmos'), value: c.audio, onChange: (v) => set('audio', v) },
+          ]}
+        />
       </Section>
     );
   },

@@ -91,7 +91,8 @@ export type LayerKind =
   | ({ type: 'alarmLog' } & import('../widgets/broadcast').AlarmLogConfig)
   | ({ type: 'scope' } & import('../widgets/scope').ScopeConfig)
   | ({ type: 'signalInfo' } & import('../widgets/signalInfo').SignalConfig)
-  | ({ type: 'chart' } & import('../widgets/chart').ChartConfig);
+  | ({ type: 'chart' } & import('../widgets/chart').ChartConfig)
+  | ({ type: 'value' } & import('../widgets/value').ValueConfig);
 
 export type LayerType = LayerKind['type'];
 

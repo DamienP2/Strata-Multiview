@@ -83,6 +83,7 @@ pub fn project(id: &str, inputs: &[(String, String)]) -> Option<Project> {
                 LayerKind::Scope { x } => Some(&mut x.input),
                 LayerKind::SignalInfo { x } => Some(&mut x.input),
                 LayerKind::Chart { x } => Some(&mut x.input),
+                LayerKind::Value { x } => Some(&mut x.input),
                 _ => None,
             };
             let Some(input) = input else {

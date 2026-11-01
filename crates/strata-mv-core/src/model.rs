@@ -539,6 +539,12 @@ pub enum LayerKind {
         #[serde(flatten)]
         x: Box<crate::wid::chart::ChartConfig>,
     },
+    /// One live value as text (an input's or the plant's).
+    #[serde(rename_all = "camelCase")]
+    Value {
+        #[serde(flatten)]
+        x: Box<crate::wid::value::ValueConfig>,
+    },
 }
 
 /// Font settings shared by the text-based widgets.

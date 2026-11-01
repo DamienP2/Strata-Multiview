@@ -163,6 +163,8 @@ Elle se choisit à la création d'un multiview (« Vide » par défaut), ou s'ap
 
 ### 4.4 Les widgets
 
+L'inspecteur suit les mêmes règles pour tous les widgets : réglages marche / arrêt en **icônes** (leur nom en info-bulle), choix courts en **icônes** (ajustement, position, alignement, outil), nombres en **curseurs** avec leur champ, sections repliables (contenu, disposition, seuils, cadre, typographie).
+
 Tous les widgets sont rendus à l'identique en HTML5 et par le moteur Rust (la géométrie est calculée dans `strata-mv-core`, chaque moteur ne fait que dessiner) :
 
 | Pour | Widgets |
@@ -172,6 +174,7 @@ Tous les widgets sont rendus à l'identique en HTML5 et par le moteur Rust (la g
 | **Temps** | **Timecode** : celui de la station (heure locale à la cadence de la chaîne) ou d'une entrée (NDI) ; Horloge (heure, date, fuseau, cadran analogique) ; Temps (chronomètre, compte à rebours) |
 | **Supervision** | **État** : PTP (verrouillage, domaine, écart), NTP, alarmes en cours ; **Journal des alarmes** : les défauts des entrées, les plus récents d'abord, avec leur début et leur fin |
 | **Contrôle de l'image** | **Scope** d'une entrée, au choix : **oscilloscope** (luminance), **parade RVB**, **parade Y'CbCr**, **vectorscope** (cibles 75 % et 100 %, ligne des tons chair), **histogramme** (luminance et R, V, B), **chromaticité CIE 1931** (gamuts BT.709, P3, BT.2020, point blanc D65), **fausses couleurs** (bandes d'exposition), **goniomètre** (gauche contre droite, gain automatique) avec **corrélation de phase** (−1 à +1, rouge hors phase) ; graticule selon le transfert du signal : % en SDR et HLG (blanc de référence 75 %), **nits en PQ / HDR10** (1 à 10 000, blanc de référence 203) |
+| **Valeur** | **une variable en direct, seule, en texte** — à placer et styler librement : d'une entrée (nom, UMD, format, timecode, loudness M / S / I / LRA / TP, crêtes gauche / droite, codec, taille et échantillonnage, colorimétrie, SDR / HDR, niveaux R103, corrélation de phase, piste son, pire alarme, tally) ou de l'installation (heure, date, timecode station, état et écart PTP, écart NTP, processeurs, mémoire, alarmes en cours) ; libellé à côté, au-dessus ou masqué, seuils orange et rouge |
 | **Tableau de bord** | **Courbe** : une mesure sur les dernières minutes (30 s à 5 min), en temps réel : **écart PTP** (lu chaque seconde), **écart NTP**, processeurs, mémoire, processeurs de Strata Multiview et des décodeurs, temps de rendu d'un canal, images par seconde ou loudness court terme d'une entrée ; valeur actuelle, échelle, seuils orange et rouge, minimum, moyenne et maximum. Plusieurs courbes font un tableau de bord dans un multiview |
 | **Signal** | **Fiche signal** d'une entrée : codec et profil, taille, profondeur et échantillonnage (4:2:0, 4:2:2…), **colorimétrie** (matrice, primaires BT.709 / BT.2020 / P3), **transfert** (SDR, **PQ**, **HLG**), plage, badge **SDR / HDR10 / HLG / HDR10+ / Dolby Vision**, métadonnées **ST 2086** et **MaxCLL / MaxFALL**, **niveaux mesurés** (luminance mini et maxi en %, part de pixels hors normes, en orange hors EBU R103), pistes son avec marques **DOLBY** (Digital, Digital Plus, TrueHD, AC-4, E) et **ATMOS** |
 | **Labels et logos** | Texte, Image (PNG, JPEG, SVG, GIF, vidéo en boucle) |

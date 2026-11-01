@@ -1,6 +1,6 @@
 // Quad: rectangle, diamond, parallelogram or trapezoid.
 // Same picture as crates/strata-mv-render/src/wid/quad.rs; geometry mirrors crates/strata-mv-core/src/wid/quad.rs.
-import { Square } from 'lucide-react';
+import { Scan, Square } from 'lucide-react';
 import { num } from '../engine/evaluate';
 import { GroupRow } from '../designer/Inspector';
 import { clamp, defineWidget, Handle, Num, Section, Seg, Toggle, type Warning, withDefaults } from './kit';
@@ -137,7 +137,7 @@ export default defineWidget({
           />
           {k.shape === 'rect' && (
             <>
-              <Toggle label={t('Per corner')} path="perCorner" value={false} />
+              <Toggle icon={<Scan size={14} />} label={t('Per corner')} path="perCorner" value={false} />
               {!k.perCorner ? (
                 <GroupRow layer={layer} spec={{ label: t('Radius'), props: ['cornerRadius'], min: 0, suffix: 'px' }} />
               ) : (

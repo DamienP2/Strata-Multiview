@@ -14,9 +14,10 @@ import { alarmLogWidget, audioMeter, loudnessWidget, statusWidget, timecodeWidge
 import scope from './scope';
 import signalInfo from './signalInfo';
 import chart from './chart';
+import value from './value';
 
 /** In the order of the spec. */
-export const WIDGET_LIST: WidgetDef[] = [source, audioMeter, loudnessWidget, timecodeWidget, statusWidget, alarmLogWidget, scope, signalInfo, chart, quad, polygon, ellipse, text, image, clock, time] as unknown as WidgetDef[];
+export const WIDGET_LIST: WidgetDef[] = [source, audioMeter, loudnessWidget, timecodeWidget, statusWidget, alarmLogWidget, scope, signalInfo, chart, value, quad, polygon, ellipse, text, image, clock, time] as unknown as WidgetDef[];
 
 /** By layer type (a `clock` layer: the Clock; widgetOf(layer) tells the Clock from the Time). */
 export const WIDGETS: Partial<Record<LayerType, WidgetDef>> = Object.fromEntries([...WIDGET_LIST].reverse().map((w) => [w.type, w]));

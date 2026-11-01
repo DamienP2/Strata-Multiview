@@ -2,12 +2,12 @@
 // processors, memory, the time to draw a picture, an input's pictures a second or its loudness.
 // Several make a dashboard in a multiview. Laid out as items, mirroring
 // crates/strata-mv-core/src/wid/chart.rs (keep in sync); the Rust engine draws the same list.
-import { ChartLine } from 'lucide-react';
+import { ChartLine, PaintBucket, Sigma } from 'lucide-react';
 import { useInputs, useSignal, useSystem, type Curves, type SignalView } from '../engine/liveInputs';
 import type { Panel } from '../engine/types';
 import { t } from '../i18n';
 import { AMBER, Items, path, RED, rect, text, type Item } from './broadcast';
-import { ColorPick, defineWidget, Num, Section, Select, Text, Toggle, withDefaults } from './kit';
+import { ColorPick, defineWidget, Flags, Num, Section, Select, Text, withDefaults } from './kit';
 
 export type ChartMetric = 'ptpOffset' | 'ntpOffset' | 'cpu' | 'memory' | 'serverCpu' | 'ffmpegCpu' | 'renderTime' | 'inputFps' | 'loudness';
 
@@ -236,8 +236,13 @@ export const chartWidget = defineWidget({
         <Num label={t('Amber from')} value={c.warn} min={0} slider={false} unit={unit} onChange={(v) => set('warn', v)} />
         <Num label={t('Red from')} value={c.crit} min={0} slider={false} unit={unit} onChange={(v) => set('crit', v)} />
         <ColorPick label={t('Curve')} value={c.color} onChange={(v) => set('color', v)} />
-        <Toggle label={t('Fill')} text={t('The area under the curve')} value={c.fill} onChange={(v) => set('fill', v)} />
-        <Toggle label={t('Figures')} text={t('Lowest, mean and highest')} value={c.stats} onChange={(v) => set('stats', v)} />
+        <Flags
+          label={t('Show')}
+          items={[
+            { icon: <PaintBucket size={14} />, title: t('Fill: the area under the curve'), value: c.fill, onChange: (v) => set('fill', v) },
+            { icon: <Sigma size={14} />, title: t('Figures: lowest, mean and highest'), value: c.stats, onChange: (v) => set('stats', v) },
+          ]}
+        />
       </Section>
     );
   },

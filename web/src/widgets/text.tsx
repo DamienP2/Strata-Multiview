@@ -6,7 +6,7 @@ import { FontPick } from '../ui/FontPick';
 import { useContext, useState, type CSSProperties } from 'react';
 import { align, decodeChar, decodeLine, encodeRuns, imageIndex, imgHeightPx, imgMiddle, inlineImages, RichKeys, runs as richRuns, type InlineImage, type Run, type RunStyle, type VarStyle, type VarStyles } from '../engine/rich';
 import { pictureSize, usePictures } from './image';
-import { AlignCenter, AlignJustify, AlignLeft, AlignRight, AlignVerticalJustifyCenter, AlignVerticalJustifyEnd, AlignVerticalJustifyStart, Bold, Italic, Strikethrough, Subscript, Superscript, Type, Underline } from 'lucide-react';
+import { AlignCenter, AlignJustify, AlignLeft, AlignRight, AlignVerticalJustifyCenter, AlignVerticalJustifyEnd, AlignVerticalJustifyStart, Bold, Italic, RotateCcw, Strikethrough, Subscript, Superscript, Type, Underline } from 'lucide-react';
 import { Segmented } from '../ui/fields';
 import { col, cssColor, interpolateText, num, propValue, toHex, transformText, type Resolved } from '../engine/evaluate';
 import type { Data, Layer, Template, TextOverflow } from '../engine/types';
@@ -472,8 +472,8 @@ function Inspector({ layer, template, edit }: { layer: TextLayer; data: Data; te
           options={[{ value: '', label: t('Common · the whole text') }, ...vars.map((f) => ({ value: f.key, label: f.label }))]}
         />
         {value && own && reset && (
-          <button type="button" className="tx-reset" onClick={reset}>
-            {t('As the common')}
+          <button type="button" className="icon-btn ghost tx-reset" title={t('As the common')} aria-label={t('As the common')} onClick={reset}>
+            <RotateCcw size={13} />
           </button>
         )}
       </div>
@@ -499,7 +499,7 @@ function Inspector({ layer, template, edit }: { layer: TextLayer; data: Data; te
                 onChange={(f, w) => setVar(typoVar, { fontFamily: f === layer.fontFamily ? undefined : f, fontWeight: w === layer.fontWeight ? undefined : w })}
               />
             </Row>
-            <Num label={<span className={vs.fontSize != null ? 'tx-own' : ''}>{t('Size')}</span>} value={vs.fontSize ?? size0} min={1} unit="px" onChange={(v) => setVar(typoVar, { fontSize: Math.abs(v - size0) < 1e-6 ? undefined : v })} />
+            <Num label={<span className={vs.fontSize != null ? 'tx-own' : ''}>{t('Size')}</span>} value={vs.fontSize ?? size0} min={1} max={400} unit="px" onChange={(v) => setVar(typoVar, { fontSize: Math.abs(v - size0) < 1e-6 ? undefined : v })} />
             <Row label={<span className={['bold', 'italic', 'underline', 'strike', 'sup', 'sub'].some((x) => vs[x as keyof VarStyle] != null) ? 'tx-own' : ''}>{t('Decoration')}</span>}>
               <Toggles
                 items={[
@@ -513,7 +513,7 @@ function Inspector({ layer, template, edit }: { layer: TextLayer; data: Data; te
                 onToggle={(x, on) => setVar(typoVar, x === 'sup' ? { sup: on || undefined, sub: undefined } : x === 'sub' ? { sub: on || undefined, sup: undefined } : { [x]: on })}
               />
             </Row>
-            <Num label={<span className={vs.letterSpacing != null ? 'tx-own' : ''}>{tc('text', 'Spacing')}</span>} value={vs.letterSpacing ?? ls0} precision={1} unit="px" onChange={(v) => setVar(typoVar, { letterSpacing: Math.abs(v - ls0) < 1e-6 ? undefined : v })} />
+            <Num label={<span className={vs.letterSpacing != null ? 'tx-own' : ''}>{tc('text', 'Spacing')}</span>} value={vs.letterSpacing ?? ls0} min={-20} max={100} step={0.5} precision={1} unit="px" onChange={(v) => setVar(typoVar, { letterSpacing: Math.abs(v - ls0) < 1e-6 ? undefined : v })} />
             <Row label={<span className={vs.transform ? 'tx-own' : ''}>{t('Case')}</span>}>
               <Segmented
                 value={vs.transform ?? (layer.uppercase ? 'upper' : (layer.transform ?? 'none'))}

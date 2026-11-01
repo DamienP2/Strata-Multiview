@@ -1,7 +1,7 @@
 // Clock (« Horloge »): the time of day or the date of a `clock` layer (timerMode clock / date),
 // digits or an analog face, one zone or several cities. Drawing, Operator controls and the
 // rows shared with the Time widget in ./timer.tsx; logic in ./timer-fmt.ts.
-import { Clock } from 'lucide-react';
+import { Building, Clock, Hash } from 'lucide-react';
 import { ListEditor, Num, Section, Seg, Select, Text, Toggle } from './kit';
 import * as T from './timer-fmt';
 import { AffixRows, AnalogRows, clockWidget, DigitRows, FontRows, LookSeg, ModeSeg, PlateRows, PresetRow, TextRows, useProjectLang, WidthRows, ZONES, type Config, type InspP, type L } from './timer';
@@ -43,7 +43,7 @@ function Inspector({ layer, data, edit, set }: InspP) {
             <Toggle
               expose="cities"
               exposeValue={c.cities}
-              label={t('Cities')}
+              icon={<Building size={14} />} label={t('Cities')}
               value={c.cities}
               onChange={(v) =>
                 edit((l) => {
@@ -78,7 +78,7 @@ function Inspector({ layer, data, edit, set }: InspP) {
 
       {digital && (
         <Section id="clock-digits" title={t('Digits')}>
-          <Toggle label={t('Tabular')} path="tabular" value={T.DEF.tabular} />
+          <Toggle icon={<Hash size={14} />} label={t('Tabular')} path="tabular" value={T.DEF.tabular} />
           {mode === 'clock' && (
             <>
               <DigitRows e={e} />

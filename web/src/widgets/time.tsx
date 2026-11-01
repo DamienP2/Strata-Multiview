@@ -2,7 +2,7 @@
 // countdown). Its inspector puts the value first, the look next, the rest under More
 // settings; how it starts on air is in its control centre (line 3). Drawing, control
 // centre and the shared rows in ./timer.tsx; logic in ./timer-fmt.ts.
-import { Timer } from 'lucide-react';
+import { ArrowUp, Hash, Hourglass, RectangleHorizontal, Timer } from 'lucide-react';
 import { ColorPick, Content, ListEditor, Num, Section, Seg, Select, Text, Toggle } from './kit';
 import * as T from './timer-fmt';
 import { AffixRows, AnalogRows, clockWidget, DigitRows, DurField, FontRows, LookSeg, ModeSeg, PlateRows, PresetRow, STEPS, TextRows, WidthRows, ZONES, type InspP } from './timer';
@@ -82,14 +82,14 @@ function Inspector({ layer, data, edit, set }: InspP) {
         </Section>
         {digital && (
           <Section id="time-digits" title={t('Digits')} level={2}>
-            <Toggle label={t('Tabular')} path="tabular" value={T.DEF.tabular} />
+            <Toggle icon={<Hash size={14} />} label={t('Tabular')} path="tabular" value={T.DEF.tabular} />
             <DigitRows e={e} />
             <WidthRows c={c} />
           </Section>
         )}
         {cd ? (
           <Section id="time-cd" title={t('Countdown')} level={2}>
-            <Toggle label={t('Round up')} path="roundUp" value={true} />
+            <Toggle icon={<ArrowUp size={14} />} label={t('Round up')} path="roundUp" value={true} />
             <Text label={t('Then trigger')} path="zeroTrigger" value="" placeholder={t('e.g. next (none)')} />
             {c.atZero === 'overrun' && (
               <>
@@ -97,7 +97,7 @@ function Inspector({ layer, data, edit, set }: InspP) {
                 <ColorPick label={t('Overrun bg')} path="overBg" value="" none={t('None')} first="#3a0d18" />
               </>
             )}
-            <Toggle label={t('Banner')} path="banner" value={false} />
+            <Toggle icon={<RectangleHorizontal size={14} />} label={t('Banner')} path="banner" value={false} />
             {c.banner && (
               <>
                 <Content label={t('Banner text')} path="bannerText" value="" />
@@ -107,7 +107,7 @@ function Inspector({ layer, data, edit, set }: InspP) {
           </Section>
         ) : (
           <Section id="time-sw" title={t('Stopwatch')} level={2}>
-            <Toggle label={t('Limit')} path="swLimitOn" value={false} />
+            <Toggle icon={<Hourglass size={14} />} label={t('Limit')} path="swLimitOn" value={false} />
             {c.swLimitOn && (
               <>
                 <DurField label={t('Limit at')} value={c.swLimit} min={1000} onChange={(v) => set('swLimit', v)} expose="swLimit" />

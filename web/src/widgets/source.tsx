@@ -3,7 +3,7 @@
 // channels. The lamps, the UMD text and the levels come with the input (engine/liveInputs.ts useSignal).
 // Same picture as crates/strata-mv-render/src/wid/source.rs; settings and geometry mirror
 // crates/strata-mv-core/src/wid/source.rs (keep in sync).
-import { MonitorPlay } from 'lucide-react';
+import { AlignCenter, AlignLeft, AlignRight, ArrowUpToLine, BellRing, Expand, EyeOff, Gauge, Info, Lightbulb, MonitorPlay, PanelBottom, PanelLeft, PanelRight, PanelTop, RadioTower, Rainbow, Shrink, Square, SquareDashed, StretchHorizontal, Video } from 'lucide-react';
 import { interpolateText, num } from '../engine/evaluate';
 import { LiveCanvas } from '../engine/LiveCanvas';
 import { alarmText, streamWidth, useInputs, useLiveFrame, useLiveStream, useSignal, type Alarm, type InputInfo, type SignalView, type Tally } from '../engine/liveInputs';
@@ -11,7 +11,7 @@ import { CRIT, loudColor, num1, stationTimecode, TARGET, WARN } from './broadcas
 import type { Data } from '../engine/types';
 import { FontPick } from '../ui/FontPick';
 import { t, tc, tl } from '../i18n';
-import { ColorPick, defineWidget, hex, Num, Row, Section, Seg, Select, Text, Toggle, withDefaults } from './kit';
+import { ColorPick, defineWidget, Flags, hex, Num, Row, Section, Seg, Select, Text, withDefaults } from './kit';
 import { FitLine } from './text-fit';
 import { SmoothMeters } from './SmoothMeters';
 
@@ -434,45 +434,67 @@ export default defineWidget({
     const c = cfg(layer as Config);
     // The tally shows on the frame and in the UMD's lamps: both on or off.
     const tally = c.tally.border || (c.umd.position !== 'off' && c.umd.lamps);
+    const off = (title: string) => [<EyeOff size={14} key="off" />, title] as const;
     return (
       <>
-        <Section id="source-video" title={t('Video')}>
+        <Section id="source-video" title={t('Picture')}>
           <InputPick value={c.input} onChange={(v) => set('input', v)} />
           <Seg
             label={t('Fit')}
             value={c.fit}
             onChange={(v) => set('fit', v)}
             options={[
-              ['contain', t('Contain')],
-              ['cover', t('Cover')],
-              ['stretch', t('Stretch')],
+              ['contain', <Shrink size={14} />, t('Contain: the whole picture')],
+              ['cover', <Expand size={14} />, t('Cover: the tile filled, the picture cropped')],
+              ['stretch', <StretchHorizontal size={14} />, t('Stretch')],
             ]}
           />
-          <Toggle label={t('Format')} text={t('The signal format, top left')} value={c.badge} onChange={(v) => set('badge', v)} />
           <Seg
             label={t('No signal')}
             value={c.noSignalLook}
             onChange={(v) => set('noSignalLook', v)}
             options={[
-              ['bars', t('Colour bars')],
-              ['plain', t('Plain')],
+              ['bars', <Rainbow size={14} />, t('Colour bars')],
+              ['plain', <Square size={14} />, t('Plain: the background and the words')],
             ]}
           />
           <Text label={t('Words')} value={c.noSignal} placeholder={t('NO SIGNAL')} onChange={(v) => set('noSignal', v)} />
         </Section>
-        <Section id="source-audio" title={t('Audio')}>
+        <Section id="source-overlays" title={t('Overlays')}>
+          <Flags
+            label={t('Show')}
+            items={[
+              { icon: <Info size={14} />, title: t('Format: the signal format, top left'), value: c.badge, onChange: (v) => set('badge', v) },
+              { icon: <Gauge size={14} />, title: t('Loudness: short-term, bottom right'), value: c.loudness, onChange: (v) => set('loudness', v) },
+              { icon: <BellRing size={14} />, title: t('Alarms: black, frozen, silence, loudness…'), value: c.alarms, onChange: (v) => set('alarms', v) },
+              { icon: <Lightbulb size={14} />, title: t('Tally: the frame and the UMD lamps'), value: tally, onChange: (v) => (set('tally.border', v), set('umd.lamps', v)) },
+            ]}
+          />
           <Seg
-            label={t('Meters')}
+            label={t('Timecode')}
+            value={c.timecode}
+            onChange={(v) => set('timecode', v)}
+            options={[
+              ['off', ...off(t('No timecode'))],
+              ['input', <Video size={14} />, t('The input’s timecode')],
+              ['station', <RadioTower size={14} />, t('The station’s timecode')],
+            ]}
+          />
+        </Section>
+        <Section id="source-audio" title={t('Audio meters')}>
+          <Seg
+            label={t('Position')}
             value={c.vu.position}
             onChange={(v) => set('vu.position', v)}
             options={[
-              ['left', t('Left')],
-              ['right', t('Right')],
-              ['off', t('None')],
+              ['left', <PanelLeft size={14} />, t('Left')],
+              ['right', <PanelRight size={14} />, t('Right')],
+              ['off', ...off(t('No meters'))],
             ]}
           />
           {c.vu.position !== 'off' && (
             <>
+              <Flags label={t('Show')} items={[{ icon: <ArrowUpToLine size={14} />, title: t('Peak hold'), value: c.vu.hold, onChange: (v) => set('vu.hold', v) }]} />
               <Num label={t('Channels')} value={c.vu.max} min={0} max={16} onChange={(v) => set('vu.max', v)} />
               <Num label={t('Bar width')} value={c.vu.width} min={1} max={60} unit=" px" onChange={(v) => set('vu.width', v)} />
               <Num label={t('Gap')} value={c.vu.gap} min={0} max={40} unit=" px" onChange={(v) => set('vu.gap', v)} />
@@ -480,33 +502,10 @@ export default defineWidget({
               <Num label={t('Scale from')} value={c.vu.min} min={-120} max={-6} unit=" dBFS" onChange={(v) => set('vu.min', v)} />
               <Num label={t('Yellow from')} value={c.vu.yellow} min={-60} max={0} unit=" dBFS" onChange={(v) => set('vu.yellow', v)} />
               <Num label={t('Red from')} value={c.vu.red} min={-60} max={0} unit=" dBFS" onChange={(v) => set('vu.red', v)} />
-              <Toggle label={t('Peak hold')} value={c.vu.hold} onChange={(v) => set('vu.hold', v)} />
             </>
           )}
-          <Toggle label={t('Loudness')} text={t('Short-term, bottom right')} value={c.loudness} onChange={(v) => set('loudness', v)} />
-        </Section>
-        <Section id="source-data" title={t('Data (ANC)')}>
-          <Seg
-            label={t('Timecode')}
-            value={c.timecode}
-            onChange={(v) => set('timecode', v)}
-            options={[
-              ['off', t('None')],
-              ['input', t('The input’s')],
-              ['station', t('Station')],
-            ]}
-          />
         </Section>
         <Section id="source-tally" title={t('Tally')}>
-          <Toggle
-            label={t('Show the tally')}
-            text={t('The frame and the UMD lamps')}
-            value={tally}
-            onChange={(v) => {
-              set('tally.border', v);
-              set('umd.lamps', v);
-            }}
-          />
           <Num label={t('Frame')} value={c.border} min={0} max={60} unit=" px" onChange={(v) => set('border', v)} />
           {tally && (
             <>
@@ -523,16 +522,16 @@ export default defineWidget({
             value={c.umd.position}
             onChange={(v) => set('umd.position', v)}
             options={[
-              ['bottom', t('Bottom')],
-              ['top', t('Top')],
-              ['off', t('None')],
+              ['bottom', <PanelBottom size={14} />, t('Bottom')],
+              ['top', <PanelTop size={14} />, t('Top')],
+              ['off', ...off(t('No UMD'))],
             ]}
           />
           {c.umd.position !== 'off' && (
             <>
               <Text label={t('Text')} value={c.umd.text} placeholder={t('From the switcher, else the input name')} onChange={(v) => set('umd.text', v)} />
+              <Flags label={t('Place')} items={[{ icon: <SquareDashed size={14} />, title: t('Outside: beside the picture, not over it'), value: c.umd.outside, onChange: (v) => set('umd.outside', v) }]} />
               <Num label={t('Height')} value={c.umd.size} min={2} max={50} step={0.5} precision={1} unit=" %" onChange={(v) => set('umd.size', v)} />
-              <Toggle label={t('Outside')} text={t('Beside the picture, not over it')} value={c.umd.outside} onChange={(v) => set('umd.outside', v)} />
               <Row label={t('Font')}>
                 <FontPick family={c.umd.font} weight={c.umd.weight} onChange={(f, wt) => (set('umd.font', f), set('umd.weight', wt))} />
               </Row>
@@ -541,18 +540,15 @@ export default defineWidget({
                 value={c.umd.align}
                 onChange={(v) => set('umd.align', v)}
                 options={[
-                  ['left', t('Left')],
-                  ['center', t('Centre')],
-                  ['right', t('Right')],
+                  ['left', <AlignLeft size={14} />, t('Left')],
+                  ['center', <AlignCenter size={14} />, t('Centre')],
+                  ['right', <AlignRight size={14} />, t('Right')],
                 ]}
               />
               <ColorPick label={t('Text colour')} value={c.umd.color} onChange={(v) => set('umd.color', v)} />
               <ColorPick label={t('Bar')} value={c.umd.background} onChange={(v) => set('umd.background', v)} />
             </>
           )}
-        </Section>
-        <Section id="source-alarms" title={t('Alarms')}>
-          <Toggle label={t('Alarms')} text={t('Black, frozen, silence, loudness…')} value={c.alarms} onChange={(v) => set('alarms', v)} />
         </Section>
       </>
     );

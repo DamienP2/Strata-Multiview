@@ -221,9 +221,8 @@ pub(crate) fn draw(d: &mut Draw) -> bool {
         "timer" => timer::draw(d, &state(&raw)),
         "ticker" => ticker::draw(d, &state(&raw)),
         "source" => source::draw(d),
-        "audioMeter" | "loudness" | "timecode" | "status" | "alarmLog" | "signalInfo" | "chart" => {
-            broadcast::draw(d)
-        }
+        "audioMeter" | "loudness" | "timecode" | "status" | "alarmLog" | "signalInfo" | "chart"
+        | "value" => broadcast::draw(d),
         "scope" => scope::draw(d),
         // No browser here: its box stays empty on these outputs.
         _ => false,
@@ -247,7 +246,7 @@ pub(crate) fn motion(d: &mut Draw) -> Option<Motion> {
         "image" => image::motion(d, &state(raw)),
         "source" => source::motion(d),
         "audioMeter" | "loudness" | "timecode" | "status" | "alarmLog" | "scope" | "signalInfo"
-        | "chart" => broadcast::motion(d),
+        | "chart" | "value" => broadcast::motion(d),
         "timer" => timer::motion(d, &state(raw)),
         // Tickers: by the time on air.
         _ => Some(Motion::Moving),

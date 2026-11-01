@@ -14,6 +14,7 @@ const BROADCAST: { widget: string; label: string; hint: string }[] = [
   { widget: 'source', label: 'Source', hint: 'A live input with its tally, UMD and audio meters' },
   { widget: 'audioMeter', label: 'Audio meters', hint: 'Up to 16 channels of an input, with or without picture' },
   { widget: 'timecode', label: 'Timecode', hint: 'The station’s or an input’s' },
+  { widget: 'value', label: 'Value', hint: 'One live value as text: UMD, timecode, loudness, codec, HDR, PTP, the time…' },
   { widget: 'alarmLog', label: 'Alarm log', hint: 'The faults of the inputs, the newest first' },
   { widget: 'time', label: 'Time', hint: 'A stopwatch or a countdown' },
   { widget: 'loudness', label: 'Loudness', hint: 'EBU R128: integrated, momentary, short-term, range, true peak' },

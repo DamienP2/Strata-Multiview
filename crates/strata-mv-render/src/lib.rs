@@ -2106,7 +2106,8 @@ impl Renderer {
             | LayerKind::AlarmLog { .. }
             | LayerKind::Scope { .. }
             | LayerKind::SignalInfo { .. }
-            | LayerKind::Chart { .. } => {}
+            | LayerKind::Chart { .. }
+            | LayerKind::Value { .. } => {}
         }
     }
 

@@ -312,15 +312,61 @@ export function Select<V extends string | number>(p: { label?: ReactNode; path?:
   );
 }
 
-/** On / off switch with its text. `disabled`: the reason it cannot change. */
-export function Toggle(p: { label?: ReactNode; path?: string; expose?: Expose; exposeValue?: unknown; exposeOptions?: [string, string][]; value?: boolean; onChange?: (v: boolean) => void; text?: ReactNode; disabled?: string }) {
+/**
+ * On / off. With `icon`: an icon button (pressed: on), its words in the tooltip; else a switch with
+ * its text. `disabled`: the reason it cannot change.
+ */
+export function Toggle(p: { label?: ReactNode; path?: string; expose?: Expose; exposeValue?: unknown; exposeOptions?: [string, string][]; value?: boolean; onChange?: (v: boolean) => void; text?: ReactNode; disabled?: string; icon?: ReactNode }) {
   const [v, set] = useBind<boolean>(p.path, p.value, p.onChange);
+  const tip = p.disabled ?? (typeof p.text === 'string' ? p.text : typeof p.label === 'string' ? p.label : undefined);
   return (
     <Row label={p.label} expose={p.expose ?? p.path} exposeValue={p.exposeValue ?? (p.path ? v : undefined)} exposeOptions={p.exposeOptions}>
-      <button className={`wk-tog ${v ? 'on' : ''}`} disabled={!!p.disabled} title={p.disabled} onClick={() => set(!v)}>
-        <i />
-        {p.text && <span>{p.text}</span>}
-      </button>
+      {p.icon ? (
+        <div className="segmented wk-flags">
+          <button type="button" className={v ? 'on' : ''} aria-pressed={!!v} disabled={!!p.disabled} title={tip} onClick={() => set(!v)}>
+            {p.icon}
+          </button>
+        </div>
+      ) : (
+        <button className={`wk-tog ${v ? 'on' : ''}`} disabled={!!p.disabled} title={p.disabled} onClick={() => set(!v)}>
+          <i />
+          {p.text && <span>{p.text}</span>}
+        </button>
+      )}
+    </Row>
+  );
+}
+
+/**
+ * An on / off setting shown as an icon (its words in the tooltip): bound to `path` of the edited
+ * object (`value`: its default), or `value` / `onChange`.
+ */
+export interface Flag {
+  icon: ReactNode;
+  title: string;
+  path?: string;
+  value?: boolean;
+  onChange?: (v: boolean) => void;
+}
+
+/** Several on / off settings on one row, each an icon button (pressed: on). */
+export function Flags({ label, items }: { label?: ReactNode; items: (Flag | false | null | undefined)[] }) {
+  const b = useContext(BindContext);
+  const list = items.filter((x): x is Flag => !!x);
+  return (
+    <Row label={label}>
+      <div className="segmented wk-flags">
+        {list.map((f) => {
+          const got = f.path ? getPath(b.obj, f.path) : undefined;
+          const on = !!(got == null ? f.value : got);
+          const flip = () => (f.path ? b.set(f.path, !on) : f.onChange?.(!on));
+          return (
+            <button key={f.title} type="button" title={f.title} aria-label={f.title} aria-pressed={on} className={on ? 'on' : ''} onClick={flip}>
+              {f.icon}
+            </button>
+          );
+        })}
+      </div>
     </Row>
   );
 }

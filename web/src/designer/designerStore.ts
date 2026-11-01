@@ -283,6 +283,7 @@ export const LABELS: Record<LayerType, string> = {
   scope: 'Scope',
   signalInfo: 'Signal',
   chart: 'Chart',
+  value: 'Value',
   group: 'Group',
   rect: 'Rectangle',
   ellipse: 'Ellipse',

@@ -8522,3 +8522,21 @@ textarea.tx-grow {
   background: transparent;
   font-family: var(--mono);
 }
+
+/* Inspector: on / off settings as icons (widgets/kit.tsx Flags), choices as icons. */
+.wk-ctl > .segmented.wk-flags {
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  gap: 2px;
+}
+.wk-ctl > .segmented.wk-flags button {
+  flex: 0 0 34px;
+  height: 24px;
+}
+.wk-flags button.on {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.wk-flags button:not(.on) {
+  opacity: 0.7;
+}

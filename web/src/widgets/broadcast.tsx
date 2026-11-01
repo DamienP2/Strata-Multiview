@@ -3,12 +3,12 @@
 // faults) and the alarm journal. Each one is laid out as a list of rectangles and texts, mirroring
 // crates/strata-mv-core/src/wid/broadcast.rs (keep in sync); the Rust engine draws the same list
 // (crates/strata-mv-render/src/wid/broadcast.rs).
-import { Activity, AudioLines, BellRing, Gauge, Timer } from 'lucide-react';
+import { Activity, ArrowUpToLine, AudioLines, BellRing, ChartLine, Globe, Gauge, Hash, History, Network, Ruler, Timer } from 'lucide-react';
 import { alarmText, smoothLevels, useEveryFrame, useInputs, useSignal, useSystem, type SignalView, type SystemView } from '../engine/liveInputs';
 import { zonedFields } from '../engine/widgets';
 import type { Panel } from '../engine/types';
 import { t } from '../i18n';
-import { ColorPick, defineWidget, Num, Section, Select, Text, Toggle, withDefaults } from './kit';
+import { ColorPick, defineWidget, Flags, Num, Section, Select, Text, withDefaults } from './kit';
 import { FitLine } from './text-fit';
 
 type Area = [number, number, number, number];
@@ -224,7 +224,7 @@ export function stationTimecode(nowMs: number, tz: string, fps: number): string 
 }
 
 /** The time of day, "HH:MM:SS" (mirrors clock). */
-const clockText = (ms: number, tz: string) => {
+export const clockText = (ms: number, tz: string) => {
   const f = zonedFields(ms, tz);
   return `${p2(f.hour)}:${p2(f.minute)}:${p2(f.second)}`;
 };
@@ -429,10 +429,15 @@ export const audioMeter = defineWidget({
         <InputPick value={c.input} onChange={(v) => set('input', v)} />
         <Num label={t('Channels')} value={c.channels} min={0} max={16} onChange={(v) => set('channels', v)} />
         <Text label={t('Names')} value={c.labels} placeholder="L, R, C, LFE, Ls, Rs" onChange={(v) => set('labels', v)} />
-        <Toggle label={t('Scale')} value={c.scale} onChange={(v) => set('scale', v)} />
-        <Toggle label={t('Values')} text={t('The peak above each bar')} value={c.values} onChange={(v) => set('values', v)} />
-        <Toggle label={t('Peak hold')} value={c.hold} onChange={(v) => set('hold', v)} />
-        <Toggle label={t('Loudness')} text="I · S · TP" value={c.loudness} onChange={(v) => set('loudness', v)} />
+        <Flags
+          label={t('Show')}
+          items={[
+            { icon: <Ruler size={14} />, title: t('Scale'), value: c.scale, onChange: (v) => set('scale', v) },
+            { icon: <Hash size={14} />, title: t('Values: the peak above each bar'), value: c.values, onChange: (v) => set('values', v) },
+            { icon: <ArrowUpToLine size={14} />, title: t('Peak hold'), value: c.hold, onChange: (v) => set('hold', v) },
+            { icon: <Gauge size={14} />, title: t('Loudness: I · S · TP'), value: c.loudness, onChange: (v) => set('loudness', v) },
+          ]}
+        />
         <Num label={t('Scale from')} value={c.min} min={-120} max={-6} unit=" dBFS" onChange={(v) => set('min', v)} />
         <Num label={t('Yellow from')} value={c.yellow} min={-60} max={0} unit=" dBFS" onChange={(v) => set('yellow', v)} />
         <Num label={t('Red from')} value={c.red} min={-60} max={0} unit=" dBFS" onChange={(v) => set('red', v)} />
@@ -458,7 +463,7 @@ export const loudnessWidget = defineWidget({
         <InputPick value={c.input} onChange={(v) => set('input', v)} />
         <Num label={t('Target')} value={c.target} min={-40} max={-10} step={0.5} precision={1} unit=" LUFS" onChange={(v) => set('target', v)} />
         <Num label={t('Tolerance')} value={c.tolerance} min={0} max={5} step={0.5} precision={1} unit=" LU" onChange={(v) => set('tolerance', v)} />
-        <Toggle label={t('History')} text={t('The last two minutes')} value={c.history} onChange={(v) => set('history', v)} />
+        <Flags label={t('Show')} items={[{ icon: <ChartLine size={14} />, title: t('History: the last two minutes'), value: c.history, onChange: (v) => set('history', v) }]} />
       </Section>
     );
   },
@@ -500,9 +505,14 @@ export const statusWidget = defineWidget({
     const c = withDefaults(D_STATUS, layer as StatusConfig);
     return (
       <Section id="status" title={t('Status')}>
-        <Toggle label="PTP" value={c.ptp} onChange={(v) => set('ptp', v)} />
-        <Toggle label="NTP" value={c.ntp} onChange={(v) => set('ntp', v)} />
-        <Toggle label={t('Alarms')} value={c.alarms} onChange={(v) => set('alarms', v)} />
+        <Flags
+          label={t('Show')}
+          items={[
+            { icon: <Network size={14} />, title: 'PTP', value: c.ptp, onChange: (v) => set('ptp', v) },
+            { icon: <Globe size={14} />, title: 'NTP', value: c.ntp, onChange: (v) => set('ntp', v) },
+            { icon: <BellRing size={14} />, title: t('Alarms'), value: c.alarms, onChange: (v) => set('alarms', v) },
+          ]}
+        />
       </Section>
     );
   },
@@ -523,7 +533,7 @@ export const alarmLogWidget = defineWidget({
     return (
       <Section id="alarmLog" title={t('Alarm log')}>
         <Num label={t('Lines')} value={c.rows} min={1} max={40} onChange={(v) => set('rows', v)} />
-        <Toggle label={t('Ended')} text={t('The faults over too, dimmed')} value={c.ended} onChange={(v) => set('ended', v)} />
+        <Flags label={t('Show')} items={[{ icon: <History size={14} />, title: t('Ended: the faults over too, dimmed'), value: c.ended, onChange: (v) => set('ended', v) }]} />
       </Section>
     );
   },

@@ -6,7 +6,7 @@
 // (crates/strata-mv-core/src/wid/timer.rs); actions in crates/strata-mv-core/src/wid/timer.rs.
 import { Dropdown } from '../ui/Dropdown';
 import { useRef, useState, type CSSProperties, type ReactNode } from 'react';
-import { Flag, Minus, Pause, Play, Plus, RotateCcw, RotateCw, type LucideIcon } from 'lucide-react';
+import { Bookmark, CalendarClock, CaseUpper, Clock3, Flag, Hash, Layers, Minus, MoveHorizontal, Pause, Play, Plus, RectangleHorizontal, RotateCcw, RotateCw, Ruler, Shrink, Timer, Zap, type LucideIcon } from 'lucide-react';
 import { col, cssColor, num, type Resolved } from '../engine/evaluate';
 import { layerAgeFrames, textWidth } from '../engine/widgets';
 import type { Data, Layer, FontStyle, PlayoutItem } from '../engine/types';
@@ -441,7 +441,7 @@ export function DigitRows({ e }: { e: T.Eff }) {
           ['trim', '1:05'],
         ]}
       />
-      {T.timed(e) && <Toggle label={t('Auto hours')} path="hoursAuto" value={false} />}
+      {T.timed(e) && <Toggle icon={<Clock3 size={14} />} label={t('Auto hours')} path="hoursAuto" value={false} />}
       <Seg
         label={t('Separator')}
         path="sep"
@@ -454,7 +454,7 @@ export function DigitRows({ e }: { e: T.Eff }) {
           ['.', '.'],
         ]}
       />
-      <Toggle label={t('Blink')} path="sepBlink" value={false} />
+      <Toggle icon={<Zap size={14} />} label={t('Blink')} path="sepBlink" value={false} />
     </>
   );
 }
@@ -481,11 +481,11 @@ export function AnalogRows({ c }: { c: T.Cfg }) {
       <ColorPick label={t('Face')} path="analog.face" value={T.DEF.analog.face} none={t('None')} first={T.DEF.analog.face} />
       <ColorPick label={t('Rim')} path="analog.rim" value="" none={t('None')} />
       <ColorPick label={t('Hands')} path="analog.hands" value="" none={t('Text colour')} />
-      <Toggle label={t('Second hand')} path="analog.seconds" value={true} />
+      <Toggle icon={<Timer size={14} />} label={t('Second hand')} path="analog.seconds" value={true} />
       {c.analog.seconds && (
         <>
           <ColorPick label={t('Second hand colour')} path="analog.accent" value={T.DEF.analog.accent} />
-          <Toggle label={t('Sweep')} path="analog.smooth" value={false} text={t('The second hand moves smoothly')} />
+          <Toggle icon={<RotateCw size={14} />} label={t('Sweep')} path="analog.smooth" value={false} text={t('The second hand moves smoothly')} />
         </>
       )}
       <Seg
@@ -498,7 +498,7 @@ export function AnalogRows({ c }: { c: T.Cfg }) {
           ['none', t('None')],
         ]}
       />
-      <Toggle label={tc('clock', 'Numbers')} path="analog.numbers" value={false} text={t('1 to 12 around the face')} />
+      <Toggle icon={<Hash size={14} />} label={tc('clock', 'Numbers')} path="analog.numbers" value={false} text={t('1 to 12 around the face')} />
     </>
   );
 }
@@ -530,7 +530,7 @@ export function AffixRows() {
           [900, t('Black')],
         ]}
       />
-      <Toggle label={t('Affix caps')} path="affix.upper" value={true} />
+      <Toggle icon={<CaseUpper size={14} />} label={t('Affix caps')} path="affix.upper" value={true} />
     </>
   );
 }
@@ -539,16 +539,16 @@ export function AffixRows() {
 export function PlateRows({ c }: { c: T.Cfg }) {
   return (
     <>
-      <Toggle label={t('Plate')} path="plate.on" value={false} />
+      <Toggle icon={<RectangleHorizontal size={14} />} label={t('Plate')} path="plate.on" value={false} />
       {c.plate.on && (
         <>
           <ColorPick label={t('Colour')} path="plate.color" value={T.DEF.plate.color} />
           <Num label={t('Radius')} path="plate.radius" value={22} min={0} max={80} unit="px" />
           <Num label={t('Padding')} path="plate.padX" value={46} min={0} max={120} unit="px" />
           <Num label={t('Padding V')} path="plate.padY" value={14} min={0} max={80} unit="px" />
-          <Toggle label={t('Accent')} path="plate.accent" value={true} />
+          <Toggle icon={<Bookmark size={14} />} label={t('Accent')} path="plate.accent" value={true} />
           {c.plate.accent && <ColorPick label={t('Accent colour')} path="plate.accentColor" value="#ff3b5c" />}
-          <Toggle label={t('Shadow')} path="plate.shadow" value={true} />
+          <Toggle icon={<Layers size={14} />} label={t('Shadow')} path="plate.shadow" value={true} />
         </>
       )}
     </>
@@ -559,9 +559,9 @@ export function PlateRows({ c }: { c: T.Cfg }) {
 export function WidthRows({ c }: { c: T.Cfg }) {
   return (
     <>
-      <Toggle label={t('Reserve width')} path="reserve" value={T.DEF.reserve} />
-      {c.reserve && <Toggle label={t('Guide')} path="guide" value={true} />}
-      <Toggle label={t('Shrink to fit')} path="fit" value={false} />
+      <Toggle icon={<MoveHorizontal size={14} />} label={t('Reserve width')} path="reserve" value={T.DEF.reserve} />
+      {c.reserve && <Toggle icon={<Ruler size={14} />} label={t('Guide')} path="guide" value={true} />}
+      <Toggle icon={<Shrink size={14} />} label={t('Shrink to fit')} path="fit" value={false} />
     </>
   );
 }
@@ -690,11 +690,11 @@ function TimerBar(p: OpP) {
           <StartRow layer={startView} />
         </Bound>
       )}
-      {!tgt && designer && <Toggle label={t('At a fixed time')} value={e.start === 'at'} onChange={(v) => b.set('startMode', v ? 'at' : 'auto')} />}
+      {!tgt && designer && <Toggle icon={<CalendarClock size={14} />} label={t('At a fixed time')} value={e.start === 'at'} onChange={(v) => b.set('startMode', v ? 'at' : 'auto')} />}
       {!tgt && designer && e.start === 'at' && (
         <>
           <Text label={t('Start at')} path="startAt" value="20:00:00" placeholder="20:00:00" />
-          <Toggle label={t('Run off air')} path="offAir" value={true} />
+          <Toggle icon={<Play size={14} />} label={t('Run off air')} path="offAir" value={true} />
         </>
       )}
       <Row label={t('Value')} title={tgt ? t('New target') : t('Set value')}>

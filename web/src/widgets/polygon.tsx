@@ -2,7 +2,7 @@
 // Free vertices are fractions of the box (they scale with it).
 // Same picture as crates/strata-mv-render/src/wid/polygon.rs; geometry mirrors crates/strata-mv-core/src/wid/polygon.rs.
 import { useEffect, useState, useSyncExternalStore } from 'react';
-import { Pentagon } from 'lucide-react';
+import { MousePointerClick, Pentagon, Star } from 'lucide-react';
 import { useApp } from '../store';
 import { num } from '../engine/evaluate';
 import { Btns, clamp, defineWidget, Handle, Num, Row, Section, Seg, Toggle, type Warning, withDefaults } from './kit';
@@ -352,7 +352,7 @@ export default defineWidget({
             <>
               <Num label={t('Sides')} path="sides" value={k.sides} min={3} max={64} />
               <Num label={t('Orientation')} path="startAngle" value={k.startAngle} min={0} max={360} unit="°" />
-              <Toggle label={t('Star')} path="star" value={k.star} />
+              <Toggle icon={<Star size={14} />} label={t('Star')} path="star" value={k.star} />
               {k.star && <Num label={t('Inner radius')} path="inner" value={k.inner} min={1} max={100} unit="%" />}
             </>
           )}
@@ -385,7 +385,7 @@ export default defineWidget({
           {k.mode === 'free' && (
             <>
               <VertexList layer={layer as L} edit={edit as unknown as Edit} />
-              <Toggle label={t('Click to add')} path="clickAdd" value={k.clickAdd} expose={false} />
+              <Toggle icon={<MousePointerClick size={14} />} label={t('Click to add')} path="clickAdd" value={k.clickAdd} expose={false} />
             </>
           )}
           <Num label={t('Rounding')} path="round" value={k.round} min={0} max={400} unit="px" />

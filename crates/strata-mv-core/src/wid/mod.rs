@@ -19,6 +19,7 @@ pub mod source;
 pub mod text;
 pub mod ticker;
 pub mod timer;
+pub mod value;
 
 use serde_json::Value;
 
@@ -58,6 +59,7 @@ pub fn widget_id(kind: &LayerKind) -> Option<&'static str> {
         LayerKind::Scope { .. } => "scope",
         LayerKind::SignalInfo { .. } => "signalInfo",
         LayerKind::Chart { .. } => "chart",
+        LayerKind::Value { .. } => "value",
         _ => return None,
     })
 }

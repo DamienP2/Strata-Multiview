@@ -1,6 +1,7 @@
 // What the shape widgets share (quad, polygon, ellipse, pen): fill and
 // stroke styles, outlines as path commands, and their inspector sections.
 // Mirror of crates/strata-mv-core/src/wid/shape.rs and strata-mv-render/src/wid/shape.rs.
+import { Expand, Grid2x2, Shrink, SquareDashed, StretchHorizontal } from 'lucide-react';
 import { col, cssColor, interpolateText, num, propValue, type Resolved } from '../engine/evaluate';
 import type { Data, Layer } from '../engine/types';
 import { ColorGroupRow, GroupRow, AssetPicker } from '../designer/Inspector';
@@ -185,7 +186,7 @@ export function StrokeToggle({ layer, edit, width = 4 }: { layer: Layer; edit: S
     <Toggle
       // The width is exposed by its own row (Width): the toggle is not.
       expose={false}
-      label={t('Stroke')}
+      icon={<SquareDashed size={14} />} label={t('Stroke')}
       value={num(propValue(layer, 'strokeWidth', 0)) > 0}
       onChange={(v) =>
         edit((l) => {
@@ -232,10 +233,10 @@ export function FillStrokeSections({ layer, id, edit, rule, caps, noPosition, jo
             path="fillStyle.fit"
             value={FILL.fit}
             options={[
-              ['contain', t('Contain')],
-              ['cover', t('Cover')],
-              ['stretch', t('Stretch')],
-              ['tile', t('Tile')],
+              ['contain', <Shrink size={14} />, t('Contain')],
+              ['cover', <Expand size={14} />, t('Cover')],
+              ['stretch', <StretchHorizontal size={14} />, t('Stretch')],
+              ['tile', <Grid2x2 size={14} />, t('Tile')],
             ]}
           />
         )}
