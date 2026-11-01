@@ -312,6 +312,7 @@ impl Facts {
             matrix,
             primaries,
             transfer,
+            afd: f.afd(),
             dolby_vision: f.seen("Dolby Vision", now),
             hdr10_plus: f.seen("HDR10+ (dynamique)", now),
             ..Default::default()

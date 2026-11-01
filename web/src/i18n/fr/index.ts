@@ -20,5 +20,6 @@ import { multiview } from './multiview';
 import { alarms } from './alarms';
 import { analysis } from './analysis';
 import { security } from './security';
+import { ops } from './ops';
 
-export const fr: Record<string, string> = { ...common, ...controls, ...ccA, ...ccB, ...ccC, ...ccD, ...home, ...designer, ...widgets, ...widgetsA, ...widgetsB, ...widgetsC, ...buttons, ...ux3, ...ux1, ...ux2, ...shared, ...multiview, ...analysis, ...alarms, ...security };
+export const fr: Record<string, string> = { ...common, ...controls, ...ccA, ...ccB, ...ccC, ...ccD, ...home, ...designer, ...widgets, ...widgetsA, ...widgetsB, ...widgetsC, ...buttons, ...ux3, ...ux1, ...ux2, ...shared, ...multiview, ...analysis, ...alarms, ...security, ...ops };

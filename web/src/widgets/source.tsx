@@ -3,7 +3,7 @@
 // channels. The lamps, the UMD text and the levels come with the input (engine/liveInputs.ts useSignal).
 // Same picture as crates/strata-mv-render/src/wid/source.rs; settings and geometry mirror
 // crates/strata-mv-core/src/wid/source.rs (keep in sync).
-import { AlignCenter, AlignLeft, AlignRight, ArrowUpToLine, BellRing, Expand, EyeOff, Gauge, Info, Lightbulb, MonitorPlay, PanelBottom, PanelLeft, PanelRight, PanelTop, RadioTower, Rainbow, Shrink, Square, SquareDashed, StretchHorizontal, Video } from 'lucide-react';
+import { AlignCenter, AlignLeft, AlignRight, ArrowUpToLine, BellRing, Crosshair, Expand, EyeOff, Gauge, Info, Lightbulb, MonitorPlay, RectangleHorizontal, Scan, ScanLine, SquareStack, Tv, PanelBottom, PanelLeft, PanelRight, PanelTop, RadioTower, Rainbow, Shrink, Square, SquareDashed, StretchHorizontal, Video } from 'lucide-react';
 import { interpolateText, num } from '../engine/evaluate';
 import { LiveCanvas } from '../engine/LiveCanvas';
 import { alarmText, streamWidth, useInputs, useLiveFrame, useLiveStream, useSignal, type Alarm, type InputInfo, type SignalView, type Tally } from '../engine/liveInputs';
@@ -74,6 +74,90 @@ export interface Config {
   loudness?: boolean;
   /** The faults the server sees: a banner, the frame in their colour. */
   alarms?: boolean;
+  /** Lines over the picture (mirrors wid::source::Markers). */
+  markers?: Partial<Markers>;
+}
+
+export interface Markers {
+  /** Action safe, 93 %. */
+  action: boolean;
+  /** Graphics safe, 90 %. */
+  title: boolean;
+  fourThree: boolean;
+  fourteenNine: boolean;
+  centre: boolean;
+  afd: boolean;
+  color: string;
+}
+const D_MARKERS: Markers = { action: false, title: false, fourThree: false, fourteenNine: false, centre: false, afd: false, color: '#ffffffb3' };
+export const AFD_COLOR = '#22d3ee';
+const anyMarker = (m: Markers) => m.action || m.title || m.fourThree || m.fourteenNine || m.centre || m.afd;
+
+/** Where the picture is drawn in `v` (none: 16:9). Mirrors picture_area. */
+export function pictureArea(fit: Fit, v: Area, size: [number, number] | null): Area {
+  const [iw, ih] = size && size[0] > 0 && size[1] > 0 ? size : [16, 9];
+  if (fit === 'stretch') return v;
+  const k = fit === 'contain' ? Math.min(v[2] / iw, v[3] / ih) : Math.max(v[2] / iw, v[3] / ih);
+  const [pw, ph] = [Math.min(iw * k, v[2]), Math.min(ih * k, v[3])];
+  return [v[0] + (v[2] - pw) / 2, v[1] + (v[3] - ph) / 2, pw, ph];
+}
+
+/** The active area of an AFD code in picture `p`. Mirrors afd_area. */
+export function afdArea(code: number, p: Area): Area | null {
+  const wide = p[2] / Math.max(p[3], 1) > 1.5;
+  const pillar = (a: number): Area => {
+    const w = Math.min(p[3] * a, p[2]);
+    return [p[0] + (p[2] - w) / 2, p[1], w, p[3]];
+  };
+  const letter = (a: number, top: boolean): Area => {
+    const h = Math.min(p[2] / a, p[3]);
+    return [p[0], top ? p[1] : p[1] + (p[3] - h) / 2, p[2], h];
+  };
+  if (wide) return [9, 13, 15].includes(code) ? pillar(4 / 3) : [11, 14].includes(code) ? pillar(14 / 9) : null;
+  if (code === 2) return letter(16 / 9, true);
+  if (code === 3) return letter(14 / 9, true);
+  if (code === 10 || code === 15) return letter(16 / 9, false);
+  if (code === 11 || code === 14) return letter(14 / 9, false);
+  return null;
+}
+
+const AFD_WORDS: Record<number, string> = { 2: '16:9 haut', 3: '14:9 haut', 4: '> 16:9', 8: 'plein', 9: '4:3', 10: '16:9', 11: '14:9', 13: '4:3 (14:9)', 14: '16:9 (14:9)', 15: '16:9 (4:3)' };
+export const afdLabel = (code: number) => `AFD ${code} · ${AFD_WORDS[code] ?? '?'}`;
+
+/** The markers' lines over picture `p`. Mirrors marker_lines. */
+export function markerLines(m: Markers, p: Area, afd: number | undefined, size: number): { lines: Area[]; afd: Area[]; label: [Area, string] | null } {
+  const lines: Area[] = [];
+  const afdLines: Area[] = [];
+  let label: [Area, string] | null = null;
+  if (p[2] <= 4 || p[3] <= 4) return { lines, afd: afdLines, label };
+  const t = Math.max(1, Math.round(p[3] / 270));
+  const outline = (a: Area, out: Area[]) => out.push([a[0], a[1], a[2], t], [a[0], a[1] + a[3] - t, a[2], t], [a[0], a[1], t, a[3]], [a[0] + a[2] - t, a[1], t, a[3]]);
+  const inset = (k: number): Area => [p[0] + p[2] * k, p[1] + p[3] * k, p[2] * (1 - 2 * k), p[3] * (1 - 2 * k)];
+  if (m.action) outline(inset(0.035), lines);
+  if (m.title) outline(inset(0.05), lines);
+  for (const [on, aspect] of [
+    [m.fourThree, 4 / 3],
+    [m.fourteenNine, 14 / 9],
+  ] as [boolean, number][]) {
+    const w = p[3] * aspect;
+    if (on && w < p[2] - 2 * t) {
+      const x = p[0] + (p[2] - w) / 2;
+      lines.push([x, p[1], t, p[3]], [x + w - t, p[1], t, p[3]]);
+    }
+  }
+  if (m.centre) {
+    const l = Math.max(4, p[3] * 0.05);
+    const [cx, cy] = [p[0] + p[2] / 2, p[1] + p[3] / 2];
+    lines.push([cx - l, cy - t / 2, 2 * l, t], [cx - t / 2, cy - l, t, 2 * l]);
+  }
+  if (m.afd && afd != null) {
+    const a = afdArea(afd, p);
+    if (a) outline(a, afdLines);
+    const w = Math.max(1, Math.min(size * 7, p[2] - 8));
+    const pad = Math.round(size * 0.4);
+    label = [[p[0] + (p[2] - w) / 2, p[1] + pad, w, size * 1.4], afdLabel(afd)];
+  }
+  return { lines, afd: afdLines, label };
 }
 
 const D_TALLY: TallyLook = { border: true, program: '#e5212b', preview: '#17b14a', aux: '#f2b705', off: '#262a33' };
@@ -81,9 +165,10 @@ const D_UMD: Umd = { position: 'bottom', size: 11, outside: false, text: '', fon
 const D_VU: Vu = { position: 'right', width: 6, gap: 2, margin: 6, min: -60, yellow: -18, red: -9, hold: true, max: 0 };
 const D = { input: '', fit: 'contain' as Fit, background: '#0b0d12', border: 4, badge: false, noSignal: '', noSignalLook: 'bars' as 'bars' | 'plain', timecode: 'off' as 'off' | 'input' | 'station', loudness: false, alarms: true };
 
-export type Full = typeof D & { tally: TallyLook; umd: Umd; vu: Vu };
+export type Full = typeof D & { tally: TallyLook; umd: Umd; vu: Vu; markers: Markers };
 
-export const cfg = (c: Config): Full => ({ ...withDefaults(D, c), tally: withDefaults(D_TALLY, c.tally ?? {}), umd: withDefaults(D_UMD, c.umd ?? {}), vu: withDefaults(D_VU, c.vu ?? {}) }) as Full;
+export const cfg = (c: Config): Full =>
+  ({ ...withDefaults(D, c), tally: withDefaults(D_TALLY, c.tally ?? {}), umd: withDefaults(D_UMD, c.umd ?? {}), vu: withDefaults(D_VU, c.vu ?? {}), markers: withDefaults(D_MARKERS, c.markers ?? {}) }) as Full;
 
 /** The meters' colours (green, yellow, red), their track, a lamp that is off (mirrors METER, TRACK, LAMP_OFF). */
 export const METER = ['#2bd96b', '#f2c12e', '#ff3b3b'];
@@ -350,6 +435,8 @@ function SourceView({ layer, w, h, data, designer, lang, nowMs, tz, fps, seed }:
     const size = clamp(v[3] * 0.09, 10, 64);
     pic = <FitLine text={s} size={size} weight={700} ls={size * 0.08} align="center" box={[v[0] + 8, v[1], Math.max(1, v[2] - 16), v[3]]} color={hex('#ffffff66')} fit={{ overflow: 'shrink', minSize: size * 0.5, minSqueeze: 70 }} />;
   }
+  // The markers, over the picture (where it is drawn; 16:9 without one).
+  const ml = anyMarker(c.markers) && v[2] > 0 && v[3] > 0 ? markerLines(c.markers, pictureArea(c.fit, v, picture ? size : null), info ? signal.video?.afd : undefined, overlay(c, l, h).size) : null;
   const fmt = c.badge ? formatName(info) : '';
   const bsize = clamp(h * 0.045, 9, 28);
   const bpad = Math.round(bsize * 0.4);
@@ -369,6 +456,17 @@ function SourceView({ layer, w, h, data, designer, lang, nowMs, tz, fps, seed }:
     <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', background: hex(alarmBorder(c, tally, alarms, nowMs)) }}>
       <div style={box(l.inner, { background: hex(c.background) })} />
       {pic}
+      {ml && (
+        <div style={box(v, { overflow: 'hidden' })}>
+          {ml.lines.map((a, i) => (
+            <div key={`m${i}`} style={box([a[0] - v[0], a[1] - v[1], a[2], a[3]], { background: hex(c.markers.color) })} />
+          ))}
+          {ml.afd.map((a, i) => (
+            <div key={`a${i}`} style={box([a[0] - v[0], a[1] - v[1], a[2], a[3]], { background: AFD_COLOR })} />
+          ))}
+        </div>
+      )}
+      {ml?.label && tag(ml.label[0], ml.label[1], overlay(c, l, h).size, '#000000b3', AFD_COLOR, false)}
       {fmt && (
         <div style={box([v[0] + bpad, v[1] + bpad, 0, bsize * 1.5], { width: 'auto', padding: `0 ${bpad}px`, background: hex('#000000b3'), borderRadius: bsize * 0.25, font: `700 ${bsize}px Inter, sans-serif`, color: '#fff', display: 'flex', alignItems: 'center', whiteSpace: 'pre' })}>{fmt}</div>
       )}
@@ -480,6 +578,20 @@ export default defineWidget({
               ['station', <RadioTower size={14} />, t('The station’s timecode')],
             ]}
           />
+        </Section>
+        <Section id="source-markers" title={t('Markers')}>
+          <Flags
+            label={t('Show')}
+            items={[
+              { icon: <Scan size={14} />, title: t('Action safe (93 %)'), value: c.markers.action, onChange: (v) => set('markers.action', v) },
+              { icon: <ScanLine size={14} />, title: t('Graphics safe (90 %)'), value: c.markers.title, onChange: (v) => set('markers.title', v) },
+              { icon: <Tv size={14} />, title: t('4:3 frame'), value: c.markers.fourThree, onChange: (v) => set('markers.fourThree', v) },
+              { icon: <RectangleHorizontal size={14} />, title: t('14:9 frame'), value: c.markers.fourteenNine, onChange: (v) => set('markers.fourteenNine', v) },
+              { icon: <Crosshair size={14} />, title: t('Centre'), value: c.markers.centre, onChange: (v) => set('markers.centre', v) },
+              { icon: <SquareStack size={14} />, title: t('AFD: the active area the picture signals, and its code'), value: c.markers.afd, onChange: (v) => set('markers.afd', v) },
+            ]}
+          />
+          {anyMarker(c.markers) && <ColorPick label={t('Colour')} value={c.markers.color} onChange={(v) => set('markers.color', v)} />}
         </Section>
         <Section id="source-audio" title={t('Audio meters')}>
           <Seg

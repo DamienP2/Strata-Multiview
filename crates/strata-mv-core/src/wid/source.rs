@@ -197,7 +197,195 @@ pub struct Config {
     pub loudness: bool,
     /// The faults the server sees: a banner, and the frame in their colour.
     pub alarms: bool,
+    /// Lines over the picture: safe areas, other aspect ratios, centre, AFD.
+    pub markers: Markers,
 }
+
+/// Lines drawn over the picture (EBU R95 safe areas, the 4:3 and 14:9
+/// frames inside a 16:9 picture, the centre, the active area its AFD gives).
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(default, rename_all = "camelCase")]
+pub struct Markers {
+    /// Action safe: 93 % of the picture.
+    pub action: bool,
+    /// Graphics (title) safe: 90 %.
+    pub title: bool,
+    pub four_three: bool,
+    pub fourteen_nine: bool,
+    pub centre: bool,
+    /// The active area of the picture's Active Format Description, and its code.
+    pub afd: bool,
+    pub color: String,
+}
+
+impl Default for Markers {
+    fn default() -> Self {
+        Self {
+            action: false,
+            title: false,
+            four_three: false,
+            fourteen_nine: false,
+            centre: false,
+            afd: false,
+            color: "#ffffffb3".into(),
+        }
+    }
+}
+
+impl Markers {
+    pub fn any(&self) -> bool {
+        self.action
+            || self.title
+            || self.four_three
+            || self.fourteen_nine
+            || self.centre
+            || self.afd
+    }
+}
+
+/// Where the picture is drawn in `v` (`size`: the picture's; none: 16:9).
+pub fn picture_area(fit: Fit, v: Area, size: Option<(f32, f32)>) -> Area {
+    let (iw, ih) = size
+        .filter(|s| s.0 > 0.0 && s.1 > 0.0)
+        .unwrap_or((16.0, 9.0));
+    let (sx, sy) = match fit {
+        Fit::Stretch => return v,
+        Fit::Contain => {
+            let k = (v[2] / iw).min(v[3] / ih);
+            (k, k)
+        }
+        Fit::Cover => {
+            let k = (v[2] / iw).max(v[3] / ih);
+            (k, k)
+        }
+    };
+    let (pw, ph) = ((iw * sx).min(v[2]), (ih * sy).min(v[3]));
+    [v[0] + (v[2] - pw) / 2.0, v[1] + (v[3] - ph) / 2.0, pw, ph]
+}
+
+/// The active area an AFD code gives in picture `p` (none: all of it, or
+/// an unknown code).
+pub fn afd_area(code: u8, p: Area) -> Option<Area> {
+    let wide = p[2] / p[3].max(1.0) > 1.5;
+    let pillar = |aspect: f32| {
+        let w = (p[3] * aspect).min(p[2]);
+        [p[0] + (p[2] - w) / 2.0, p[1], w, p[3]]
+    };
+    let letter = |aspect: f32, top: bool| {
+        let h = (p[2] / aspect).min(p[3]);
+        [
+            p[0],
+            if top { p[1] } else { p[1] + (p[3] - h) / 2.0 },
+            p[2],
+            h,
+        ]
+    };
+    match (wide, code) {
+        // A 16:9 coded frame: 4:3 or 14:9 pillar boxes.
+        (true, 9 | 13 | 15) => Some(pillar(4.0 / 3.0)),
+        (true, 11 | 14) => Some(pillar(14.0 / 9.0)),
+        // A 4:3 coded frame: letter boxes.
+        (false, 2) => Some(letter(16.0 / 9.0, true)),
+        (false, 3) => Some(letter(14.0 / 9.0, true)),
+        (false, 10 | 15) => Some(letter(16.0 / 9.0, false)),
+        (false, 11 | 14) => Some(letter(14.0 / 9.0, false)),
+        _ => None,
+    }
+}
+
+/// What an AFD code means, in short ("AFD 9 · 4:3").
+pub fn afd_label(code: u8) -> String {
+    let what = match code {
+        2 => "16:9 haut",
+        3 => "14:9 haut",
+        4 => "> 16:9",
+        8 => "plein",
+        9 => "4:3",
+        10 => "16:9",
+        11 => "14:9",
+        13 => "4:3 (14:9)",
+        14 => "16:9 (14:9)",
+        15 => "16:9 (4:3)",
+        _ => "?",
+    };
+    format!("AFD {code} · {what}")
+}
+
+/// The lines of the markers over picture `p`, as thin boxes (the AFD's area
+/// apart, drawn in its own colour), and where the AFD's label goes.
+pub struct MarkerLines {
+    pub lines: Vec<Area>,
+    pub afd: Vec<Area>,
+    pub label: Option<(Area, String)>,
+}
+
+fn outline(a: Area, t: f32, out: &mut Vec<Area>) {
+    out.push([a[0], a[1], a[2], t]);
+    out.push([a[0], a[1] + a[3] - t, a[2], t]);
+    out.push([a[0], a[1], t, a[3]]);
+    out.push([a[0] + a[2] - t, a[1], t, a[3]]);
+}
+
+pub fn marker_lines(m: &Markers, p: Area, afd: Option<u8>, size: f32) -> MarkerLines {
+    let mut lines = Vec::new();
+    let mut afd_lines = Vec::new();
+    let mut label = None;
+    if p[2] <= 4.0 || p[3] <= 4.0 {
+        return MarkerLines {
+            lines,
+            afd: afd_lines,
+            label,
+        };
+    }
+    let t = (p[3] / 270.0).round().max(1.0);
+    let inset = |k: f32| {
+        [
+            p[0] + p[2] * k,
+            p[1] + p[3] * k,
+            p[2] * (1.0 - 2.0 * k),
+            p[3] * (1.0 - 2.0 * k),
+        ]
+    };
+    if m.action {
+        outline(inset(0.035), t, &mut lines);
+    }
+    if m.title {
+        outline(inset(0.05), t, &mut lines);
+    }
+    for (on, aspect) in [(m.four_three, 4.0 / 3.0), (m.fourteen_nine, 14.0 / 9.0)] {
+        let w = p[3] * aspect;
+        if on && w < p[2] - 2.0 * t {
+            let x = p[0] + (p[2] - w) / 2.0;
+            lines.push([x, p[1], t, p[3]]);
+            lines.push([x + w - t, p[1], t, p[3]]);
+        }
+    }
+    if m.centre {
+        let l = (p[3] * 0.05).max(4.0);
+        let (cx, cy) = (p[0] + p[2] / 2.0, p[1] + p[3] / 2.0);
+        lines.push([cx - l, cy - t / 2.0, 2.0 * l, t]);
+        lines.push([cx - t / 2.0, cy - l, t, 2.0 * l]);
+    }
+    if let (true, Some(code)) = (m.afd, afd) {
+        if let Some(a) = afd_area(code, p) {
+            outline(a, t, &mut afd_lines);
+        }
+        let w = (size * 7.0).min(p[2] - 8.0).max(1.0);
+        let pad = (size * 0.4).round();
+        label = Some((
+            [p[0] + (p[2] - w) / 2.0, p[1] + pad, w, size * 1.4],
+            afd_label(code),
+        ));
+    }
+    MarkerLines {
+        lines,
+        afd: afd_lines,
+        label,
+    }
+}
+
+/// The AFD's lines: cyan.
+pub const AFD_COLOR: &str = "#22d3ee";
 
 impl Default for Config {
     fn default() -> Self {
@@ -215,6 +403,7 @@ impl Default for Config {
             timecode: TcShow::Off,
             loudness: false,
             alarms: true,
+            markers: Markers::default(),
         }
     }
 }
@@ -546,6 +735,44 @@ pub fn segments(c: &Vu, level: &Level) -> Vec<(f32, f32, u8)> {
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn markers_over_the_picture() {
+        // A 4:3 picture in a 16:9 tile: drawn in the middle.
+        let p = picture_area(
+            Fit::Contain,
+            [0.0, 0.0, 1600.0, 900.0],
+            Some((640.0, 480.0)),
+        );
+        assert_eq!(p, [200.0, 0.0, 1200.0, 900.0]);
+        assert_eq!(
+            picture_area(Fit::Stretch, [1.0, 2.0, 3.0, 4.0], None),
+            [1.0, 2.0, 3.0, 4.0]
+        );
+        let m = Markers {
+            action: true,
+            title: true,
+            four_three: true,
+            centre: true,
+            afd: true,
+            ..Default::default()
+        };
+        let p = [0.0, 0.0, 1920.0, 1080.0];
+        let ml = marker_lines(&m, p, Some(9), 20.0);
+        // 4 + 4 sides, the 4:3 frame's 2 lines, the cross's 2.
+        assert_eq!(ml.lines.len(), 12);
+        assert_eq!(ml.lines[0], [67.2, 37.8, 1785.6, 4.0]);
+        assert_eq!(ml.afd.len(), 4);
+        assert_eq!(ml.label.as_ref().unwrap().1, "AFD 9 · 4:3");
+        // AFD 9 in a 16:9 frame: the 4:3 middle.
+        assert_eq!(afd_area(9, p), Some([240.0, 0.0, 1440.0, 1080.0]));
+        assert_eq!(afd_area(10, p), None);
+        // AFD 10 in a 4:3 frame: a 16:9 letterbox.
+        assert_eq!(
+            afd_area(10, [0.0, 0.0, 1440.0, 1080.0]),
+            Some([0.0, 135.0, 1440.0, 810.0])
+        );
+    }
+
     use super::*;
     use crate::signal::Tally;
 

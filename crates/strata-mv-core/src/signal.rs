@@ -340,6 +340,9 @@ pub struct VideoInfo {
     /// Pixels out of the broadcast range lately (luma 16–235, chroma 16–240
     /// in 8 bits), %.
     pub illegal: Option<f32>,
+    /// Active Format Description carried by the pictures (SMPTE ST 2016).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub afd: Option<u8>,
 }
 
 /// A sound track of an input.

@@ -553,6 +553,8 @@ export interface VideoInfo {
   luma?: [number, number] | null;
   /** Pixels out of the broadcast range lately, %. */
   illegal?: number | null;
+  /** Active Format Description carried by the pictures. */
+  afd?: number;
 }
 
 /** A line of the alarm journal (mirrors signal::JournalEntry). */

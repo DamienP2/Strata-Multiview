@@ -260,6 +260,11 @@ impl Frames {
         &self.color
     }
 
+    /// The pictures' AFD, when they carry one.
+    pub fn afd(&self) -> Option<u8> {
+        self.afd
+    }
+
     pub fn pix_fmt(&self) -> &str {
         &self.pix_fmt
     }

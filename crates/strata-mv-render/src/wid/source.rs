@@ -8,8 +8,9 @@ use strata_mv_core::signal::SourceView;
 
 use strata_mv_core::wid::broadcast::{alarm_colors, loud_color, num1, station_timecode};
 use strata_mv_core::wid::source::{
-    alarm_banner, alarm_border, layout, no_signal_card, no_signal_text, overlay, scale, segments,
-    umd_text, Area, Config, Fit, NoSignalLook, TcShow, UmdAlign, BARS,
+    alarm_banner, alarm_border, layout, marker_lines, no_signal_card, no_signal_text, overlay,
+    picture_area, scale, segments, umd_text, Area, Config, Fit, NoSignalLook, TcShow, UmdAlign,
+    AFD_COLOR, BARS,
 };
 use strata_mv_core::{Color, LayerKind, TextAlign, VerticalAlign};
 use tiny_skia::{FillRule, Mask, Pixmap, PixmapPaint, Transform};
@@ -240,6 +241,27 @@ pub(crate) fn draw(d: &mut Draw) -> bool {
                     d.fill(&p, Draw::hex("#ffffff66"), FillRule::Winding, bm);
                 }
             }
+        }
+    }
+
+    // The markers, over the picture (where it is drawn; 16:9 without one).
+    if c.markers.any() && v[2] > 0.0 && v[3] > 0.0 {
+        let size = picture
+            .as_ref()
+            .map(|i| (i.width() as f32, i.height() as f32));
+        let p = picture_area(c.fit, v, size);
+        let afd = view.as_ref().and_then(|v| v.video.afd);
+        let ml = marker_lines(&c.markers, p, afd, overlay(c, &l, d.h).size);
+        let clip = d.clip(v[0], v[1], v[2], v[3]);
+        for a in ml.lines {
+            fill_area(d, a, 0.0, Draw::hex(&c.markers.color), clip.as_ref());
+        }
+        for a in ml.afd {
+            fill_area(d, a, 0.0, Draw::hex(AFD_COLOR), clip.as_ref());
+        }
+        if let Some((a, s)) = ml.label {
+            let size = overlay(c, &l, d.h).size;
+            tag(d, a, &s, size, "#000000b3", AFD_COLOR, false, bm);
         }
     }
 
