@@ -241,6 +241,31 @@ impl Frames {
         said
     }
 
+    /// Side data `name` came with a picture in the last 10 s.
+    pub fn seen(&self, name: &str, now: Instant) -> bool {
+        self.side
+            .get(name)
+            .is_some_and(|(_, _, at)| now.duration_since(*at).as_secs() < 10)
+    }
+
+    /// Range, matrix, primaries and transfer as decoded ("" unknown).
+    pub fn color(&self) -> &[String; 4] {
+        &self.color
+    }
+
+    pub fn pix_fmt(&self) -> &str {
+        &self.pix_fmt
+    }
+
+    pub fn size(&self) -> &str {
+        &self.size
+    }
+
+    /// SMPTE 2086 and content light level as ffmpeg tells them.
+    pub fn hdr_metadata(&self) -> (&str, &str) {
+        (&self.mastering, &self.light)
+    }
+
     pub fn view(&self, now: Instant) -> FrameStats {
         let mut s = FrameStats {
             frames: self.frames,

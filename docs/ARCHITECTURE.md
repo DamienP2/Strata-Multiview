@@ -83,6 +83,16 @@ Une entrée arrive souvent par à-coups : les images sortent du décodeur par ra
 
 Mesures (source à flash et bip simultanés toutes les 2 s) : son/image +0,5 ms, vu-mètres/image −10 ms, sortie NDI +3 ms en moyenne (−30 à +37 ms) ; images régulières à 0,3 ms près.
 
+### Outils de contrôle de l'image (scopes)
+
+Le widget **Scope** (`LayerKind::Scope`) montre l'oscilloscope, les parades RVB et Y'CbCr, le vectorscope, l'histogramme, la chromaticité CIE 1931 ou les fausses couleurs d'une entrée.
+
+- **La trace** (ce que font les pixels) est calculée par le serveur sur l'image affichée de l'entrée (`strata-mv-render/src/scopes.rs`), environ 130 000 échantillons répartis sur l'image, en quelques millisecondes ; une fois par image et par demande (taille, outil, intensité, couleur), au plus toutes les 70 ms, partagée par toutes les sorties et toutes les pages (`Live::scope`).
+- **Le graticule** (lignes, cibles, locus, gamuts, échelle) est disposé dans `strata-mv-core/src/wid/scope.rs` comme une liste d'éléments (`Item::Path`, rectangles, textes) que les deux moteurs dessinent par-dessus la trace ; `web/src/widgets/scope.tsx` le reproduit à l'identique. Les positions (`level_y`, `vector_point`, `cie_point`, `panels`) servent aux deux : la trace tombe sur le graticule.
+- **Le transfert** du signal (`VideoInfo`, lu par `showinfo` et l'ouverture de l'entrée) choisit l'échelle : % en SDR et HLG, nits en PQ (ST 2084) ; les primaires BT.2020 ou BT.709 servent au calcul CIE (RVB linéaire → XYZ).
+- **Les moteurs** : le moteur Rust demande la trace à la taille où il la dessine (`LiveInputs::scope`) et la compose en mode *screen* (le noir n'ajoute rien ; fausses couleurs : opaque). Les pages web reçoivent toutes les traces de leurs scopes sur **une seule WebSocket** (`GET /api/scopes` : la page envoie la liste de ses scopes, le serveur chaque nouvelle trace en JPEG, 12 par seconde au plus) — un navigateur n'ouvre que six connexions vers un serveur.
+- **`VideoInfo`** (codec, profil, échantillonnage, profondeur, plage, matrice, primaires, transfert, HDR10 / HLG / Dolby Vision / HDR10+, ST 2086, MaxCLL / MaxFALL, pistes audio dont Dolby et Atmos) est relu une fois par seconde et envoyé aux pages quand il change (et toutes les 5 s pour celles qui viennent de s'ouvrir).
+
 ## Feuille de route
 
 - [ ] Plusieurs pistes audio par flux (aujourd'hui la première, tous ses canaux).

@@ -15,10 +15,25 @@ type Area = [number, number, number, number];
 type Align = 'left' | 'center' | 'right';
 
 /** What a broadcast widget draws (mirrors broadcast::Item). */
-export type Item = { rect: Area; radius: number; color: string } | { text: string; box: Area; size: number; weight: number; mono: boolean; color: string; align: Align };
+export type Item =
+  | { rect: Area; radius: number; color: string }
+  | { text: string; box: Area; size: number; weight: number; mono: boolean; color: string; align: Align }
+  /** A line through points (closed: back to the first), stroked, filled when `fill` is set (mirrors Item::Path). */
+  | { path: [number, number][]; closed: boolean; width: number; color: string; fill?: string };
 
-const rect = (a: Area, radius: number, color: string): Item => ({ rect: a, radius, color });
-const text = (box: Area, s: string, size: number, weight: number, mono: boolean, color: string, align: Align): Item => ({ text: s, box, size, weight, mono, color, align });
+/** A line through `points` (mirrors broadcast::path). */
+export const path = (points: [number, number][], closed: boolean, width: number, color: string): Item => ({ path: points, closed, width, color });
+/** A circle of `r` around `c`, 72 points (mirrors broadcast::circle). */
+export const circle = (c: [number, number], r: number, width: number, color: string): Item =>
+  path(
+    Array.from({ length: 72 }, (_, i) => [c[0] + r * Math.cos((i * Math.PI * 2) / 72), c[1] + r * Math.sin((i * Math.PI * 2) / 72)] as [number, number]),
+    true,
+    width,
+    color,
+  );
+
+export const rect = (a: Area, radius: number, color: string): Item => ({ rect: a, radius, color });
+export const text = (box: Area, s: string, size: number, weight: number, mono: boolean, color: string, align: Align): Item => ({ text: s, box, size, weight, mono, color, align });
 
 export const GREEN = '#2bd96b';
 export const YELLOW = '#f2c12e';
@@ -338,7 +353,7 @@ export function alarmLog(cfg: AlarmLogConfig, w: number, h: number, s: SystemVie
 
 // ------------------------------------------------------------- drawing --
 
-const hexCss = (c: string) => {
+export const hexCss = (c: string) => {
   // #rrggbbaa → rgba(): every browser reads 8-digit hex, kept as is.
   return c;
 };
@@ -353,6 +368,13 @@ export function Items({ items, look }: { items: Item[]; look?: Panel }) {
   return (
     <>
       {items.map((it, i) => {
+        // A line, in its place among the items (drawn over those before it, as the Rust engine does).
+        if ('path' in it)
+          return (
+            <svg key={i} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', overflow: 'visible', pointerEvents: 'none' }}>
+              <path d={it.path.map(([x, y], k) => `${k ? 'L' : 'M'}${x} ${y}`).join('') + (it.closed ? 'Z' : '')} fill={it.fill ?? 'none'} stroke={it.width > 0 ? it.color : 'none'} strokeWidth={it.width} strokeLinejoin="round" />
+            </svg>
+          );
         if ('rect' in it) return <div key={i} style={{ position: 'absolute', left: it.rect[0], top: it.rect[1], width: it.rect[2], height: it.rect[3], background: hexCss(it.color), borderRadius: it.radius }} />;
         const size = sizeOf(look, it.size);
         return <FitLine key={i} text={it.text} size={size} weight={it.weight} family={familyOf(look, it.mono)} align={it.align} box={it.box} color={colorOf(look, it.color)} fit={{ overflow: 'shrink', minSize: size * 0.55, minSqueeze: 70 }} />;

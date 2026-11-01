@@ -11,9 +11,10 @@ import time from './time';
 import { eff, timed } from './timer-fmt';
 import source from './source';
 import { alarmLogWidget, audioMeter, loudnessWidget, statusWidget, timecodeWidget } from './broadcast';
+import scope from './scope';
 
 /** In the order of the spec. */
-export const WIDGET_LIST: WidgetDef[] = [source, audioMeter, loudnessWidget, timecodeWidget, statusWidget, alarmLogWidget, quad, polygon, ellipse, text, image, clock, time] as unknown as WidgetDef[];
+export const WIDGET_LIST: WidgetDef[] = [source, audioMeter, loudnessWidget, timecodeWidget, statusWidget, alarmLogWidget, scope, quad, polygon, ellipse, text, image, clock, time] as unknown as WidgetDef[];
 
 /** By layer type (a `clock` layer: the Clock; widgetOf(layer) tells the Clock from the Time). */
 export const WIDGETS: Partial<Record<LayerType, WidgetDef>> = Object.fromEntries([...WIDGET_LIST].reverse().map((w) => [w.type, w]));

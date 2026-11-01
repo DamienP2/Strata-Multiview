@@ -80,6 +80,7 @@ pub fn project(id: &str, inputs: &[(String, String)]) -> Option<Project> {
                 LayerKind::AudioMeter { x } => Some(&mut x.input),
                 LayerKind::Loudness { x } => Some(&mut x.input),
                 LayerKind::Timecode { x } => Some(&mut x.input),
+                LayerKind::Scope { x } => Some(&mut x.input),
                 _ => None,
             };
             let Some(input) = input else {

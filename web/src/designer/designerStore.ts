@@ -280,6 +280,7 @@ export const LABELS: Record<LayerType, string> = {
   timecode: 'Timecode',
   status: 'Status',
   alarmLog: 'Alarm log',
+  scope: 'Scope',
   group: 'Group',
   rect: 'Rectangle',
   ellipse: 'Ellipse',

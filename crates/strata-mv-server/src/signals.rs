@@ -165,6 +165,10 @@ pub struct SignalView {
     pub timecode: String,
     #[serde(skip_serializing_if = "Vec::is_empty")]
     pub alarms: Vec<Alarm>,
+    /// What its picture and sound are: sent when it changed, and every few
+    /// seconds for the pages just opened (the browsers keep the last one).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub video: Option<strata_mv_core::signal::VideoInfo>,
 }
 
 fn is_off(t: &Tally) -> bool {
@@ -810,10 +814,23 @@ pub async fn broadcast(s: crate::state::Shared) {
     let mut tick = tokio::time::interval(Duration::from_millis(40));
     tick.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Skip);
     let mut n = 0u64;
+    let mut videos: BTreeMap<String, strata_mv_core::signal::VideoInfo> = BTreeMap::new();
     loop {
         tick.tick().await;
         n += 1;
         let signals = s.inputs.signals();
+        // What the inputs are: once a second, sent when changed (all of it
+        // every 5 s, for the pages just opened).
+        let mut new_video = BTreeMap::new();
+        if n % 25 == 2 {
+            let all = n % 125 == 2;
+            for (id, v) in s.inputs.videos() {
+                if all || videos.get(&id) != Some(&v) {
+                    new_video.insert(id.clone(), v.clone());
+                }
+                videos.insert(id, v);
+            }
+        }
         if n % 50 == 1 {
             let st = s.perf.sync.get();
             signals.set_sync(
@@ -836,17 +853,23 @@ pub async fn broadcast(s: crate::state::Shared) {
             signals.evaluate(&s.inputs.watched());
         }
         let v = signals.version();
-        if v == sent {
+        if v == sent && new_video.is_empty() {
             continue;
         }
         sent = v;
-        let now = signals.snapshot();
+        let mut now = signals.snapshot();
+        for (id, vi) in new_video {
+            now.entry(id).or_default().video = Some(vi);
+        }
         let system = signals.system();
         // The same as sent, a history aside (sent when it changes only).
-        let new_history = now.values().any(|v| v.history.is_some());
+        let new_history = now
+            .values()
+            .any(|v| v.history.is_some() || v.video.is_some());
         let mut bare = now.clone();
         for v in bare.values_mut() {
             v.history = None;
+            v.video = None;
         }
         if new_history || bare != last || system != last_system {
             let _ = s.events.send(crate::state::Event::Signals {

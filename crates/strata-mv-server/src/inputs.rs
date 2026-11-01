@@ -411,6 +411,11 @@ struct Live {
     relay: Mutex<Option<Child>>,
     /// What it carries (`probe`).
     facts: Arc<Mutex<crate::probe::Facts>>,
+    /// What its picture and sound are, read from `facts` once a second.
+    video: Mutex<Option<(Instant, strata_mv_core::signal::VideoInfo)>>,
+    /// The scopes' traces made of its pictures: of which picture (its
+    /// address), asked how, made when.
+    scopes: Mutex<VecDeque<Trace>>,
     /// The number of the newest picture and when it came (ms since 1970):
     /// the web streams wake on it.
     frames: tokio::sync::watch::Sender<(u64, u64)>,
@@ -822,7 +827,56 @@ impl Live {
     fn facts(&self) -> std::sync::MutexGuard<'_, crate::probe::Facts> {
         self.facts.lock().unwrap_or_else(|p| p.into_inner())
     }
+
+    /// What its picture and sound are (read again once a second).
+    fn video(&self) -> strata_mv_core::signal::VideoInfo {
+        let mut v = self.video.lock().unwrap_or_else(|p| p.into_inner());
+        match v.as_ref() {
+            Some((at, info)) if at.elapsed() < Duration::from_secs(1) => info.clone(),
+            _ => {
+                let now = Instant::now();
+                let info = self.facts().video_info(now);
+                *v = Some((now, info.clone()));
+                info
+            }
+        }
+    }
+
+    /// The trace of a scope of the picture shown now: made once per picture
+    /// and request, at most every 70 ms (a scope needs no more).
+    fn scope(&self, r: &strata_mv_render::scopes::ScopeRequest) -> Option<Arc<Pixmap>> {
+        if !self.fresh() {
+            return None;
+        }
+        let pic = self.current()?;
+        let key = Arc::as_ptr(&pic) as usize;
+        let r = r.clone().bounded();
+        {
+            let made = self.scopes.lock().unwrap_or_else(|p| p.into_inner());
+            if let Some((_, _, _, t)) = made.iter().rev().find(|(k, q, at, _)| {
+                q == &r && (*k == key || at.elapsed() < Duration::from_millis(70))
+            }) {
+                return Some(t.clone());
+            }
+        }
+        let t = Arc::new(strata_mv_render::scopes::trace(&pic, &r)?);
+        let mut made = self.scopes.lock().unwrap_or_else(|p| p.into_inner());
+        made.retain(|(_, q, _, _)| q != &r);
+        made.push_back((key, r, Instant::now(), t.clone()));
+        while made.len() > 24 {
+            made.pop_front();
+        }
+        Some(t)
+    }
 }
+
+/// A scope's trace: of which picture (its address), asked how, made when.
+type Trace = (
+    usize,
+    strata_mv_render::scopes::ScopeRequest,
+    Instant,
+    Arc<Pixmap>,
+);
 
 /// The live inputs of the server.
 #[derive(Default)]
@@ -870,6 +924,8 @@ impl Inputs {
                 no_fps_mode: AtomicBool::new(false),
                 relay: Mutex::new(None),
                 facts: Arc::new(Mutex::new(crate::probe::Facts::default())),
+                video: Mutex::new(None),
+                scopes: Mutex::new(VecDeque::new()),
                 frames: tokio::sync::watch::channel((0, 0)).0,
                 jpegs: Mutex::new(VecDeque::new()),
                 recent: Mutex::new(VecDeque::new()),
@@ -1225,7 +1281,18 @@ impl strata_mv_render::LiveInputs for Inputs {
             history,
             timecode: self.signals.timecode_of(id),
             alarms: self.signals.alarms(id),
+            video: l.video(),
         })
+    }
+
+    fn scope(&self, id: &str, r: &strata_mv_render::scopes::ScopeRequest) -> Option<Arc<Pixmap>> {
+        let l = self
+            .live
+            .read()
+            .unwrap_or_else(|p| p.into_inner())
+            .get(id)?
+            .clone();
+        l.scope(r)
     }
 
     fn system(&self) -> strata_mv_core::signal::SystemView {
@@ -1234,6 +1301,21 @@ impl strata_mv_render::LiveInputs for Inputs {
 }
 
 impl Inputs {
+    /// What the inputs receiving now are (colour, HDR, codecs).
+    pub fn videos(&self) -> Vec<(String, strata_mv_core::signal::VideoInfo)> {
+        let list: Vec<Arc<Live>> = self
+            .live
+            .read()
+            .unwrap_or_else(|p| p.into_inner())
+            .values()
+            .filter(|l| l.fresh())
+            .cloned()
+            .collect();
+        list.iter()
+            .map(|l| (l.config.id.clone(), l.video()))
+            .collect()
+    }
+
     /// Every input, to look at its faults: id, name, a picture came in the
     /// last two seconds, when the last one came.
     pub fn watched(&self) -> Vec<(String, String, bool, Option<Instant>)> {
@@ -1727,6 +1809,124 @@ pub async fn mjpeg(
         Body::from_stream(stream),
     )
         .into_response()
+}
+
+/// A scope a page shows (`GET /api/scopes`): its key (the page's own name
+/// for it), the input, the tool, the trace area (pixels), its intensity in
+/// hundredths and its colour (rrggbb).
+#[derive(Deserialize, Clone, PartialEq)]
+pub struct ScopeWanted {
+    key: String,
+    input: String,
+    #[serde(default)]
+    kind: strata_mv_core::wid::scope::ScopeKind,
+    #[serde(default)]
+    w: u32,
+    #[serde(default)]
+    h: u32,
+    #[serde(default)]
+    i: u16,
+    #[serde(default)]
+    color: String,
+}
+
+/// `GET /api/scopes` (WebSocket): the traces of the scopes of a page, all
+/// on one connection (a browser opens six at most to a server). The page
+/// sends the list of its scopes (JSON) whenever it changes; the server sends
+/// each trace as JPEG when a new one is made (12 a second at most): a binary
+/// message of the key's length (one byte), the key, the JPEG; no JPEG when
+/// the input has no picture. Public like the outputs when they are.
+pub async fn scopes_ws(
+    State(s): State<Shared>,
+    MaybeUser(me): MaybeUser,
+    ws: axum::extract::ws::WebSocketUpgrade,
+) -> Response {
+    if me.is_none() && !s.config.public_outputs {
+        return (StatusCode::UNAUTHORIZED, "sign in").into_response();
+    }
+    ws.on_upgrade(move |socket| scopes_session(s, socket))
+}
+
+async fn scopes_session(s: Shared, socket: axum::extract::ws::WebSocket) {
+    use axum::extract::ws::Message;
+    use futures_util::{SinkExt, StreamExt};
+    use strata_mv_core::wid::scope::Transfer;
+    use strata_mv_render::scopes::{rgb_of, ScopeRequest};
+    use strata_mv_render::LiveInputs;
+    let (mut tx, mut rx) = socket.split();
+    let mut wanted: Vec<ScopeWanted> = Vec::new();
+    // Per key: the trace sent last (its address; 1: "no picture").
+    let mut sent: BTreeMap<String, usize> = BTreeMap::new();
+    let mut tick = tokio::time::interval(Duration::from_millis(80));
+    tick.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Skip);
+    let closing = crate::state::until_true(s.closing.subscribe());
+    tokio::pin!(closing);
+    loop {
+        tokio::select! {
+            _ = &mut closing => break,
+            m = rx.next() => match m {
+                Some(Ok(Message::Text(t))) => {
+                    if let Ok(list) = serde_json::from_str::<Vec<ScopeWanted>>(&t) {
+                        // At most 32 scopes a page.
+                        wanted = list.into_iter().take(32).collect();
+                        sent.retain(|k, _| wanted.iter().any(|w| &w.key == k));
+                    }
+                }
+                Some(Ok(Message::Close(_))) | None | Some(Err(_)) => break,
+                _ => {}
+            },
+            _ = tick.tick() => {
+                if wanted.is_empty() {
+                    continue;
+                }
+                let (hub, list, last) = (s.inputs.clone(), wanted.clone(), sent.clone());
+                let made = tokio::task::spawn_blocking(move || {
+                    let mut out: Vec<(String, usize, Vec<u8>)> = Vec::new();
+                    for w in &list {
+                        let input = w.input.trim();
+                        let video = hub.source(input).map(|v| v.video).unwrap_or_default();
+                        let r = ScopeRequest {
+                            kind: w.kind,
+                            w: w.w,
+                            h: w.h,
+                            intensity: if w.i == 0 { 100 } else { w.i },
+                            color: rgb_of(&format!("#{}", w.color.trim_start_matches('#'))),
+                            transfer: Transfer::of(&video.transfer),
+                            wide: video.wide(),
+                        }
+                        .bounded();
+                        let before = last.get(&w.key).copied().unwrap_or(0);
+                        match hub.scope(input, &r) {
+                            Some(t) => {
+                                let key = Arc::as_ptr(&t) as usize;
+                                if key != before {
+                                    if let Some(j) = strata_mv_render::jpeg(&t, t.width(), 88) {
+                                        out.push((w.key.clone(), key, j));
+                                    }
+                                }
+                            }
+                            None if before != 1 => out.push((w.key.clone(), 1, Vec::new())),
+                            None => {}
+                        }
+                    }
+                    out
+                })
+                .await
+                .unwrap_or_default();
+                for (key, mark, jpeg) in made {
+                    let k = &key.as_bytes()[..key.len().min(255)];
+                    let mut b = Vec::with_capacity(1 + k.len() + jpeg.len());
+                    b.push(k.len() as u8);
+                    b.extend_from_slice(k);
+                    b.extend_from_slice(&jpeg);
+                    if tx.send(Message::Binary(b.into())).await.is_err() {
+                        return;
+                    }
+                    sent.insert(key, mark);
+                }
+            }
+        }
+    }
 }
 
 /// NDI timecode (100 ns units: the sender's, or its clock's time of day,
@@ -2814,6 +3014,8 @@ mod tests {
             no_fps_mode: AtomicBool::new(false),
             relay: Mutex::new(None),
             facts: Arc::new(Mutex::new(crate::probe::Facts::default())),
+            video: Mutex::new(None),
+            scopes: Mutex::new(VecDeque::new()),
             frames: tokio::sync::watch::channel((0, 0)).0,
             jpegs: Mutex::new(VecDeque::new()),
             recent: Mutex::new(VecDeque::new()),

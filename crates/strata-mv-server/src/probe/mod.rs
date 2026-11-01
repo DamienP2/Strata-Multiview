@@ -268,6 +268,118 @@ impl Facts {
         false
     }
 
+    /// What the picture and sound are, in short (the Signal widget, the
+    /// scopes' graticules): the decoded pictures first, then the banner.
+    pub fn video_info(&self, now: Instant) -> strata_mv_core::signal::VideoInfo {
+        use strata_mv_core::signal::{AudioTrack, VideoInfo};
+        let f = &self.frames;
+        let [range, matrix, primaries, transfer] = f.color().clone();
+        let mut v = VideoInfo {
+            pix_fmt: f.pix_fmt().to_string(),
+            size: f.size().to_string(),
+            range,
+            matrix,
+            primaries,
+            transfer,
+            dolby_vision: f.seen("Dolby Vision", now),
+            hdr10_plus: f.seen("HDR10+ (dynamique)", now),
+            ..Default::default()
+        };
+        let (mastering, light) = f.hdr_metadata();
+        v.mastering = mastering.to_string();
+        let number_after = |key: &str| -> u32 {
+            light
+                .split(key)
+                .nth(1)
+                .map(|r| {
+                    r.chars()
+                        .take_while(char::is_ascii_digit)
+                        .collect::<String>()
+                })
+                .and_then(|n| n.parse().ok())
+                .unwrap_or(0)
+        };
+        v.max_cll = number_after("MaxCLL=");
+        v.max_fall = number_after("MaxFALL=");
+        if let Some(b) = &self.banner {
+            if let Some(s) = b.streams.iter().find(|s| s.kind == "video") {
+                v.codec = if s.codec_name.is_empty() {
+                    codec_name(&s.codec).to_string()
+                } else {
+                    s.codec_name.clone()
+                };
+                if v.codec.is_empty() {
+                    v.codec = s.codec.clone();
+                }
+                v.profile = s.profile.clone();
+                if v.pix_fmt.is_empty() {
+                    v.pix_fmt = s.pix_fmt.clone();
+                }
+                if v.size.is_empty() {
+                    if let (Some(w), Some(h)) = (s.width, s.height) {
+                        v.size = format!("{w}x{h}");
+                    }
+                }
+                for (mine, theirs) in [
+                    (&mut v.range, &s.range),
+                    (&mut v.matrix, &s.matrix),
+                    (&mut v.primaries, &s.primaries),
+                    (&mut v.transfer, &s.transfer),
+                ] {
+                    if mine.is_empty() {
+                        *mine = theirs.clone();
+                    }
+                }
+                if s.details
+                    .iter()
+                    .any(|d| d.contains("DOVI") || d.contains("Dolby Vision"))
+                {
+                    v.dolby_vision = true;
+                }
+                v.hdr = s.hdr.clone();
+            }
+            for s in b.streams.iter().filter(|s| s.kind == "audio") {
+                let name = if s.codec_name.is_empty() {
+                    codec_name(&s.codec)
+                } else {
+                    &s.codec_name
+                };
+                let all =
+                    format!("{} {} {}", s.codec, s.profile, s.details.join(" ")).to_lowercase();
+                v.audio.push(AudioTrack {
+                    codec: if name.is_empty() {
+                        s.codec.clone()
+                    } else {
+                        name.to_string()
+                    },
+                    layout: s.layout.clone(),
+                    rate: s.sample_rate.unwrap_or(0),
+                    language: s.language.clone(),
+                    dolby: matches!(
+                        s.codec.as_str(),
+                        "ac3" | "eac3" | "truehd" | "ac4" | "dolby_e"
+                    ) || all.contains("dolby"),
+                    atmos: all.contains("atmos") || all.contains("joc"),
+                });
+            }
+        }
+        let d = banner::depth_chroma(&v.pix_fmt);
+        // "10 bits, 4:2:2"
+        let mut parts = d.split(", ");
+        if let (Some(b), Some(c)) = (parts.next(), parts.next()) {
+            v.bits = b
+                .split(' ')
+                .next()
+                .and_then(|n| n.parse().ok())
+                .unwrap_or(0);
+            v.chroma = c.to_string();
+        }
+        if v.hdr.is_empty() && !v.transfer.is_empty() {
+            v.hdr = banner::hdr(&v.transfer).to_string();
+        }
+        v
+    }
+
     /// The report: the decoder's view, completed by the transport's.
     pub fn report(&self, now: Instant) -> Report {
         let mut r = Report {

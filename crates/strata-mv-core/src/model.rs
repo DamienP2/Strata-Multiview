@@ -520,6 +520,13 @@ pub enum LayerKind {
         #[serde(flatten)]
         x: Box<crate::wid::broadcast::AlarmLogConfig>,
     },
+    /// A picture measuring tool of an input: waveform, parade, vectorscope,
+    /// histogram, CIE diagram or false colour.
+    #[serde(rename_all = "camelCase")]
+    Scope {
+        #[serde(flatten)]
+        x: Box<crate::wid::scope::ScopeConfig>,
+    },
 }
 
 /// Font settings shared by the text-based widgets.

@@ -17,7 +17,7 @@ pub(crate) fn motion(_d: &mut Draw) -> Option<Motion> {
     Some(Motion::Moving)
 }
 
-fn paint(d: &mut Draw, items: &[Item]) {
+pub(crate) fn paint(d: &mut Draw, items: &[Item]) {
     // Its typography (Layer::panel): font, figures, colour of plain texts, size.
     let look = d.layer.panel.clone().unwrap_or_default();
     let boxed = d.boxed();
@@ -26,6 +26,39 @@ fn paint(d: &mut Draw, items: &[Item]) {
         match it {
             Item::Rect { a, radius, color } => {
                 rect(d, a[0], a[1], a[2], a[3], *radius, Draw::hex(color), m);
+            }
+            Item::Path {
+                points,
+                closed,
+                width,
+                color,
+                fill,
+            } => {
+                let mut pb = tiny_skia::PathBuilder::new();
+                for (i, p) in points.iter().enumerate() {
+                    if i == 0 {
+                        pb.move_to(p[0], p[1]);
+                    } else {
+                        pb.line_to(p[0], p[1]);
+                    }
+                }
+                if *closed {
+                    pb.close();
+                }
+                let Some(path) = pb.finish() else {
+                    continue;
+                };
+                if let Some(f) = fill {
+                    d.fill(&path, Draw::hex(f), FillRule::Winding, m);
+                }
+                if *width > 0.0 {
+                    let stroke = tiny_skia::Stroke {
+                        width: *width,
+                        line_join: tiny_skia::LineJoin::Round,
+                        ..Default::default()
+                    };
+                    d.stroke(&path, Draw::hex(color), &stroke, m);
+                }
             }
             Item::Text {
                 a,

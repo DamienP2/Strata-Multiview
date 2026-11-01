@@ -496,6 +496,29 @@ export interface SignalView {
   timecode?: string;
   /** The worst first. */
   alarms?: Alarm[];
+  /** What its picture and sound are (sent when it changes; kept here). */
+  video?: VideoInfo;
+}
+
+/** What an input's picture and sound are (mirrors strata_mv_core::signal::VideoInfo). */
+export interface VideoInfo {
+  codec: string;
+  profile: string;
+  size: string;
+  pixFmt: string;
+  bits: number;
+  chroma: string;
+  range: string;
+  matrix: string;
+  primaries: string;
+  transfer: string;
+  hdr: string;
+  dolbyVision: boolean;
+  hdr10Plus: boolean;
+  mastering: string;
+  maxCll: number;
+  maxFall: number;
+  audio: { codec: string; layout: string; rate: number; language: string; dolby: boolean; atmos: boolean }[];
 }
 
 /** A line of the alarm journal (mirrors signal::JournalEntry). */
@@ -593,7 +616,12 @@ export function smoothLevels(id: string): Levels {
 
 function applySignals(all: Record<string, SignalView>, sys?: SystemView) {
   const next: Record<string, SignalView> = {};
-  for (const [id, v] of Object.entries(all)) next[id] = v.history || !signals[id]?.history ? v : { ...v, history: signals[id].history };
+  for (const [id, v] of Object.entries(all)) {
+    const was = signals[id];
+    next[id] = { ...v, history: v.history ?? was?.history, video: v.video ?? was?.video };
+  }
+  // What an input is stays known while it says nothing else.
+  for (const [id, v] of Object.entries(signals)) if (!next[id] && v.video) next[id] = { video: v.video };
   signals = next;
   if (sys) system = sys;
   signalSubs.forEach((f) => f());

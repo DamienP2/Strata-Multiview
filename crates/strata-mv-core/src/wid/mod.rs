@@ -11,6 +11,7 @@ pub mod ellipse;
 pub mod image;
 pub mod polygon;
 pub mod quad;
+pub mod scope;
 pub mod shape;
 pub mod source;
 pub mod text;
@@ -52,6 +53,7 @@ pub fn widget_id(kind: &LayerKind) -> Option<&'static str> {
         LayerKind::Timecode { .. } => "timecode",
         LayerKind::Status { .. } => "status",
         LayerKind::AlarmLog { .. } => "alarmLog",
+        LayerKind::Scope { .. } => "scope",
         _ => return None,
     })
 }

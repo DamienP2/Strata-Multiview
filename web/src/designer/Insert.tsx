@@ -1,6 +1,7 @@
-// The tools of the Designer's toolbar that add to the multiview, all at hand in two groups: the
-// broadcast widgets (sources, meters, timecode, alarms, time…), then the shapes, text and images.
-import { Circle, Image, Minus, Square, Type } from 'lucide-react';
+// The tools of the Designer's toolbar that add to the multiview, all at hand in three groups: the
+// broadcast widgets (sources, meters, timecode, alarms, time…), the picture measuring tools
+// (waveform, parade, vectorscope…), then the shapes, text and images.
+import { ChartColumn, Circle, Columns3, Image, Minus, Palette, Radar, Square, Triangle, Type, Waves } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import type { LayerType } from '../engine/types';
 import { WIDGET_LIST } from '../widgets';
@@ -20,7 +21,17 @@ const BROADCAST: { widget: string; label: string; hint: string }[] = [
   { widget: 'clock', label: 'Clock', hint: 'The time of day, analogue or digital, of any time zone' },
 ];
 
-/** Group 2: shapes (rectangle, circle, line), text, images. */
+/** Group 2: the picture measuring tools, a Scope widget each set to its tool. */
+const CONTROL: { kind: string; icon: LucideIcon; label: string; hint: string; size: [number, number] }[] = [
+  { kind: 'waveform', icon: Waves, label: 'Waveform', hint: 'The luma of the picture, % or nits (HDR)', size: [640, 360] },
+  { kind: 'parade', icon: Columns3, label: 'RGB parade', hint: 'R, G and B side by side', size: [640, 360] },
+  { kind: 'vector', icon: Radar, label: 'Vectorscope', hint: 'Hue and saturation, 75 % and 100 % targets, skin tone line', size: [400, 400] },
+  { kind: 'histogram', icon: ChartColumn, label: 'Histogram', hint: 'How many pixels at each level, luma and R, G, B', size: [640, 300] },
+  { kind: 'cie', icon: Triangle, label: 'CIE 1931 chromaticity', hint: 'The colours against the BT.709, P3 and BT.2020 gamuts', size: [400, 400] },
+  { kind: 'falseColor', icon: Palette, label: 'False colour', hint: 'The picture coloured by exposure', size: [640, 360] },
+];
+
+/** Group 3: shapes (rectangle, circle, line), text, images. */
 const DRAWING: { key: string; icon: LucideIcon; label: string; ctx?: string; type: LayerType; patch?: Record<string, unknown>; name?: () => string }[] = [
   { key: 'rect', icon: Square, label: 'Rectangle', type: 'rect' },
   { key: 'ellipse', icon: Circle, label: 'Circle', type: 'ellipse', patch: { props: { width: 300, height: 300 } } },
@@ -50,6 +61,14 @@ export function InsertTools({ onAdd }: { onAdd: AddLayer }) {
             </button>
           );
         })}
+      </div>
+      <span className="tl-sep" />
+      <div className="tl-insert" role="group" aria-label={t('Picture measuring tools')}>
+        {CONTROL.map((c) => (
+          <button key={c.kind} className="tool" title={`${t(c.label)} — ${t(c.hint)}`} onClick={() => onAdd('scope', { kind: c.kind, props: { width: c.size[0], height: c.size[1] } }, t(c.label))}>
+            <c.icon size={15} />
+          </button>
+        ))}
       </div>
       <span className="tl-sep" />
       <div className="tl-insert" role="group" aria-label={t('Shapes, text and images')}>

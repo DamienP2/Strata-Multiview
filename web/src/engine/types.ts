@@ -88,7 +88,8 @@ export type LayerKind =
   | ({ type: 'loudness' } & import('../widgets/broadcast').LoudnessConfig)
   | ({ type: 'timecode' } & import('../widgets/broadcast').TimecodeConfig)
   | ({ type: 'status' } & import('../widgets/broadcast').StatusConfig)
-  | ({ type: 'alarmLog' } & import('../widgets/broadcast').AlarmLogConfig);
+  | ({ type: 'alarmLog' } & import('../widgets/broadcast').AlarmLogConfig)
+  | ({ type: 'scope' } & import('../widgets/scope').ScopeConfig);
 
 export type LayerType = LayerKind['type'];
 

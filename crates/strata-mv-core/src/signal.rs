@@ -186,6 +186,85 @@ pub struct SourceView {
     pub timecode: String,
     /// The faults on it now, the worst first.
     pub alarms: Vec<Alarm>,
+    /// What its picture and sound are (colour, HDR, codecs).
+    pub video: VideoInfo,
+}
+
+/// What a live input's picture and sound are: the Signal widget, the scopes'
+/// graticules (by transfer and primaries).
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+#[serde(default, rename_all = "camelCase")]
+pub struct VideoInfo {
+    /// "H.264 / AVC", "HEVC"…
+    pub codec: String,
+    /// "Main 10", "High"…
+    pub profile: String,
+    /// "1920x1080".
+    pub size: String,
+    /// As decoded ("yuv422p10le").
+    pub pix_fmt: String,
+    /// Bits per component (0: unknown).
+    pub bits: u8,
+    /// "4:2:0", "4:2:2", "4:4:4" ("" unknown).
+    pub chroma: String,
+    /// "tv" (limited) or "pc" (full).
+    pub range: String,
+    /// ffmpeg's names: "bt709", "bt2020nc"…
+    pub matrix: String,
+    pub primaries: String,
+    /// "bt709", "smpte2084" (PQ), "arib-std-b67" (HLG)…
+    pub transfer: String,
+    /// SDR, HDR10, HLG, Dolby Vision, HDR10+.
+    pub hdr: String,
+    pub dolby_vision: bool,
+    pub hdr10_plus: bool,
+    /// SMPTE ST 2086, as ffmpeg tells it ("" none).
+    pub mastering: String,
+    /// MaxCLL and MaxFALL, cd/m² (0: not carried).
+    pub max_cll: u32,
+    pub max_fall: u32,
+    /// Its sound tracks.
+    pub audio: Vec<AudioTrack>,
+}
+
+/// A sound track of an input.
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+#[serde(default, rename_all = "camelCase")]
+pub struct AudioTrack {
+    /// "AAC", "E-AC-3 (Dolby Digital Plus)"…
+    pub codec: String,
+    /// "stereo", "5.1(side)"…
+    pub layout: String,
+    pub rate: u32,
+    pub language: String,
+    /// Dolby Digital, Digital Plus, TrueHD, E, AC-4.
+    pub dolby: bool,
+    /// Dolby Atmos (Digital Plus JOC, TrueHD Atmos).
+    pub atmos: bool,
+}
+
+impl VideoInfo {
+    /// The wide gamut of BT.2020 (else BT.709).
+    pub fn wide(&self) -> bool {
+        self.primaries.contains("2020")
+    }
+
+    /// SDR, HDR10, HLG… from what is known.
+    pub fn dynamic(&self) -> &str {
+        if self.dolby_vision {
+            "Dolby Vision"
+        } else if self.hdr10_plus {
+            "HDR10+"
+        } else if self.transfer.contains("2084") {
+            "HDR10"
+        } else if self.transfer.contains("b67") {
+            "HLG"
+        } else if !self.hdr.is_empty() {
+            &self.hdr
+        } else {
+            "SDR"
+        }
+    }
 }
 
 /// PTP, as linuxptp tells it.

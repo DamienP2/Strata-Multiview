@@ -11,6 +11,7 @@ mod cache;
 mod mask;
 pub mod pool;
 mod scaled;
+pub mod scopes;
 pub mod sequence;
 mod shadow;
 pub mod slate;
@@ -172,6 +173,13 @@ pub trait LiveInputs: Send + Sync {
     /// PTP, NTP and the alarm journal (the Status and Alarms widgets).
     fn system(&self) -> strata_mv_core::signal::SystemView {
         Default::default()
+    }
+    /// The trace of a scope of an input's newest picture (made once per
+    /// picture by the server, shared by every output and page).
+    fn scope(&self, id: &str, r: &scopes::ScopeRequest) -> Option<Arc<Pixmap>> {
+        self.picture(id)
+            .and_then(|p| scopes::trace(&p, r))
+            .map(Arc::new)
     }
 }
 
@@ -457,6 +465,11 @@ impl Renderer {
     /// PTP, NTP and the alarm journal.
     pub fn live_system(&self) -> strata_mv_core::signal::SystemView {
         self.live.as_ref().map(|l| l.system()).unwrap_or_default()
+    }
+
+    /// The trace of a scope of a live input.
+    pub fn live_scope(&self, id: &str, r: &scopes::ScopeRequest) -> Option<Arc<Pixmap>> {
+        self.live.as_ref()?.scope(id, r)
     }
 
     /// The latest picture of a live input.
@@ -2079,7 +2092,8 @@ impl Renderer {
             | LayerKind::Loudness { .. }
             | LayerKind::Timecode { .. }
             | LayerKind::Status { .. }
-            | LayerKind::AlarmLog { .. } => {}
+            | LayerKind::AlarmLog { .. }
+            | LayerKind::Scope { .. } => {}
         }
     }
 

@@ -37,9 +37,40 @@ pub enum Item {
         color: String,
         align: TextAlign,
     },
+    /// A line through points (closed: back to the first), stroked `width`
+    /// wide, filled when `fill` is set: graticules, curves.
+    Path {
+        points: Vec<[f32; 2]>,
+        closed: bool,
+        width: f32,
+        color: String,
+        fill: Option<String>,
+    },
 }
 
-fn rect(a: Area, radius: f32, color: &str) -> Item {
+/// A line through `points`.
+pub fn path(points: Vec<[f32; 2]>, closed: bool, width: f32, color: &str) -> Item {
+    Item::Path {
+        points,
+        closed,
+        width,
+        color: color.into(),
+        fill: None,
+    }
+}
+
+/// A circle of `r` around `c`, as a closed line of 72 points.
+pub fn circle(c: [f32; 2], r: f32, width: f32, color: &str) -> Item {
+    let points = (0..72)
+        .map(|i| {
+            let a = i as f32 * std::f32::consts::TAU / 72.0;
+            [c[0] + r * a.cos(), c[1] + r * a.sin()]
+        })
+        .collect();
+    path(points, true, width, color)
+}
+
+pub fn rect(a: Area, radius: f32, color: &str) -> Item {
     Item::Rect {
         a,
         radius,
@@ -47,7 +78,7 @@ fn rect(a: Area, radius: f32, color: &str) -> Item {
     }
 }
 
-fn text(
+pub fn text(
     a: Area,
     t: impl Into<String>,
     size: f32,
