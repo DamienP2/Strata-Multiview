@@ -274,7 +274,7 @@ Chaque entrée est surveillée en permanence :
 | --- | --- | --- |
 | **Perte du signal** | critique | plus d'image reçue |
 | **Noir** | critique | image noire depuis 3 s |
-| **Image figée** | critique | image identique depuis 4 s |
+| **Image figée** | critique | une image vivante qui ne bouge plus : elle bougeait dans les 30 s d'avant et ses images se répètent au pixel près depuis 10 s, ou elle avait le bruit d'une image en direct et se répète au pixel près depuis 4 s. Jamais sur une mire, une image unie, du noir, une image fixe dès le départ (carton, graphique) ni un plan calme en direct (son bruit continue) |
 | **Silence** | alerte | audio sous −60 dBFS depuis 5 s |
 | **Trop fort** | alerte | short-term au-dessus de la cible de plus de 3 LU depuis 10 s |
 | **Crête** | alerte | true peak au-dessus de −1 dBTP (tenue 3 s) |

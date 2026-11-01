@@ -470,7 +470,7 @@ export interface Tally {
 }
 
 /** A fault the server sees on an input (mirrors signal::AlarmKind). */
-export type AlarmKind = 'loss' | 'black' | 'freeze' | 'silence' | 'loud' | 'peak' | 'bars';
+export type AlarmKind = 'loss' | 'black' | 'freeze' | 'silence' | 'loud' | 'peak';
 export type Severity = 'warning' | 'critical';
 export interface Alarm {
   kind: AlarmKind;
@@ -626,7 +626,6 @@ export function alarmText(kind: AlarmKind, lang = 'fr'): string {
     silence: ['SILENCE', 'SILENCE'],
     loud: ['TROP FORT', 'TOO LOUD'],
     peak: ['TRUE PEAK', 'TRUE PEAK'],
-    bars: ['MIRE', 'COLOUR BARS'],
   };
   return words[kind][fr ? 0 : 1];
 }

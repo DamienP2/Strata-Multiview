@@ -118,9 +118,6 @@ pub enum AlarmKind {
     Loud,
     /// The true peak goes over the limit.
     Peak,
-    /// The picture is colour bars (a source not on air yet, an encoder
-    /// without input): still by nature, not a frozen picture.
-    Bars,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord, Serialize, Deserialize)]
@@ -154,8 +151,6 @@ impl AlarmKind {
             (AlarmKind::Loud, false) => "TOO LOUD",
             (AlarmKind::Peak, true) => "TRUE PEAK",
             (AlarmKind::Peak, false) => "TRUE PEAK",
-            (AlarmKind::Bars, true) => "MIRE",
-            (AlarmKind::Bars, false) => "COLOUR BARS",
         }
     }
 }

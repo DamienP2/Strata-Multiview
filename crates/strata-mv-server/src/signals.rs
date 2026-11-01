@@ -31,8 +31,18 @@ const TC_GONE: Duration = Duration::from_secs(1);
 
 /// How long a fault lasts before it is one.
 const BLACK_AFTER: Duration = Duration::from_secs(3);
-const FREEZE_AFTER: Duration = Duration::from_secs(4);
-const BARS_AFTER: Duration = Duration::from_secs(3);
+/// A picture that moved and stopped moving (only noise left) is frozen
+/// after this long…
+const FREEZE_AFTER: Duration = Duration::from_secs(10);
+/// …if it moved, a few moments at least, in this time before.
+const MOVED_BEFORE: Duration = Duration::from_secs(30);
+/// A live picture (never twice the same, by its noise) for this long that
+/// becomes the same to the pixel picture after picture (a decoder or an
+/// encoder repeating its last one) is frozen after…
+const NOISY_BEFORE: Duration = Duration::from_secs(5);
+const EXACT_AFTER: Duration = Duration::from_secs(4);
+/// A sample changing by more than this is the picture moving, not noise.
+const MOVES: u8 = 10;
 const SILENCE_AFTER: Duration = Duration::from_secs(5);
 const LOUD_AFTER: Duration = Duration::from_secs(10);
 /// Louder than the target by this much, LU, for [`LOUD_AFTER`].
@@ -77,15 +87,32 @@ struct Loud {
 
 /// What the picture of an input looks like, to tell black and frozen ones.
 struct Look {
-    /// 8 × 8 luma samples of the last picture.
-    print: [u8; 64],
-    /// Since when it has not changed.
-    same_since: Instant,
+    /// 16 × 9 luma samples of the last picture.
+    print: [u8; PRINT],
+    /// Since when it has not moved (only noise, if anything).
+    still_since: Instant,
+    /// When it moved (twice a second at most), the last minute.
+    moved: VecDeque<Instant>,
+    /// Since when each picture is the same as the one before, to the pixel.
+    exact_since: Option<Instant>,
+    /// It was never the same twice (a live picture's noise) for a while
+    /// just before it became the same to the pixel.
+    noisy_before: bool,
+    /// When two pictures in a row were last the same to the pixel.
+    last_exact: Option<Instant>,
+    /// Since it stopped moving: pictures, and how many of them were the
+    /// same to the pixel as the one before (a frozen picture coded again
+    /// differs at each key frame only; a live one, by its noise, always).
+    still_pictures: u32,
+    still_exact: u32,
     /// Since when it is black.
     black_since: Option<Instant>,
-    /// Since when it is colour bars.
-    bars_since: Option<Instant>,
+    /// Still by nature (colour bars, a plain picture): never frozen.
+    still_kind: bool,
 }
+
+/// Samples of a picture's print (16 × 9).
+const PRINT: usize = 144;
 
 /// The faults on an input now, since when (ms since 1970), and its name
 /// (the journal's lines say it).
@@ -226,15 +253,17 @@ pub fn is_bars(pm: &tiny_skia::Pixmap) -> bool {
     bars.contains("YCGMRB")
 }
 
-fn print_of(pm: &tiny_skia::Pixmap) -> ([u8; 64], bool) {
+/// 16 × 9 luma samples of a picture, whether it is black, whether it is
+/// plain (one colour, a slate's background: still by nature).
+fn print_of(pm: &tiny_skia::Pixmap) -> ([u8; PRINT], bool, bool) {
     let (w, h) = (pm.width() as usize, pm.height() as usize);
     let data = pm.data();
-    let mut out = [0u8; 64];
-    let (mut sum, mut max) = (0u32, 0u8);
+    let mut out = [0u8; PRINT];
+    let (mut sum, mut max, mut min) = (0u32, 0u8, 255u8);
     for (i, o) in out.iter_mut().enumerate() {
-        let (gx, gy) = (i % 8, i / 8);
-        let x = (gx * 2 + 1) * w / 16;
-        let y = (gy * 2 + 1) * h / 16;
+        let (gx, gy) = (i % 16, i / 16);
+        let x = (gx * 2 + 1) * w / 32;
+        let y = (gy * 2 + 1) * h / 18;
         let p = (y.min(h.saturating_sub(1)) * w + x.min(w.saturating_sub(1))) * 4;
         let (r, g, b) = (
             u32::from(*data.get(p).unwrap_or(&0)),
@@ -245,9 +274,11 @@ fn print_of(pm: &tiny_skia::Pixmap) -> ([u8; 64], bool) {
         *o = y;
         sum += u32::from(y);
         max = max.max(y);
+        min = min.min(y);
     }
-    // Under 4 % on average, nothing above 12 %.
-    (out, sum / 64 < 10 && max < 31)
+    // Black: under 4 % on average, nothing above 12 %.
+    let black = sum / (PRINT as u32) < 10 && max < 31;
+    (out, black, max - min < 12)
 }
 
 impl Signals {
@@ -371,37 +402,105 @@ impl Signals {
 
     /// A new picture of an input: is it black, has it changed?
     pub fn picture(&self, id: &str, pm: &tiny_skia::Pixmap) {
-        let (print, black) = print_of(pm);
+        let (print, black, plain) = print_of(pm);
+        let still_kind = plain || is_bars(pm);
         let now = Instant::now();
         let mut looks = write(&self.looks);
         let l = looks.entry(id.to_string()).or_insert(Look {
             print,
-            same_since: now,
+            still_since: now,
+            moved: VecDeque::new(),
+            exact_since: None,
+            noisy_before: false,
+            last_exact: None,
+            still_pictures: 0,
+            still_exact: 0,
             black_since: None,
-            bars_since: None,
+            still_kind,
         });
-        // Changed: more than a slight difference somewhere (noise of a
-        // still picture coded again stays under it).
-        if l.print
+        let most = l
+            .print
             .iter()
             .zip(print.iter())
-            .any(|(a, b)| a.abs_diff(*b) > 2)
+            .map(|(a, b)| a.abs_diff(*b))
+            .max()
+            .unwrap_or(0);
+        // Moving: more than noise somewhere.
+        if most > MOVES {
+            l.still_since = now;
+            l.still_pictures = 0;
+            l.still_exact = 0;
+            if l.moved
+                .back()
+                .is_none_or(|t| now.saturating_duration_since(*t) >= Duration::from_millis(500))
+            {
+                l.moved.push_back(now);
+            }
+        }
+        while l
+            .moved
+            .front()
+            .is_some_and(|t| now.saturating_duration_since(*t) > Duration::from_secs(60))
         {
-            l.same_since = now;
+            l.moved.pop_front();
+        }
+        l.still_pictures += 1;
+        if most == 0 {
+            l.still_exact += 1;
+        }
+        // The same to the pixel as the one before.
+        if most == 0 {
+            if l.exact_since.is_none() {
+                l.noisy_before = l
+                    .last_exact
+                    .is_none_or(|t| now.saturating_duration_since(t) >= NOISY_BEFORE);
+                l.exact_since = Some(now);
+            }
+            l.last_exact = Some(now);
+        } else {
+            l.exact_since = None;
         }
         l.print = print;
+        l.still_kind = still_kind;
         if black {
             l.black_since.get_or_insert(now);
         } else {
             l.black_since = None;
         }
-        if is_bars(pm) {
-            l.bars_since.get_or_insert(now);
-            // Bars are still by nature: never a frozen picture.
-            l.same_since = now;
-        } else {
-            l.bars_since = None;
+    }
+
+    /// Since when an input's picture is frozen (None: it is not). Frozen:
+    /// not still by nature (colour bars, a plain picture, black) and either
+    /// - it was live (its noise) and is the same to the pixel picture after
+    ///   picture for `EXACT_AFTER` (a decoder or an encoder repeating its
+    ///   last picture), or
+    /// - it moved, then stopped for `FREEZE_AFTER`, its pictures the same to
+    ///   the pixel 4 times out of 5 since (a frozen picture coded again; a
+    ///   calm live shot keeps its noise).
+    ///
+    /// A picture still from the start (a slate, a still graphic) is never
+    /// frozen.
+    fn frozen(l: &Look, now: Instant) -> Option<Instant> {
+        if l.still_kind || l.black_since.is_some() {
+            return None;
         }
+        if let Some(e) = l.exact_since.filter(|_| l.noisy_before) {
+            if now.saturating_duration_since(e) >= EXACT_AFTER {
+                return Some(e);
+            }
+        }
+        let moved_before = l
+            .moved
+            .iter()
+            .filter(|t| {
+                **t <= l.still_since && l.still_since.saturating_duration_since(**t) <= MOVED_BEFORE
+            })
+            .count();
+        let repeated = l.still_pictures > 0 && l.still_exact * 5 >= l.still_pictures * 4;
+        (moved_before >= 3
+            && repeated
+            && now.saturating_duration_since(l.still_since) >= FREEZE_AFTER)
+            .then_some(l.still_since)
     }
 
     /// The meters of an input as they were `delay` ago (an output shows
@@ -498,9 +597,7 @@ impl Signals {
                 } else if let Some(l) = looks.get(id) {
                     if let Some(s) = over(l.black_since, BLACK_AFTER) {
                         f.insert(AlarmKind::Black, s);
-                    } else if let Some(s) = over(l.bars_since, BARS_AFTER) {
-                        f.insert(AlarmKind::Bars, s);
-                    } else if let Some(s) = over(Some(l.same_since), FREEZE_AFTER) {
+                    } else if let Some(s) = Self::frozen(l, now) {
                         f.insert(AlarmKind::Freeze, s);
                     }
                 }
@@ -862,8 +959,98 @@ mod tests {
         }
     }
 
+    /// A look of a picture still since `still_since`, which moved at `moved`.
+    fn look(still_since: Instant, moved: &[Instant]) -> Look {
+        Look {
+            print: [0; PRINT],
+            still_since,
+            moved: moved.iter().copied().collect(),
+            exact_since: None,
+            noisy_before: false,
+            last_exact: None,
+            still_pictures: 250,
+            still_exact: 240,
+            black_since: None,
+            still_kind: false,
+        }
+    }
+
     #[test]
-    fn bars_are_not_a_frozen_picture() {
+    fn a_picture_still_from_the_start_is_not_frozen() {
+        // A slate, a still graphic: never moved.
+        let t0 = Instant::now();
+        let l = look(t0, &[]);
+        assert_eq!(Signals::frozen(&l, t0 + Duration::from_secs(120)), None);
+    }
+
+    #[test]
+    fn a_picture_that_moved_then_stopped_is_frozen() {
+        let t0 = Instant::now();
+        let moved: Vec<Instant> = (0..6)
+            .map(|i| t0 + Duration::from_millis(500 * i))
+            .collect();
+        let stop = t0 + Duration::from_millis(2500);
+        let l = look(stop, &moved);
+        // Not yet after 5 s; frozen after 10 s, since it stopped.
+        assert_eq!(Signals::frozen(&l, stop + Duration::from_secs(5)), None);
+        assert_eq!(
+            Signals::frozen(&l, stop + Duration::from_secs(11)),
+            Some(stop)
+        );
+        // The same on colour bars or a plain picture: never.
+        let bars = Look {
+            still_kind: true,
+            ..look(stop, &moved)
+        };
+        assert_eq!(Signals::frozen(&bars, stop + Duration::from_secs(60)), None);
+        // Black is its own fault.
+        let black = Look {
+            black_since: Some(stop),
+            ..look(stop, &moved)
+        };
+        assert_eq!(
+            Signals::frozen(&black, stop + Duration::from_secs(60)),
+            None
+        );
+        // It moved once only, long before: a still shot now, not frozen.
+        let once = look(stop, &[t0]);
+        assert_eq!(Signals::frozen(&once, stop + Duration::from_secs(60)), None);
+        // A calm live shot (an empty set): no motion, but its noise; not frozen.
+        let calm = Look {
+            still_exact: 10,
+            ..look(stop, &moved)
+        };
+        assert_eq!(Signals::frozen(&calm, stop + Duration::from_secs(60)), None);
+    }
+
+    #[test]
+    fn a_live_picture_repeated_to_the_pixel_is_frozen_sooner() {
+        // A still shot of a camera (noise, no motion), then the same picture to the pixel.
+        let t0 = Instant::now();
+        let exact = t0 + Duration::from_secs(20);
+        let l = Look {
+            exact_since: Some(exact),
+            noisy_before: true,
+            ..look(t0, &[])
+        };
+        assert_eq!(Signals::frozen(&l, exact + Duration::from_secs(2)), None);
+        assert_eq!(
+            Signals::frozen(&l, exact + Duration::from_secs(5)),
+            Some(exact)
+        );
+        // A computer picture is always the same to the pixel: no noise before, not frozen.
+        let still = Look {
+            noisy_before: false,
+            ..l
+        };
+        assert_eq!(
+            Signals::frozen(&still, exact + Duration::from_secs(60)),
+            None
+        );
+    }
+
+    #[test]
+    fn colour_bars_never_raise_an_alarm() {
         let s = Signals::default();
         let smpte = [
             [191, 191, 191],
@@ -875,17 +1062,20 @@ mod tests {
             [0, 0, 191],
         ];
         let pm = bars(640, &smpte);
-        s.picture("a", &pm);
+        for _ in 0..3 {
+            s.picture("a", &pm);
+        }
         {
-            // Bars for 5 s: the bars, not a frozen picture.
+            // As if they had moved before and stood for a minute.
             let mut looks = write(&s.looks);
             let l = looks.get_mut("a").unwrap();
-            let past = Instant::now() - Duration::from_secs(5);
-            l.bars_since = Some(past);
+            let past = Instant::now() - Duration::from_secs(60);
+            l.still_since = past;
+            l.moved = (0..6).map(|i| past - Duration::from_secs(i)).collect();
+            assert!(l.still_kind);
         }
         s.evaluate(&[("a".into(), "A".into(), true, None)]);
-        let kinds: Vec<_> = s.alarms("a").iter().map(|a| a.kind).collect();
-        assert_eq!(kinds, vec![AlarmKind::Bars]);
+        assert!(s.alarms("a").is_empty(), "{:?}", s.alarms("a"));
     }
 
     #[test]
@@ -949,12 +1139,14 @@ mod tests {
     #[test]
     fn black_and_frozen_pictures_are_told() {
         let black = tiny_skia::Pixmap::new(64, 36).unwrap();
-        let (_, is_black) = print_of(&black);
+        let (_, is_black, _) = print_of(&black);
         assert!(is_black);
         let mut grey = tiny_skia::Pixmap::new(64, 36).unwrap();
         grey.fill(tiny_skia::Color::from_rgba8(128, 128, 128, 255));
-        let (p, is_black) = print_of(&grey);
+        let (p, is_black, plain) = print_of(&grey);
         assert!(!is_black && p[0] > 100);
+        // One colour: still by nature.
+        assert!(plain);
     }
 
     #[test]
