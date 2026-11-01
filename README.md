@@ -383,7 +383,13 @@ Les entrées **SRT, UDP et TCP** passent par un relais : un premier ffmpeg reço
 - **Performances** : processeurs, mémoire, part de Strata et de ffmpeg, avertissements (rendu en retard, images perdues, entrée en défaut, horloge) ; par chaîne la cadence réelle et le temps de rendu ; par sortie ou entrée les images par seconde et les pertes ; la capacité restante de la machine.
 - **Santé** : journal du serveur, arrêts inattendus, archive pour le support.
 - **Utilisateurs** : comptes par rôle, accès limités à certains multiviews et à certaines chaînes. Mots de passe hachés (Argon2), session en cookie HttpOnly, clés d'API pour l'automation.
-- **Paramètres** : nom du serveur, fuseau horaire, sorties publiques, réseaux, heure, synchro vidéo, mises à jour. *Appliquer* redémarre les sorties sans redémarrer le service (le tally et les entrées continuent).
+- **Paramètres** : nom du serveur, fuseau horaire, sorties publiques, réseaux, heure, synchro vidéo, sécurité, mises à jour. *Appliquer* redémarre les sorties sans redémarrer le service (le tally et les entrées continuent).
+- **Sécurité** (Paramètres › Sécurité) :
+  - **HTTPS** sur le port de l'interface : le certificat et la clé (PEM) indiqués, ou à défaut un certificat créé pour la machine (`<données>/tls/`, nom, nom `.local` et adresses IP), que les navigateurs demandent d'accepter une fois. Le HTTP venant d'une autre machine est redirigé vers HTTPS ; la machine elle-même reste joignable en HTTP (application de la barre des menus, scripts locaux).
+  - **Annuaire LDAP / Active Directory** : un compte du serveur est essayé d'abord, puis l'annuaire (compte de recherche, filtre `(sAMAccountName={user})`, liaison avec le mot de passe saisi). Le rôle vient des groupes (`memberOf`, par nom ou DN), mis à jour à chaque connexion ; « Les autres » : rôle des personnes hors de ces groupes, ou refus.
+  - **Authentification unique (OpenID Connect)** : Entra ID / Azure AD, Google, Keycloak, Okta… Un bouton « Se connecter avec … » sur la page de connexion ; flux *authorization code*, jeton d'identité vérifié (signature RS256 par les clés du fournisseur, émetteur, audience, expiration, nonce). URI de redirection à déclarer : `https://<serveur>:<port>/api/auth/oidc/callback`.
+  - Les secrets (mot de passe du compte LDAP, secret client) restent sur le serveur : l'interface les renvoie vides.
+- **Journal d'audit** (Paramètres › Journal d'audit) : chaque modification faite par l'interface ou l'API (connexions réussies ou non, réglages, multiviews, chaînes, entrées, alarmes, utilisateurs, clés) avec la date, l'utilisateur, son adresse et le résultat. Fichier `<données>/audit.log` (une ligne JSON par action, 20 Mo puis `audit.1.log`), export CSV.
 
 ```bash
 strata-mv-server user add <nom> [--role admin|designer|operator|viewer]
@@ -398,7 +404,9 @@ La page **Système › API** documente toute l'API (OpenAPI 3.1, aussi sur `/api
 
 | Méthode | Route | Rôle |
 | --- | --- | --- |
-| `POST` | `/api/auth/login` · `/logout` | session (cookie et jeton) |
+| `POST` | `/api/auth/login` · `/logout` | session (cookie et jeton) ; comptes locaux puis annuaire LDAP |
+| `GET` | `/api/auth/oidc/start` · `/api/auth/oidc/callback` | authentification unique OpenID Connect |
+| `GET` | `/api/audit?limit=…` · `/api/audit?csv=true` | journal d'audit (admin) |
 | `GET` `POST` `PUT` `DELETE` | `/api/projects[/{id}]` · `/export` · `/import` | multiviews (un projet de l'API est un multiview) |
 | `PUT` `DELETE` `POST` | `/api/projects/{id}/templates/{tid}` · `/publish` | multiviews, publication |
 | `GET` `PUT` | `/api/channels` · `/{id}/state` · `/{id}/project` · `/{id}/multiview` · `/{id}/preview.png` | chaînes, multiview à l'antenne, rendu du programme |

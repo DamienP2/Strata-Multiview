@@ -39,6 +39,10 @@ export interface AuthState {
   user: User | null;
   serverName: string;
   publicOutputs: boolean;
+  /** Words of the single sign-on button, when OpenID Connect is on. */
+  sso?: string;
+  /** Accounts of the company's directory (LDAP) can sign in too. */
+  directory?: boolean;
 }
 
 /** Channel state plus when it arrived, to extrapolate widget time. */

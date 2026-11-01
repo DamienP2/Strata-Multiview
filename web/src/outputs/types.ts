@@ -181,6 +181,44 @@ export interface ServerConfig {
   inputs?: InputConfig[];
   /** DeckLink cards and ST 2110 flows (Hardware page). */
   hardware?: HardwareConfig;
+  /** HTTPS of the web interface (crates/strata-mv-server/src/security.rs). */
+  tls?: { enabled: boolean; cert: string; key: string };
+  /** Signing in with LDAP / Active Directory. */
+  ldap?: LdapConfig;
+  /** Signing in with an OpenID Connect provider. */
+  oidc?: OidcConfig;
+}
+
+export interface LdapConfig {
+  enabled: boolean;
+  url: string;
+  starttls: boolean;
+  insecure: boolean;
+  bindDn: string;
+  /** Sent back empty: the saved one is kept. */
+  bindPassword: string;
+  baseDn: string;
+  userFilter: string;
+  nameAttribute: string;
+  adminGroups: string[];
+  designerGroups: string[];
+  operatorGroups: string[];
+  defaultRole: string;
+}
+
+export interface OidcConfig {
+  enabled: boolean;
+  label: string;
+  issuer: string;
+  clientId: string;
+  /** Sent back empty: the saved one is kept. */
+  clientSecret: string;
+  usernameClaim: string;
+  groupsClaim: string;
+  adminGroups: string[];
+  designerGroups: string[];
+  operatorGroups: string[];
+  defaultRole: string;
 }
 
 // ---- Hardware (crates/strata-mv-server/src/hardware.rs) ----

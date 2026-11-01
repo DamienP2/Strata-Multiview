@@ -53,6 +53,16 @@ zip = { version = "9", default-features = false, features = ["deflate-flate2"] }
 resvg = { version = "0.45", default-features = false }
 # Illustrator files (.ai, PDF inside) uploaded as SVG pictures.
 hayro-svg = "0.8"
+# HTTPS of the web interface (rustls with ring, no C toolchain needed) and
+# its self-signed certificate made on first use.
+hyper = "1"
+hyper-util = { version = "0.1", features = ["server-auto", "server-graceful", "service", "tokio"] }
+tokio-rustls = { version = "0.26", default-features = false, features = ["ring", "tls12", "logging"] }
+tower = { version = "0.5", features = ["util"] }
+rustls = { version = "0.23", default-features = false, features = ["ring", "std", "tls12", "logging"] }
+rcgen = { version = "0.14", default-features = false, features = ["crypto", "pem", "ring"] }
+# Sign-in with the directory of the company (LDAP, Active Directory).
+ldap3 = { version = "0.12", default-features = false, features = ["tls-rustls-ring"] }
 
 [target.'cfg(unix)'.dependencies]
 # Thread priorities of the playout (src/rt.rs).

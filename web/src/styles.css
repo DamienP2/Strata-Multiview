@@ -1339,6 +1339,20 @@ code {
   flex: none;
   margin-top: 1px;
 }
+.login-or {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text-3);
+  font-size: 12px;
+}
+.login-or::before,
+.login-or::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--line);
+}
 .login-error {
   color: var(--live);
   background: var(--live-soft);

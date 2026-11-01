@@ -252,6 +252,15 @@ pub struct ServerConfig {
     /// DeckLink cards and ST 2110 flows (Hardware page).
     #[serde(default)]
     pub hardware: HardwareConfig,
+    /// HTTPS of the web interface.
+    #[serde(default)]
+    pub tls: crate::security::TlsConfig,
+    /// Signing in with LDAP / Active Directory.
+    #[serde(default)]
+    pub ldap: crate::security::LdapConfig,
+    /// Signing in with an OpenID Connect provider.
+    #[serde(default)]
+    pub oidc: crate::security::OidcConfig,
     /// Pre-0.2 single-channel outputs, moved into the first channel on load.
     #[serde(default, skip_serializing)]
     outputs: Option<OutputsConfig>,
@@ -278,6 +287,9 @@ impl Default for ServerConfig {
             channels: Vec::new(),
             inputs: Vec::new(),
             hardware: HardwareConfig::default(),
+            tls: Default::default(),
+            ldap: Default::default(),
+            oidc: Default::default(),
             outputs: None,
         }
     }

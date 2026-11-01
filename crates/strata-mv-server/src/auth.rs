@@ -59,6 +59,10 @@ pub struct User {
     /// Colour theme of the interface ("dark", "light", "system"); empty = dark.
     #[serde(default)]
     pub theme: String,
+    /// Where the account comes from: "" (this server), "ldap", "oidc" (its
+    /// password and role are the directory's).
+    #[serde(default)]
+    pub source: String,
     password_hash: String,
 }
 
@@ -75,6 +79,7 @@ pub struct PublicUser {
     pub disabled: bool,
     pub lang: String,
     pub theme: String,
+    pub source: String,
 }
 
 impl From<&User> for PublicUser {
@@ -89,6 +94,7 @@ impl From<&User> for PublicUser {
             disabled: u.disabled,
             lang: u.lang.clone(),
             theme: u.theme.clone(),
+            source: u.source.clone(),
         }
     }
 }
@@ -431,6 +437,7 @@ impl Auth {
             disabled: input.disabled,
             lang: String::new(),
             theme: String::new(),
+            source: String::new(),
             password_hash: hash_password(&input.password).map_err(|e| e.to_string())?,
         };
         list.push(user.clone());
@@ -682,7 +689,73 @@ impl Auth {
         // Hash even for unknown users so timing does not reveal them.
         let hash = user.as_ref().map(|u| u.password_hash.clone()).unwrap_or_else(|| "$argon2id$v=19$m=19456,t=2,p=1$c29tZXNhbHQ$ZmFrZWZha2VmYWtlZmFrZWZha2VmYWtlZmFrZWZha2U".into());
         let ok = verify_password(password, &hash);
-        let user = user.filter(|u| ok && !u.disabled)?;
+        // A directory's account signs in through the directory only.
+        let user = user.filter(|u| ok && !u.disabled && u.source.is_empty())?;
+        Some((self.open_session(&user), user))
+    }
+
+    /// Someone the directory (LDAP, OIDC) knows signs in: their account made
+    /// or brought up to date (name, role), a session opened. An account of
+    /// this server with the same name is theirs (its role kept).
+    pub fn external_login(
+        &self,
+        username: &str,
+        display_name: &str,
+        role: Role,
+        source: &str,
+    ) -> Result<(String, User), String> {
+        let username = username.trim();
+        validate_username(username)?;
+        let mut list = self.users();
+        let user = match list
+            .iter_mut()
+            .find(|u| u.username.eq_ignore_ascii_case(username))
+        {
+            Some(u) => {
+                if u.disabled {
+                    return Err("this account is disabled".into());
+                }
+                if !u.source.is_empty() {
+                    u.role = role;
+                    if !display_name.trim().is_empty() {
+                        u.display_name = display_name.trim().to_string();
+                    }
+                }
+                u.clone()
+            }
+            None => {
+                let random = format!(
+                    "{}{}",
+                    uuid::Uuid::new_v4().simple(),
+                    uuid::Uuid::new_v4().simple()
+                );
+                let u = User {
+                    id: strata_mv_core::new_id(),
+                    username: username.to_string(),
+                    display_name: if display_name.trim().is_empty() {
+                        username.to_string()
+                    } else {
+                        display_name.trim().to_string()
+                    },
+                    role,
+                    projects: None,
+                    channels: None,
+                    disabled: false,
+                    lang: String::new(),
+                    theme: String::new(),
+                    source: source.to_string(),
+                    password_hash: hash_password(&random).map_err(|e| e.to_string())?,
+                };
+                list.push(u.clone());
+                u
+            }
+        };
+        self.save(list).map_err(|e| e.to_string())?;
+        Ok((self.open_session(&user), user))
+    }
+
+    /// A session for `user`: its token.
+    fn open_session(&self, user: &User) -> String {
         let token = format!(
             "{}{}",
             uuid::Uuid::new_v4().simple(),
@@ -698,7 +771,7 @@ impl Auth {
                 },
             );
         }
-        Some((token, user))
+        token
     }
 
     pub fn logout(&self, token: &str) {

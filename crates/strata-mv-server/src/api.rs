@@ -33,6 +33,9 @@ pub fn router() -> Router<Shared> {
         .route("/api/auth/setup", post(auth_setup))
         .route("/api/auth/login", post(auth_login))
         .route("/api/auth/logout", post(auth_logout))
+        .route("/api/auth/oidc/start", get(oidc_start))
+        .route("/api/auth/oidc/callback", get(oidc_callback))
+        .route("/api/audit", get(get_audit))
         .route("/api/me/lang", put(put_my_lang))
         .route("/api/me/theme", put(put_my_theme))
         .route(
@@ -210,6 +213,10 @@ struct AuthState {
     user: Option<PublicUser>,
     server_name: String,
     public_outputs: bool,
+    /// The single sign-on button's words ("" : none).
+    sso: String,
+    /// Names are checked against the directory (LDAP).
+    directory: bool,
 }
 
 async fn auth_state(State(s): State<Shared>, MaybeUser(user): MaybeUser) -> Json<AuthState> {
@@ -218,6 +225,12 @@ async fn auth_state(State(s): State<Shared>, MaybeUser(user): MaybeUser) -> Json
         user: user.as_ref().map(PublicUser::from),
         server_name: s.config.name.clone(),
         public_outputs: s.config.public_outputs,
+        sso: if s.config.oidc.enabled {
+            s.config.oidc.label.clone()
+        } else {
+            String::new()
+        },
+        directory: s.config.ldap.enabled,
     })
 }
 
@@ -281,17 +294,250 @@ async fn auth_setup(
 
 async fn auth_login(State(s): State<Shared>, Json(c): Json<Credentials>) -> ApiResult<Response> {
     let auth = s.auth.clone();
+    let (user, pass) = (c.username.clone(), c.password.clone());
     // Argon2 is deliberately slow: keep it off the async workers.
-    let res = tokio::task::spawn_blocking(move || auth.login(&c.username, &c.password))
+    let res = tokio::task::spawn_blocking(move || auth.login(&user, &pass))
         .await
         .map_err(internal)?;
-    match res {
-        Some((token, user)) => Ok(login_response(token, &user)),
-        None => Err((
-            StatusCode::UNAUTHORIZED,
-            "wrong user name or password".into(),
-        )),
+    if let Some((token, user)) = res {
+        return Ok(login_response(token, &user));
     }
+    // Not an account of this server: the directory, when there is one.
+    if s.config.ldap.enabled {
+        match crate::security::ldap_login(&s.config.ldap, &c.username, &c.password).await {
+            Ok(Some((name, role))) => {
+                let auth = s.auth.clone();
+                let user = c.username.trim().to_string();
+                let r = tokio::task::spawn_blocking(move || {
+                    auth.external_login(&user, &name, role, "ldap")
+                })
+                .await
+                .map_err(internal)?
+                .map_err(|e| (StatusCode::FORBIDDEN, e))?;
+                return Ok(login_response(r.0, &r.1));
+            }
+            Ok(None) => {}
+            Err(e) => tracing::warn!("LDAP: {e}"),
+        }
+    }
+    Err((
+        StatusCode::UNAUTHORIZED,
+        "wrong user name or password".into(),
+    ))
+}
+
+/// The address the browser reached this server at ("https://host:port").
+fn origin_of(headers: &HeaderMap, s: &Shared) -> String {
+    let host = headers
+        .get(header::HOST)
+        .and_then(|h| h.to_str().ok())
+        .unwrap_or("localhost");
+    let scheme = headers
+        .get("x-forwarded-proto")
+        .and_then(|h| h.to_str().ok())
+        .unwrap_or(if s.config.tls.enabled {
+            "https"
+        } else {
+            "http"
+        });
+    format!("{scheme}://{host}")
+}
+
+/// `GET /api/auth/oidc/start`: off to the provider's sign-in page.
+async fn oidc_start(State(s): State<Shared>, headers: HeaderMap) -> ApiResult<Response> {
+    let c = s.config.oidc.clone();
+    if !c.enabled {
+        return Err(not_found("single sign-on"));
+    }
+    let d = tokio::task::spawn_blocking(move || crate::security::discover(&c.issuer))
+        .await
+        .map_err(internal)?
+        .map_err(|e| (StatusCode::BAD_GATEWAY, e.to_string()))?;
+    let redirect = format!("{}/api/auth/oidc/callback", origin_of(&headers, &s));
+    let state = uuid::Uuid::new_v4().simple().to_string();
+    let nonce = uuid::Uuid::new_v4().simple().to_string();
+    s.oidc.put(state.clone(), nonce.clone(), redirect.clone());
+    let enc = crate::security::urlenc;
+    let url = format!(
+        "{}?response_type=code&client_id={}&redirect_uri={}&scope={}&state={state}&nonce={nonce}",
+        d.authorization,
+        enc(s.config.oidc.client_id.trim()),
+        enc(&redirect),
+        enc("openid profile email")
+    );
+    Ok((StatusCode::FOUND, [(header::LOCATION, url)]).into_response())
+}
+
+#[derive(Deserialize)]
+struct OidcBack {
+    #[serde(default)]
+    code: String,
+    #[serde(default)]
+    state: String,
+    #[serde(default)]
+    error_description: String,
+}
+
+/// `GET /api/auth/oidc/callback`: back from the provider, signed in.
+async fn oidc_callback(State(s): State<Shared>, Query(q): Query<OidcBack>) -> Response {
+    let fail = |m: String| {
+        tracing::warn!("SSO: {m}");
+        (
+            StatusCode::FOUND,
+            [(
+                header::LOCATION,
+                format!("/?sso_error={}", crate::security::urlenc(&m)),
+            )],
+        )
+            .into_response()
+    };
+    if !q.error_description.is_empty() {
+        return fail(q.error_description);
+    }
+    let Some((nonce, redirect)) = s.oidc.take(&q.state) else {
+        return fail("sign-in expired: try again".into());
+    };
+    let c = s.config.oidc.clone();
+    let code = q.code.clone();
+    let claims = tokio::task::spawn_blocking(move || {
+        let d = crate::security::discover(&c.issuer)?;
+        crate::security::finish(&c, &d, &code, &redirect, &nonce)
+    })
+    .await;
+    let claims = match claims {
+        Ok(Ok(c)) => c,
+        Ok(Err(e)) => return fail(e.to_string()),
+        Err(e) => return fail(e.to_string()),
+    };
+    let Some((user, name, role)) = crate::security::identity(&s.config.oidc, &claims) else {
+        return fail("no role for this account (groups)".into());
+    };
+    let auth = s.auth.clone();
+    match tokio::task::spawn_blocking(move || auth.external_login(&user, &name, role, "oidc")).await
+    {
+        Ok(Ok((token, _))) => (
+            StatusCode::FOUND,
+            [
+                (header::SET_COOKIE, session_cookie(&token, 14 * 24 * 3600)),
+                (header::LOCATION, "/".to_string()),
+            ],
+        )
+            .into_response(),
+        Ok(Err(e)) => fail(e),
+        Err(e) => fail(e.to_string()),
+    }
+}
+
+/// Every change made through the API goes to the audit journal: who, from
+/// where, what, and how it went.
+pub async fn audit_layer(
+    State(s): State<Shared>,
+    req: axum::extract::Request,
+    next: axum::middleware::Next,
+) -> Response {
+    let method = req.method().clone();
+    let path = req.uri().path().to_string();
+    let changes =
+        matches!(method.as_str(), "POST" | "PUT" | "PATCH" | "DELETE") && path.starts_with("/api/");
+    // Reading, and the live pages' own chatter: not audited.
+    if !changes || path.starts_with("/api/alarms/test") {
+        return next.run(req).await;
+    }
+    let (parts, body) = req.into_parts();
+    let ip = parts
+        .extensions
+        .get::<ConnectInfo<SocketAddr>>()
+        .map(|c| c.0.ip().to_string())
+        .unwrap_or_default();
+    let before = auth::token_from(&parts).and_then(|t| s.auth.user_for_token(&t));
+    let req = axum::extract::Request::from_parts(parts, body);
+    let res = next.run(req).await;
+    let status = res.status().as_u16();
+    let user = match &before {
+        Some(u) => u.username.clone(),
+        None => res
+            .headers()
+            .get_all(header::SET_COOKIE)
+            .iter()
+            .filter_map(|v| v.to_str().ok())
+            .find_map(|c| {
+                c.strip_prefix(&format!("{}=", auth::COOKIE))
+                    .map(|v| v.split(';').next().unwrap_or("").to_string())
+            })
+            .and_then(|t| s.auth.user_for_token(&t))
+            .map(|u| u.username)
+            .unwrap_or_else(|| "—".into()),
+    };
+    let e = crate::security::AuditEntry {
+        at: now_ms(),
+        user,
+        ip,
+        method: method.to_string(),
+        path: path.clone(),
+        status,
+        action: crate::security::action_of(method.as_str(), &path),
+    };
+    let audit = s.audit.clone();
+    tokio::task::spawn_blocking(move || audit.write(&e));
+    res
+}
+
+#[derive(Deserialize)]
+struct AuditQuery {
+    #[serde(default)]
+    limit: Option<usize>,
+    #[serde(default)]
+    csv: Option<bool>,
+}
+
+/// `GET /api/audit`: the newest changes (admin); `?csv=true` as a file.
+async fn get_audit(
+    State(s): State<Shared>,
+    CurrentUser(me): CurrentUser,
+    Query(q): Query<AuditQuery>,
+) -> ApiResult<Response> {
+    require(me.is_admin())?;
+    let audit = s.audit.clone();
+    let limit = q.limit.unwrap_or(2000).clamp(1, 50_000);
+    let list = tokio::task::spawn_blocking(move || audit.read(limit))
+        .await
+        .map_err(internal)?;
+    if q.csv.unwrap_or(false) {
+        let tz = jiff::tz::TimeZone::system();
+        let mut out =
+            String::from("\u{feff}Date;Utilisateur;Adresse;Action;Méthode;Chemin;Résultat\r\n");
+        let qt = |x: &str| format!("\"{}\"", x.replace('"', "\"\""));
+        for e in &list {
+            let when = jiff::Timestamp::from_millisecond(e.at)
+                .map(|t| {
+                    t.to_zoned(tz.clone())
+                        .strftime("%Y-%m-%d %H:%M:%S")
+                        .to_string()
+                })
+                .unwrap_or_default();
+            out.push_str(&format!(
+                "{when};{};{};{};{};{};{}\r\n",
+                qt(&e.user),
+                e.ip,
+                qt(&e.action),
+                e.method,
+                qt(&e.path),
+                e.status
+            ));
+        }
+        return Ok((
+            [
+                (header::CONTENT_TYPE, "text/csv; charset=utf-8"),
+                (
+                    header::CONTENT_DISPOSITION,
+                    "attachment; filename=\"journal-audit.csv\"",
+                ),
+            ],
+            out,
+        )
+            .into_response());
+    }
+    Ok(Json(list).into_response())
 }
 
 async fn auth_logout(State(s): State<Shared>, headers: HeaderMap) -> Response {
@@ -1801,7 +2047,13 @@ async fn get_system(State(s): State<Shared>, CurrentUser(me): CurrentUser) -> Js
         uptime_secs: s.started_at.elapsed().map(|d| d.as_secs()).unwrap_or(0),
         timezone: server_timezone(&s),
         // Re-read so the loaded projects are current.
-        config: me.is_admin().then(|| ServerConfig::load(&s.data_dir)),
+        config: me.is_admin().then(|| {
+            // The directory's secrets stay on the server.
+            let mut c = ServerConfig::load(&s.data_dir);
+            c.ldap.bind_password.clear();
+            c.oidc.client_secret.clear();
+            c
+        }),
         interfaces,
     })
 }
@@ -1835,6 +2087,13 @@ async fn put_system_config(
     }
     let dir = s.data_dir.clone();
     let before = ServerConfig::load(&dir);
+    // A secret sent back empty: the saved one.
+    if cfg.ldap.bind_password.is_empty() {
+        cfg.ldap.bind_password = before.ldap.bind_password.clone();
+    }
+    if cfg.oidc.client_secret.is_empty() {
+        cfg.oidc.client_secret = before.oidc.client_secret.clone();
+    }
     let time = (before.time != cfg.time).then(|| cfg.time.clone());
     // Only the time changed: the engine goes on.
     let restart = {

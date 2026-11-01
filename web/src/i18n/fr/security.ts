@@ -1,0 +1,56 @@
+// Security: HTTPS, the company's directory (LDAP / Active Directory), single sign-on (OpenID Connect)
+// and the audit journal.
+// spacing: a no-break space (U+00A0) before ? ! : ; and inside « ».
+export const security: Record<string, string> = {
+  'Single sign-on failed:': 'Échec de l’authentification unique :',
+  or: 'ou',
+  'Sign in with {name}': 'Se connecter avec {name}',
+  'Your company account (directory) works here too.': 'Votre compte d’entreprise (annuaire) fonctionne aussi ici.',
+  'Administrator groups': 'Groupes administrateurs',
+  'One a line: the group’s name, or its full DN (LDAP).': 'Un par ligne : le nom du groupe, ou son DN complet (LDAP).',
+  'Designer groups': 'Groupes designers',
+  'Operator groups': 'Groupes opérateurs',
+  'The others': 'Les autres',
+  'The role of someone in none of these groups.': 'Le rôle d’une personne qui n’est dans aucun de ces groupes.',
+  Refused: 'Refusé',
+  Administrator: 'Administrateur',
+  'Encrypted interface': 'Interface chiffrée',
+  'The web interface, the API and the output pages over HTTPS on the same port. Applied when the settings are saved (the engine restarts).':
+    'L’interface web, l’API et les pages de sortie en HTTPS sur le même port. Appliqué à l’enregistrement des réglages (le moteur redémarre).',
+  HTTPS: 'HTTPS',
+  'Certificate (PEM)': 'Certificat (PEM)',
+  'Path of the certificate (chain) on the server. Both empty: a certificate made for this machine, which browsers ask to trust once.':
+    'Chemin du certificat (chaîne) sur le serveur. Les deux vides : un certificat créé pour cette machine, que les navigateurs demandent d’accepter une fois.',
+  'Private key (PEM)': 'Clé privée (PEM)',
+  'Plain HTTP from another machine is sent to HTTPS; the machine itself (127.0.0.1) stays reachable over HTTP for the menu bar app.':
+    'Le HTTP venant d’une autre machine est redirigé vers HTTPS ; la machine elle-même (127.0.0.1) reste joignable en HTTP pour l’application de la barre des menus.',
+  'Directory (LDAP / Active Directory)': 'Annuaire (LDAP / Active Directory)',
+  'Sign in with the directory': 'Connexion par l’annuaire',
+  Security: 'Sécurité',
+  'Do not check its certificate': 'Ne pas vérifier son certificat',
+  'Search account (DN)': 'Compte de recherche (DN)',
+  'Empty: anonymous search.': 'Vide : recherche anonyme.',
+  'Its password': 'Son mot de passe',
+  'Kept on the server; leave empty to keep the saved one.': 'Conservé sur le serveur ; laisser vide pour garder celui enregistré.',
+  'Base of the users (DN)': 'Base des utilisateurs (DN)',
+  'User filter': 'Filtre utilisateur',
+  '{user}: the name typed. Active Directory: (sAMAccountName={user}); OpenLDAP: (uid={user}).': '{user} : le nom saisi. Active Directory : (sAMAccountName={user}) ; OpenLDAP : (uid={user}).',
+  'Name attribute': 'Attribut du nom',
+  'An account of this server signs in first; the others are checked against the directory, their account made on first sign-in with the role of their groups (brought up to date at each sign-in).':
+    'Un compte de ce serveur est essayé d’abord ; les autres sont vérifiés auprès de l’annuaire, leur compte est créé à la première connexion avec le rôle de leurs groupes (mis à jour à chaque connexion).',
+  'Single sign-on (OpenID Connect)': 'Authentification unique (OpenID Connect)',
+  'Sign-in button': 'Bouton de connexion',
+  'Words of the button': 'Texte du bouton',
+  Issuer: 'Émetteur (issuer)',
+  'Client ID': 'ID client',
+  'Client secret': 'Secret client',
+  'Name claim': 'Claim du nom',
+  'Groups claim': 'Claim des groupes',
+  'Address to give the provider (redirect URI):': 'Adresse à donner au fournisseur (URI de redirection) :',
+  'Audit journal': 'Journal d’audit',
+  'Every change made through the interface or the API: sign-ins, settings, multiviews, alarms, users…':
+    'Chaque modification faite par l’interface ou l’API : connexions, réglages, multiviews, alarmes, utilisateurs…',
+  User: 'Utilisateur',
+  Action: 'Action',
+  Result: 'Résultat',
+};

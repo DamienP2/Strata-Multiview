@@ -67,6 +67,7 @@ Le serveur repose sur axum et tokio.
 - **Exemples** (`examples.rs`) : les dix multiviews de régie de diffusion, fichiers `examples/ex-NN-*.json` embarqués (`build.rs`), copiés en multiviews de l'utilisateur, leurs tuiles sur les entrées du serveur (`{{input:N}}`).
 - **Multiviews** : la bibliothèque `data/projects/<id>.json` est écrite de façon atomique ; un nouveau multiview naît avec sa page, déjà publiée. Le multiview chargé sur chaque chaîne est mémorisé dans `config.json`.
 - **Utilisateurs** : `users.json` stocke des hachages Argon2. Chaque route vérifie le rôle de l'appelant et son périmètre de multiviews et de chaînes.
+- **Sécurité** (`security.rs`) : HTTPS par rustls (fournisseur ring, sans chaîne de compilation C) ; certificat fourni ou créé par rcgen. `serve_https` sert HTTPS et HTTP sur le même port en regardant le premier octet de chaque connexion (0x16 : poignée de main TLS) : HTTP accepté depuis la machine elle-même, redirigé vers HTTPS (308) depuis ailleurs ; connexions HTTP/1.1 et HTTP/2 avec mise à niveau WebSocket, arrêt gracieux de 3 s au redémarrage du moteur. LDAP par `ldap3` (liaison du compte de recherche, recherche, liaison de l'utilisateur, groupes `memberOf` → rôle). OpenID Connect : découverte, état et nonce en mémoire 10 min, échange du code, jeton d'identité vérifié avec ring contre le JWKS. Les comptes venus de l'annuaire (`User.source`) n'ont pas de mot de passe local et sont créés ou mis à jour à chaque connexion (`Auth::external_login`). Le middleware `audit_layer` écrit chaque requête POST/PUT/PATCH/DELETE de `/api/` dans `audit.log` (JSON par ligne, rotation à 20 Mo) avec un libellé lisible (`action_of`).
 - **Redémarrage à chaud** : une modification des réglages reconstruit les chaînes et le listener sans arrêter le processus ; les entrées et le tally continuent.
 
 ### Synchronisation image, son et vu-mètres
@@ -113,4 +114,4 @@ Le réglage du générateur vit dans la chaîne (`ChannelConfig::generator`, gar
 - [ ] Sources de tally supplémentaires : Ross RossTalk, protocoles propriétaires de routeurs (Probel, Quartz) pour les UMD dynamiques.
 - [ ] Tuile pilotée par un routeur (l'entrée d'une tuile suit une destination de grille).
 - [ ] Timecode des flux (SEI, LTC dans l'audio) et du SDI (VITC, RP 188).
-- [ ] Alarmes envoyées vers l'extérieur (SNMP, webhook, GPO).
+- [ ] Alarmes envoyées vers l'extérieur (SNMP, GPO ; les webhooks sont faits).

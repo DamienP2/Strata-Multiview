@@ -165,6 +165,53 @@
         }
       }
     },
+    "/api/auth/oidc/start": {
+      "get": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Start single sign-on (OpenID Connect)",
+        "description": "Redirects to the provider configured in Settings › Security.",
+        "responses": {
+          "302": {
+            "description": "To the provider"
+          },
+          "404": {
+            "description": "Single sign-on is off"
+          }
+        }
+      }
+    },
+    "/api/auth/oidc/callback": {
+      "get": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Return from the OpenID Connect provider",
+        "description": "Checks the ID token, opens the session (cookie) and redirects to `/`, or to `/?sso_error=…`.",
+        "parameters": [
+          {
+            "name": "code",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "state",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "302": {
+            "description": "To the interface"
+          }
+        }
+      }
+    },
     "/api/me/lang": {
       "put": {
         "tags": [
@@ -2785,6 +2832,72 @@
         "responses": {
           "200": {
             "description": "multipart/x-mixed-replace"
+          }
+        }
+      }
+    },
+    "/api/audit": {
+      "get": {
+        "tags": [
+          "System"
+        ],
+        "summary": "Audit journal (admin)",
+        "description": "Every change made through the interface or the API, newest first.",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 1000
+            }
+          },
+          {
+            "name": "csv",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            },
+            "description": "A CSV file instead of JSON."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The entries",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "at": {
+                        "type": "integer",
+                        "description": "ms since 1970"
+                      },
+                      "user": {
+                        "type": "string"
+                      },
+                      "ip": {
+                        "type": "string"
+                      },
+                      "method": {
+                        "type": "string"
+                      },
+                      "path": {
+                        "type": "string"
+                      },
+                      "status": {
+                        "type": "integer"
+                      },
+                      "action": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }

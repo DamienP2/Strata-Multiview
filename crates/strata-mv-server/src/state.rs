@@ -296,6 +296,10 @@ pub struct AppState {
     pub saving: tokio::sync::Mutex<()>,
     /// Users and sessions outlive engine restarts.
     pub auth: Arc<Auth>,
+    /// What was changed, by whom (`crate::security`).
+    pub audit: Arc<crate::security::Audit>,
+    /// Single sign-ins under way.
+    pub oidc: Arc<crate::security::OidcPending>,
     /// Who edits which template in the designer.
     pub locks: Arc<crate::locks::Locks>,
     /// Held from reading a project to saving it, so two edits at the same

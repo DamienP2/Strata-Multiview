@@ -20,6 +20,7 @@ mod perf;
 mod prefs;
 mod probe;
 mod rt;
+mod security;
 mod service;
 mod signals;
 mod state;
@@ -420,6 +421,8 @@ pub async fn serve(
     update::spawn_auto_check(data_dir.clone());
     // Sessions survive engine restarts.
     let auth = Arc::new(auth::Auth::load(&data_dir));
+    let audit = Arc::new(security::Audit::new(&data_dir));
+    let oidc = Arc::new(security::OidcPending::default());
     let locks = Arc::new(locks::Locks::default());
     let output_status = Arc::new(state::OutputStatus::default());
     // Live inputs keep running across engine restarts.
@@ -544,6 +547,8 @@ pub async fn serve(
             thumbs: Default::default(),
             saving: Default::default(),
             auth: auth.clone(),
+            audit: audit.clone(),
+            oidc: oidc.clone(),
             locks: locks.clone(),
             edits: Default::default(),
             output_status: output_status.clone(),
@@ -588,6 +593,10 @@ pub async fn serve(
         let app = app
             // JSON and text gzipped for clients that take it (web.rs).
             .layer(axum::middleware::from_fn(web::compress))
+            .layer(axum::middleware::from_fn_with_state(
+                shared.clone(),
+                api::audit_layer,
+            ))
             .layer(CorsLayer::permissive())
             .with_state(shared.clone());
 
@@ -605,18 +614,41 @@ pub async fn serve(
                     .await
             })
         });
-        axum::serve(
-            listener,
-            app.into_make_service_with_connect_info::<SocketAddr>(),
-        )
-        .with_graceful_shutdown(async move {
-            tokio::select! {
-                _ = stop => {}
-                _ = cycle.restart.notified() => {}
+        let tls = if shared.config.tls.enabled {
+            match security::rustls_config(&data_dir, &shared.config.tls) {
+                Ok(c) => Some(c),
+                Err(e) => {
+                    tracing::error!("HTTPS: {e} — serving HTTP");
+                    None
+                }
             }
-            let _ = cycle.closing.send(true);
-        })
-        .await?;
+        } else {
+            None
+        };
+        if let Some(tls) = tls {
+            tracing::info!("HTTPS on https://{bind} (plain HTTP from this machine still served)");
+            security::serve_https(listener, app, tls, async move {
+                tokio::select! {
+                    _ = stop => {}
+                    _ = cycle.restart.notified() => {}
+                }
+                let _ = cycle.closing.send(true);
+            })
+            .await;
+        } else {
+            axum::serve(
+                listener,
+                app.into_make_service_with_connect_info::<SocketAddr>(),
+            )
+            .with_graceful_shutdown(async move {
+                tokio::select! {
+                    _ = stop => {}
+                    _ = cycle.restart.notified() => {}
+                }
+                let _ = cycle.closing.send(true);
+            })
+            .await?;
+        }
         if let Some(h) = loopback {
             let _ = h.await;
         }

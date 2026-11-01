@@ -1,4 +1,4 @@
-import { LogIn, ShieldCheck } from 'lucide-react';
+import { KeyRound, LogIn, ShieldCheck } from 'lucide-react';
 import { Brand } from '../ui/Brand';
 import { useState } from 'react';
 import { ApiError, useApp } from '../store';
@@ -12,7 +12,12 @@ export function Login() {
   const [displayName, setDisplayName] = useState('');
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
-  const [error, setError] = useState('');
+  // A failed single sign-on comes back as /?sso_error=…
+  const [error, setError] = useState(() => {
+    const e = new URLSearchParams(location.search).get('sso_error');
+    if (e) history.replaceState(null, '', location.pathname);
+    return e ? `${t('Single sign-on failed:')} ${e}` : '';
+  });
   const [busy, setBusy] = useState(false);
   const lang = useLang((s) => s.lang);
 
@@ -77,6 +82,15 @@ export function Login() {
         <button className="btn primary block" disabled={busy || !username || !password}>
           <LogIn size={15} /> {firstRun ? t('Create the admin account') : t('Sign in')}
         </button>
+        {!firstRun && auth?.sso && (
+          <>
+            <div className="login-or">{t('or')}</div>
+            <a className="btn block" href="/api/auth/oidc/start">
+              <KeyRound size={15} /> {t('Sign in with {name}', { name: auth.sso })}
+            </a>
+          </>
+        )}
+        {!firstRun && auth?.directory && <p className="set-hint">{t('Your company account (directory) works here too.')}</p>}
         {firstRun && (
           <p className="set-hint">
             {t('For security this page only works on the server itself (http://localhost). Remotely, run this on the server:')} <code>strata-mv-server user add admin</code>
