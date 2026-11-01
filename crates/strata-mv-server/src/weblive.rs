@@ -313,6 +313,10 @@ pub struct Resolved {
     pub fps: Option<f64>,
     /// m3u8, https, …
     pub protocol: String,
+    /// The sound apart, when the platform gives picture and sound as two
+    /// streams (YouTube's lives in high definition): read as a second input.
+    #[serde(skip)]
+    pub audio: String,
 }
 
 /// The format asked of yt-dlp: picture and sound together, the best up to
@@ -353,8 +357,22 @@ fn parse(json: &str, page: &str) -> Result<Resolved, String> {
                 .collect()
         })
         .unwrap_or_default();
+    // The sound of a pair (picture and sound apart).
+    let audio = v
+        .get("requested_formats")
+        .and_then(|r| r.as_array())
+        .and_then(|r| {
+            r.iter().find(|a| {
+                a.get("vcodec").and_then(|c| c.as_str()) == Some("none")
+                    && a.get("acodec").and_then(|c| c.as_str()) != Some("none")
+            })
+        })
+        .map(|a| s(a, "url"))
+        .filter(|u| *u != s(f, "url"))
+        .unwrap_or_default();
     Ok(Resolved {
         url: s(f, "url"),
+        audio,
         headers,
         platform: platform(page)
             .map(String::from)
@@ -395,6 +413,62 @@ fn error_of(stderr: &str) -> String {
     line.chars().take(300).collect()
 }
 
+/// The JavaScript runtimes yt-dlp may use (YouTube's pages need one).
+fn js_runtimes(c: &mut Command, page: &str) {
+    if platform(page) == Some("YouTube") {
+        if let Some(d) = deno() {
+            c.arg("--js-runtimes").arg(format!("deno:{}", d.display()));
+        }
+    }
+    // The system's Node or Bun, when there is one.
+    for r in ["node", "bun"] {
+        if let Some(p) = in_path(r) {
+            c.arg("--js-runtimes").arg(format!("{r}:{}", p.display()));
+        }
+    }
+}
+
+/// yt-dlp reading the live itself and writing it on its standard output
+/// (MPEG-TS; picture and sound put together by ffmpeg when they come
+/// apart): the stream as the platform serves it to yt-dlp, its headers,
+/// cookies and address the same as when it was found. Used when ffmpeg
+/// cannot open the stream found.
+pub fn pipe_command(page: &str, height: u32) -> Result<Command, String> {
+    let page = page.trim();
+    if !(page.starts_with("https://") || page.starts_with("http://")) {
+        return Err("the address must start with https://".into());
+    }
+    let mut c = Command::new(ytdlp()?);
+    c.args([
+        "--no-playlist",
+        "--no-warnings",
+        "--no-progress",
+        "--no-part",
+        "--hls-use-mpegts",
+        "-f",
+    ])
+    .arg(format(height));
+    // Strata's ffmpeg, by its full path (yt-dlp does not search a bare name).
+    let ff = strata_mv_output::ffmpeg::path();
+    let ff = if ff.is_absolute() {
+        Some(ff)
+    } else {
+        in_path(&ff.to_string_lossy().replace(".exe", ""))
+    };
+    if let Some(ff) = ff {
+        c.arg("--ffmpeg-location").arg(ff);
+    }
+    js_runtimes(&mut c, page);
+    c.args(["-o", "-", "--"]).arg(page);
+    #[cfg(windows)]
+    {
+        use std::os::windows::process::CommandExt;
+        // CREATE_NO_WINDOW
+        c.creation_flags(0x0800_0000);
+    }
+    Ok(c)
+}
+
 /// The stream of a page (a few seconds: yt-dlp reads the page).
 pub fn resolve(page: &str, height: u32) -> Result<Resolved, String> {
     let page = page.trim();
@@ -402,8 +476,6 @@ pub fn resolve(page: &str, height: u32) -> Result<Resolved, String> {
         return Err("the address must start with https://".into());
     }
     let tool = ytdlp()?;
-    let youtube = platform(page) == Some("YouTube");
-    let js = if youtube { deno() } else { None };
     let ask = || {
         let mut c = Command::new(&tool);
         c.args([
@@ -414,15 +486,7 @@ pub fn resolve(page: &str, height: u32) -> Result<Resolved, String> {
             "-f",
         ])
         .arg(format(height));
-        if let Some(d) = &js {
-            c.arg("--js-runtimes").arg(format!("deno:{}", d.display()));
-        }
-        // The system's Node or Bun, when there is one.
-        for r in ["node", "bun"] {
-            if let Some(p) = in_path(r) {
-                c.arg("--js-runtimes").arg(format!("{r}:{}", p.display()));
-            }
-        }
+        js_runtimes(&mut c, page);
         c.arg("--").arg(page);
         run(&mut c, Duration::from_secs(90))
     };
@@ -688,6 +752,25 @@ pub fn playlist(url: &str, height: u32) -> Result<Playlist, String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn picture_and_sound_apart() {
+        // A YouTube live in high definition: a video-only HLS and an audio one.
+        let json = r#"{"title":"Live","is_live":true,"requested_formats":[
+            {"url":"https://manifest.googlevideo.com/itag/270/index.m3u8","vcodec":"avc1.640028","acodec":"none","width":1920,"height":1080,"fps":30,"protocol":"m3u8_native","http_headers":{"User-Agent":"UA","Accept-Encoding":"gzip"}},
+            {"url":"https://manifest.googlevideo.com/itag/234/index.m3u8","vcodec":"none","acodec":"mp4a.40.2","protocol":"m3u8_native"}]}"#;
+        let r = parse(json, "https://www.youtube.com/watch?v=x").unwrap();
+        assert!(r.url.contains("itag/270"));
+        assert!(r.audio.contains("itag/234"));
+        assert_eq!((r.width, r.height, r.live), (1920, 1080, true));
+        assert_eq!(
+            r.headers,
+            vec![("User-Agent".to_string(), "UA".to_string())]
+        );
+        // Together: no sound apart.
+        let one = r#"{"url":"https://a/b.m3u8","vcodec":"avc1","acodec":"mp4a"}"#;
+        assert_eq!(parse(one, "https://kick.com/c").unwrap().audio, "");
+    }
 
     #[test]
     fn platforms_by_address() {

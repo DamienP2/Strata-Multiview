@@ -214,6 +214,9 @@ pub struct Pull {
     /// Where ffmpeg sends the pictures as they come (copied into MPEG-TS)
     /// for their closed captions (a local port).
     pub cc: Option<u16>,
+    /// The stream comes on the decoder's standard input, as another
+    /// program reads it (a web live read by yt-dlp).
+    pub pipe: bool,
 }
 
 /// The decoder's filters: each picture told (`showinfo`), and its levels
@@ -461,7 +464,7 @@ impl InputConfig {
             );
             r
         });
-        if relay.is_some() {
+        if relay.is_some() || pull.pipe {
             // Its options went to the relay: the decoder reads a pipe.
             a.truncate(common);
         }
@@ -471,6 +474,9 @@ impl InputConfig {
         // The source's own size and rate.
         if relay.is_some() {
             a.extend(["-f", "mpegts", "-i", "pipe:0"].map(String::from));
+        } else if pull.pipe {
+            // Whatever the program writes (MPEG-TS, Matroska…).
+            a.extend(["-i", "pipe:0"].map(String::from));
         } else {
             a.extend(pull.input.iter().cloned());
             a.extend(["-i".into(), url]);
@@ -480,7 +486,11 @@ impl InputConfig {
                 a.extend(["-i".into(), au.clone()]);
             }
         }
-        let from = if pull.audio.is_some() { "1" } else { "0" };
+        let from = if pull.audio.is_some() && !pull.pipe {
+            "1"
+        } else {
+            "0"
+        };
         a.extend(["-map".into(), "0:v:0".into()]);
         if info {
             a.extend(["-vf".to_string(), info_filter(pull.levels)]);
@@ -522,7 +532,7 @@ impl InputConfig {
         }
         // The pictures as they come, not decoded: their closed captions
         // (a relayed stream's are read from the bytes relayed).
-        if let (Some(port), None) = (pull.cc, &relay) {
+        if let (Some(port), None, false) = (pull.cc, &relay, pull.pipe) {
             a.extend(
                 [
                     "-map",
@@ -624,6 +634,9 @@ struct Live {
     cc: Mutex<CcState>,
     /// The copy of the pictures for the captions failed: without it.
     no_captions: AtomicBool,
+    /// A web live ffmpeg could not open: read by yt-dlp, which writes it
+    /// to the decoder (each failure to open switches between the two).
+    web_pipe: AtomicBool,
     /// The ffmpeg receiving a relayed stream.
     relay: Mutex<Option<Child>>,
     /// SRT received by libsrt: its statistics.
@@ -1374,6 +1387,8 @@ impl Inputs {
                 no_levels: AtomicBool::new(false),
                 cc: Default::default(),
                 no_captions: AtomicBool::new(false),
+                // STRATA_WEB_PIPE=1: web lives read by yt-dlp from the start.
+                web_pipe: AtomicBool::new(std::env::var("STRATA_WEB_PIPE").is_ok_and(|v| v == "1")),
                 relay: Mutex::new(None),
                 srt: Default::default(),
                 facts: Arc::new(Mutex::new(crate::probe::Facts::default())),
@@ -2711,6 +2726,8 @@ fn prepare(l: &Live) -> Result<Pull, String> {
             let r = weblive::resolve(url, c.height)?;
             pull.url = Some(r.url.clone());
             pull.input = weblive::header_args(&r.headers);
+            // Picture and sound apart (YouTube in high definition).
+            pull.audio = (!r.audio.is_empty()).then(|| r.audio.clone());
             l.facts().web = Some(r);
             false
         }
@@ -2764,7 +2781,16 @@ fn run_stream(l: &Live) {
             tries = 0;
         }
         started = Some(Instant::now());
-        let mut pull = match prepare(l) {
+        let piped = c.kind == InputKind::Web && l.web_pipe.load(Ordering::Relaxed);
+        let mut pull = match if piped {
+            l.say("Reading the live with yt-dlp…");
+            Ok(Pull {
+                pipe: true,
+                ..Pull::default()
+            })
+        } else {
+            prepare(l)
+        } {
             Ok(p) => p,
             Err(e) => {
                 l.say(e);
@@ -2786,7 +2812,7 @@ fn run_stream(l: &Live) {
             .map(|a| a.port());
         // The pictures copied for their captions: ffmpeg sends them to this
         // port (a relayed stream's are read from the bytes relayed).
-        let cc = (c.captions && !c.relayed() && !l.no_captions.load(Ordering::Relaxed))
+        let cc = (c.captions && !c.relayed() && !piped && !l.no_captions.load(Ordering::Relaxed))
             .then(|| std::net::TcpListener::bind("127.0.0.1:0").ok())
             .flatten();
         pull.cc = cc
@@ -2797,6 +2823,7 @@ fn run_stream(l: &Live) {
         pull.fps_mode = !l.no_fps_mode.load(Ordering::Relaxed);
         pull.levels = info && !l.no_levels.load(Ordering::Relaxed);
         let args = c.ffmpeg_args_from(&pull, audio, info).unwrap_or_default();
+        let pictures_before = l.received.load(Ordering::Relaxed);
         let log = Arc::new(Mutex::new(String::new()));
         // SRT received by libsrt itself (its statistics), when it is there.
         let native = args
@@ -2811,6 +2838,37 @@ fn run_stream(l: &Live) {
             .and_then(|u| crate::srt::parse(u));
         // The relay first: the decoder reads what it writes.
         let mut relay = None;
+        if piped {
+            let spawned = weblive_pipe(c).and_then(|mut cmd| {
+                cmd.stdin(Stdio::null())
+                    .stdout(Stdio::piped())
+                    .stderr(Stdio::piped())
+                    .spawn()
+                    .map_err(|e| format!("yt-dlp could not start ({e})"))
+            });
+            match spawned {
+                Ok(mut child) => {
+                    if let Some(err) = child.stderr.take() {
+                        let log = log.clone();
+                        std::thread::spawn(move || {
+                            for line in log_lines(err) {
+                                keep_log(&log, &line);
+                            }
+                        });
+                    }
+                    relay = Some(child);
+                }
+                Err(e) => {
+                    l.say(e);
+                    // Back to ffmpeg next time.
+                    l.web_pipe.store(false, Ordering::Relaxed);
+                    if !l.pause(Duration::from_secs(10)) {
+                        return;
+                    }
+                    continue;
+                }
+            }
+        }
         if let (Some(ra), None) = (&args.relay, &native) {
             match strata_mv_output::ffmpeg::command()
                 .args(ra)
@@ -2841,7 +2899,7 @@ fn run_stream(l: &Live) {
         }
         let spawned = strata_mv_output::ffmpeg::command()
             .args(&args.decode)
-            .stdin(if relay.is_some() || native.is_some() {
+            .stdin(if relay.is_some() || native.is_some() || piped {
                 Stdio::piped()
             } else {
                 Stdio::null()
@@ -3112,7 +3170,22 @@ fn run_stream(l: &Live) {
             l.no_info.store(true, Ordering::Relaxed);
             continue;
         }
-        let why = strata_mv_output::ffmpeg::tail(&said);
+        // A web live that would not open (no picture): read the other way
+        // next time (yt-dlp writing it to the decoder, or ffmpeg again).
+        if c.kind == InputKind::Web && l.received.load(Ordering::Relaxed) == pictures_before {
+            let now = !l.web_pipe.fetch_xor(true, Ordering::Relaxed);
+            tracing::info!(
+                "input {}: the live did not open ({}); next: {}",
+                c.id,
+                stream_error(&said),
+                if now {
+                    "read by yt-dlp"
+                } else {
+                    "read by ffmpeg"
+                }
+            );
+        }
+        let why = stream_error(&said);
         l.say(format!("Stopped: {why} — trying again"));
         l.restarted();
         if !l.pause(Duration::from_secs(2)) {
@@ -3205,6 +3278,41 @@ fn read_pcm(l: &Live, listener: std::net::TcpListener) {
             }
             Err(_) => return,
         }
+    }
+}
+
+/// yt-dlp reading a web live to its standard output.
+fn weblive_pipe(c: &InputConfig) -> Result<std::process::Command, String> {
+    crate::weblive::pipe_command(c.url.trim(), c.height)
+}
+
+/// Why a stream stopped: the last lines of the log, after the line that
+/// says why (an HTTP or TLS error, yt-dlp's error) when there is one
+/// before them.
+fn stream_error(log: &str) -> String {
+    let tail = strata_mv_output::ffmpeg::tail(log);
+    let cause = log.lines().rev().find(|l| {
+        let low = l.to_ascii_lowercase();
+        [
+            "http error",
+            "server returned",
+            "tls",
+            "ssl",
+            "certificate",
+            "error:",
+            "forbidden",
+            "connection refused",
+            "timed out",
+        ]
+        .iter()
+        .any(|k| low.contains(k))
+    });
+    match cause.map(str::trim) {
+        Some(c) if !c.is_empty() && !tail.contains(c) => {
+            let c: String = c.chars().take(200).collect();
+            format!("{c} · {tail}").chars().take(400).collect()
+        }
+        _ => tail,
     }
 }
 
@@ -3822,6 +3930,19 @@ mod tests {
         }
     }
 
+    #[test]
+    fn the_cause_of_a_stop() {
+        let log = "[https @ 0x1] HTTP error 403 Forbidden\n[hls @ 0x2] Failed to open segment 1\n[in#0 @ 0x3] Error opening input: Input/output error\nError opening input file https://x/index.m3u8.\nError opening input files: Input/output error";
+        let why = stream_error(log);
+        assert!(
+            why.starts_with("[https @ 0x1] HTTP error 403 Forbidden · "),
+            "{why}"
+        );
+        // Already in the last lines: not twice.
+        let short = "Error opening input file x: Server returned 403 Forbidden";
+        assert_eq!(stream_error(short), short);
+    }
+
     fn live(fps: u32, buffer: u32) -> Live {
         let mut config = input(InputKind::Udp, "udp://127.0.0.1:1", false);
         (config.fps, config.buffer) = (fps, buffer);
@@ -3847,6 +3968,7 @@ mod tests {
             no_levels: AtomicBool::new(false),
             cc: Default::default(),
             no_captions: AtomicBool::new(false),
+            web_pipe: AtomicBool::new(false),
             relay: Mutex::new(None),
             srt: Default::default(),
             facts: Arc::new(Mutex::new(crate::probe::Facts::default())),
