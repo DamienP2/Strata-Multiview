@@ -186,7 +186,9 @@ export function overlay(c: Full, l: Layout, h: number) {
 /** The frame with the faults: a critical one blinks, a warning stays (mirrors alarm_border). */
 export function alarmBorder(c: Full, tally: Tally, alarms: Alarm[], nowMs: number): string {
   if (c.alarms && alarms.length) {
-    if (alarms[0].severity === 'critical' && ((Math.floor(nowMs / 500) % 2) + 2) % 2 === 0) return '#dc2626';
+    // Critical: flashing until acknowledged, then steady.
+    const unseen = alarms.some((a) => !a.acked);
+    if (alarms[0].severity === 'critical' && (!unseen || ((Math.floor(nowMs / 500) % 2) + 2) % 2 === 0)) return '#dc2626';
     if (alarms[0].severity === 'warning') return '#fbbf24';
   }
   return borderColor(c, tally);

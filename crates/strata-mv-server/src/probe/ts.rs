@@ -916,6 +916,29 @@ impl TsMonitor {
     }
 
     /// What has been read, now.
+    /// TR 101 290 errors in the last `within`: first priority (sync, PAT,
+    /// continuity, PMT, PID), second priority (transport, CRC, PCR).
+    pub fn recent_errors(&self, now: Instant, within: std::time::Duration) -> (bool, bool) {
+        let e = &self.errors;
+        let hit = |c: &Count| {
+            c.last
+                .is_some_and(|t| now.saturating_duration_since(t) < within)
+        };
+        (
+            [&e.sync_loss, &e.sync_byte, &e.pat, &e.cc, &e.pmt, &e.pid]
+                .into_iter()
+                .any(hit),
+            [
+                &e.transport,
+                &e.crc,
+                &e.pcr_repetition,
+                &e.pcr_discontinuity,
+            ]
+            .into_iter()
+            .any(hit),
+        )
+    }
+
     pub fn view(&self, now: Instant) -> TsView {
         // Live: over the last seconds; a segment: over its PCR span.
         let (seconds, rate_of): (f64, Box<dyn Fn(u16, u64) -> f64>) = if self.live {

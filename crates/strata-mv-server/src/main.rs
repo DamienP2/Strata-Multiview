@@ -1,3 +1,4 @@
+mod alarms;
 mod api;
 mod auth;
 mod colors;
@@ -428,6 +429,8 @@ pub async fn serve(
     // Tally and UMD from the switchers, kept across engine restarts.
     let tally = tally::Tally::load(&data_dir, inputs.clone());
     tally.start();
+    // The alarm settings and journal, kept across engine restarts.
+    let alarms = alarms::Alarms::load(&data_dir, inputs.signals());
     if auth.needs_setup() {
         tracing::warn!("no user yet: open http://localhost:<port>/ on this machine to create the admin account, or run `strata-mv-server user add <name>`");
     }
@@ -545,6 +548,7 @@ pub async fn serve(
             output_status: output_status.clone(),
             inputs: inputs.clone(),
             tally: tally.clone(),
+            alarms: alarms.clone(),
             perf: perf.clone(),
             config,
             bind,

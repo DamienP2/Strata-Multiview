@@ -98,6 +98,10 @@ Le widget **Scope** (`LayerKind::Scope`) montre l'oscilloscope, les parades RVB 
 
 Le serveur relève chaque seconde (`perf.rs`, `CurveStore`) les processeurs, la mémoire, les processeurs de Strata Multiview et des ffmpeg, l'écart PTP (pmc interrogé chaque seconde ; NTP toutes les dix), l'écart NTP, le temps de rendu de chaque canal et les images par seconde de chaque entrée ; cinq minutes sont gardées (`signal::Curves`). Le moteur Rust les lit dans `SystemView::curves` ; les pages les reçoivent une fois par seconde avec les signaux (pas avec chaque vu-mètre) et gardent les dernières. Le widget **Courbe** (`wid/chart.rs`, `web/src/widgets/chart.tsx`) en trace une, avec ses seuils.
 
+### Alarmes
+
+`signals::evaluate` (toutes les 240 ms) relève les conditions de chaque entrée (`Inputs::watched` : image, cadence mesurée et nominale, redémarrages, corrélation, sous-titres, erreurs TR 101 290) et de l'installation (`Plant` : PTP, NTP, processeurs, mémoire, images perdues par les sorties), note depuis quand chacune est vraie, et lève l'alarme quand elle a duré le délai de sa règle (`strata_mv_core::alarm` : profils partagés par les entrées, règles de l'installation). Les alarmes levées, terminées ou acquittées vont au journal (mille lignes, sauvé dans `alarms-journal.json`) et à `alarms.rs`, qui appelle les systèmes configurés (GET ou POST, 5 s au plus, dans un fil à part). Les pages reçoivent le journal avec les signaux, seulement quand il change (et toutes les 5 s).
+
 ## Feuille de route
 
 - [ ] Plusieurs pistes audio par flux (aujourd'hui la première, tous ses canaux).

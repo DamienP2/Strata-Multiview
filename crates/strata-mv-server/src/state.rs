@@ -65,8 +65,11 @@ pub enum Event {
     /// The tally, UMD and audio levels of the inputs (`crate::signals`).
     Signals {
         sources: BTreeMap<String, crate::signals::SignalView>,
-        /// PTP, NTP and the alarm journal.
-        system: strata_mv_core::signal::SystemView,
+        /// PTP, NTP, the alarm journal (and the curves): when they changed,
+        /// and every few seconds for the pages just opened; none otherwise
+        /// (the pages keep the last).
+        #[serde(skip_serializing_if = "Option::is_none")]
+        system: Option<strata_mv_core::signal::SystemView>,
         /// When they were sent (ms since 1970).
         at: f64,
     },
@@ -293,6 +296,8 @@ pub struct AppState {
     pub inputs: Arc<crate::inputs::Inputs>,
     /// Tally and UMD from the switchers (kept across engine restarts).
     pub tally: Arc<crate::tally::Tally>,
+    /// The alarm settings, journal and actions (kept across engine restarts).
+    pub alarms: Arc<crate::alarms::Alarms>,
     /// Load of the machine, the channels, outputs and inputs (kept across engine restarts).
     pub perf: Arc<crate::perf::Perf>,
     /// Settings this engine cycle was started with.

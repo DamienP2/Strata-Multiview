@@ -976,6 +976,9 @@ mod tests {
                     kind: AlarmKind::Freeze,
                     severity: Severity::Critical,
                     ended: None,
+                    input_id: "cam1".into(),
+                    acked: None,
+                    by: String::new(),
                 },
                 JournalEntry {
                     at: 1_699_999_000_000,
@@ -983,6 +986,9 @@ mod tests {
                     kind: AlarmKind::Silence,
                     severity: Severity::Warning,
                     ended: Some(1_699_999_100_000),
+                    input_id: "cam2".into(),
+                    acked: None,
+                    by: String::new(),
                 },
             ],
             ..Default::default()

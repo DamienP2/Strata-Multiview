@@ -421,6 +421,8 @@ struct Live {
     heard: Mutex<VecDeque<(Instant, axum::body::Bytes)>>,
     /// The phase correlation, measured at most every 40 ms.
     phase: Mutex<Option<(Instant, Option<f32>)>>,
+    /// When it started again after stopping (the last minute).
+    restarts: Mutex<VecDeque<Instant>>,
     /// The number of the newest picture and when it came (ms since 1970):
     /// the web streams wake on it.
     frames: tokio::sync::watch::Sender<(u64, u64)>,
@@ -847,6 +849,25 @@ impl Live {
         }
     }
 
+    /// It stopped and starts again.
+    fn restarted(&self) {
+        let mut r = self.restarts.lock().unwrap_or_else(|p| p.into_inner());
+        r.push_back(Instant::now());
+        while r.len() > 60 {
+            r.pop_front();
+        }
+    }
+
+    /// How many times it started again in the last minute.
+    fn restarts(&self) -> usize {
+        self.restarts
+            .lock()
+            .unwrap_or_else(|p| p.into_inner())
+            .iter()
+            .filter(|t| t.elapsed() < Duration::from_secs(60))
+            .count()
+    }
+
     /// Its sound as it comes: to the people listening and the outputs
     /// sending it, and kept a moment (the goniometer, the phase).
     fn sound(&self, at: Instant, data: axum::body::Bytes) {
@@ -1038,6 +1059,7 @@ impl Inputs {
                 scopes: Mutex::new(VecDeque::new()),
                 heard: Mutex::new(VecDeque::new()),
                 phase: Mutex::new(None),
+                restarts: Mutex::new(VecDeque::new()),
                 frames: tokio::sync::watch::channel((0, 0)).0,
                 jpegs: Mutex::new(VecDeque::new()),
                 recent: Mutex::new(VecDeque::new()),
@@ -1443,17 +1465,41 @@ impl Inputs {
             .collect()
     }
 
-    /// Every input, to look at its faults: id, name, a picture came in the
-    /// last two seconds, when the last one came.
-    pub fn watched(&self) -> Vec<(String, String, bool, Option<Instant>)> {
-        self.live
+    /// Every input, to look at its faults (`fps`: the pictures a second
+    /// measured, from the sampler).
+    pub fn watched(
+        &self,
+        fps: &std::collections::HashMap<String, f64>,
+    ) -> Vec<crate::signals::Watched> {
+        let list: Vec<Arc<Live>> = self
+            .live
             .read()
             .unwrap_or_else(|p| p.into_inner())
             .values()
+            .cloned()
+            .collect();
+        let now = Instant::now();
+        list.iter()
             .map(|l| {
                 let last = *l.last_at.lock().unwrap_or_else(|p| p.into_inner());
-                let fresh = l.fresh();
-                (l.config.id.clone(), l.config.name.clone(), fresh, last)
+                let rate = *l.rate.lock().unwrap_or_else(|p| p.into_inner());
+                let fields = l.interlaced.load(Ordering::Relaxed);
+                let (captions, ts) = {
+                    let f = l.facts();
+                    (f.frames.captions(now), f.ts_errors(now))
+                };
+                crate::signals::Watched {
+                    id: l.config.id.clone(),
+                    name: l.config.name.clone(),
+                    fresh: l.fresh(),
+                    lost_at: last,
+                    fps: fps.get(&l.config.id).copied(),
+                    nominal: rate.map(|r| if fields { r / 2.0 } else { r }),
+                    restarts: l.restarts(),
+                    correlation: l.correlation(),
+                    captions,
+                    ts,
+                }
             })
             .collect()
     }
@@ -2470,6 +2516,7 @@ fn run_stream(l: &Live) {
         }
         let why = strata_mv_output::ffmpeg::tail(&said);
         l.say(format!("Stopped: {why} — trying again"));
+        l.restarted();
         if !l.pause(Duration::from_secs(2)) {
             return;
         }
@@ -2754,6 +2801,7 @@ fn run_ndi(l: &Live) {
                 Ok(_) => {}
                 Err(e) => {
                     l.say(format!("{e} — trying again"));
+                    l.restarted();
                     break;
                 }
             }
@@ -3133,6 +3181,7 @@ mod tests {
             scopes: Mutex::new(VecDeque::new()),
             heard: Mutex::new(VecDeque::new()),
             phase: Mutex::new(None),
+            restarts: Mutex::new(VecDeque::new()),
             frames: tokio::sync::watch::channel((0, 0)).0,
             jpegs: Mutex::new(VecDeque::new()),
             recent: Mutex::new(VecDeque::new()),

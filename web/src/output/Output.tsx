@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useAlarmSound } from '../engine/alarmSound';
 import { Viewport } from '../engine/Scene';
 import { useApp } from '../store';
 import { Program } from './Program';
@@ -14,6 +15,8 @@ import { ListenControls } from './Listen';
  */
 export function Output({ channelId: page }: { channelId: string }) {
   const { connect, channels, full, live } = useApp();
+  // A sound for a new fault (Alarms › Actions › Sound; `?mute` silences this page).
+  useAlarmSound(!new URLSearchParams(location.search).has('mute'));
   // The channel of this address (a page's own address, else a channel's id).
   const [channelId, setChannelId] = useState<string | null>(null);
   useEffect(() => {

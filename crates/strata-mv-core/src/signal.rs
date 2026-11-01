@@ -102,7 +102,7 @@ pub const TOLERANCE: f32 = 1.0;
 /// The true peak not to go over, dBTP.
 pub const MAX_TRUE_PEAK: f32 = -1.0;
 
-/// A fault the server sees on a source.
+/// A fault the server sees on a source, or on the plant (the last ones).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub enum AlarmKind {
@@ -118,6 +118,36 @@ pub enum AlarmKind {
     Loud,
     /// The true peak goes over the limit.
     Peak,
+    /// One channel silent while the others are not.
+    ChannelSilent,
+    /// Much quieter than the target for a while.
+    Quiet,
+    /// The samples reach full scale.
+    Clipping,
+    /// Left and right out of phase.
+    Phase,
+    /// Fewer (or more) pictures a second than its format.
+    Fps,
+    /// The input keeps reconnecting.
+    Reconnecting,
+    /// No timecode in the pictures.
+    NoTimecode,
+    /// No closed captions in the pictures.
+    NoCaptions,
+    /// TR 101 290 first priority errors (sync, PAT, continuity, PMT, PID).
+    TsPriority1,
+    /// TR 101 290 second priority errors (transport, CRC, PCR).
+    TsPriority2,
+    /// PTP runs but follows no grandmaster.
+    PtpUnlocked,
+    /// The clock is not synchronised by NTP.
+    NtpUnsynced,
+    /// The processors are busy.
+    CpuHigh,
+    /// The memory is nearly full.
+    MemoryHigh,
+    /// An output drops pictures.
+    OutputDropped,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord, Serialize, Deserialize)]
@@ -127,30 +157,83 @@ pub enum Severity {
     Critical,
 }
 
+/// The faults of an input, in the order of the settings.
+pub const INPUT_ALARMS: [AlarmKind; 16] = [
+    AlarmKind::Loss,
+    AlarmKind::Black,
+    AlarmKind::Freeze,
+    AlarmKind::Fps,
+    AlarmKind::Reconnecting,
+    AlarmKind::Silence,
+    AlarmKind::ChannelSilent,
+    AlarmKind::Loud,
+    AlarmKind::Quiet,
+    AlarmKind::Peak,
+    AlarmKind::Clipping,
+    AlarmKind::Phase,
+    AlarmKind::NoTimecode,
+    AlarmKind::NoCaptions,
+    AlarmKind::TsPriority1,
+    AlarmKind::TsPriority2,
+];
+
+/// The faults of the plant.
+pub const SYSTEM_ALARMS: [AlarmKind; 5] = [
+    AlarmKind::PtpUnlocked,
+    AlarmKind::NtpUnsynced,
+    AlarmKind::CpuHigh,
+    AlarmKind::MemoryHigh,
+    AlarmKind::OutputDropped,
+];
+
 impl AlarmKind {
+    /// Its severity unless the settings say otherwise.
     pub fn severity(self) -> Severity {
         match self {
-            AlarmKind::Loss | AlarmKind::Freeze | AlarmKind::Black => Severity::Critical,
+            AlarmKind::Loss
+            | AlarmKind::Freeze
+            | AlarmKind::Black
+            | AlarmKind::Silence
+            | AlarmKind::PtpUnlocked => Severity::Critical,
             _ => Severity::Warning,
         }
+    }
+
+    /// Of the plant (not of an input).
+    pub fn system(self) -> bool {
+        SYSTEM_ALARMS.contains(&self)
     }
 
     /// The words on the tile and in the journal, in the project's language.
     pub fn text(self, lang: &str) -> &'static str {
         let fr = lang.to_lowercase().starts_with("fr");
-        match (self, fr) {
-            (AlarmKind::Loss, true) => "PERTE DU SIGNAL",
-            (AlarmKind::Loss, false) => "SIGNAL LOSS",
-            (AlarmKind::Black, true) => "NOIR",
-            (AlarmKind::Black, false) => "BLACK",
-            (AlarmKind::Freeze, true) => "IMAGE FIGÉE",
-            (AlarmKind::Freeze, false) => "FROZEN PICTURE",
-            (AlarmKind::Silence, true) => "SILENCE",
-            (AlarmKind::Silence, false) => "SILENCE",
-            (AlarmKind::Loud, true) => "TROP FORT",
-            (AlarmKind::Loud, false) => "TOO LOUD",
-            (AlarmKind::Peak, true) => "TRUE PEAK",
-            (AlarmKind::Peak, false) => "TRUE PEAK",
+        let (f, e) = match self {
+            AlarmKind::Loss => ("PERTE DU SIGNAL", "SIGNAL LOSS"),
+            AlarmKind::Black => ("NOIR", "BLACK"),
+            AlarmKind::Freeze => ("IMAGE FIGÉE", "FROZEN PICTURE"),
+            AlarmKind::Silence => ("SILENCE", "SILENCE"),
+            AlarmKind::Loud => ("TROP FORT", "TOO LOUD"),
+            AlarmKind::Peak => ("TRUE PEAK", "TRUE PEAK"),
+            AlarmKind::ChannelSilent => ("CANAL MUET", "CHANNEL SILENT"),
+            AlarmKind::Quiet => ("TROP FAIBLE", "TOO QUIET"),
+            AlarmKind::Clipping => ("SATURATION", "CLIPPING"),
+            AlarmKind::Phase => ("OPPOSITION DE PHASE", "OUT OF PHASE"),
+            AlarmKind::Fps => ("CADENCE ANORMALE", "ABNORMAL FRAME RATE"),
+            AlarmKind::Reconnecting => ("RECONNEXIONS", "RECONNECTING"),
+            AlarmKind::NoTimecode => ("SANS TIMECODE", "NO TIMECODE"),
+            AlarmKind::NoCaptions => ("SANS SOUS-TITRES", "NO CAPTIONS"),
+            AlarmKind::TsPriority1 => ("TR 101 290 P1", "TR 101 290 P1"),
+            AlarmKind::TsPriority2 => ("TR 101 290 P2", "TR 101 290 P2"),
+            AlarmKind::PtpUnlocked => ("PTP NON VERROUILLÉ", "PTP UNLOCKED"),
+            AlarmKind::NtpUnsynced => ("NTP NON SYNCHRONISÉ", "NTP NOT SYNCED"),
+            AlarmKind::CpuHigh => ("PROCESSEURS SATURÉS", "PROCESSORS BUSY"),
+            AlarmKind::MemoryHigh => ("MÉMOIRE PLEINE", "MEMORY FULL"),
+            AlarmKind::OutputDropped => ("IMAGES PERDUES EN SORTIE", "OUTPUT DROPS FRAMES"),
+        };
+        if fr {
+            f
+        } else {
+            e
         }
     }
 }
@@ -163,6 +246,9 @@ pub struct Alarm {
     pub severity: Severity,
     /// Since when, ms since 1970.
     pub since: i64,
+    /// Someone has seen it (the tile stops flashing).
+    #[serde(default)]
+    pub acked: bool,
 }
 
 /// Everything the Source widget shows of a live input.
@@ -302,12 +388,20 @@ pub struct NtpView {
 pub struct JournalEntry {
     /// When it began, ms since 1970.
     pub at: i64,
-    /// The input's name.
+    /// The input's name (the plant's faults: what is at fault, "PTP"…).
     pub input: String,
+    /// The input's id ("" for the plant).
+    #[serde(default)]
+    pub input_id: String,
     pub kind: AlarmKind,
     pub severity: Severity,
     /// When it ended (none: still on).
     pub ended: Option<i64>,
+    /// When it was acknowledged, and by whom.
+    #[serde(default)]
+    pub acked: Option<i64>,
+    #[serde(default)]
+    pub by: String,
 }
 
 /// The state of the plant: synchronisation and the alarm journal.
@@ -320,6 +414,8 @@ pub struct SystemView {
     pub journal: Vec<JournalEntry>,
     /// The plant's measures, one a second (the Chart widget).
     pub curves: Curves,
+    /// The pages sound for a new fault this grave at least (none: silence).
+    pub sound: Option<Severity>,
 }
 
 /// Measures of the plant, one a second, the newest last (five minutes at

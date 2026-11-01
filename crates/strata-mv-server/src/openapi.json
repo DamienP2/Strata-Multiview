@@ -2666,6 +2666,90 @@
           }
         }
       }
+    },
+    "/api/alarms": {
+      "get": {
+        "tags": [
+          "Alarms"
+        ],
+        "summary": "Alarm settings and journal",
+        "description": "The settings (profiles of faults shared by the inputs, the input → profile map, the plant's faults, the sound, the calls to other systems) and the journal (the last thousand faults, newest first: `at`, `ended`, `input`, `inputId`, `kind`, `severity`, `acked`, `by`).",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/alarms/settings": {
+      "put": {
+        "tags": [
+          "Alarms"
+        ],
+        "summary": "Save the alarm settings",
+        "description": "`profiles` (each `rules`: fault → `{enabled, after (s), severity, threshold}`), `inputs` (input id → profile id), `system` (plant faults), `sound` (`critical`, `warning` or null), `webhooks` (`{name, enabled, method GET|POST, url, minSeverity, onEnd}`; `{input}`, `{kind}`, `{severity}`, `{state}`, `{text}` replaced in the URL). Applied at once.\n\n**Rights:** admin.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Saved"
+          }
+        }
+      }
+    },
+    "/api/alarms/ack": {
+      "post": {
+        "tags": [
+          "Alarms"
+        ],
+        "summary": "Acknowledge faults on now",
+        "description": "`{\"inputId\": \"cam1\", \"kind\": \"freeze\"}`: one fault; `inputId` alone: an input's; `{}`: every fault. The plant's parts are `~ptp`, `~ntp`, `~cpu`, `~memory`, `~output:<key>`.\n\n**Rights:** operator and up.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "inputId": {
+                    "type": "string"
+                  },
+                  "kind": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/alarms/journal.csv": {
+      "get": {
+        "tags": [
+          "Alarms"
+        ],
+        "summary": "The alarm journal as CSV",
+        "description": "One line a fault (`;` separated, UTF-8). `?tz=Europe/Paris`: times in that zone (default: the server's).",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
     }
   },
   "components": {

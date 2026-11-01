@@ -470,13 +470,36 @@ export interface Tally {
 }
 
 /** A fault the server sees on an input (mirrors signal::AlarmKind). */
-export type AlarmKind = 'loss' | 'black' | 'freeze' | 'silence' | 'loud' | 'peak';
+export type AlarmKind =
+  | 'loss'
+  | 'black'
+  | 'freeze'
+  | 'silence'
+  | 'loud'
+  | 'peak'
+  | 'channelSilent'
+  | 'quiet'
+  | 'clipping'
+  | 'phase'
+  | 'fps'
+  | 'reconnecting'
+  | 'noTimecode'
+  | 'noCaptions'
+  | 'tsPriority1'
+  | 'tsPriority2'
+  | 'ptpUnlocked'
+  | 'ntpUnsynced'
+  | 'cpuHigh'
+  | 'memoryHigh'
+  | 'outputDropped';
 export type Severity = 'warning' | 'critical';
 export interface Alarm {
   kind: AlarmKind;
   severity: Severity;
   /** Since when, ms since 1970. */
   since: number;
+  /** Someone has seen it (the tile stops flashing). */
+  acked?: boolean;
 }
 
 /** One input's signals. */
@@ -527,9 +550,14 @@ export interface VideoInfo {
 export interface JournalEntry {
   at: number;
   input: string;
+  /** The input's id ("" for the plant). */
+  inputId?: string;
   kind: AlarmKind;
   severity: Severity;
   ended?: number | null;
+  /** When it was acknowledged, and by whom. */
+  acked?: number | null;
+  by?: string;
 }
 
 /** PTP, NTP and the alarm journal (mirrors signal::SystemView). */
@@ -539,6 +567,8 @@ export interface SystemView {
   journal: JournalEntry[];
   /** The plant's measures, one a second, the newest last (sent when they change; kept here). */
   curves?: Curves;
+  /** The pages sound for a new fault this grave at least (null: silence). */
+  sound?: Severity | null;
 }
 
 /** Measures of the plant (mirrors signal::Curves): "cpu", "memory", "server", "ffmpeg", "ptp", "ntp", "render:<channel>", "fps:<input>". */
@@ -665,6 +695,21 @@ export function alarmText(kind: AlarmKind, lang = 'fr'): string {
     silence: ['SILENCE', 'SILENCE'],
     loud: ['TROP FORT', 'TOO LOUD'],
     peak: ['TRUE PEAK', 'TRUE PEAK'],
+    channelSilent: ['CANAL MUET', 'CHANNEL SILENT'],
+    quiet: ['TROP FAIBLE', 'TOO QUIET'],
+    clipping: ['SATURATION', 'CLIPPING'],
+    phase: ['OPPOSITION DE PHASE', 'OUT OF PHASE'],
+    fps: ['CADENCE ANORMALE', 'ABNORMAL FRAME RATE'],
+    reconnecting: ['RECONNEXIONS', 'RECONNECTING'],
+    noTimecode: ['SANS TIMECODE', 'NO TIMECODE'],
+    noCaptions: ['SANS SOUS-TITRES', 'NO CAPTIONS'],
+    tsPriority1: ['TR 101 290 P1', 'TR 101 290 P1'],
+    tsPriority2: ['TR 101 290 P2', 'TR 101 290 P2'],
+    ptpUnlocked: ['PTP NON VERROUILLÉ', 'PTP UNLOCKED'],
+    ntpUnsynced: ['NTP NON SYNCHRONISÉ', 'NTP NOT SYNCED'],
+    cpuHigh: ['PROCESSEURS SATURÉS', 'PROCESSORS BUSY'],
+    memoryHigh: ['MÉMOIRE PLEINE', 'MEMORY FULL'],
+    outputDropped: ['IMAGES PERDUES EN SORTIE', 'OUTPUT DROPS FRAMES'],
   };
   return words[kind][fr ? 0 : 1];
 }

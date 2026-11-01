@@ -271,18 +271,34 @@ Le **timecode** d'une entrée est celui de NDI ; le **timecode station** est l'h
 
 ### 7.3 Alarmes et journal
 
-Chaque entrée est surveillée en permanence :
+Chaque entrée et l'installation sont surveillées en permanence (**Diffusion › Alarmes**). Valeurs par défaut :
 
 | Alarme | Gravité | Quand |
 | --- | --- | --- |
-| **Perte du signal** | critique | plus d'image reçue |
+| **Perte du signal** | critique | plus d'image reçue (pas pendant les 10 s où une entrée démarre) |
 | **Noir** | critique | image noire depuis 3 s |
 | **Image figée** | critique | une image vivante qui ne bouge plus : elle bougeait dans les 30 s d'avant et ses images se répètent au pixel près depuis 10 s, ou elle avait le bruit d'une image en direct et se répète au pixel près depuis 4 s. Jamais sur une mire, une image unie, du noir, une image fixe dès le départ (carton, graphique) ni un plan calme en direct (son bruit continue) |
-| **Silence** | alerte | audio sous −60 dBFS depuis 5 s |
-| **Trop fort** | alerte | short-term au-dessus de la cible de plus de 3 LU depuis 10 s |
-| **Crête** | alerte | true peak au-dessus de −1 dBTP (tenue 3 s) |
+| **Cadence anormale** | alerte | images par seconde à plus de 10 % de la cadence du format depuis 5 s |
+| **Reconnexions** | alerte | l'entrée a redémarré 3 fois dans la minute |
+| **Silence** | critique | tous les canaux sous −60 dBFS depuis 5 s |
+| **Canal muet** | alerte | un canal sous −60 dBFS alors qu'un autre s'entend, depuis 10 s (hors LFE du 5.1) |
+| **Trop fort** / **Trop faible** | alerte | short-term au-dessus de la cible de plus de 3 LU depuis 10 s / en dessous de plus de 10 LU depuis 30 s |
+| **True peak** | alerte | au-dessus de −1 dBTP |
+| **Saturation** | alerte | crête d'échantillon à −0,1 dBFS |
+| **Opposition de phase** | alerte | corrélation gauche/droite sous −0,3 depuis 3 s |
+| **Sans timecode** / **Sans sous-titres** | alerte | désactivées par défaut (à activer pour les entrées qui doivent en porter) |
+| **TR 101 290 P1** / **P2** | alerte | erreurs de priorité 1 (synchro, PAT, continuité, PMT, PID) ; P2 (transport, CRC, PCR) désactivée par défaut, beaucoup de contributions IP espaçant leur PCR de plus de 40 ms |
+| **PTP non verrouillé** | critique | ptp4l tourne sans suivre de grandmaster depuis 5 s |
+| **NTP non synchronisé** | alerte | depuis 60 s |
+| **Processeurs saturés** / **Mémoire pleine** | alerte | au-dessus de 90 % depuis 10 s |
+| **Images perdues en sortie** | alerte | une sortie a perdu 5 images en 10 s |
 
-Les alarmes s'affichent sur les tuiles (cadre et bandeau), dans le widget **État** et dans le **journal** (200 lignes, début et fin de chaque défaut). L'état **PTP** (ptp4l) et **NTP** de la machine accompagne les signaux.
+- **Profils** : chaque alarme s'active ou non, avec son délai, sa gravité et son seuil ; un profil regroupe ces réglages et se partage entre entrées (caméras, serveurs de diffusion, une contribution qui montre une mire entre les programmes…). Le profil **Standard** vaut pour toute entrée sans autre profil.
+- **Acquittement** : sur la page Alarmes (une alarme, ou toutes) ; une alarme critique acquittée cesse de clignoter sur la tuile (cadre rouge fixe). Le journal garde qui a acquitté et quand.
+- **Actions** : un **son** sur les pages de sortie et la page Alarmes (critiques seulement, ou toutes ; `?mute` dans l'adresse d'une page la rend muette) ; des **appels** à d'autres systèmes quand une alarme se déclenche, se termine ou est acquittée : `POST` en JSON (automation, messagerie) ou `GET` sur une adresse où `{input}`, `{kind}`, `{severity}`, `{state}` et `{text}` sont remplacés — un **boîtier GPO** IP (une adresse par contact) allume ainsi un voyant ou une sirène.
+- **Journal** : les mille dernières alarmes (début, fin, durée, source, gravité, acquittement), gardées au redémarrage (`alarms-journal.json`), filtrables, exportables en **CSV** ; **statistiques** par alarme et par source sur l'heure, le jour ou la semaine.
+
+Les alarmes s'affichent aussi sur les tuiles (cadre et bandeau), dans le widget **État** et dans le widget **Journal des alarmes**.
 
 ---
 
@@ -365,6 +381,7 @@ La page **Système › API** documente toute l'API (OpenAPI 3.1, aussi sur `/api
 | `PUT` `DELETE` `POST` | `/api/projects/{id}/templates/{tid}` · `/publish` | multiviews, publication |
 | `GET` `PUT` | `/api/channels` · `/{id}/state` · `/{id}/project` · `/{id}/multiview` · `/{id}/preview.png` | chaînes, multiview à l'antenne, rendu du programme |
 | `GET` `PUT` `DELETE` | `/api/tally` · `/api/tally/config` · `/api/tally/inputs/{entrée}` · `/api/tally/gpi/{source}/{contact}/{on\|off}` | tally et UMD |
+| `GET` `PUT` `POST` | `/api/alarms` · `/api/alarms/settings` · `/api/alarms/ack` · `/api/alarms/journal.csv` | alarmes : réglages, journal, acquittement (`{"inputId":…,"kind":…}`, vide : toutes) |
 | `GET` | `/api/inputs` · `/api/inputs/{id}/live.mjpeg` · `/api/inputs/{id}/analysis` | entrées, leurs images et ce qu'elles transportent |
 | `GET` `POST` | `/api/examples` · `/api/examples/{id}` · `/api/examples/{id}/cover.png` | exemples de multiviews |
 | `GET` | `/api/outputs/status` · `/api/system/metrics` · `/api/health` | supervision |

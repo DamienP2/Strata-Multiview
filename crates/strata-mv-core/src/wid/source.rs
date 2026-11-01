@@ -369,8 +369,12 @@ pub fn alarm_border<'a>(
 ) -> &'a str {
     use crate::signal::Severity;
     if c.alarms {
+        // Critical: flashing until acknowledged, then steady.
+        let unseen = alarms.iter().any(|a| !a.acked);
         match alarms.first().map(|a| a.severity) {
-            Some(Severity::Critical) if (now_ms / 500).rem_euclid(2) == 0 => return "#dc2626",
+            Some(Severity::Critical) if !unseen || (now_ms / 500).rem_euclid(2) == 0 => {
+                return "#dc2626"
+            }
             Some(Severity::Warning) => return "#fbbf24",
             _ => {}
         }

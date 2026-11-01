@@ -17,6 +17,7 @@ import { ux1 } from './ux1';
 import { ux2 } from './ux2';
 import { shared } from './shared';
 import { multiview } from './multiview';
+import { alarms } from './alarms';
 import { analysis } from './analysis';
 
-export const fr: Record<string, string> = { ...common, ...controls, ...ccA, ...ccB, ...ccC, ...ccD, ...home, ...designer, ...widgets, ...widgetsA, ...widgetsB, ...widgetsC, ...buttons, ...ux3, ...ux1, ...ux2, ...shared, ...multiview, ...analysis };
+export const fr: Record<string, string> = { ...common, ...controls, ...ccA, ...ccB, ...ccC, ...ccD, ...home, ...designer, ...widgets, ...widgetsA, ...widgetsB, ...widgetsC, ...buttons, ...ux3, ...ux1, ...ux2, ...shared, ...multiview, ...analysis, ...alarms };

@@ -13,9 +13,10 @@ use std::sync::RwLock;
 use std::time::{Duration, Instant};
 
 use serde::Serialize;
+use strata_mv_core::alarm::AlarmSettings;
 use strata_mv_core::signal::{
-    Alarm, AlarmKind, JournalEntry, Level, Loudness, NtpView, PtpView, SystemView, Tally,
-    MAX_TRUE_PEAK, SILENCE, TARGET,
+    Alarm, AlarmKind, JournalEntry, Level, Loudness, NtpView, PtpView, Severity, SystemView, Tally,
+    SILENCE, TARGET,
 };
 
 /// The hold mark stays this long on a peak, then falls.
@@ -29,8 +30,6 @@ const HISTORY: usize = 120;
 /// A timecode not received for this long is gone.
 const TC_GONE: Duration = Duration::from_secs(1);
 
-/// How long a fault lasts before it is one.
-const BLACK_AFTER: Duration = Duration::from_secs(3);
 /// A picture that moved and stopped moving (only noise left) is frozen
 /// after this long…
 const FREEZE_AFTER: Duration = Duration::from_secs(10);
@@ -43,24 +42,16 @@ const NOISY_BEFORE: Duration = Duration::from_secs(5);
 const EXACT_AFTER: Duration = Duration::from_secs(4);
 /// A sample changing by more than this is the picture moving, not noise.
 const MOVES: u8 = 10;
-const SILENCE_AFTER: Duration = Duration::from_secs(5);
-const LOUD_AFTER: Duration = Duration::from_secs(10);
-/// Louder than the target by this much, LU, for [`LOUD_AFTER`].
-const LOUD_BY: f32 = 3.0;
-/// A true peak over the limit stays a fault this long.
-const PEAK_FOR: Duration = Duration::from_secs(3);
-/// Silent: every channel under this, dBFS.
-const SILENT: f32 = -60.0;
-/// Lines of the journal kept.
-const JOURNAL: usize = 200;
+/// An input that never had a picture is not lost while it starts.
+const STARTING: Duration = Duration::from_secs(10);
+/// Lines of the journal kept (and saved).
+const JOURNAL: usize = 1000;
 
 struct Meter {
     shown: Vec<Level>,
     /// When each channel's hold mark was set.
     held: Vec<Instant>,
     at: Instant,
-    /// Since when every channel is silent.
-    silent_since: Option<Instant>,
     /// The meters as they were at each measure, the last second and a half:
     /// an output shows them as late as its pictures.
     past: VecDeque<(Instant, Vec<Level>)>,
@@ -77,10 +68,6 @@ struct Loud {
     history: VecDeque<f32>,
     /// When the last value went into the history.
     sampled: Instant,
-    /// Since when it is too loud.
-    loud_since: Option<Instant>,
-    /// When the true peak last went over the limit.
-    peak_at: Option<Instant>,
     /// The history changed since the browsers had it.
     history_changed: bool,
 }
@@ -114,12 +101,90 @@ struct Look {
 /// Samples of a picture's print (16 × 9).
 const PRINT: usize = 144;
 
-/// The faults on an input now, since when (ms since 1970), and its name
+/// The faults on an input now (or on a part of the plant), and its name
 /// (the journal's lines say it).
 #[derive(Default)]
 struct Active {
-    kinds: BTreeMap<AlarmKind, i64>,
+    kinds: BTreeMap<AlarmKind, On>,
     name: String,
+}
+
+/// The faults raised on an input now: its name, each with when it began
+/// and how grave it is.
+type Found = (String, BTreeMap<AlarmKind, (Instant, Severity)>);
+
+/// A fault on now: since when (ms since 1970), how grave, seen or not.
+struct On {
+    since: i64,
+    severity: Severity,
+    acked: bool,
+}
+
+/// What is known of an input to look at its faults (`Inputs::watched`).
+pub struct Watched {
+    pub id: String,
+    pub name: String,
+    /// A picture came lately.
+    pub fresh: bool,
+    /// When the last one came.
+    pub lost_at: Option<Instant>,
+    /// Pictures a second measured, and of its format.
+    pub fps: Option<f64>,
+    pub nominal: Option<f64>,
+    /// Times it started again in the last minute.
+    pub restarts: usize,
+    pub correlation: Option<f32>,
+    /// Closed captions lately.
+    pub captions: bool,
+    /// TR 101 290 errors lately: first, second priority.
+    pub ts: (bool, bool),
+}
+
+/// What is known of the plant to look at its faults.
+#[derive(Default)]
+pub struct Plant {
+    pub ptp_running: bool,
+    pub ptp_locked: bool,
+    pub ntp_synced: Option<bool>,
+    /// % of the machine (processors over 10 s, memory).
+    pub cpu: f32,
+    pub memory: f32,
+    /// Outputs: key, name, pictures dropped in the last 10 s.
+    pub dropped: Vec<(String, String, f64)>,
+}
+
+/// A fault raised, over or acknowledged: for the actions.
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct AlarmEvent {
+    /// "raised", "ended", "acked".
+    pub state: &'static str,
+    pub input_id: String,
+    pub input: String,
+    pub kind: AlarmKind,
+    pub severity: Severity,
+    /// ms since 1970.
+    pub at: i64,
+}
+
+impl AlarmEvent {
+    fn new(
+        state: &'static str,
+        id: &str,
+        name: &str,
+        kind: AlarmKind,
+        severity: Severity,
+        at: i64,
+    ) -> Self {
+        Self {
+            state,
+            input_id: id.to_string(),
+            input: name.to_string(),
+            kind,
+            severity,
+            at,
+        }
+    }
 }
 
 /// The signals of every input.
@@ -133,6 +198,14 @@ pub struct Signals {
     active: RwLock<BTreeMap<String, Active>>,
     journal: RwLock<VecDeque<JournalEntry>>,
     ptp: RwLock<(PtpView, NtpView)>,
+    /// How faults are raised (`crate::alarms`).
+    settings: RwLock<AlarmSettings>,
+    /// Since when each fault's condition is true (input id, fault).
+    conds: std::sync::Mutex<BTreeMap<(String, AlarmKind), Instant>>,
+    /// When each input was first looked at (an input starting is not lost).
+    first_seen: std::sync::Mutex<BTreeMap<String, Instant>>,
+    /// Bumped when the journal changes (it is saved then).
+    journal_version: AtomicU64,
     /// The plant's measures, one a second (the charts).
     curves: RwLock<strata_mv_core::signal::Curves>,
     /// Bumped at each change (the broadcaster sends when it moves).
@@ -328,7 +401,6 @@ impl Signals {
             shown: Vec::new(),
             held: Vec::new(),
             at: now,
-            silent_since: None,
             past: VecDeque::new(),
             shown_at: now,
             unsent: Vec::new(),
@@ -347,11 +419,6 @@ impl Signals {
                     m.held[i] = now;
                 }
             }
-        }
-        if levels.iter().all(|l| l.peak < SILENT) {
-            m.silent_since.get_or_insert(now);
-        } else {
-            m.silent_since = None;
         }
         m.past.push_back((when, m.shown.clone()));
         m.shown_at = when;
@@ -378,8 +445,6 @@ impl Signals {
             at: now,
             history: VecDeque::new(),
             sampled: now - Duration::from_secs(1),
-            loud_since: None,
-            peak_at: None,
             history_changed: true,
         });
         e.now = l;
@@ -391,14 +456,6 @@ impl Signals {
                 e.history.pop_front();
             }
             e.history_changed = true;
-        }
-        if l.short_term > TARGET + LOUD_BY {
-            e.loud_since.get_or_insert(now);
-        } else {
-            e.loud_since = None;
-        }
-        if l.true_peak > MAX_TRUE_PEAK {
-            e.peak_at = Some(now);
         }
         self.bump();
     }
@@ -573,10 +630,11 @@ impl Signals {
             .map(|a| {
                 a.kinds
                     .iter()
-                    .map(|(k, since)| Alarm {
+                    .map(|(k, on)| Alarm {
                         kind: *k,
-                        severity: k.severity(),
-                        since: *since,
+                        severity: on.severity,
+                        since: on.since,
+                        acked: on.acked,
                     })
                     .collect()
             })
@@ -585,58 +643,195 @@ impl Signals {
         out
     }
 
-    /// Looks at the faults of every input again (`inputs`: id, name, a
-    /// picture came lately, since when none did); new ones and the ones
-    /// over go to the journal.
-    pub fn evaluate(&self, inputs: &[(String, String, bool, Option<Instant>)]) {
+    /// Looks at the faults of every input and of the plant again, by the
+    /// alarm settings (`crate::alarms`): new ones and the ones over go to
+    /// the journal, and are returned for the actions (calls to other
+    /// systems).
+    pub fn evaluate(&self, inputs: &[Watched], plant: &Plant) -> Vec<AlarmEvent> {
+        let settings = read(&self.settings).clone();
         let now = Instant::now();
-        let over = |since: Option<Instant>, d: Duration| {
-            since.filter(|s| now.saturating_duration_since(*s) >= d)
+        // The conditions true now, each with when it began if known.
+        let mut seen: Vec<(String, String, AlarmKind, Option<Instant>)> = Vec::new();
+        let starting: std::collections::BTreeSet<String> = {
+            let mut first = self.first_seen.lock().unwrap_or_else(|p| p.into_inner());
+            first.retain(|id, _| inputs.iter().any(|w| &w.id == id));
+            inputs
+                .iter()
+                .filter(|w| {
+                    let at = *first.entry(w.id.clone()).or_insert(now);
+                    now.saturating_duration_since(at) < STARTING
+                })
+                .map(|w| w.id.clone())
+                .collect()
         };
-        let mut found: BTreeMap<String, BTreeMap<AlarmKind, Instant>> = BTreeMap::new();
         {
             let looks = read(&self.looks);
             let audio = read(&self.audio);
             let loud = read(&self.loud);
-            for (id, _, fresh, lost_at) in inputs {
-                let f = found.entry(id.clone()).or_default();
-                if !fresh {
-                    // No picture: the other faults of the picture do not count.
-                    f.insert(AlarmKind::Loss, lost_at.unwrap_or(now));
-                } else if let Some(l) = looks.get(id) {
-                    if let Some(s) = over(l.black_since, BLACK_AFTER) {
-                        f.insert(AlarmKind::Black, s);
-                    } else if let Some(s) = Self::frozen(l, now) {
-                        f.insert(AlarmKind::Freeze, s);
+            let tcs = read(&self.timecodes);
+            for w in inputs {
+                let mut on = |k: AlarmKind, since: Option<Instant>| {
+                    seen.push((w.id.clone(), w.name.clone(), k, since));
+                };
+                let rule = |k: AlarmKind| settings.rule(&w.id, k);
+                if !w.fresh {
+                    // No picture: the other faults of the picture do not count;
+                    // none yet while it starts (it connects).
+                    if w.lost_at.is_some() || !starting.contains(&w.id) {
+                        on(AlarmKind::Loss, Some(w.lost_at.unwrap_or(now)));
                     }
-                }
-                if let Some(m) = audio.get(id).filter(|m| m.at.elapsed() < GONE) {
-                    if let Some(s) = over(m.silent_since, SILENCE_AFTER) {
-                        f.insert(AlarmKind::Silence, s);
+                } else {
+                    if let Some(l) = looks.get(&w.id) {
+                        if let Some(s) = l.black_since {
+                            on(AlarmKind::Black, Some(s));
+                        } else if let Some(s) = Self::frozen(l, now) {
+                            on(AlarmKind::Freeze, Some(s));
+                        }
                     }
-                }
-                if let Some(l) = loud.get(id).filter(|l| l.at.elapsed() < GONE) {
-                    if let Some(s) = over(l.loud_since, LOUD_AFTER) {
-                        f.insert(AlarmKind::Loud, s);
+                    if let (Some(fps), Some(nominal)) = (w.fps, w.nominal.filter(|n| *n > 1.0)) {
+                        // Off by more than the threshold (fields counted
+                        // as pictures are not off).
+                        let off = ((fps - nominal).abs().min((fps - 2.0 * nominal).abs()))
+                            / nominal
+                            * 100.0;
+                        if off > rule(AlarmKind::Fps).threshold as f64 {
+                            on(AlarmKind::Fps, None);
+                        }
                     }
-                    if let Some(p) = l
-                        .peak_at
-                        .filter(|p| now.saturating_duration_since(*p) < PEAK_FOR)
+                    if !tcs
+                        .get(&w.id)
+                        .is_some_and(|(_, at)| at.elapsed() < Duration::from_secs(2))
                     {
-                        f.insert(AlarmKind::Peak, p);
+                        on(AlarmKind::NoTimecode, None);
+                    }
+                    if !w.captions {
+                        on(AlarmKind::NoCaptions, None);
+                    }
+                }
+                if w.restarts as f32 >= rule(AlarmKind::Reconnecting).threshold.max(1.0) {
+                    on(AlarmKind::Reconnecting, None);
+                }
+                if w.ts.0 {
+                    on(AlarmKind::TsPriority1, None);
+                }
+                if w.ts.1 {
+                    on(AlarmKind::TsPriority2, None);
+                }
+                let mut silent = false;
+                if let Some(m) = audio.get(&w.id).filter(|m| m.at.elapsed() < GONE) {
+                    let quiet = rule(AlarmKind::Silence).threshold;
+                    if !m.shown.is_empty() && m.shown.iter().all(|l| l.peak < quiet) {
+                        silent = true;
+                        on(AlarmKind::Silence, None);
+                    }
+                    // One channel silent, another not (the LFE of 5.1 aside).
+                    let mute = rule(AlarmKind::ChannelSilent).threshold;
+                    let lfe = (m.shown.len() == 6).then_some(3);
+                    let heard: Vec<&Level> = m
+                        .shown
+                        .iter()
+                        .enumerate()
+                        .filter(|(i, _)| Some(*i) != lfe)
+                        .map(|(_, l)| l)
+                        .collect();
+                    if heard.len() >= 2
+                        && heard.iter().any(|l| l.peak < mute)
+                        && heard.iter().any(|l| l.peak >= mute + 20.0)
+                    {
+                        on(AlarmKind::ChannelSilent, None);
+                    }
+                    // The peak hold (two seconds): a clip is seen a moment.
+                    let clip = rule(AlarmKind::Clipping).threshold;
+                    if m.shown.iter().any(|l| l.hold >= clip) {
+                        on(AlarmKind::Clipping, None);
+                    }
+                }
+                if let Some(l) = loud.get(&w.id).filter(|l| l.at.elapsed() < GONE) {
+                    let st = l.now.short_term;
+                    if st > TARGET + rule(AlarmKind::Loud).threshold {
+                        on(AlarmKind::Loud, None);
+                    }
+                    if !silent && st > -70.0 && st < TARGET - rule(AlarmKind::Quiet).threshold {
+                        on(AlarmKind::Quiet, None);
+                    }
+                    // The highest true peak of the last seconds.
+                    if l.now.true_peak > rule(AlarmKind::Peak).threshold {
+                        on(AlarmKind::Peak, None);
+                    }
+                }
+                if let Some(c) = w.correlation {
+                    if c < rule(AlarmKind::Phase).threshold {
+                        on(AlarmKind::Phase, None);
                     }
                 }
             }
+            // The plant's, under names of their own.
+            let mut on = |id: &str, name: &str, k: AlarmKind| {
+                seen.push((id.to_string(), name.to_string(), k, None));
+            };
+            if plant.ptp_running && !plant.ptp_locked {
+                on("~ptp", "PTP", AlarmKind::PtpUnlocked);
+            }
+            if plant.ntp_synced == Some(false) {
+                on("~ntp", "NTP", AlarmKind::NtpUnsynced);
+            }
+            if plant.cpu > settings.rule("", AlarmKind::CpuHigh).threshold {
+                on("~cpu", "CPU", AlarmKind::CpuHigh);
+            }
+            if plant.memory > settings.rule("", AlarmKind::MemoryHigh).threshold {
+                on("~memory", "RAM", AlarmKind::MemoryHigh);
+            }
+            let drops = settings
+                .rule("", AlarmKind::OutputDropped)
+                .threshold
+                .max(1.0);
+            for (key, name, n) in &plant.dropped {
+                if *n as f32 >= drops {
+                    on(&format!("~output:{key}"), name, AlarmKind::OutputDropped);
+                }
+            }
         }
-        let names: BTreeMap<&str, &str> = inputs
-            .iter()
-            .map(|(id, n, _, _)| (id.as_str(), n.as_str()))
-            .collect();
+
+        // When each condition began; raised once it has lasted long enough.
+        let mut found: BTreeMap<String, Found> = BTreeMap::new();
+        {
+            let mut conds = self.conds.lock().unwrap_or_else(|p| p.into_inner());
+            let mut still: BTreeMap<(String, AlarmKind), Instant> = BTreeMap::new();
+            for (id, name, k, since) in &seen {
+                let began = conds
+                    .get(&(id.clone(), *k))
+                    .copied()
+                    .or(*since)
+                    .unwrap_or(now);
+                let began = since.map_or(began, |s| s.min(began));
+                still.insert((id.clone(), *k), began);
+                let r = settings.rule(if k.system() { "" } else { id }, *k);
+                if !r.enabled {
+                    continue;
+                }
+                if now.saturating_duration_since(began).as_secs_f32() >= r.after.max(0.0) {
+                    found
+                        .entry(id.clone())
+                        .or_insert_with(|| (name.clone(), BTreeMap::new()))
+                        .1
+                        .insert(*k, (began, r.severity));
+                }
+            }
+            *conds = still;
+        }
+        // Inputs (and the plant's parts) watched now, their faults or not.
+        for w in inputs {
+            found
+                .entry(w.id.clone())
+                .or_insert_with(|| (w.name.clone(), BTreeMap::new()));
+        }
+
         let t = now_ms();
+        let mut events = Vec::new();
         let mut changed = false;
         let mut active = write(&self.active);
         let mut journal = write(&self.journal);
-        // Inputs gone: their faults end.
+        // Gone (an input removed, a part of the plant fine again): over.
         let gone: Vec<String> = active
             .keys()
             .filter(|id| !found.contains_key(*id))
@@ -644,16 +839,16 @@ impl Signals {
             .collect();
         for id in gone {
             if let Some(a) = active.remove(&id) {
-                for k in a.kinds.keys() {
-                    end(&mut journal, &a.name, *k, t);
+                for (k, on) in &a.kinds {
+                    end(&mut journal, &id, *k, t);
+                    events.push(AlarmEvent::new("ended", &id, &a.name, *k, on.severity, t));
                 }
                 changed = true;
             }
         }
-        for (id, kinds) in found {
+        for (id, (name, kinds)) in found {
             let a = active.entry(id.clone()).or_default();
-            let name = names.get(id.as_str()).copied().unwrap_or("");
-            a.name = name.to_string();
+            a.name = name.clone();
             let over: Vec<AlarmKind> = a
                 .kinds
                 .keys()
@@ -661,30 +856,111 @@ impl Signals {
                 .copied()
                 .collect();
             for k in over {
-                a.kinds.remove(&k);
-                end(&mut journal, name, k, t);
-                changed = true;
+                if let Some(on) = a.kinds.remove(&k) {
+                    end(&mut journal, &id, k, t);
+                    events.push(AlarmEvent::new("ended", &id, &name, k, on.severity, t));
+                    changed = true;
+                }
             }
-            for (k, since) in kinds {
-                if a.kinds.contains_key(&k) {
+            for (k, (since, severity)) in kinds {
+                if let Some(on) = a.kinds.get_mut(&k) {
+                    // Its severity set otherwise meanwhile.
+                    if on.severity != severity {
+                        on.severity = severity;
+                        changed = true;
+                    }
                     continue;
                 }
                 let at = ms_of(since);
-                a.kinds.insert(k, at);
+                a.kinds.insert(
+                    k,
+                    On {
+                        since: at,
+                        severity,
+                        acked: false,
+                    },
+                );
                 journal.push_front(JournalEntry {
                     at,
-                    input: name.to_string(),
+                    input: name.clone(),
+                    input_id: id.clone(),
                     kind: k,
-                    severity: k.severity(),
+                    severity,
                     ended: None,
+                    acked: None,
+                    by: String::new(),
                 });
                 journal.truncate(JOURNAL);
+                events.push(AlarmEvent::new("raised", &id, &name, k, severity, at));
                 changed = true;
             }
         }
         if changed {
+            self.journal_version.fetch_add(1, Ordering::Relaxed);
             self.bump();
         }
+        events
+    }
+
+    /// Someone has seen the faults on now (of an input, of a kind, or
+    /// all): they stop flashing, the journal says who and when.
+    pub fn ack(&self, input: Option<&str>, kind: Option<AlarmKind>, by: &str) -> Vec<AlarmEvent> {
+        let t = now_ms();
+        let mut events = Vec::new();
+        let mut active = write(&self.active);
+        let mut journal = write(&self.journal);
+        for (id, a) in active.iter_mut() {
+            if input.is_some_and(|i| i != id) {
+                continue;
+            }
+            for (k, on) in a.kinds.iter_mut() {
+                if on.acked || kind.is_some_and(|x| x != *k) {
+                    continue;
+                }
+                on.acked = true;
+                if let Some(e) = journal
+                    .iter_mut()
+                    .find(|e| e.input_id == *id && e.kind == *k && e.ended.is_none())
+                {
+                    e.acked = Some(t);
+                    e.by = by.to_string();
+                }
+                events.push(AlarmEvent::new("acked", id, &a.name, *k, on.severity, t));
+            }
+        }
+        if !events.is_empty() {
+            self.journal_version.fetch_add(1, Ordering::Relaxed);
+            self.bump();
+        }
+        events
+    }
+
+    /// The alarm settings to follow from now on.
+    pub fn set_settings(&self, s: AlarmSettings) {
+        *write(&self.settings) = s;
+    }
+
+    /// The journal kept from before (the server starts).
+    pub fn load_journal(&self, mut lines: Vec<JournalEntry>) {
+        let t = now_ms();
+        // Faults still on when the server stopped: over then.
+        for e in lines.iter_mut().filter(|e| e.ended.is_none()) {
+            e.ended = Some(t);
+        }
+        lines.truncate(JOURNAL);
+        *write(&self.journal) = lines.into();
+    }
+
+    /// The journal, and a number changing with it (to save it).
+    pub fn journal(&self) -> (u64, Vec<JournalEntry>) {
+        (
+            self.journal_version.load(Ordering::Relaxed),
+            read(&self.journal).iter().cloned().collect(),
+        )
+    }
+
+    pub fn journal_version(&self) -> u64 {
+        self.journal_version.load(Ordering::Relaxed)
     }
 
     /// What PTP and NTP say now.
@@ -713,6 +989,7 @@ impl Signals {
             ntp,
             journal: read(&self.journal).iter().cloned().collect(),
             curves: read(&self.curves).clone(),
+            sound: read(&self.settings).sound,
         }
     }
 
@@ -809,11 +1086,11 @@ fn epoch_ms(t: Instant) -> f64 {
     }
 }
 
-/// Marks the journal's line of a fault of `input` as over at `t`.
-fn end(journal: &mut VecDeque<JournalEntry>, input: &str, kind: AlarmKind, t: i64) {
+/// Marks the journal's line of a fault of input `id` as over at `t`.
+fn end(journal: &mut VecDeque<JournalEntry>, id: &str, kind: AlarmKind, t: i64) {
     if let Some(e) = journal
         .iter_mut()
-        .find(|e| e.input == input && e.kind == kind && e.ended.is_none())
+        .find(|e| e.input_id == id && e.kind == kind && e.ended.is_none())
     {
         e.ended = Some(t);
     }
@@ -831,6 +1108,7 @@ pub async fn broadcast(s: crate::state::Shared) {
     let mut n = 0u64;
     let mut videos: BTreeMap<String, strata_mv_core::signal::VideoInfo> = BTreeMap::new();
     let mut curves_sent = 0i64;
+    let mut system_at = Instant::now();
     loop {
         tick.tick().await;
         n += 1;
@@ -867,7 +1145,44 @@ pub async fn broadcast(s: crate::state::Shared) {
             );
         }
         if n.is_multiple_of(6) {
-            signals.evaluate(&s.inputs.watched());
+            let sampled = s.perf.sampled();
+            let fps: std::collections::HashMap<String, f64> = sampled
+                .inputs
+                .iter()
+                .map(|(id, r)| (id.clone(), r.fps))
+                .collect();
+            let st = s.perf.sync.get();
+            let m = &sampled.machine;
+            let plant = Plant {
+                ptp_running: st.ptp.running,
+                ptp_locked: st.ptp.locked,
+                ntp_synced: st.ntp.synced,
+                cpu: sampled.cpu10,
+                memory: if m.mem_total > 0 {
+                    m.mem_used as f32 / m.mem_total as f32 * 100.0
+                } else {
+                    0.0
+                },
+                dropped: sampled
+                    .outputs
+                    .iter()
+                    .map(|(k, r)| {
+                        (
+                            k.clone(),
+                            k.rsplit('/').next().unwrap_or(k).to_string(),
+                            r.count10,
+                        )
+                    })
+                    .collect(),
+            };
+            let watched = s.inputs.watched(&fps);
+            let events = signals.evaluate(&watched, &plant);
+            s.alarms.dispatch(events);
+        }
+        // The journal saved now and then.
+        if n % 125 == 7 {
+            let s2 = s.clone();
+            tokio::task::spawn_blocking(move || s2.alarms.save_journal(s2.inputs.signals()));
         }
         let v = signals.version();
         if v == sent && new_video.is_empty() {
@@ -898,12 +1213,19 @@ pub async fn broadcast(s: crate::state::Shared) {
             v.history = None;
             v.video = None;
         }
-        if new_history || bare != last || system != last_system || new_curves {
-            let mut out = system.clone();
-            if new_curves {
-                curves_sent = curves.end_ms;
-                out.curves = curves;
+        let system_changed = system != last_system || system_at.elapsed() > Duration::from_secs(5);
+        if new_history || bare != last || system_changed || new_curves {
+            if system_changed {
+                system_at = Instant::now();
             }
+            let out = (system_changed || new_curves).then(|| {
+                let mut out = system.clone();
+                if new_curves {
+                    curves_sent = curves.end_ms;
+                    out.curves = curves;
+                }
+                out
+            });
             let _ = s.events.send(crate::state::Event::Signals {
                 sources: now,
                 system: out,
@@ -1129,7 +1451,7 @@ mod tests {
             l.moved = (0..6).map(|i| past - Duration::from_secs(i)).collect();
             assert!(l.still_kind);
         }
-        s.evaluate(&[("a".into(), "A".into(), true, None)]);
+        s.evaluate(&[w("a", "A", true, None)], &Plant::default());
         assert!(s.alarms("a").is_empty(), "{:?}", s.alarms("a"));
     }
 
@@ -1171,12 +1493,143 @@ mod tests {
         assert!(s.snapshot().contains_key("cam1"));
     }
 
+    fn w(id: &str, name: &str, fresh: bool, lost_at: Option<Instant>) -> Watched {
+        Watched {
+            id: id.into(),
+            name: name.into(),
+            fresh,
+            lost_at,
+            fps: None,
+            nominal: None,
+            restarts: 0,
+            correlation: None,
+            captions: false,
+            ts: (false, false),
+        }
+    }
+
+    #[test]
+    fn a_profile_says_which_faults_count_after_how_long_and_how_grave() {
+        use strata_mv_core::alarm::{default_rule, Profile, Rule};
+        let s = Signals::default();
+        let mut set = AlarmSettings::default();
+        let mut p = Profile {
+            id: "feed".into(),
+            name: "Feed".into(),
+            ..Default::default()
+        };
+        p.rules.insert(
+            AlarmKind::Loss,
+            Rule {
+                after: 60.0,
+                ..default_rule(AlarmKind::Loss)
+            },
+        );
+        p.rules.insert(
+            AlarmKind::Fps,
+            Rule {
+                severity: Severity::Critical,
+                after: 0.0,
+                ..default_rule(AlarmKind::Fps)
+            },
+        );
+        set.profiles.push(p);
+        set.inputs.insert("feed".into(), "feed".into());
+        s.set_settings(set);
+        let long_ago = Instant::now() - Duration::from_secs(30);
+        let mut slow = w("cam", "CAM", true, None);
+        slow.fps = Some(12.5);
+        slow.nominal = Some(25.0);
+        let mut feed_slow = w("feed2", "F2", true, None);
+        feed_slow.fps = Some(25.0);
+        feed_slow.nominal = Some(25.0);
+        let events = s.evaluate(
+            &[w("feed", "FEED", false, Some(long_ago)), slow, feed_slow],
+            &Plant::default(),
+        );
+        // Lost for 30 s, raised after 60 s only: nothing yet.
+        assert!(s.alarms("feed").is_empty());
+        // Half its rate, the default profile: raised after 5 s (not yet).
+        assert!(s.alarms("cam").is_empty());
+        assert!(events.is_empty());
+        // Its condition began 6 s ago.
+        s.conds.lock().unwrap().insert(
+            ("cam".into(), AlarmKind::Fps),
+            Instant::now() - Duration::from_secs(6),
+        );
+        let mut slow = w("cam", "CAM", true, None);
+        slow.fps = Some(12.5);
+        slow.nominal = Some(25.0);
+        let events = s.evaluate(&[slow], &Plant::default());
+        assert_eq!(s.alarms("cam")[0].kind, AlarmKind::Fps);
+        assert_eq!(s.alarms("cam")[0].severity, Severity::Warning);
+        assert_eq!(events.len(), 1);
+        assert_eq!(events[0].state, "raised");
+    }
+
+    #[test]
+    fn acknowledged_faults_say_who_saw_them() {
+        let s = Signals::default();
+        let long_ago = Instant::now() - Duration::from_secs(30);
+        s.evaluate(
+            &[w("cam", "CAM 1", false, Some(long_ago))],
+            &Plant::default(),
+        );
+        assert!(!s.alarms("cam")[0].acked);
+        let ev = s.ack(Some("cam"), None, "Régie");
+        assert_eq!(ev.len(), 1);
+        assert!(s.alarms("cam")[0].acked);
+        let j = s.system().journal;
+        assert_eq!(j[0].by, "Régie");
+        assert!(j[0].acked.is_some());
+        // Once only.
+        assert!(s.ack(None, None, "x").is_empty());
+    }
+
+    #[test]
+    fn the_plant_has_faults_too() {
+        let s = Signals::default();
+        let plant = Plant {
+            ptp_running: true,
+            ptp_locked: false,
+            cpu: 97.0,
+            dropped: vec![("main/pgm/ndi1".into(), "ndi1".into(), 12.0)],
+            ..Default::default()
+        };
+        s.evaluate(&[], &plant);
+        // PTP after 5 s, the processors after 10 s: as if begun long ago.
+        for (id, k) in [
+            ("~ptp", AlarmKind::PtpUnlocked),
+            ("~cpu", AlarmKind::CpuHigh),
+        ] {
+            s.conds
+                .lock()
+                .unwrap()
+                .insert((id.into(), k), Instant::now() - Duration::from_secs(20));
+        }
+        s.evaluate(&[], &plant);
+        assert_eq!(s.alarms("~ptp")[0].kind, AlarmKind::PtpUnlocked);
+        assert_eq!(s.alarms("~ptp")[0].severity, Severity::Critical);
+        assert_eq!(s.alarms("~cpu")[0].kind, AlarmKind::CpuHigh);
+        assert_eq!(
+            s.alarms("~output:main/pgm/ndi1")[0].kind,
+            AlarmKind::OutputDropped
+        );
+        // Fine again: over.
+        s.evaluate(&[], &Plant::default());
+        assert!(s.alarms("~ptp").is_empty());
+        assert!(s.system().journal.iter().all(|e| e.ended.is_some()));
+    }
+
     #[test]
     fn faults_go_to_the_journal_and_end_there() {
         let s = Signals::default();
         let long_ago = Instant::now() - Duration::from_secs(30);
         // No picture: a loss.
-        s.evaluate(&[("cam".into(), "CAM 1".into(), false, Some(long_ago))]);
+        s.evaluate(
+            &[w("cam", "CAM 1", false, Some(long_ago))],
+            &Plant::default(),
+        );
         let a = s.alarms("cam");
         assert_eq!(a.len(), 1);
         assert_eq!(a[0].kind, AlarmKind::Loss);
@@ -1186,7 +1639,7 @@ mod tests {
             (1, "CAM 1", None)
         );
         // The picture is back: over.
-        s.evaluate(&[("cam".into(), "CAM 1".into(), true, None)]);
+        s.evaluate(&[w("cam", "CAM 1", true, None)], &Plant::default());
         assert!(s.alarms("cam").is_empty());
         assert!(s.system().journal[0].ended.is_some());
     }

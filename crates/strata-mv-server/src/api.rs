@@ -28,6 +28,7 @@ pub fn router() -> Router<Shared> {
         .merge(crate::iconlib::router())
         .merge(crate::health::router())
         .merge(crate::tally::api::router())
+        .merge(crate::alarms::router())
         .route("/api/auth/state", get(auth_state))
         .route("/api/auth/setup", post(auth_setup))
         .route("/api/auth/login", post(auth_login))

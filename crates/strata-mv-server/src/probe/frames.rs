@@ -242,6 +242,12 @@ impl Frames {
         said
     }
 
+    /// A/53 closed captions came in the last 5 s.
+    pub fn captions(&self, now: Instant) -> bool {
+        self.captions_at
+            .is_some_and(|t| now.duration_since(t).as_secs() < 5)
+    }
+
     /// Side data `name` came with a picture in the last 10 s.
     pub fn seen(&self, name: &str, now: Instant) -> bool {
         self.side

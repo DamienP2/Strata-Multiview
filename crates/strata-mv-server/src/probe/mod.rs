@@ -268,6 +268,13 @@ impl Facts {
         false
     }
 
+    /// TR 101 290 errors of the last 5 s (first, second priority).
+    pub fn ts_errors(&self, now: Instant) -> (bool, bool) {
+        self.ts.as_ref().map_or((false, false), |t| {
+            t.recent_errors(now, std::time::Duration::from_secs(5))
+        })
+    }
+
     /// What the picture and sound are, in short (the Signal widget, the
     /// scopes' graticules): the decoded pictures first, then the banner.
     pub fn video_info(&self, now: Instant) -> strata_mv_core::signal::VideoInfo {
