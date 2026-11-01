@@ -2679,9 +2679,19 @@ fn run_stream(l: &Live) {
                 *l.rate.lock().unwrap_or_else(|p| p.into_inner()) = fps;
                 let size = (w as usize) * (h as usize) * 4;
                 let mut first = true;
+                let began = Instant::now();
                 // Pictures read so far (their number in ffmpeg's `showinfo`).
                 let mut count = 0u64;
                 loop {
+                    // Without audio because the probe found none: tried
+                    // again with audio once the picture runs (3 s).
+                    if !audio
+                        && (1..=2).contains(&l.audio_misses.load(Ordering::Relaxed))
+                        && began.elapsed() > Duration::from_secs(3)
+                    {
+                        l.no_audio.store(false, Ordering::Relaxed);
+                        break;
+                    }
                     let mut buf = l.buffer(size);
                     if out.read_exact(&mut buf).is_err() || l.stopped() {
                         break;
@@ -2737,16 +2747,24 @@ fn run_stream(l: &Live) {
         if l.stopped() {
             return;
         }
+        // Stopped to try the audio again (see above).
+        if !audio && !l.no_audio.load(Ordering::Relaxed) {
+            continue;
+        }
         let said = log.lock().unwrap_or_else(|p| p.into_inner()).clone();
-        // No audio track: again a moment later (joining a stream midway, the
-        // probe may have missed it), without the meters after five tries.
+        // No audio track: again at once without the meters (the picture
+        // first); joining a stream midway, the probe may have missed it, so
+        // tried again twice once the picture runs, then given up.
         if audio && said.contains("matches no streams") {
-            if l.audio_misses.fetch_add(1, Ordering::Relaxed) + 1 >= 5 {
-                tracing::info!("input {}: no audio track found, measured without sound", l.config.id);
-                l.no_audio.store(true, Ordering::Relaxed);
-            } else if !l.pause(Duration::from_secs(1)) {
-                return;
+            let misses = l.audio_misses.fetch_add(1, Ordering::Relaxed) + 1;
+            if misses >= 3 {
+                tracing::info!(
+                    "input {}: no audio track found, measured without sound",
+                    l.config.id
+                );
+                l.audio_misses.store(99, Ordering::Relaxed);
             }
+            l.no_audio.store(true, Ordering::Relaxed);
             continue;
         }
         // An ffmpeg without -fps_mode (before 5.1): again, without it.
