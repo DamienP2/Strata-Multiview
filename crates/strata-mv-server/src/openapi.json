@@ -2901,6 +2901,50 @@
           }
         }
       }
+    },
+    "/metrics": {
+      "get": {
+        "tags": [
+          "System"
+        ],
+        "summary": "Measures for Prometheus",
+        "description": "Text exposition format 0.0.4: machine, PTP / NTP, inputs (pictures, audio levels, loudness), channels, outputs and the faults on now. Use an API key (`Authorization: Bearer smv_…`).",
+        "responses": {
+          "200": {
+            "description": "The measures",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/alarms/test": {
+      "post": {
+        "tags": [
+          "System"
+        ],
+        "summary": "Try an action (admin)",
+        "description": "`{url, method}`: calls the address with a test fault and gives its answer. `{snmp: target, snmpBaseOid}`: sends a test trap. `{syslog: target}`: sends a test line.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "`{ok, status?, sent?, error?}`"
+          }
+        }
+      }
     }
   },
   "components": {

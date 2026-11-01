@@ -303,6 +303,10 @@ Chaque entrée et l'installation sont surveillées en permanence (**Diffusion �
 - **Profils** : chaque alarme s'active ou non, avec son délai, sa gravité et son seuil ; un profil regroupe ces réglages et se partage entre entrées (caméras, serveurs de diffusion, une contribution qui montre une mire entre les programmes…). Le profil **Standard** vaut pour toute entrée sans autre profil.
 - **Acquittement** : sur la page Alarmes (une alarme, ou toutes) ; une alarme critique acquittée cesse de clignoter sur la tuile (cadre rouge fixe). Le journal garde qui a acquitté et quand.
 - **Actions** : un **son** sur les pages de sortie et la page Alarmes (critiques seulement, ou toutes ; `?mute` dans l'adresse d'une page la rend muette) ; des **appels** à d'autres systèmes quand une alarme se déclenche, se termine ou est acquittée : `POST` en JSON (automation, messagerie) ou `GET` sur une adresse où `{input}`, `{kind}`, `{severity}`, `{state}` et `{text}` sont remplacés — un **boîtier GPO** IP (une adresse par contact) allume ainsi un voyant ou une sirène.
+- **Supervision** (Actions) :
+  - **Traps SNMP v2c** vers un ou plusieurs récepteurs (Zabbix, Nagios, PRTG, un NMS) : levée, fin et acquittement, avec l'entrée, l'alarme, sa gravité, son texte et le serveur. MIB : [`docs/STRATA-MV-MIB.txt`](docs/STRATA-MV-MIB.txt) ; OID de base réglable (par défaut la branche expérimentale de Net-SNMP, `1.3.6.1.4.1.8072.9999.9999.3637`).
+  - **Syslog** RFC 5424 en UDP ou TCP (Graylog, Splunk, ELK, rsyslog), facility local0 à local7 : les alarmes (`ALARM`, gravité syslog critique, alerte ou notice) et, au choix, le **journal d'audit** (`AUDIT`).
+  - **Prometheus** : `GET /metrics` avec une clé d'API (`authorization: credentials: smv_…` dans `scrape_configs`) : machine, PTP / NTP, chaque entrée (images par seconde, pertes, niveaux par canal, loudness, true peak), chaînes (temps de rendu, retard d'horloge), sorties (cadence, pertes, état) et alarmes en cours (`strata_alarm{input,kind,severity,acknowledged}`), pour des tableaux Grafana.
 - **Journal** : les mille dernières alarmes (début, fin, durée, source, gravité, acquittement), gardées au redémarrage (`alarms-journal.json`), filtrables, exportables en **CSV** ; **statistiques** par alarme et par source sur l'heure, le jour ou la semaine.
 
 Les alarmes s'affichent aussi sur les tuiles (cadre et bandeau), dans le widget **État** et dans le widget **Journal des alarmes**.
@@ -407,6 +411,7 @@ La page **Système › API** documente toute l'API (OpenAPI 3.1, aussi sur `/api
 | `POST` | `/api/auth/login` · `/logout` | session (cookie et jeton) ; comptes locaux puis annuaire LDAP |
 | `GET` | `/api/auth/oidc/start` · `/api/auth/oidc/callback` | authentification unique OpenID Connect |
 | `GET` | `/api/audit?limit=…` · `/api/audit?csv=true` | journal d'audit (admin) |
+| `GET` | `/metrics` | mesures au format Prometheus (clé d'API) |
 | `GET` `POST` `PUT` `DELETE` | `/api/projects[/{id}]` · `/export` · `/import` | multiviews (un projet de l'API est un multiview) |
 | `PUT` `DELETE` `POST` | `/api/projects/{id}/templates/{tid}` · `/publish` | multiviews, publication |
 | `GET` `PUT` | `/api/channels` · `/{id}/state` · `/{id}/project` · `/{id}/multiview` · `/{id}/preview.png` | chaînes, multiview à l'antenne, rendu du programme |

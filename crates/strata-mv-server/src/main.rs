@@ -15,6 +15,8 @@ mod library;
 mod locks;
 mod logs;
 mod media;
+mod metrics;
+mod notify;
 mod paths;
 mod perf;
 mod prefs;

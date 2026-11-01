@@ -136,6 +136,7 @@ pub fn router() -> Router<Shared> {
         .route("/api/health", get(health))
         .route("/api/system", get(get_system))
         .route("/api/system/metrics", get(crate::perf::metrics))
+        .route("/metrics", get(crate::metrics::metrics))
         .route("/api/system/logs", get(crate::perf::logs))
         .route("/api/system/logs/download", get(crate::perf::logs_download))
         .route("/api/system/config", put(put_system_config))
@@ -477,6 +478,7 @@ pub async fn audit_layer(
         status,
         action: crate::security::action_of(method.as_str(), &path),
     };
+    s.alarms.audit(e.clone());
     let audit = s.audit.clone();
     tokio::task::spawn_blocking(move || audit.write(&e));
     res

@@ -1,0 +1,98 @@
+STRATA-MV-MIB DEFINITIONS ::= BEGIN
+
+-- The SNMP v2c traps of Strata Multiview (crates/strata-mv-server/src/notify.rs).
+--
+-- By default the objects sit in the experimental branch of Net-SNMP
+-- (netSnmpPlaypen, 1.3.6.1.4.1.8072.9999.9999), arc 3637. A company with its
+-- own enterprise number sets it in Alarms > Actions > SNMP (base OID) and
+-- changes the OBJECT IDENTIFIER of strataMv below to match.
+
+IMPORTS
+    MODULE-IDENTITY, OBJECT-TYPE, NOTIFICATION-TYPE
+        FROM SNMPv2-SMI
+    DisplayString
+        FROM SNMPv2-TC
+    netSnmpPlaypen
+        FROM NET-SNMP-MIB;
+
+strataMv MODULE-IDENTITY
+    LAST-UPDATED "202611010000Z"
+    ORGANIZATION "Strata Multiview"
+    CONTACT-INFO "https://github.com/DamienP2/Strata-Multiview"
+    DESCRIPTION  "Faults of the inputs and of the plant seen by a Strata Multiview server."
+    REVISION     "202611010000Z"
+    DESCRIPTION  "First version."
+    ::= { netSnmpPlaypen 3637 }
+
+strataMvNotifications OBJECT IDENTIFIER ::= { strataMv 0 }
+strataMvObjects       OBJECT IDENTIFIER ::= { strataMv 1 }
+
+smvInput OBJECT-TYPE
+    SYNTAX      DisplayString
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION "Name of the input at fault (for the plant: what is at fault, PTP, NTP...)."
+    ::= { strataMvObjects 1 }
+
+smvInputId OBJECT-TYPE
+    SYNTAX      DisplayString
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION "Identifier of the input; empty for a fault of the plant."
+    ::= { strataMvObjects 2 }
+
+smvKind OBJECT-TYPE
+    SYNTAX      DisplayString
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION "The fault: loss, black, freeze, fps, silence, loud, truePeak,
+                 illegalLevels, colourSpace, ptp, ntp, cpu, memory... (as in the API)."
+    ::= { strataMvObjects 3 }
+
+smvSeverity OBJECT-TYPE
+    SYNTAX      INTEGER { warning(1), critical(2) }
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION "How grave the fault is."
+    ::= { strataMvObjects 4 }
+
+smvText OBJECT-TYPE
+    SYNTAX      DisplayString
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION "The fault in words (UTF-8, French)."
+    ::= { strataMvObjects 5 }
+
+smvServer OBJECT-TYPE
+    SYNTAX      DisplayString
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION "Host name of the server."
+    ::= { strataMvObjects 6 }
+
+smvState OBJECT-TYPE
+    SYNTAX      DisplayString
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION "raised, ended or acked."
+    ::= { strataMvObjects 7 }
+
+smvAlarmRaised NOTIFICATION-TYPE
+    OBJECTS     { smvInput, smvInputId, smvKind, smvSeverity, smvText, smvServer, smvState }
+    STATUS      current
+    DESCRIPTION "A fault was raised."
+    ::= { strataMvNotifications 1 }
+
+smvAlarmEnded NOTIFICATION-TYPE
+    OBJECTS     { smvInput, smvInputId, smvKind, smvSeverity, smvText, smvServer, smvState }
+    STATUS      current
+    DESCRIPTION "A fault is over."
+    ::= { strataMvNotifications 2 }
+
+smvAlarmAcked NOTIFICATION-TYPE
+    OBJECTS     { smvInput, smvInputId, smvKind, smvSeverity, smvText, smvServer, smvState }
+    STATUS      current
+    DESCRIPTION "A fault was acknowledged by an operator."
+    ::= { strataMvNotifications 3 }
+
+END

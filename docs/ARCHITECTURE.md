@@ -103,6 +103,8 @@ Le serveur relève chaque seconde (`perf.rs`, `CurveStore`) les processeurs, la 
 
 `signals::evaluate` (toutes les 240 ms) relève les conditions de chaque entrée (`Inputs::watched` : image, cadence mesurée et nominale, redémarrages, corrélation, sous-titres, erreurs TR 101 290) et de l'installation (`Plant` : PTP, NTP, processeurs, mémoire, images perdues par les sorties), note depuis quand chacune est vraie, et lève l'alarme quand elle a duré le délai de sa règle (`strata_mv_core::alarm` : profils partagés par les entrées, règles de l'installation). Les alarmes levées, terminées ou acquittées vont au journal (mille lignes, sauvé dans `alarms-journal.json`) et à `alarms.rs`, qui appelle les systèmes configurés (GET ou POST, 5 s au plus, dans un fil à part). Les pages reçoivent le journal avec les signaux, seulement quand il change (et toutes les 5 s).
 
+Les actions partent d'un fil à part (`mv-alarm-calls`) : appels HTTP, **traps SNMP v2c** encodés en BER par `notify.rs` (SNMPv2-Trap-PDU : sysUpTime, snmpTrapOID `base.0.{1,2,3}`, objets `base.1.{1..7}`, docs/STRATA-MV-MIB.txt) et lignes **syslog** RFC 5424 (UDP, ou TCP avec comptage d'octets RFC 6587). Le middleware d'audit y envoie aussi chaque ligne du journal d'audit pour les serveurs syslog qui la veulent. `metrics.rs` sert `/metrics` au format texte de Prometheus à partir des mesures du sampler (`Perf::sampled`), des signaux (niveaux, loudness, synchro) et des alarmes ouvertes du journal.
+
 ### Générateur de test
 
 Le réglage du générateur vit dans la chaîne (`ChannelConfig::generator`, gardé dans config.json) et, à chaud, dans `ChannelRt::generator`. L'horloge de la chaîne le joint à chaque demande de rendu (`RenderJob`) ; les fils de rendu dessinent alors la mire (`Renderer::render_generator`, `strata-mv-render/src/generator.rs` : le motif fixe une fois par réglage et par taille, puis ce qui bouge) au lieu du multiview. Le son de l'image `n` (`strata_mv_core::generator::sound`) part dans la trame (`Frame::audio`) : la sortie NDI l'envoie une fois par trame ; la sortie SDI l'accumule (deux trames en entrelacé) et le passe au shim DeckLink (`dl_output_push_audio`), qui le programme avec l'image (`ScheduleAudioSamples` à l'heure de l'image). Changer le générateur ne redémarre aucune sortie ; l'enregistrement des réglages système garde le générateur en cours.
@@ -114,4 +116,4 @@ Le réglage du générateur vit dans la chaîne (`ChannelConfig::generator`, gar
 - [ ] Sources de tally supplémentaires : Ross RossTalk, protocoles propriétaires de routeurs (Probel, Quartz) pour les UMD dynamiques.
 - [ ] Tuile pilotée par un routeur (l'entrée d'une tuile suit une destination de grille).
 - [ ] Timecode des flux (SEI, LTC dans l'audio) et du SDI (VITC, RP 188).
-- [ ] Alarmes envoyées vers l'extérieur (SNMP, GPO ; les webhooks sont faits).
+- [ ] Agent SNMP (lecture des mesures par GET ; les traps sont faits).

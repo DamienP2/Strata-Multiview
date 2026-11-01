@@ -120,4 +120,27 @@ export const alarms: Record<string, string> = {
   'HDR10 (PQ) without its static metadata (ST 2086, MaxCLL / MaxFALL).': 'HDR10 (PQ) sans ses métadonnées statiques (ST 2086, MaxCLL / MaxFALL).',
   'Colour not signalled': 'Colorimétrie non signalée',
   'The stream carries no colour space, primaries nor transfer.': 'Le flux ne signale ni espace couleur, ni primaires, ni transfert.',
+  // Supervision: SNMP traps, syslog, Prometheus.
+  'Also when the fault ends or is acknowledged.': 'Aussi quand l’alarme se termine ou est acquittée.',
+  'Sent: a test fault (TEST, critical).': 'Envoyé : une alarme de test (TEST, critique).',
+  'an API key (System › API)': 'une clé d’API (Système › API)',
+  'SNMP traps': 'Traps SNMP',
+  'Supervision {n}': 'Supervision {n}',
+  'SNMP v2c traps to a supervision (Zabbix, Nagios, PRTG, an NMS): raised, ended, acknowledged, with the input, the fault and its severity. The MIB: docs/STRATA-MV-MIB.txt.':
+    'Des traps SNMP v2c vers une supervision (Zabbix, Nagios, PRTG, un NMS) : levée, fin, acquittement, avec l’entrée, l’alarme et sa gravité. La MIB : docs/STRATA-MV-MIB.txt.',
+  Community: 'Communauté',
+  'Receiver: 10.0.0.5 or nms.example.com:162': 'Récepteur : 10.0.0.5 ou nms.exemple.fr:162',
+  'No receiver yet.': 'Aucun récepteur.',
+  'Base OID': 'OID de base',
+  'Empty: the experimental branch of Net-SNMP. Your company’s enterprise number if it has one (change the MIB to match).':
+    'Vide : la branche expérimentale de Net-SNMP. Le numéro d’entreprise (PEN) de votre société si elle en a un (modifiez la MIB en conséquence).',
+  'Log server {n}': 'Serveur de journaux {n}',
+  'RFC 5424 lines to a log server or a SIEM (Graylog, Splunk, ELK, rsyslog): the faults, and if wanted the audit journal (sign-ins, changes).':
+    'Des lignes RFC 5424 vers un serveur de journaux ou un SIEM (Graylog, Splunk, ELK, rsyslog) : les alarmes et, au choix, le journal d’audit (connexions, modifications).',
+  Facility: 'Facility',
+  'Sign-ins and changes made through the interface or the API.': 'Les connexions et les modifications faites par l’interface ou l’API.',
+  'Server: 10.0.0.5 or logs.example.com:514': 'Serveur : 10.0.0.5 ou journaux.exemple.fr:514',
+  'No server yet.': 'Aucun serveur.',
+  'The measures of the server for Prometheus and Grafana: machine, PTP / NTP, each input (pictures a second, audio levels, loudness), channels, outputs and the faults on now. Address:':
+    'Les mesures du serveur pour Prometheus et Grafana : machine, PTP / NTP, chaque entrée (images par seconde, niveaux audio, loudness), chaînes, sorties et alarmes en cours. Adresse :',
 };

@@ -202,6 +202,74 @@ impl Default for Webhook {
     }
 }
 
+/// SNMP v2c traps to a supervision (Nagios, Zabbix, PRTG, an NMS).
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(default, rename_all = "camelCase")]
+pub struct SnmpTarget {
+    pub id: String,
+    pub name: String,
+    pub enabled: bool,
+    /// "10.0.0.5" (port 162) or "nms.example.com:1162".
+    pub host: String,
+    pub community: String,
+    pub min_severity: Severity,
+    /// A trap when the fault ends, and when it is acknowledged.
+    pub on_end: bool,
+}
+
+impl Default for SnmpTarget {
+    fn default() -> Self {
+        Self {
+            id: String::new(),
+            name: String::new(),
+            enabled: true,
+            host: String::new(),
+            community: "public".into(),
+            min_severity: Severity::Warning,
+            on_end: true,
+        }
+    }
+}
+
+/// Lines to a syslog server (RFC 5424), a SIEM, a log collector.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(default, rename_all = "camelCase")]
+pub struct SyslogTarget {
+    pub id: String,
+    pub name: String,
+    pub enabled: bool,
+    /// "10.0.0.5" (port 514) or "logs.example.com:6514".
+    pub host: String,
+    /// "udp" or "tcp" (octet counting, RFC 6587).
+    pub transport: String,
+    /// 16 to 23: local0 to local7.
+    pub facility: u8,
+    pub min_severity: Severity,
+    pub on_end: bool,
+    /// The audit journal too (sign-ins, changes).
+    pub audit: bool,
+}
+
+impl Default for SyslogTarget {
+    fn default() -> Self {
+        Self {
+            id: String::new(),
+            name: String::new(),
+            enabled: true,
+            host: String::new(),
+            transport: "udp".into(),
+            facility: 16,
+            min_severity: Severity::Warning,
+            on_end: true,
+            audit: false,
+        }
+    }
+}
+
+/// The base of the SNMP objects and traps (STRATA-MV-MIB): the experimental
+/// branch of Net-SNMP (netSnmpPlaypen) unless set to a company's own.
+pub const SNMP_BASE_OID: &str = "1.3.6.1.4.1.8072.9999.9999.3637";
+
 /// Every alarm setting of the server.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(default, rename_all = "camelCase")]
@@ -216,6 +284,10 @@ pub struct AlarmSettings {
     /// grave at least; none: silence.
     pub sound: Option<Severity>,
     pub webhooks: Vec<Webhook>,
+    pub snmp: Vec<SnmpTarget>,
+    /// The base OID of the traps ("" : `SNMP_BASE_OID`).
+    pub snmp_base_oid: String,
+    pub syslog: Vec<SyslogTarget>,
 }
 
 impl Default for AlarmSettings {
@@ -226,6 +298,9 @@ impl Default for AlarmSettings {
             system: BTreeMap::new(),
             sound: Some(Severity::Critical),
             webhooks: Vec::new(),
+            snmp: Vec::new(),
+            snmp_base_oid: String::new(),
+            syslog: Vec::new(),
         }
     }
 }
@@ -276,6 +351,17 @@ impl AlarmSettings {
             if w.id.is_empty() {
                 w.id = format!("hook{}", i + 1);
             }
+        }
+        for (i, w) in self.snmp.iter_mut().enumerate() {
+            if w.id.is_empty() {
+                w.id = format!("snmp{}", i + 1);
+            }
+        }
+        for (i, w) in self.syslog.iter_mut().enumerate() {
+            if w.id.is_empty() {
+                w.id = format!("syslog{}", i + 1);
+            }
+            w.facility = w.facility.min(23);
         }
     }
 }

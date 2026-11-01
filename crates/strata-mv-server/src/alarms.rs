@@ -25,13 +25,19 @@ use crate::auth::{CurrentUser, Role};
 use crate::signals::{AlarmEvent, Signals};
 use crate::state::Shared;
 
+/// What the calling thread sends out.
+enum Msg {
+    Alarm(AlarmEvent),
+    Audit(crate::security::AuditEntry),
+}
+
 const SETTINGS: &str = "alarms.json";
 const JOURNAL: &str = "alarms-journal.json";
 
 pub struct Alarms {
     dir: PathBuf,
     settings: Arc<RwLock<AlarmSettings>>,
-    calls: std::sync::mpsc::Sender<AlarmEvent>,
+    calls: std::sync::mpsc::Sender<Msg>,
     /// The journal's version last saved.
     saved: AtomicU64,
 }
@@ -52,14 +58,30 @@ impl Alarms {
             signals.load_journal(lines);
         }
         let settings = Arc::new(RwLock::new(s));
-        let (tx, rx) = std::sync::mpsc::channel::<AlarmEvent>();
+        let (tx, rx) = std::sync::mpsc::channel::<Msg>();
         let shared = settings.clone();
+        crate::notify::init();
         let _ = std::thread::Builder::new()
             .name("mv-alarm-calls".into())
             .spawn(move || {
-                for ev in rx {
+                for m in rx {
                     let s = shared.read().unwrap_or_else(|p| p.into_inner()).clone();
-                    call(&s, &ev);
+                    match m {
+                        Msg::Alarm(ev) => {
+                            notify(&s, &ev);
+                            call(&s, &ev);
+                        }
+                        Msg::Audit(e) => {
+                            for t in s.syslog.iter().filter(|t| t.enabled && t.audit) {
+                                if let Err(err) = crate::notify::send_syslog(
+                                    t,
+                                    &crate::notify::audit_line(t.facility, &e),
+                                ) {
+                                    tracing::debug!("syslog « {} »: {err}", t.name);
+                                }
+                            }
+                        }
+                    }
                 }
             });
         Arc::new(Self {
@@ -89,6 +111,16 @@ impl Alarms {
                 ));
             }
         }
+        for (name, host, on) in s
+            .snmp
+            .iter()
+            .map(|t| (&t.name, &t.host, t.enabled))
+            .chain(s.syslog.iter().map(|t| (&t.name, &t.host, t.enabled)))
+        {
+            if on && host.trim().is_empty() {
+                return Err(format!("« {name} » : l’adresse du serveur manque"));
+            }
+        }
         let tmp = self.dir.join(format!("{SETTINGS}.tmp"));
         std::fs::write(
             &tmp,
@@ -111,7 +143,21 @@ impl Alarms {
                 e.kind,
                 e.severity
             );
-            let _ = self.calls.send(e);
+            let _ = self.calls.send(Msg::Alarm(e));
+        }
+    }
+
+    /// A line of the audit journal: to the syslog servers that want it.
+    pub fn audit(&self, e: crate::security::AuditEntry) {
+        let wanted = self
+            .settings
+            .read()
+            .unwrap_or_else(|p| p.into_inner())
+            .syslog
+            .iter()
+            .any(|t| t.enabled && t.audit);
+        if wanted {
+            let _ = self.calls.send(Msg::Audit(e));
         }
     }
 
@@ -159,6 +205,30 @@ fn fill(url: &str, ev: &AlarmEvent) -> String {
         .replace("{severity}", severity)
         .replace("{state}", ev.state)
         .replace("{text}", &enc(ev.kind.text("fr")))
+}
+
+/// SNMP traps and syslog lines of a fault.
+fn notify(s: &AlarmSettings, ev: &AlarmEvent) {
+    let wanted =
+        |min: Severity, on_end: bool| ev.severity >= min && (ev.state == "raised" || on_end);
+    for t in s
+        .snmp
+        .iter()
+        .filter(|t| t.enabled && wanted(t.min_severity, t.on_end))
+    {
+        if let Err(e) = crate::notify::send_trap(t, &s.snmp_base_oid, ev) {
+            tracing::warn!("SNMP trap « {} » failed: {e}", t.name);
+        }
+    }
+    for t in s
+        .syslog
+        .iter()
+        .filter(|t| t.enabled && wanted(t.min_severity, t.on_end))
+    {
+        if let Err(e) = crate::notify::send_syslog(t, &crate::notify::alarm_line(t.facility, ev)) {
+            tracing::warn!("syslog « {} » failed: {e}", t.name);
+        }
+    }
 }
 
 /// Calls the systems set for a fault (5 s at most each).
@@ -270,10 +340,18 @@ async fn ack(
 }
 
 #[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
 struct TestBody {
+    #[serde(default)]
     url: String,
     #[serde(default)]
     method: String,
+    /// Or a trap to this target.
+    snmp: Option<strata_mv_core::alarm::SnmpTarget>,
+    #[serde(default)]
+    snmp_base_oid: String,
+    /// Or a line to this syslog server.
+    syslog: Option<strata_mv_core::alarm::SyslogTarget>,
 }
 
 /// Tries a call (the Alarms page's « Essayer »): its answer.
@@ -290,8 +368,25 @@ async fn test_call(
             input: "TEST".into(),
             kind: AlarmKind::Freeze,
             severity: Severity::Critical,
-            at: 0,
+            at: std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_millis() as i64)
+                .unwrap_or(0),
         };
+        // A trap or a syslog line: sent, no answer to wait for (UDP).
+        let sent = if let Some(t) = &b.snmp {
+            Some(crate::notify::send_trap(t, &b.snmp_base_oid, &ev))
+        } else {
+            b.syslog
+                .as_ref()
+                .map(|t| crate::notify::send_syslog(t, &crate::notify::alarm_line(t.facility, &ev)))
+        };
+        if let Some(r) = sent {
+            return match r {
+                Ok(()) => serde_json::json!({ "ok": true, "sent": true }),
+                Err(e) => serde_json::json!({ "ok": false, "error": e }),
+            };
+        }
         let s = AlarmSettings {
             webhooks: vec![strata_mv_core::alarm::Webhook {
                 name: "test".into(),

@@ -3,7 +3,27 @@
 // grave, from what threshold), the profile of each input, the plant's faults, and what happens when
 // a fault is raised (a sound on the pages, calls to other systems). Mirrors
 // crates/strata-mv-server/src/alarms.rs (settings in alarms.json, applied at once).
-import { BellOff, BellRing, Check, CheckCheck, Download, History, ListChecks, Plus, Server, SlidersHorizontal, Trash2, Webhook as WebhookIcon, BarChart3, Copy, RotateCcw, Send } from 'lucide-react';
+import {
+  BellOff,
+  BellRing,
+  Check,
+  CheckCheck,
+  Download,
+  History,
+  ListChecks,
+  Plus,
+  Server,
+  SlidersHorizontal,
+  Trash2,
+  Webhook as WebhookIcon,
+  BarChart3,
+  Copy,
+  RotateCcw,
+  Send,
+  Network,
+  ScrollText,
+  Activity,
+} from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useAlarmSound } from '../engine/alarmSound';
 import { alarmText, useInputs, useSystem, type AlarmKind, type JournalEntry, type Severity } from '../engine/liveInputs';
@@ -12,7 +32,23 @@ import { NavItem, NavSection, PageHead, SidePage } from '../pages/SidePage';
 import { Card, Field, SaveBar } from '../settings/ui';
 import { api, can, useApp } from '../store';
 import { friendlyError } from '../ui/serverError';
-import { COLOR_SPACES, DEFAULT_PROFILE, INPUT_ALARMS, KIND_INFO, SYSTEM_ALARMS, defaultRule, ruleOf, thresholdUnit, type AlarmSettings, type Profile, type Rule, type Webhook } from './model';
+import {
+  COLOR_SPACES,
+  DEFAULT_PROFILE,
+  INPUT_ALARMS,
+  KIND_INFO,
+  SYSTEM_ALARMS,
+  defaultRule,
+  ruleOf,
+  thresholdUnit,
+  SNMP_BASE_OID,
+  type AlarmSettings,
+  type Profile,
+  type Rule,
+  type SnmpTarget,
+  type SyslogTarget,
+  type Webhook,
+} from './model';
 import './alarms.css';
 
 interface AlarmsView {
@@ -173,7 +209,13 @@ export function AlarmsPage() {
           <NavSection>{t('Settings')}</NavSection>
           <NavItem on={page === 'sources'} icon={<SlidersHorizontal size={15} />} label={t('Profile of each input')} onClick={() => setPage('sources')} />
           <NavItem on={page === 'system'} icon={<Server size={15} />} label={t('Plant')} onClick={() => setPage('system')} />
-          <NavItem on={page === 'actions'} icon={<WebhookIcon size={15} />} label={t('Actions')} count={cfg.webhooks.length || undefined} onClick={() => setPage('actions')} />
+          <NavItem
+            on={page === 'actions'}
+            icon={<WebhookIcon size={15} />}
+            label={t('Actions')}
+            count={cfg.webhooks.length + (cfg.snmp?.length ?? 0) + (cfg.syslog?.length ?? 0) || undefined}
+            onClick={() => setPage('actions')}
+          />
         </>
       )}
     </>
@@ -690,6 +732,220 @@ function ActionsView({ cfg, edit }: { cfg: AlarmSettings; edit: (fn: (c: AlarmSe
           </div>
         ))}
         {!cfg.webhooks.length && <p className="muted">{t('No call yet.')}</p>}
+      </Card>
+      <Supervision cfg={cfg} edit={edit} />
+    </>
+  );
+}
+
+/** Severity and "when over too", shared by the SNMP and syslog targets. */
+function WhenFields({ minSeverity, onEnd, set }: { minSeverity: Severity; onEnd: boolean; set: (p: { minSeverity?: Severity; onEnd?: boolean }) => void }) {
+  return (
+    <>
+      <Field label={t('Faults')}>
+        <select value={minSeverity} onChange={(e) => set({ minSeverity: e.target.value as Severity })}>
+          <option value="critical">{t('Critical faults')}</option>
+          <option value="warning">{t('Every fault')}</option>
+        </select>
+      </Field>
+      <Field label={t('When over too')} hint={t('Also when the fault ends or is acknowledged.')}>
+        <select value={onEnd ? 'on' : 'off'} onChange={(e) => set({ onEnd: e.target.value === 'on' })}>
+          <option value="on">{t('Yes')}</option>
+          <option value="off">{t('No')}</option>
+        </select>
+      </Field>
+    </>
+  );
+}
+
+/** SNMP traps, syslog, Prometheus: the supervision of the plant. */
+function Supervision({ cfg, edit }: { cfg: AlarmSettings; edit: (fn: (c: AlarmSettings) => void) => void }) {
+  const toast = useApp((s) => s.toast);
+  const snmp = cfg.snmp ?? [];
+  const syslog = cfg.syslog ?? [];
+  const setS = (id: string, p: Partial<SnmpTarget>) => edit((c) => void Object.assign(c.snmp.find((x) => x.id === id)!, p));
+  const setL = (id: string, p: Partial<SyslogTarget>) => edit((c) => void Object.assign(c.syslog.find((x) => x.id === id)!, p));
+  const tryIt = async (body: object) => {
+    try {
+      const r = await api<{ ok: boolean; error?: string }>('POST', '/api/alarms/test', body);
+      toast(r.ok ? t('Sent: a test fault (TEST, critical).') : friendlyError(r.error ?? ''), r.ok ? 'info' : 'error');
+    } catch (e) {
+      toast(friendlyError((e as Error).message), 'error');
+    }
+  };
+  const metricsUrl = `${location.origin}/metrics`;
+  const scrape = `scrape_configs:
+  - job_name: strata
+    scheme: ${location.protocol.replace(':', '')}
+    authorization:
+      credentials: smv_…   # ${t('an API key (System › API)')}
+    static_configs:
+      - targets: ['${location.host}']`;
+  return (
+    <>
+      <Card
+        icon={<Network size={16} />}
+        title={t('SNMP traps')}
+        actions={
+          <button
+            className="btn small"
+            onClick={() =>
+              edit((c) => {
+                c.snmp = c.snmp ?? [];
+                c.snmp.push({
+                  id: newId(
+                    'snmp',
+                    c.snmp.map((w) => w.id),
+                  ),
+                  name: t('Supervision {n}', { n: c.snmp.length + 1 }),
+                  enabled: true,
+                  host: '',
+                  community: 'public',
+                  minSeverity: 'warning',
+                  onEnd: true,
+                });
+              })
+            }
+          >
+            <Plus size={13} /> {t('Add')}
+          </button>
+        }
+      >
+        <p className="muted">
+          {t('SNMP v2c traps to a supervision (Zabbix, Nagios, PRTG, an NMS): raised, ended, acknowledged, with the input, the fault and its severity. The MIB: docs/STRATA-MV-MIB.txt.')}
+        </p>
+        {snmp.map((w) => (
+          <div key={w.id} className="al-hook">
+            <div className="al-grid">
+              <Field label={t('Name')}>
+                <input value={w.name} onChange={(e) => setS(w.id, { name: e.target.value })} />
+              </Field>
+              <Field label={t('Active')}>
+                <select value={w.enabled ? 'on' : 'off'} onChange={(e) => setS(w.id, { enabled: e.target.value === 'on' })}>
+                  <option value="on">{t('On')}</option>
+                  <option value="off">{t('Off')}</option>
+                </select>
+              </Field>
+              <Field label={t('Community')}>
+                <input value={w.community} spellCheck={false} onChange={(e) => setS(w.id, { community: e.target.value })} />
+              </Field>
+              <WhenFields minSeverity={w.minSeverity} onEnd={w.onEnd} set={(p) => setS(w.id, p)} />
+            </div>
+            <div className="al-url">
+              <input value={w.host} placeholder={t('Receiver: 10.0.0.5 or nms.example.com:162')} spellCheck={false} onChange={(e) => setS(w.id, { host: e.target.value })} />
+              <button className="btn small" disabled={!w.host.trim()} onClick={() => void tryIt({ snmp: w, snmpBaseOid: cfg.snmpBaseOid })}>
+                <Send size={13} /> {t('Try')}
+              </button>
+              <button className="icon-btn ghost" title={t('Remove')} onClick={() => edit((c) => void (c.snmp = c.snmp.filter((x) => x.id !== w.id)))}>
+                <Trash2 size={14} />
+              </button>
+            </div>
+          </div>
+        ))}
+        {!snmp.length && <p className="muted">{t('No receiver yet.')}</p>}
+        <div className="al-grid">
+          <div style={{ gridColumn: 'span 2' }}>
+            <Field label={t('Base OID')} hint={t('Empty: the experimental branch of Net-SNMP. Your company’s enterprise number if it has one (change the MIB to match).')}>
+              <input value={cfg.snmpBaseOid ?? ''} placeholder={SNMP_BASE_OID} spellCheck={false} onChange={(e) => edit((c) => void (c.snmpBaseOid = e.target.value.trim()))} />
+            </Field>
+          </div>
+        </div>
+      </Card>
+
+      <Card
+        icon={<ScrollText size={16} />}
+        title="Syslog"
+        actions={
+          <button
+            className="btn small"
+            onClick={() =>
+              edit((c) => {
+                c.syslog = c.syslog ?? [];
+                c.syslog.push({
+                  id: newId(
+                    'syslog',
+                    c.syslog.map((w) => w.id),
+                  ),
+                  name: t('Log server {n}', { n: c.syslog.length + 1 }),
+                  enabled: true,
+                  host: '',
+                  transport: 'udp',
+                  facility: 16,
+                  minSeverity: 'warning',
+                  onEnd: true,
+                  audit: false,
+                });
+              })
+            }
+          >
+            <Plus size={13} /> {t('Add')}
+          </button>
+        }
+      >
+        <p className="muted">{t('RFC 5424 lines to a log server or a SIEM (Graylog, Splunk, ELK, rsyslog): the faults, and if wanted the audit journal (sign-ins, changes).')}</p>
+        {syslog.map((w) => (
+          <div key={w.id} className="al-hook">
+            <div className="al-grid">
+              <Field label={t('Name')}>
+                <input value={w.name} onChange={(e) => setL(w.id, { name: e.target.value })} />
+              </Field>
+              <Field label={t('Active')}>
+                <select value={w.enabled ? 'on' : 'off'} onChange={(e) => setL(w.id, { enabled: e.target.value === 'on' })}>
+                  <option value="on">{t('On')}</option>
+                  <option value="off">{t('Off')}</option>
+                </select>
+              </Field>
+              <Field label={t('Transport')}>
+                <select value={w.transport} onChange={(e) => setL(w.id, { transport: e.target.value as 'udp' | 'tcp' })}>
+                  <option value="udp">UDP</option>
+                  <option value="tcp">TCP</option>
+                </select>
+              </Field>
+              <Field label={t('Facility')}>
+                <select value={w.facility} onChange={(e) => setL(w.id, { facility: Number(e.target.value) })}>
+                  {[16, 17, 18, 19, 20, 21, 22, 23].map((f) => (
+                    <option key={f} value={f}>
+                      local{f - 16}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+              <WhenFields minSeverity={w.minSeverity} onEnd={w.onEnd} set={(p) => setL(w.id, p)} />
+              <Field label={t('Audit journal')} hint={t('Sign-ins and changes made through the interface or the API.')}>
+                <select value={w.audit ? 'on' : 'off'} onChange={(e) => setL(w.id, { audit: e.target.value === 'on' })}>
+                  <option value="on">{t('Yes')}</option>
+                  <option value="off">{t('No')}</option>
+                </select>
+              </Field>
+            </div>
+            <div className="al-url">
+              <input value={w.host} placeholder={t('Server: 10.0.0.5 or logs.example.com:514')} spellCheck={false} onChange={(e) => setL(w.id, { host: e.target.value })} />
+              <button className="btn small" disabled={!w.host.trim()} onClick={() => void tryIt({ syslog: w })}>
+                <Send size={13} /> {t('Try')}
+              </button>
+              <button className="icon-btn ghost" title={t('Remove')} onClick={() => edit((c) => void (c.syslog = c.syslog.filter((x) => x.id !== w.id)))}>
+                <Trash2 size={14} />
+              </button>
+            </div>
+          </div>
+        ))}
+        {!syslog.length && <p className="muted">{t('No server yet.')}</p>}
+      </Card>
+
+      <Card
+        icon={<Activity size={16} />}
+        title="Prometheus"
+        actions={
+          <button className="btn small" onClick={() => void navigator.clipboard?.writeText(scrape).then(() => toast(t('Copied')))}>
+            <Copy size={13} /> {t('Copy')}
+          </button>
+        }
+      >
+        <p className="muted">
+          {t('The measures of the server for Prometheus and Grafana: machine, PTP / NTP, each input (pictures a second, audio levels, loudness), channels, outputs and the faults on now. Address:')}{' '}
+          <code>{metricsUrl}</code>
+        </p>
+        <pre className="al-code">{scrape}</pre>
       </Card>
     </>
   );

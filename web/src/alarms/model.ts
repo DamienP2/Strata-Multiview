@@ -38,13 +38,43 @@ export interface Webhook {
   onEnd: boolean;
 }
 
+/** SNMP v2c traps (docs/STRATA-MV-MIB.txt). */
+export interface SnmpTarget {
+  id: string;
+  name: string;
+  enabled: boolean;
+  host: string;
+  community: string;
+  minSeverity: Severity;
+  onEnd: boolean;
+}
+
+/** Lines to a syslog server (RFC 5424). */
+export interface SyslogTarget {
+  id: string;
+  name: string;
+  enabled: boolean;
+  host: string;
+  transport: 'udp' | 'tcp';
+  facility: number;
+  minSeverity: Severity;
+  onEnd: boolean;
+  audit: boolean;
+}
+
 export interface AlarmSettings {
   profiles: Profile[];
   inputs: Record<string, string>;
   system: Partial<Record<AlarmKind, Rule>>;
   sound: Severity | null;
   webhooks: Webhook[];
+  snmp: SnmpTarget[];
+  snmpBaseOid: string;
+  syslog: SyslogTarget[];
 }
+
+/** Mirrors strata_mv_core::alarm::SNMP_BASE_OID. */
+export const SNMP_BASE_OID = '1.3.6.1.4.1.8072.9999.9999.3637';
 
 export const DEFAULT_PROFILE = 'default';
 
