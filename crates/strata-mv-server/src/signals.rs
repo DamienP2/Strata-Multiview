@@ -32,6 +32,7 @@ const TC_GONE: Duration = Duration::from_secs(1);
 /// How long a fault lasts before it is one.
 const BLACK_AFTER: Duration = Duration::from_secs(3);
 const FREEZE_AFTER: Duration = Duration::from_secs(4);
+const BARS_AFTER: Duration = Duration::from_secs(3);
 const SILENCE_AFTER: Duration = Duration::from_secs(5);
 const LOUD_AFTER: Duration = Duration::from_secs(10);
 /// Louder than the target by this much, LU, for [`LOUD_AFTER`].
@@ -82,6 +83,8 @@ struct Look {
     same_since: Instant,
     /// Since when it is black.
     black_since: Option<Instant>,
+    /// Since when it is colour bars.
+    bars_since: Option<Instant>,
 }
 
 /// The faults on an input now, since when (ms since 1970), and its name
@@ -161,6 +164,68 @@ fn write<T>(l: &RwLock<T>) -> std::sync::RwLockWriteGuard<'_, T> {
 }
 
 /// 8 × 8 luma samples of a picture (0…255), and whether it is black.
+/// The picture is colour bars (SMPTE, EBU, HD, 75 % or 100 %): columns the
+/// same from top to bottom over its upper half, yellow, cyan, green,
+/// magenta, red and blue in that order from left to right.
+pub fn is_bars(pm: &tiny_skia::Pixmap) -> bool {
+    let (w, h) = (pm.width() as usize, pm.height() as usize);
+    if w < 64 || h < 32 {
+        return false;
+    }
+    let data = pm.data();
+    let px = |x: usize, y: usize| {
+        let p = (y * w + x) * 4;
+        [data[p] as i32, data[p + 1] as i32, data[p + 2] as i32]
+    };
+    const N: usize = 96;
+    let rows = [h * 12 / 100, h * 30 / 100, h * 48 / 100];
+    let line: Vec<[i32; 3]> = (0..N)
+        .map(|i| px((i * 2 + 1) * w / (2 * N), rows[1]))
+        .collect();
+    // Columns: the same colour at the three heights.
+    let same = |a: [i32; 3], b: [i32; 3]| (0..3).all(|c| (a[c] - b[c]).abs() <= 28);
+    let uniform = (0..N)
+        .filter(|&i| {
+            let x = (i * 2 + 1) * w / (2 * N);
+            same(px(x, rows[0]), line[i]) && same(px(x, rows[2]), line[i])
+        })
+        .count();
+    if uniform * 100 < N * 80 {
+        return false;
+    }
+    // The hues, left to right: Y, C, G, M, R, B ('-' for a grey or another colour).
+    let hue = |[r, g, b]: [i32; 3]| {
+        let (hi, lo) = (r.max(g).max(b), r.min(g).min(b));
+        if hi < 80 || hi - lo < 80 {
+            return '-';
+        }
+        let on = |v: i32| v > lo + (hi - lo) / 2;
+        match (on(r), on(g), on(b)) {
+            (true, true, false) => 'Y',
+            (false, true, true) => 'C',
+            (false, true, false) => 'G',
+            (true, false, true) => 'M',
+            (true, false, false) => 'R',
+            (false, false, true) => 'B',
+            _ => '-',
+        }
+    };
+    let mut seq: Vec<(char, usize)> = Vec::new();
+    for c in line.iter().map(|&p| hue(p)) {
+        match seq.last_mut() {
+            Some((h, n)) if *h == c => *n += 1,
+            _ => seq.push((c, 1)),
+        }
+    }
+    // Each bar a few samples wide at least (not a detail of a picture).
+    let bars: String = seq
+        .iter()
+        .filter(|(c, n)| *c != '-' && *n >= 4)
+        .map(|(c, _)| *c)
+        .collect();
+    bars.contains("YCGMRB")
+}
+
 fn print_of(pm: &tiny_skia::Pixmap) -> ([u8; 64], bool) {
     let (w, h) = (pm.width() as usize, pm.height() as usize);
     let data = pm.data();
@@ -313,6 +378,7 @@ impl Signals {
             print,
             same_since: now,
             black_since: None,
+            bars_since: None,
         });
         // Changed: more than a slight difference somewhere (noise of a
         // still picture coded again stays under it).
@@ -328,6 +394,13 @@ impl Signals {
             l.black_since.get_or_insert(now);
         } else {
             l.black_since = None;
+        }
+        if is_bars(pm) {
+            l.bars_since.get_or_insert(now);
+            // Bars are still by nature: never a frozen picture.
+            l.same_since = now;
+        } else {
+            l.bars_since = None;
         }
     }
 
@@ -425,6 +498,8 @@ impl Signals {
                 } else if let Some(l) = looks.get(id) {
                     if let Some(s) = over(l.black_since, BLACK_AFTER) {
                         f.insert(AlarmKind::Black, s);
+                    } else if let Some(s) = over(l.bars_since, BARS_AFTER) {
+                        f.insert(AlarmKind::Bars, s);
                     } else if let Some(s) = over(Some(l.same_since), FREEZE_AFTER) {
                         f.insert(AlarmKind::Freeze, s);
                     }
@@ -700,6 +775,117 @@ mod tests {
             rms: db,
             hold: db,
         }
+    }
+
+    /// A picture `w` wide of vertical bars of these colours, the lower third grey.
+    fn bars(w: u32, colours: &[[u8; 3]]) -> tiny_skia::Pixmap {
+        let h = w * 9 / 16;
+        let mut pm = tiny_skia::Pixmap::new(w, h).unwrap();
+        let d = pm.data_mut();
+        for y in 0..h as usize {
+            for x in 0..w as usize {
+                let c = if y > (h as usize) * 2 / 3 {
+                    [40, 40, 40]
+                } else {
+                    colours[x * colours.len() / w as usize]
+                };
+                let p = (y * w as usize + x) * 4;
+                d[p..p + 4].copy_from_slice(&[c[0], c[1], c[2], 255]);
+            }
+        }
+        pm
+    }
+
+    #[test]
+    fn colour_bars_are_told_apart() {
+        // SMPTE 75 %: white, yellow, cyan, green, magenta, red, blue.
+        let smpte = [
+            [191, 191, 191],
+            [191, 191, 0],
+            [0, 191, 191],
+            [0, 191, 0],
+            [191, 0, 191],
+            [191, 0, 0],
+            [0, 0, 191],
+        ];
+        assert!(is_bars(&bars(1280, &smpte)));
+        // HD bars: grey sides.
+        let mut hd = vec![[104, 104, 104]];
+        hd.extend_from_slice(&smpte);
+        hd.push([104, 104, 104]);
+        assert!(is_bars(&bars(1920, &hd)));
+        // A picture with some of those colours, not in that order: not bars.
+        assert!(!is_bars(&bars(
+            1280,
+            &[[0, 0, 191], [191, 0, 0], [0, 191, 0], [191, 191, 0]]
+        )));
+        // Black: not bars.
+        assert!(!is_bars(&tiny_skia::Pixmap::new(640, 360).unwrap()));
+    }
+
+    /// ffmpeg's own test patterns (skipped without ffmpeg).
+    #[test]
+    fn ffmpeg_bars_are_bars_and_other_patterns_not() {
+        let frame = |src: &str| {
+            let out = std::process::Command::new("ffmpeg")
+                .args([
+                    "-v",
+                    "error",
+                    "-f",
+                    "lavfi",
+                    "-i",
+                    src,
+                    "-frames:v",
+                    "1",
+                    "-pix_fmt",
+                    "rgba",
+                    "-f",
+                    "rawvideo",
+                    "-",
+                ])
+                .output()
+                .ok()
+                .filter(|o| o.status.success())?;
+            tiny_skia::Pixmap::from_vec(out.stdout, tiny_skia::IntSize::from_wh(640, 360)?)
+        };
+        for (src, want) in [
+            ("smptebars=size=640x360", true),
+            ("smptehdbars=size=640x360", true),
+            ("pal75bars=size=640x360", true),
+            ("pal100bars=size=640x360", true),
+            ("testsrc2=size=640x360", false),
+            ("mandelbrot=size=640x360", false),
+            ("color=c=0x2040a0:size=640x360", false),
+        ] {
+            let Some(pm) = frame(src) else { return };
+            assert_eq!(is_bars(&pm), want, "{src}");
+        }
+    }
+
+    #[test]
+    fn bars_are_not_a_frozen_picture() {
+        let s = Signals::default();
+        let smpte = [
+            [191, 191, 191],
+            [191, 191, 0],
+            [0, 191, 191],
+            [0, 191, 0],
+            [191, 0, 191],
+            [191, 0, 0],
+            [0, 0, 191],
+        ];
+        let pm = bars(640, &smpte);
+        s.picture("a", &pm);
+        {
+            // Bars for 5 s: the bars, not a frozen picture.
+            let mut looks = write(&s.looks);
+            let l = looks.get_mut("a").unwrap();
+            let past = Instant::now() - Duration::from_secs(5);
+            l.bars_since = Some(past);
+        }
+        s.evaluate(&[("a".into(), "A".into(), true, None)]);
+        let kinds: Vec<_> = s.alarms("a").iter().map(|a| a.kind).collect();
+        assert_eq!(kinds, vec![AlarmKind::Bars]);
     }
 
     #[test]
