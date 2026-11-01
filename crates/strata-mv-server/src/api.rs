@@ -348,6 +348,15 @@ fn origin_of(headers: &HeaderMap, s: &Shared) -> String {
     format!("{scheme}://{host}")
 }
 
+/// The scopes asked for, `openid` always among them.
+fn scopes_of(set: &str) -> String {
+    let mut v: Vec<&str> = set.split_whitespace().collect();
+    if !v.contains(&"openid") {
+        v.insert(0, "openid");
+    }
+    v.join(" ")
+}
+
 /// `GET /api/auth/oidc/start`: off to the provider's sign-in page.
 async fn oidc_start(State(s): State<Shared>, headers: HeaderMap) -> ApiResult<Response> {
     let c = s.config.oidc.clone();
@@ -368,7 +377,7 @@ async fn oidc_start(State(s): State<Shared>, headers: HeaderMap) -> ApiResult<Re
         d.authorization,
         enc(s.config.oidc.client_id.trim()),
         enc(&redirect),
-        enc("openid profile email")
+        enc(&scopes_of(&s.config.oidc.scopes))
     );
     Ok((StatusCode::FOUND, [(header::LOCATION, url)]).into_response())
 }
@@ -442,8 +451,11 @@ pub async fn audit_layer(
 ) -> Response {
     let method = req.method().clone();
     let path = req.uri().path().to_string();
-    let changes = matches!(method.as_str(), "POST" | "PUT" | "PATCH" | "DELETE")
-        && (path.starts_with("/api/") || path.starts_with("/x-nmos/"));
+    // The return from single sign-on is a GET, but a sign-in all the same.
+    let sso = path == "/api/auth/oidc/callback";
+    let changes = sso
+        || (matches!(method.as_str(), "POST" | "PUT" | "PATCH" | "DELETE")
+            && (path.starts_with("/api/") || path.starts_with("/x-nmos/")));
     // Reading, and the live pages' own chatter: not audited.
     if !changes || path.starts_with("/api/alarms/test") {
         return next.run(req).await;
@@ -457,7 +469,16 @@ pub async fn audit_layer(
     let before = auth::token_from(&parts).and_then(|t| s.auth.user_for_token(&t));
     let req = axum::extract::Request::from_parts(parts, body);
     let res = next.run(req).await;
-    let status = res.status().as_u16();
+    let mut status = res.status().as_u16();
+    if sso {
+        // Both ways end in a redirect: refused when it carries the error.
+        let failed = res
+            .headers()
+            .get(header::LOCATION)
+            .and_then(|l| l.to_str().ok())
+            .is_some_and(|l| l.contains("sso_error="));
+        status = if failed { 401 } else { 200 };
+    }
     let user = match &before {
         Some(u) => u.username.clone(),
         None => res

@@ -27,17 +27,37 @@ const LDAP: LdapConfig = {
 };
 const OIDC: OidcConfig = {
   enabled: false,
+  provider: '',
   label: 'SSO',
   issuer: '',
   clientId: '',
   clientSecret: '',
   usernameClaim: 'preferred_username',
   groupsClaim: 'groups',
+  scopes: 'openid profile email',
   adminGroups: [],
   designerGroups: [],
   operatorGroups: [],
   defaultRole: 'viewer',
 };
+
+/** What each provider needs: the button, the scopes, the claims, the issuer's form. */
+const PROVIDERS: { id: string; name: string; label: string; scopes: string; usernameClaim: string; groupsClaim: string; issuer: string }[] = [
+  { id: 'okta', name: 'Okta', label: 'Okta', scopes: 'openid profile email groups', usernameClaim: 'preferred_username', groupsClaim: 'groups', issuer: 'https://<votre-org>.okta.com' },
+  {
+    id: 'entra',
+    name: 'Microsoft Entra ID',
+    label: 'Microsoft',
+    scopes: 'openid profile email',
+    usernameClaim: 'preferred_username',
+    groupsClaim: 'groups',
+    issuer: 'https://login.microsoftonline.com/<tenant-id>/v2.0',
+  },
+  { id: 'google', name: 'Google Workspace', label: 'Google', scopes: 'openid profile email', usernameClaim: 'email', groupsClaim: 'groups', issuer: 'https://accounts.google.com' },
+  { id: 'keycloak', name: 'Keycloak', label: 'Keycloak', scopes: 'openid profile email', usernameClaim: 'preferred_username', groupsClaim: 'groups', issuer: 'https://<serveur>/realms/<realm>' },
+  { id: 'auth0', name: 'Auth0', label: 'Auth0', scopes: 'openid profile email', usernameClaim: 'email', groupsClaim: 'https://<namespace>/groups', issuer: 'https://<tenant>.auth0.com' },
+  { id: '', name: 'Other', label: 'SSO', scopes: 'openid profile email', usernameClaim: 'preferred_username', groupsClaim: 'groups', issuer: 'https://…' },
+];
 
 const ROLES: [string, string][] = [
   ['', 'Refused'],
@@ -172,11 +192,33 @@ export function Security({ cfg, edit }: { cfg: ServerConfig; edit: Edit }) {
               {t('On')}
             </label>
           </Field>
-          <Field label={t('Words of the button')}>
-            <input value={oidc.label} placeholder="Microsoft" onChange={(e) => setOidc({ label: e.target.value })} />
+          <Field label={t('Provider')}>
+            <select
+              value={oidc.provider}
+              onChange={(e) => {
+                const p = PROVIDERS.find((x) => x.id === e.target.value)!;
+                setOidc({ provider: p.id, label: p.label, scopes: p.scopes, usernameClaim: p.usernameClaim, groupsClaim: p.groupsClaim });
+              }}
+            >
+              {PROVIDERS.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.id ? p.name : t('Other (OpenID Connect)')}
+                </option>
+              ))}
+            </select>
           </Field>
-          <Field label={t('Issuer')} hint="https://login.microsoftonline.com/<tenant>/v2.0 · https://accounts.google.com · https://keycloak/realms/<realm>">
-            <input value={oidc.issuer} spellCheck={false} onChange={(e) => setOidc({ issuer: e.target.value })} />
+          <Field label={t('Words of the button')}>
+            <input value={oidc.label} placeholder="Okta" onChange={(e) => setOidc({ label: e.target.value })} />
+          </Field>
+          <Field
+            label={t('Issuer')}
+            hint={
+              oidc.provider === 'okta'
+                ? t('Okta: your org (https://<org>.okta.com), or an authorization server of yours (https://<org>.okta.com/oauth2/default).')
+                : t('The address the provider gives as « issuer ».')
+            }
+          >
+            <input value={oidc.issuer} placeholder={PROVIDERS.find((p) => p.id === oidc.provider)?.issuer} spellCheck={false} onChange={(e) => setOidc({ issuer: e.target.value.trim() })} />
           </Field>
           <Field label={t('Client ID')}>
             <input value={oidc.clientId} spellCheck={false} onChange={(e) => setOidc({ clientId: e.target.value })} />
@@ -190,11 +232,28 @@ export function Security({ cfg, edit }: { cfg: ServerConfig; edit: Edit }) {
           <Field label={t('Groups claim')}>
             <input value={oidc.groupsClaim} spellCheck={false} onChange={(e) => setOidc({ groupsClaim: e.target.value })} />
           </Field>
+          <Field
+            label={t('Scopes')}
+            hint={t(
+              'openid is always asked for. Okta: groups gives the groups with the org authorization server; with oauth2/default, remove it and add a groups claim on the authorization server instead.',
+            )}
+          >
+            <input value={oidc.scopes} spellCheck={false} onChange={(e) => setOidc({ scopes: e.target.value })} />
+          </Field>
           <Groups c={oidc} set={setOidc} />
         </div>
         <p className="muted">
           {t('Address to give the provider (redirect URI):')} <code>{callback}</code>
         </p>
+        {oidc.provider === 'okta' && (
+          <ol className="muted sso-steps">
+            <li>{t('Okta admin console › Applications › Create App Integration: OIDC - OpenID Connect, Web Application.')}</li>
+            <li>{t('Sign-in redirect URI: the address above. Sign-out redirect URI: the address of this server.')}</li>
+            <li>{t('Assignments: the groups allowed to sign in. Copy the Client ID and the Client secret here.')}</li>
+            <li>{t('Sign On tab › OpenID Connect ID Token › Groups claim: type Filter, name groups, Matches regex .* (or Starts with mv-).')}</li>
+            <li>{t('Name the Okta groups in the lists above (e.g. mv-admins): their members get that role at each sign-in.')}</li>
+          </ol>
+        )}
       </Card>
     </>
   );

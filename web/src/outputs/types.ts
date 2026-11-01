@@ -212,6 +212,8 @@ export interface LdapConfig {
 
 export interface OidcConfig {
   enabled: boolean;
+  /** Prefilled from: okta, entra, google, keycloak, auth0, or '' (another). */
+  provider: string;
   label: string;
   issuer: string;
   clientId: string;
@@ -219,6 +221,8 @@ export interface OidcConfig {
   clientSecret: string;
   usernameClaim: string;
   groupsClaim: string;
+  /** Scopes asked for ("openid profile email", + "groups" for Okta). */
+  scopes: string;
   adminGroups: string[];
   designerGroups: string[];
   operatorGroups: string[];

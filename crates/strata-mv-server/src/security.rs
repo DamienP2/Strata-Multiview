@@ -377,6 +377,9 @@ pub async fn ldap_login(
 #[serde(default, rename_all = "camelCase")]
 pub struct OidcConfig {
     pub enabled: bool,
+    /// The provider the settings page prefilled from: "okta", "entra",
+    /// "google", "keycloak", "auth0" or "" (another one).
+    pub provider: String,
     /// The words of the sign-in button ("Microsoft", "Okta"…).
     pub label: String,
     /// https://login.microsoftonline.com/<tenant>/v2.0, https://accounts.google.com…
@@ -387,6 +390,9 @@ pub struct OidcConfig {
     /// The claim of the user name and of the groups.
     pub username_claim: String,
     pub groups_claim: String,
+    /// Scopes asked for: "openid profile email", plus "groups" for Okta's
+    /// org authorization server.
+    pub scopes: String,
     pub admin_groups: Vec<String>,
     pub designer_groups: Vec<String>,
     pub operator_groups: Vec<String>,
@@ -397,12 +403,14 @@ impl Default for OidcConfig {
     fn default() -> Self {
         Self {
             enabled: false,
+            provider: String::new(),
             label: "SSO".into(),
             issuer: String::new(),
             client_id: String::new(),
             client_secret: String::new(),
             username_claim: "preferred_username".into(),
             groups_claim: "groups".into(),
+            scopes: "openid profile email".into(),
             admin_groups: Vec::new(),
             designer_groups: Vec::new(),
             operator_groups: Vec::new(),
@@ -455,6 +463,10 @@ pub struct Discovery {
     pub token: String,
     pub jwks: String,
     pub issuer: String,
+    /// How the token endpoint wants the client to prove itself: secret in
+    /// an Authorization: Basic header (the default of the standard, Okta's)
+    /// or in the form.
+    pub basic_auth: bool,
 }
 
 pub fn discover(issuer: &str) -> anyhow::Result<Discovery> {
@@ -471,6 +483,10 @@ pub fn discover(issuer: &str) -> anyhow::Result<Discovery> {
         token: s("token_endpoint"),
         jwks: s("jwks_uri"),
         issuer: s("issuer"),
+        basic_auth: d
+            .get("token_endpoint_auth_methods_supported")
+            .and_then(|v| v.as_array())
+            .is_none_or(|m| m.iter().any(|x| x == "client_secret_basic")),
     };
     anyhow::ensure!(
         !out.authorization.is_empty() && !out.token.is_empty(),
@@ -493,22 +509,41 @@ pub fn finish(
     redirect: &str,
     nonce: &str,
 ) -> anyhow::Result<serde_json::Value> {
-    let form = [
+    let mut form = vec![
         ("grant_type", "authorization_code"),
         ("code", code),
         ("redirect_uri", redirect),
         ("client_id", c.client_id.trim()),
-        ("client_secret", c.client_secret.as_str()),
     ];
+    if !d.basic_auth {
+        form.push(("client_secret", c.client_secret.as_str()));
+    }
     let body: String = form
         .iter()
         .map(|(k, v)| format!("{k}={}", urlenc(v)))
         .collect::<Vec<_>>()
         .join("&");
-    let mut r = agent()
+    let mut req = agent()
         .post(&d.token)
         .header("content-type", "application/x-www-form-urlencoded")
-        .send(body)?;
+        .header("accept", "application/json");
+    if d.basic_auth {
+        // RFC 6749 § 2.3.1: id and secret form-encoded, then Base64.
+        use base64::Engine as _;
+        let pair = format!(
+            "{}:{}",
+            urlenc(c.client_id.trim()),
+            urlenc(&c.client_secret)
+        );
+        req = req.header(
+            "authorization",
+            format!(
+                "Basic {}",
+                base64::engine::general_purpose::STANDARD.encode(pair)
+            ),
+        );
+    }
+    let mut r = req.send(body)?;
     let tok: serde_json::Value = serde_json::from_slice(&r.body_mut().read_to_vec()?)?;
     let id = tok
         .get("id_token")

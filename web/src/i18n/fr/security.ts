@@ -70,4 +70,22 @@ export const security: Record<string, string> = {
   'Tree: strata › info (name, version, uptime, faults, acknowledgeAll), channels › <channel> › multiview, inputs › <input> › live, status, alarms, loudness.':
     'Arbre : strata › info (name, version, uptime, alarms, acknowledgeAll), channels › <chaîne> › multiview, inputs › <entrée> › live, status, alarms, loudness.',
   Integrations: 'Intégrations',
+  // Single sign-on: providers, Okta.
+  'Other (OpenID Connect)': 'Autre (OpenID Connect)',
+  'Okta: your org (https://<org>.okta.com), or an authorization server of yours (https://<org>.okta.com/oauth2/default).':
+    'Okta : votre organisation (https://<org>.okta.com), ou l’un de vos serveurs d’autorisation (https://<org>.okta.com/oauth2/default).',
+  'The address the provider gives as « issuer ».': 'L’adresse que le fournisseur indique comme « issuer ».',
+  Scopes: 'Scopes',
+  'openid is always asked for. Okta: groups gives the groups with the org authorization server; with oauth2/default, remove it and add a groups claim on the authorization server instead.':
+    'openid est toujours demandé. Okta : groups donne les groupes avec le serveur d’autorisation de l’organisation ; avec oauth2/default, retirez-le et ajoutez plutôt un claim groups sur le serveur d’autorisation.',
+  'Okta admin console › Applications › Create App Integration: OIDC - OpenID Connect, Web Application.':
+    'Console d’administration Okta › Applications › Create App Integration : OIDC - OpenID Connect, Web Application.',
+  'Sign-in redirect URI: the address above. Sign-out redirect URI: the address of this server.':
+    'Sign-in redirect URI : l’adresse ci-dessus. Sign-out redirect URI : l’adresse de ce serveur.',
+  'Assignments: the groups allowed to sign in. Copy the Client ID and the Client secret here.':
+    'Assignments : les groupes autorisés à se connecter. Copiez ici le Client ID et le Client secret.',
+  'Sign On tab › OpenID Connect ID Token › Groups claim: type Filter, name groups, Matches regex .* (or Starts with mv-).':
+    'Onglet Sign On › OpenID Connect ID Token › Groups claim : type Filter, nom groups, Matches regex .* (ou Starts with mv-).',
+  'Name the Okta groups in the lists above (e.g. mv-admins): their members get that role at each sign-in.':
+    'Indiquez les groupes Okta dans les listes ci-dessus (par ex. mv-admins) : leurs membres reçoivent ce rôle à chaque connexion.',
 };
