@@ -242,4 +242,9 @@ export const multiview: Record<string, string> = {
   'How many pixels at each level, luma and R, G, B': 'Combien de pixels à chaque niveau, luminance et R, V, B',
   'The colours against the BT.709, P3 and BT.2020 gamuts': 'Les couleurs face aux gamuts BT.709, P3 et BT.2020',
   'The picture coloured by exposure': 'L’image colorée selon l’exposition',
+  'Codec, colour space, HDR (HDR10, HLG, Dolby Vision), sound tracks (Dolby, Atmos)': 'Codec, colorimétrie, HDR (HDR10, HLG, Dolby Vision), pistes son (Dolby, Atmos)',
+  'Codec, size, sampling': 'Codec, taille, échantillonnage',
+  'Colour space, transfer, range': 'Colorimétrie, transfert, plage',
+  'Mastering display, MaxCLL / MaxFALL': 'Écran de mastering, MaxCLL / MaxFALL',
+  'Tracks, Dolby, Atmos': 'Pistes, Dolby, Atmos',
 };

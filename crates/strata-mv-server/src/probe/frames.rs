@@ -205,11 +205,12 @@ impl Frames {
                 self.afd = value.trim_start_matches("value of ").trim().parse().ok();
                 "AFD"
             }
-            "mastering display" => {
+            // "mastering display", "Mastering display metadata" (ffmpeg 6+).
+            k if k.to_ascii_lowercase().starts_with("mastering display") => {
                 self.mastering = value.to_string();
                 "Mastering display (SMPTE 2086)"
             }
-            k if k.starts_with("Content Light Level") || k.starts_with("content light level") => {
+            k if k.to_ascii_lowercase().starts_with("content light level") => {
                 self.light = value.to_string();
                 "Content light level (MaxCLL/MaxFALL)"
             }

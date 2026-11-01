@@ -527,6 +527,12 @@ pub enum LayerKind {
         #[serde(flatten)]
         x: Box<crate::wid::scope::ScopeConfig>,
     },
+    /// What an input's picture and sound are: codec, colour, HDR, Dolby.
+    #[serde(rename_all = "camelCase")]
+    SignalInfo {
+        #[serde(flatten)]
+        x: Box<crate::wid::signal_info::SignalConfig>,
+    },
 }
 
 /// Font settings shared by the text-based widgets.

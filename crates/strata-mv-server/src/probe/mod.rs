@@ -647,6 +647,27 @@ mod tests {
     use super::*;
 
     #[test]
+    fn what_an_hdr10_picture_is() {
+        let mut f = Facts::default();
+        let now = Instant::now();
+        for l in [
+            "[Parsed_showinfo_0 @ 0x55] n:   1 pts:     40 pts_time:0.04    duration:     40 fmt:yuv420p10le cl:left sar:1/1 s:1280x720 i:P iskey:0 type:B",
+            "[Parsed_showinfo_0 @ 0x55]   side data - Mastering display metadata: has_primaries:1 has_luminance:1 r(0.6800,0.3200) g(0.2650,0.6900) b(0.1500 0.0600) wp(0.3127, 0.3290) min_luminance=0.000100, max_luminance=1000.000000",
+            "[Parsed_showinfo_0 @ 0x55]   side data - Content light level metadata: MaxCLL=1000, MaxFALL=400",
+            "[Parsed_showinfo_0 @ 0x55] color_range:tv color_space:bt2020nc color_primaries:bt2020 color_trc:smpte2084",
+        ] {
+            f.line(l, now, |_| {});
+        }
+        let v = f.video_info(now);
+        assert_eq!((v.bits, v.chroma.as_str()), (10, "4:2:0"));
+        assert_eq!(v.transfer, "smpte2084");
+        assert!(v.wide());
+        assert_eq!(v.dynamic(), "HDR10");
+        assert_eq!((v.max_cll, v.max_fall), (1000, 400));
+        assert!(v.mastering.contains("max_luminance=1000"));
+    }
+
+    #[test]
     fn a_report_puts_the_log_and_the_transport_together() {
         let mut f = Facts::default();
         f.reset(true);

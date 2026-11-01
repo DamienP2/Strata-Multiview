@@ -13,6 +13,7 @@ pub mod polygon;
 pub mod quad;
 pub mod scope;
 pub mod shape;
+pub mod signal_info;
 pub mod source;
 pub mod text;
 pub mod ticker;
@@ -54,6 +55,7 @@ pub fn widget_id(kind: &LayerKind) -> Option<&'static str> {
         LayerKind::Status { .. } => "status",
         LayerKind::AlarmLog { .. } => "alarmLog",
         LayerKind::Scope { .. } => "scope",
+        LayerKind::SignalInfo { .. } => "signalInfo",
         _ => return None,
     })
 }

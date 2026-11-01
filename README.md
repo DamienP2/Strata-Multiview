@@ -172,6 +172,7 @@ Tous les widgets sont rendus à l'identique en HTML5 et par le moteur Rust (la g
 | **Temps** | **Timecode** : celui de la station (heure locale à la cadence de la chaîne) ou d'une entrée (NDI) ; Horloge (heure, date, fuseau, cadran analogique) ; Temps (chronomètre, compte à rebours) |
 | **Supervision** | **État** : PTP (verrouillage, domaine, écart), NTP, alarmes en cours ; **Journal des alarmes** : les défauts des entrées, les plus récents d'abord, avec leur début et leur fin |
 | **Contrôle de l'image** | **Scope** d'une entrée, au choix : **oscilloscope** (luminance), **parade RVB**, **parade Y'CbCr**, **vectorscope** (cibles 75 % et 100 %, ligne des tons chair), **histogramme** (luminance et R, V, B), **chromaticité CIE 1931** (gamuts BT.709, P3, BT.2020, point blanc D65), **fausses couleurs** (bandes d'exposition) ; graticule selon le transfert du signal : % en SDR et HLG (blanc de référence 75 %), **nits en PQ / HDR10** (1 à 10 000, blanc de référence 203) |
+| **Signal** | **Fiche signal** d'une entrée : codec et profil, taille, profondeur et échantillonnage (4:2:0, 4:2:2…), **colorimétrie** (matrice, primaires BT.709 / BT.2020 / P3), **transfert** (SDR, **PQ**, **HLG**), plage, badge **SDR / HDR10 / HLG / HDR10+ / Dolby Vision**, métadonnées **ST 2086** et **MaxCLL / MaxFALL**, pistes son avec marques **DOLBY** (Digital, Digital Plus, TrueHD, AC-4, E) et **ATMOS** |
 | **Labels et logos** | Texte, Image (PNG, JPEG, SVG, GIF, vidéo en boucle) |
 | **Formes** | rectangle, cercle, trait, dégradés |
 

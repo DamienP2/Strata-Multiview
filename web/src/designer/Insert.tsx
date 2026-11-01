@@ -1,7 +1,7 @@
 // The tools of the Designer's toolbar that add to the multiview, all at hand in three groups: the
 // broadcast widgets (sources, meters, timecode, alarms, time…), the picture measuring tools
 // (waveform, parade, vectorscope…), then the shapes, text and images.
-import { ChartColumn, Circle, Columns3, Image, Minus, Palette, Radar, Square, Triangle, Type, Waves } from 'lucide-react';
+import { ChartColumn, Circle, Columns3, FileVideo, Image, Minus, Palette, Radar, Square, Triangle, Type, Waves } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import type { LayerType } from '../engine/types';
 import { WIDGET_LIST } from '../widgets';
@@ -69,6 +69,9 @@ export function InsertTools({ onAdd }: { onAdd: AddLayer }) {
             <c.icon size={15} />
           </button>
         ))}
+        <button className="tool" title={`${t('Signal')} — ${t('Codec, colour space, HDR (HDR10, HLG, Dolby Vision), sound tracks (Dolby, Atmos)')}`} onClick={() => onAdd('signalInfo', { props: { width: 560, height: 380 } }, t('Signal'))}>
+          <FileVideo size={15} />
+        </button>
       </div>
       <span className="tl-sep" />
       <div className="tl-insert" role="group" aria-label={t('Shapes, text and images')}>

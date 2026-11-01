@@ -132,6 +132,10 @@ pub(crate) fn draw(d: &mut Draw) -> bool {
             let s = d.rd.live_system();
             status(x, w, h, &s, lang)
         }
+        LayerKind::SignalInfo { x } => {
+            let v = d.rd.live_source(x.input.trim());
+            strata_mv_core::wid::signal_info::signal_info(x, w, h, v.as_ref(), lang)
+        }
         LayerKind::AlarmLog { x } => {
             let s = d.rd.live_system();
             alarm_log(x, w, h, &s, d.time.default_tz, lang)

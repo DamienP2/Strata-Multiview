@@ -2093,7 +2093,8 @@ impl Renderer {
             | LayerKind::Timecode { .. }
             | LayerKind::Status { .. }
             | LayerKind::AlarmLog { .. }
-            | LayerKind::Scope { .. } => {}
+            | LayerKind::Scope { .. }
+            | LayerKind::SignalInfo { .. } => {}
         }
     }
 

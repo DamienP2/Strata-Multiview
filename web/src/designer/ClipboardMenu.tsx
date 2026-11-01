@@ -13,7 +13,7 @@ import { moveLayer } from './LayersPanel';
 import { useInputs } from '../engine/liveInputs';
 
 /** The layers that show an input: a tile, and the meters, loudness and timecode of one. */
-const WITH_INPUT = new Set(['source', 'audioMeter', 'loudness', 'timecode', 'scope']);
+const WITH_INPUT = new Set(['source', 'audioMeter', 'loudness', 'timecode', 'scope', 'signalInfo']);
 
 /** Puts a layer on an input; a tile named after its input (or "Source n") takes the new one's name. */
 function setInput(id: string, input: string, names: Map<string, string>) {

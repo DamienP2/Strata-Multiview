@@ -126,7 +126,7 @@ pub fn num1(v: f32) -> String {
     }
 }
 
-fn pad_of(w: f32, h: f32) -> f32 {
+pub(crate) fn pad_of(w: f32, h: f32) -> f32 {
     (w.min(h) * 0.04).clamp(3.0, 14.0).round()
 }
 
