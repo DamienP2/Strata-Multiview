@@ -144,6 +144,8 @@ pub struct Watched {
     pub on_backup: bool,
     /// SRT packets lost for good in the last 10 s (received by libsrt).
     pub srt_dropped: Option<i64>,
+    /// A sound source (Dante): no fault of its picture.
+    pub audio_only: bool,
 }
 
 /// What is known of the plant to look at its faults.
@@ -698,7 +700,7 @@ impl Signals {
                     if w.lost_at.is_some() || !starting.contains(&w.id) {
                         on(AlarmKind::Loss, Some(w.lost_at.unwrap_or(now)));
                     }
-                } else {
+                } else if !w.audio_only {
                     if let Some(l) = looks.get(&w.id) {
                         if let Some(s) = l.black_since {
                             on(AlarmKind::Black, Some(s));
@@ -1558,6 +1560,7 @@ mod tests {
             video: Default::default(),
             on_backup: false,
             srt_dropped: None,
+            audio_only: false,
         }
     }
 

@@ -85,7 +85,7 @@ export interface OutputsConfig {
   streams?: StreamOutput[];
 }
 
-export type InputKind = 'srt' | 'udp' | 'rtmp' | 'hls' | 'rtsp' | 'url' | 'web' | 'ndi' | 'sdi' | 'st2110';
+export type InputKind = 'srt' | 'udp' | 'rtmp' | 'hls' | 'rtsp' | 'url' | 'web' | 'ndi' | 'sdi' | 'st2110' | 'aes67' | 'audioDevice';
 
 /** A live video input (crates/strata-mv-server/src/inputs.rs). */
 export interface InputConfig {
@@ -123,6 +123,12 @@ export interface InputConfig {
   failbackAfter?: number;
   /** Streams: the audio track measured and listened to (0: the first). */
   audioTrack?: number;
+  /** AES67 (Dante): the stream's SDP, from its SAP announcement or pasted ('' = built from the address). */
+  sdp?: string;
+  /** Audio sources: channels received. */
+  channels?: number;
+  /** AES67 without SDP: 'L24' or 'L16'. */
+  encoding?: string;
   /** Listened to: 0 the track mixed down to stereo, 1 channels 1-2 as they are, 2 channels 3-4… */
   listenPair?: number;
 }

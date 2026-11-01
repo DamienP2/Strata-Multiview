@@ -54,6 +54,8 @@ pub fn router() -> Router<Shared> {
             get(crate::inputs::playlist_channels),
         )
         .route("/api/inputs/web-check", get(crate::inputs::web_check))
+        .route("/api/inputs/aes67-sources", get(crate::dante::sources))
+        .route("/api/inputs/audio-devices", get(crate::dante::list_devices))
         .route(
             "/api/inputs/{id}/snapshot.jpg",
             get(crate::inputs::snapshot),

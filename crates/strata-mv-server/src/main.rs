@@ -3,6 +3,7 @@ mod api;
 mod auth;
 mod colors;
 mod config;
+mod dante;
 mod decklink;
 mod ember;
 mod engine;
@@ -439,6 +440,7 @@ pub async fn serve(
     let perf = Arc::new(perf::Perf::default());
     perf::spawn_sampler(perf.clone(), inputs.clone());
     loudlog::spawn(data_dir.clone(), inputs.clone());
+    dante::spawn_sap();
     let incidents = incidents::Incidents::new(&data_dir);
     let salvos = salvos::Salvos::load(&data_dir);
     incidents.spawn(inputs.clone());

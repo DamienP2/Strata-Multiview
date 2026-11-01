@@ -48,6 +48,11 @@ pub enum InputKind {
     Sdi,
     /// An ST 2110 flow of the Hardware settings (not received yet).
     St2110,
+    /// Dante in AES67 mode (or any AES67 sender): RTP multicast audio, its
+    /// SDP announced by SAP or given. Audio only.
+    Aes67,
+    /// A sound card of this machine (Dante Virtual Soundcard…). Audio only.
+    AudioDevice,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -110,6 +115,16 @@ pub struct InputConfig {
     /// Streams: the audio track measured and listened to (0: the first).
     #[serde(default, skip_serializing_if = "is_zero")]
     pub audio_track: u32,
+    /// AES67: the stream's SDP (from its SAP announcement, or pasted; empty:
+    /// built from the address, `channels` and `encoding`).
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub sdp: String,
+    /// Audio sources: channels received (AES67 without SDP, sound cards).
+    #[serde(default = "default_channels")]
+    pub channels: u32,
+    /// AES67 without SDP: "L24" (default) or "L16".
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub encoding: String,
     /// What is listened to: 0 the track mixed down to stereo (a 5.1), 1
     /// channels 1-2 as they are, 2 channels 3-4…
     #[serde(default, skip_serializing_if = "is_zero")]
@@ -118,6 +133,9 @@ pub struct InputConfig {
 
 fn is_zero(v: &u32) -> bool {
     *v == 0
+}
+fn default_channels() -> u32 {
+    2
 }
 
 fn default_failover() -> u32 {
@@ -221,6 +239,11 @@ pub struct StreamArgs {
 impl InputConfig {
     /// The stream comes as bytes of a transport stream (SRT, UDP, TCP):
     /// relayed through Strata, which reads it on the way.
+    /// A sound source, without pictures of its own (Dante).
+    pub fn audio_only(&self) -> bool {
+        matches!(self.kind, InputKind::Aes67 | InputKind::AudioDevice)
+    }
+
     pub fn relayed(&self) -> bool {
         let u = self.url.trim().to_ascii_lowercase();
         match self.kind {
@@ -231,6 +254,83 @@ impl InputConfig {
                 .any(|s| u.starts_with(s)),
             _ => false,
         }
+    }
+
+    /// A sound source's ffmpeg: a quiet picture of its own (twelve a second,
+    /// small) for the tiles, and the sound measured and listened to.
+    fn audio_args(&self, pull: &Pull, audio: bool) -> Result<StreamArgs, String> {
+        let mut a: Vec<String> = ["-loglevel", "info", "-nostats"].map(String::from).to_vec();
+        a.extend(
+            [
+                "-re",
+                "-f",
+                "lavfi",
+                "-i",
+                "color=c=0x0b0d12:s=320x180:r=12",
+            ]
+            .map(String::from),
+        );
+        match self.kind {
+            InputKind::Aes67 => {
+                let sdp = if self.sdp.trim().is_empty() {
+                    crate::dante::sdp_for(&self.url, self.channels, &self.encoding)?
+                } else {
+                    self.sdp.clone()
+                };
+                let path = std::env::temp_dir().join(format!(
+                    "strata-aes67-{}.sdp",
+                    self.id.replace(['/', '\\', '.'], "_")
+                ));
+                std::fs::write(&path, sdp).map_err(|e| format!("SDP: {e}"))?;
+                a.extend(
+                    [
+                        "-protocol_whitelist",
+                        "file,udp,rtp",
+                        "-reorder_queue_size",
+                        "64",
+                    ]
+                    .map(String::from),
+                );
+                a.extend(["-i".into(), path.to_string_lossy().into_owned()]);
+            }
+            _ => a.extend(crate::dante::device_input(self.url.trim(), self.channels)?),
+        }
+        a.extend(
+            [
+                "-map", "0:v:0", "-pix_fmt", "rgba", "-f", "rawvideo", "pipe:1",
+            ]
+            .map(String::from),
+        );
+        if audio {
+            a.extend(["-map", "1:a:0", "-af", METER_FILTER, "-f", "null", "-"].map(String::from));
+            if let Some(port) = pull.pcm {
+                a.extend(["-map".into(), "1:a:0".into()]);
+                let pair = self.listen_pair.min(32);
+                let af = if pair == 0 {
+                    a.extend(["-ac", "2"].map(String::from));
+                    "aresample=48000:async=1".to_string()
+                } else {
+                    format!(
+                        "pan=stereo|c0=c{}|c1=c{},aresample=48000:async=1",
+                        2 * pair - 2,
+                        2 * pair - 1
+                    )
+                };
+                a.extend([
+                    "-af".to_string(),
+                    af,
+                    "-flush_packets".into(),
+                    "1".into(),
+                    "-f".into(),
+                    "s16le".into(),
+                ]);
+                a.push(format!("tcp://127.0.0.1:{port}"));
+            }
+        }
+        Ok(StreamArgs {
+            decode: a,
+            relay: None,
+        })
     }
 
     /// The ffmpeg arguments that decode this stream to raw RGBA on stdout,
@@ -247,6 +347,9 @@ impl InputConfig {
         audio: bool,
         info: bool,
     ) -> Result<StreamArgs, String> {
+        if self.audio_only() {
+            return self.audio_args(pull, audio);
+        }
         // An SRT listener needs only its port.
         let own;
         let url = if let Some(u) = &pull.url {
@@ -322,9 +425,11 @@ impl InputConfig {
             }
             InputKind::Url => {}
             InputKind::Web => need(&["http://", "https://"])?,
-            InputKind::Ndi | InputKind::Sdi | InputKind::St2110 => {
-                return Err("not a stream".into())
-            }
+            InputKind::Ndi
+            | InputKind::Sdi
+            | InputKind::St2110
+            | InputKind::Aes67
+            | InputKind::AudioDevice => return Err("not a stream".into()),
         }
         let relay = self.relayed().then(|| {
             // The bytes as they come (the data demuxer and muxer copy them
@@ -1427,6 +1532,8 @@ impl Inputs {
             InputKind::Ndi => "NDI",
             InputKind::Sdi => "SDI (DeckLink)",
             InputKind::St2110 => "SMPTE ST 2110",
+            InputKind::Aes67 => "Dante / AES67",
+            InputKind::AudioDevice => "Carte son (Dante Virtual Soundcard…)",
         }
         .to_string();
         r.source = match c.kind {
@@ -1656,6 +1763,7 @@ impl Inputs {
                         let s = l.srt.lock().unwrap_or_else(|p| p.into_inner());
                         s.connected.then_some(s.dropped_10s)
                     },
+                    audio_only: l.config.audio_only(),
                 }
             })
             .collect();
@@ -3518,6 +3626,9 @@ mod tests {
             failback_after: 10,
             audio_track: 0,
             listen_pair: 0,
+            sdp: String::new(),
+            channels: 2,
+            encoding: String::new(),
         }
     }
 

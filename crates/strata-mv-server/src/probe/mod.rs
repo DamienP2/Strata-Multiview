@@ -282,7 +282,12 @@ impl Facts {
             return false;
         }
         if let Some(lines) = self.banner_lines.as_mut() {
-            if line.starts_with(' ') {
+            // A sound source's picture is made here (lavfi): its sound, the
+            // second input, is what it is.
+            let generated = lines
+                .first()
+                .is_some_and(|l| l.starts_with("Input #0, lavfi"));
+            if line.starts_with(' ') || (generated && line.starts_with("Input #1")) {
                 lines.push(line.to_string());
             } else {
                 self.banner = banner::Banner::parse(lines);

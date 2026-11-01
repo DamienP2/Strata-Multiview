@@ -28,11 +28,19 @@ enum Into {
 impl Banner {
     /// Reads the lines from `Input #0, …` to the end of its streams.
     pub fn parse(lines: &[String]) -> Option<Banner> {
-        let start = lines.iter().position(|l| l.starts_with("Input #0"))?;
+        let mut start = lines.iter().position(|l| l.starts_with("Input #0"))?;
+        // A sound source (Dante): its picture is made here (lavfi), its
+        // sound is the second input.
+        if lines[start].starts_with("Input #0, lavfi") {
+            if let Some(s) = lines.iter().position(|l| l.starts_with("Input #1")) {
+                start = s;
+            }
+        }
         let head = &lines[start];
         let mut b = Banner {
             format: head
-                .trim_start_matches("Input #0, ")
+                .split_once(", ")
+                .map_or("", |x| x.1)
                 .split(", from ")
                 .next()
                 .unwrap_or("")
@@ -97,7 +105,10 @@ impl Banner {
                 in_metadata = false;
                 continue;
             }
-            if let Some(rest) = t.strip_prefix("Stream #0:") {
+            if let Some(rest) = t
+                .strip_prefix("Stream #0:")
+                .or_else(|| t.strip_prefix("Stream #1:"))
+            {
                 in_metadata = false;
                 let Some(s) = stream(rest) else {
                     continue;

@@ -37,6 +37,8 @@ const KINDS: { value: InputKind; label: string; badge: string }[] = [
   { value: 'ndi', label: 'NDI', badge: 'NDI' },
   { value: 'sdi', label: 'SDI', badge: 'SDI' },
   { value: 'st2110', label: 'ST 2110', badge: 'ST 2110' },
+  { value: 'aes67', label: 'Dante / AES67 (network audio)', badge: 'DANTE' },
+  { value: 'audioDevice', label: 'Sound card (Dante Virtual Soundcard…)', badge: 'AUDIO' },
 ];
 const badgeOf = (k: InputKind) => KINDS.find((x) => x.value === k)?.badge ?? k.toUpperCase();
 const SCHEMES: Partial<Record<InputKind, RegExp>> = { srt: /^srt:/i, udp: /^udp:/i, rtmp: /^rtmps?:/i, hls: /^https?:/i, rtsp: /^rtsps?:/i, web: /^https?:/i };
@@ -61,7 +63,8 @@ function platformOf(url: string): string | null {
 }
 /** A playlist that may list channels (an IPTV M3U). */
 const mayList = (c: Pick<InputConfig, 'kind' | 'url'>) => (c.kind === 'hls' || c.kind === 'url') && /^https?:\/\/.+\.m3u8?($|[?#])/i.test(c.url.trim());
-const isStream = (k: InputKind) => k !== 'ndi' && k !== 'sdi' && k !== 'st2110';
+const isAudio = (k: InputKind) => k === 'aes67' || k === 'audioDevice';
+const isStream = (k: InputKind) => k !== 'ndi' && k !== 'sdi' && k !== 'st2110' && !isAudio(k);
 /** Inputs that receive something Hardware declares. */
 const needsHardware = (k: InputKind) => k === 'sdi' || k === 'st2110';
 /** An SRT listener waits on a port; the others have an address. */
@@ -542,6 +545,8 @@ function Inspector({
         </div>
       )}
 
+      {isAudio(i.kind) && <AudioSource i={i} editInput={editInput} />}
+
       {needsHardware(i.kind) && (
         <>
           <Field label={i.kind === 'sdi' ? t('SDI input') : t('ST 2110 flow')} hint={i.kind === 'sdi' ? t('The connectors declared in Hardware.') : t('The multicast addresses are set in Hardware.')}>
@@ -561,6 +566,7 @@ function Inspector({
         </>
       )}
 
+      {!isAudio(i.kind) && (
       <Field label={t('Jitter buffer')} hint={t('Absorbs network jitter: each frame adds one frame of delay.')}>
         <select value={i.buffer ?? 2} onChange={(e) => editInput((x) => void (x.buffer = +e.target.value))}>
           {!BUFFERS.includes(i.buffer ?? 2) && <option value={i.buffer}>{tn(i.buffer, '{n} frame', '{n} frames')}</option>}
@@ -572,6 +578,7 @@ function Inspector({
           ))}
         </select>
       </Field>
+      )}
 
       {isStream(i.kind) && (
         <Group label={t('Decoding: GPU / CPU')} hint={i.hwDecode ? t('Frees the processor. When the machine has no GPU decoder for this stream, ffmpeg falls back to the processor.') : t('Decoded by the processor.')}>
@@ -597,7 +604,7 @@ function Inspector({
           </select>
         </Field>
       )}
-      {isStream(i.kind) && (
+      {(isStream(i.kind) || isAudio(i.kind)) && (
         <Field label={t('Pair listened to')} hint={t('What is heard when this input is listened to: the whole track mixed down to stereo (a 5.1), or one pair of channels as it is (the pairs of a multichannel track).')}>
           <select value={i.listenPair ?? 0} onChange={(e) => editInput((x) => void (x.listenPair = +e.target.value))}>
             <option value={0}>{t('Mixed down to stereo')}</option>
@@ -664,6 +671,104 @@ function Preview({ id, live }: { id: string; live: boolean }) {
         </span>
       )}
     </span>
+  );
+}
+
+interface Announced {
+  name: string;
+  origin: string;
+  address: string;
+  format: string;
+  channels: number;
+  sdp: string;
+  age: number;
+}
+interface Device {
+  id: string;
+  name: string;
+  dante: boolean;
+}
+
+/** Dante: an AES67 stream heard announced (or given by hand), or a sound card of the server. */
+function AudioSource({ i, editInput }: { i: InputConfig; editInput: (fn: (i: InputConfig) => void) => void }) {
+  const [streams, setStreams] = useState<Announced[] | null>(null);
+  const [devices, setDevices] = useState<Device[] | null>(null);
+  useEffect(() => {
+    if (i.kind === 'aes67') {
+      const read = () =>
+        api<Announced[]>('GET', '/api/inputs/aes67-sources')
+          .then(setStreams)
+          .catch(() => setStreams([]));
+      void read();
+      const id = setInterval(read, 5000);
+      return () => clearInterval(id);
+    }
+    api<Device[]>('GET', '/api/inputs/audio-devices')
+      .then(setDevices)
+      .catch(() => setDevices([]));
+  }, [i.kind]);
+  const chosen = streams?.find((s) => s.sdp === i.sdp);
+  if (i.kind === 'aes67')
+    return (
+      <>
+        <Field label={t('Stream announced')} hint={t('AES67 streams announced on the network (SAP): Dante devices with AES67 mode on in Dante Controller, Dante Domain Manager, other AES67 senders.')}>
+          <select
+            value={chosen ? chosen.sdp : ''}
+            onChange={(e) => {
+              const s = streams?.find((x) => x.sdp === e.target.value);
+              editInput((x) => {
+                if (!s) return void (x.sdp = '');
+                x.sdp = s.sdp;
+                x.url = s.address;
+                x.channels = s.channels;
+                if (/^Input \d+$|^Entrée \d+$/.test(x.name) || !x.name.trim()) x.name = s.name;
+              });
+            }}
+          >
+            <option value="">{streams === null ? t('Listening…') : streams.length ? t('— by hand —') : t('None heard yet — by hand')}</option>
+            {streams?.map((s) => (
+              <option key={`${s.origin}-${s.address}`} value={s.sdp}>
+                {s.name} · {s.address} · {s.format}
+              </option>
+            ))}
+          </select>
+        </Field>
+        {!i.sdp?.trim() && (
+          <>
+            <Field label={t('Multicast address')} hint={t('Group and port of the stream, as Dante Controller shows it (AES67 tab): 239.69.x.y:5004.')}>
+              <input value={i.url} placeholder="239.69.1.10:5004" spellCheck={false} onChange={(e) => editInput((x) => void (x.url = e.target.value.trim()))} />
+            </Field>
+            <Field label={t('Channels')}>
+              <input type="number" min={1} max={64} value={i.channels ?? 2} onChange={(e) => editInput((x) => void (x.channels = Math.max(1, Math.min(64, +e.target.value || 2))))} />
+            </Field>
+            <Field label={t('Encoding')}>
+              <select value={i.encoding || 'L24'} onChange={(e) => editInput((x) => void (x.encoding = e.target.value))}>
+                <option value="L24">L24 (24 bits)</option>
+                <option value="L16">L16 (16 bits)</option>
+              </select>
+            </Field>
+          </>
+        )}
+        <Hint>{t('Dante sends AES67 only from devices where AES67 mode is on (Dante Controller › Device View › AES67 Config), as multicast. Native Dante flows need Dante Virtual Soundcard: choose « Sound card ».')}</Hint>
+      </>
+    );
+  return (
+    <>
+      <Field label={t('Sound card')} hint={t('Dante Virtual Soundcard (or Dante Via, or an audio interface) installed on the server: its Dante channels are those of this sound card.')}>
+        <select value={i.url} onChange={(e) => editInput((x) => void (x.url = e.target.value))}>
+          {!devices?.some((d) => d.id === i.url) && <option value={i.url}>{i.url || (devices === null ? t('Loading…') : t('— choose —'))}</option>}
+          {devices?.map((d) => (
+            <option key={d.id} value={d.id}>
+              {d.dante ? '● ' : ''}
+              {d.name}
+            </option>
+          ))}
+        </select>
+      </Field>
+      <Field label={t('Channels')} hint={t('As many as Dante Virtual Soundcard opens (Preferences › Audio Channels): 2 to 64.')}>
+        <input type="number" min={1} max={64} value={i.channels ?? 2} onChange={(e) => editInput((x) => void (x.channels = Math.max(1, Math.min(64, +e.target.value || 2))))} />
+      </Field>
+    </>
   );
 }
 

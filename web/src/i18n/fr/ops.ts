@@ -117,4 +117,21 @@ export const ops: Record<string, string> = {
     'Paquets SRT arrivés trop tard pour être renvoyés (absents de l’image) en 10 s, au moins le seuil. Augmentez la latence de l’entrée.',
   'SRT round trip time of an input': 'RTT SRT d’une entrée',
   'SRT packets lost by an input (%)': 'Paquets SRT perdus par une entrée (%)',
+  // Dante.
+  'Dante / AES67 (network audio)': 'Dante / AES67 (audio réseau)',
+  'Sound card (Dante Virtual Soundcard…)': 'Carte son (Dante Virtual Soundcard…)',
+  'Stream announced': 'Flux annoncé',
+  'AES67 streams announced on the network (SAP): Dante devices with AES67 mode on in Dante Controller, Dante Domain Manager, other AES67 senders.':
+    'Flux AES67 annoncés sur le réseau (SAP) : appareils Dante dont le mode AES67 est activé dans Dante Controller, Dante Domain Manager, autres émetteurs AES67.',
+  'Listening…': 'Écoute du réseau…',
+  '— by hand —': '— à la main —',
+  'None heard yet — by hand': 'Aucun entendu pour l’instant — à la main',
+  'Multicast address': 'Adresse multicast',
+  'Group and port of the stream, as Dante Controller shows it (AES67 tab): 239.69.x.y:5004.': 'Groupe et port du flux, tels que Dante Controller les montre (onglet AES67) : 239.69.x.y:5004.',
+  'Dante sends AES67 only from devices where AES67 mode is on (Dante Controller › Device View › AES67 Config), as multicast. Native Dante flows need Dante Virtual Soundcard: choose « Sound card ».':
+    'Dante n’envoie de l’AES67 que depuis les appareils dont le mode AES67 est activé (Dante Controller › Device View › AES67 Config), en multicast. Les flux Dante natifs passent par Dante Virtual Soundcard : choisissez « Carte son ».',
+  'Sound card': 'Carte son',
+  'Dante Virtual Soundcard (or Dante Via, or an audio interface) installed on the server: its Dante channels are those of this sound card.':
+    'Dante Virtual Soundcard (ou Dante Via, ou une interface audio) installé sur le serveur : ses voies Dante sont celles de cette carte son.',
+  'As many as Dante Virtual Soundcard opens (Preferences › Audio Channels): 2 to 64.': 'Autant que Dante Virtual Soundcard en ouvre (Preferences › Audio Channels) : 2 à 64.',
 };
