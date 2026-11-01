@@ -203,3 +203,74 @@
   overflow-x: auto;
   margin: 0;
 }
+.lr-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 10px;
+  margin: 12px 0;
+}
+.lr-stats > div {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.lr-stats span {
+  color: var(--text-3);
+  font-size: 12px;
+}
+.lr-stats b {
+  font-family: var(--mono);
+  font-size: 18px;
+}
+.lr-verdict {
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-weight: 600;
+  margin-top: 8px;
+}
+.lr-verdict.ok {
+  background: color-mix(in srgb, #2bd96b 18%, transparent);
+  color: #2bd96b;
+}
+.lr-verdict.bad {
+  background: var(--live-soft);
+  color: var(--live);
+}
+.lr-curve {
+  width: 100%;
+  height: 220px;
+  display: block;
+}
+.lr-grid {
+  stroke: var(--line);
+  stroke-width: 1;
+}
+.lr-target {
+  stroke: #2bd96b;
+  stroke-width: 1;
+  stroke-dasharray: 4 4;
+}
+.lr-band {
+  fill: color-mix(in srgb, #2bd96b 12%, transparent);
+}
+.lr-label {
+  fill: var(--text-3);
+  font-size: 10px;
+}
+.lr-mean {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+}
+.lr-max {
+  fill: none;
+  stroke: var(--accent);
+  stroke-opacity: 0.35;
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}

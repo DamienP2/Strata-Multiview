@@ -15,6 +15,7 @@ mod inputs;
 mod library;
 mod locks;
 mod logs;
+mod loudlog;
 mod media;
 mod metrics;
 mod nmos;
@@ -433,6 +434,7 @@ pub async fn serve(
     let inputs = Arc::new(inputs::Inputs::default());
     let perf = Arc::new(perf::Perf::default());
     perf::spawn_sampler(perf.clone(), inputs.clone());
+    loudlog::spawn(data_dir.clone(), inputs.clone());
     // Tally and UMD from the switchers, kept across engine restarts.
     let tally = tally::Tally::load(&data_dir, inputs.clone());
     tally.start();

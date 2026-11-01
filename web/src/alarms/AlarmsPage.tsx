@@ -20,12 +20,14 @@ import {
   Copy,
   RotateCcw,
   Send,
+  Gauge,
   Network,
   ScrollText,
   Activity,
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useAlarmSound } from '../engine/alarmSound';
+import { LoudnessReport } from './LoudnessReport';
 import { alarmText, useInputs, useSystem, type AlarmKind, type JournalEntry, type Severity } from '../engine/liveInputs';
 import { t } from '../i18n';
 import { NavItem, NavSection, PageHead, SidePage } from '../pages/SidePage';
@@ -167,6 +169,7 @@ export function AlarmsPage() {
       />
       <NavItem on={page === 'journal'} icon={<History size={15} />} label={t('Journal')} count={journal.length} onClick={() => setPage('journal')} />
       <NavItem on={page === 'stats'} icon={<BarChart3 size={15} />} label={t('Statistics')} onClick={() => setPage('stats')} />
+      <NavItem on={page === 'loudness'} icon={<Gauge size={15} />} label={t('Loudness')} onClick={() => setPage('loudness')} />
       {admin && (
         <>
           <NavSection
@@ -240,6 +243,8 @@ export function AlarmsPage() {
     body = <JournalView journal={journal} />;
   } else if (page === 'stats') {
     body = <StatsView journal={journal} />;
+  } else if (page === 'loudness') {
+    body = <LoudnessReport />;
   } else if (profile) {
     const setP = (fn: (p: Profile) => void) => edit((c) => fn(c.profiles.find((x) => x.id === profile.id)!));
     const used = inputs.filter((i) => (cfg.inputs[i.id] ?? DEFAULT_PROFILE) === profile.id);

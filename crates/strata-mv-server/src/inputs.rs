@@ -463,6 +463,9 @@ struct Live {
     signals: Arc<crate::signals::Signals>,
     /// The stream has no audio: ffmpeg is started without the meters.
     no_audio: AtomicBool,
+    /// Starts in a row where ffmpeg found no audio track (joining a stream
+    /// midway, its probe can miss one): without audio after three.
+    audio_misses: std::sync::atomic::AtomicU32,
     /// This ffmpeg has no `showinfo` (or not its options): without it.
     no_info: AtomicBool,
     /// This ffmpeg has no `-fps_mode` (before 5.1): without it.
@@ -1128,6 +1131,7 @@ impl Inputs {
                 interlaced: AtomicBool::new(false),
                 signals: self.signals.clone(),
                 no_audio: AtomicBool::new(false),
+                audio_misses: std::sync::atomic::AtomicU32::new(0),
                 no_info: AtomicBool::new(false),
                 no_fps_mode: AtomicBool::new(false),
                 no_levels: AtomicBool::new(false),
@@ -2716,6 +2720,9 @@ fn run_stream(l: &Live) {
                     if first {
                         first = false;
                         l.say(format!("Receiving {w}×{h}"));
+                        if audio {
+                            l.audio_misses.store(0, Ordering::Relaxed);
+                        }
                     }
                 }
             }
@@ -2731,9 +2738,15 @@ fn run_stream(l: &Live) {
             return;
         }
         let said = log.lock().unwrap_or_else(|p| p.into_inner()).clone();
-        // No audio track: again at once, without the meters.
+        // No audio track: again a moment later (joining a stream midway, the
+        // probe may have missed it), without the meters after five tries.
         if audio && said.contains("matches no streams") {
-            l.no_audio.store(true, Ordering::Relaxed);
+            if l.audio_misses.fetch_add(1, Ordering::Relaxed) + 1 >= 5 {
+                tracing::info!("input {}: no audio track found, measured without sound", l.config.id);
+                l.no_audio.store(true, Ordering::Relaxed);
+            } else if !l.pause(Duration::from_secs(1)) {
+                return;
+            }
             continue;
         }
         // An ffmpeg without -fps_mode (before 5.1): again, without it.
@@ -3413,6 +3426,7 @@ mod tests {
             interlaced: AtomicBool::new(false),
             signals: Default::default(),
             no_audio: AtomicBool::new(false),
+            audio_misses: std::sync::atomic::AtomicU32::new(0),
             no_info: AtomicBool::new(false),
             no_fps_mode: AtomicBool::new(false),
             no_levels: AtomicBool::new(false),
