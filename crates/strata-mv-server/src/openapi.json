@@ -2750,6 +2750,44 @@
           }
         }
       }
+    },
+    "/api/channels/{id}/generator": {
+      "put": {
+        "tags": [
+          "Channels"
+        ],
+        "summary": "Switch or set the channel's test generator",
+        "description": "`{enabled, pattern (smpteHd, ebu75, bars100, greyScale, pluge, grid, zonePlate, solid, image, lipsync), color, image, ident, clock, motion, tone (none, silence, tone, ebuIdent, beep), level (dBFS), frequency (Hz)}`. Enabled: every destination of the channel sends it at once instead of the multiview (sound on NDI and SDI). Kept in the settings.\\n\\n**Rights:** operator of the channel.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Applied"
+          }
+        }
+      }
+    },
+    "/api/channels/{id}/generator.mjpeg": {
+      "get": {
+        "tags": [
+          "Channels"
+        ],
+        "summary": "The test generator as Motion JPEG",
+        "description": "What the generator sends, for web pages (25 a second at most, 1280 wide at most).",
+        "responses": {
+          "200": {
+            "description": "multipart/x-mixed-replace"
+          }
+        }
+      }
     }
   },
   "components": {

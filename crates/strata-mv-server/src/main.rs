@@ -529,6 +529,7 @@ pub async fn serve(
                     project_id: RwLock::new(pid),
                     published: Default::default(),
                     dirty: Default::default(),
+                    generator: std::sync::RwLock::new(Arc::new(c.generator.clone())),
                 }),
             );
         }

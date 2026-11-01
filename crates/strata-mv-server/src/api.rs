@@ -111,6 +111,8 @@ pub fn router() -> Router<Shared> {
         .route("/api/channels/{id}/multiview", put(put_multiview))
         .route("/api/channels/{id}/preview.png", get(channel_preview))
         .route("/api/channels/{id}/slate.png", get(channel_slate))
+        .route("/api/channels/{id}/generator", put(put_generator))
+        .route("/api/channels/{id}/generator.mjpeg", get(generator_mjpeg))
         .route("/api/slate.png", get(slate_preview))
         .route("/api/channels/{id}/outputs/{name}/{essence}", get(get_sdp))
         .route(
@@ -1354,6 +1356,122 @@ async fn channel_preview(
     Ok(png(bytes))
 }
 
+/// Switches a channel's test generator, or changes it: its outputs send it
+/// at once instead of the multiview (none stops); kept in the settings.
+async fn put_generator(
+    State(s): State<Shared>,
+    CurrentUser(me): CurrentUser,
+    Path(id): Path<String>,
+    Json(mut g): Json<strata_mv_core::generator::GeneratorConfig>,
+) -> ApiResult<StatusCode> {
+    visible_channel(&me, &id)?;
+    require(me.can_operate(&id))?;
+    let ch = s.channel(&id).ok_or_else(|| not_found("channel"))?.clone();
+    g.level = g.level.clamp(-60.0, 0.0);
+    g.frequency = g.frequency.clamp(20.0, 20_000.0);
+    *ch.generator.write().unwrap_or_else(|p| p.into_inner()) = std::sync::Arc::new(g.clone());
+    let dir = s.data_dir.clone();
+    let cid = id.clone();
+    tokio::task::spawn_blocking(move || {
+        let mut cfg = ServerConfig::load(&dir);
+        if let Some(c) = cfg.channels.iter_mut().find(|c| c.id == cid) {
+            c.generator = g;
+        }
+        cfg.save(&dir)
+    })
+    .await
+    .map_err(internal)?
+    .map_err(internal)?;
+    let _ = s.events.send(crate::state::Event::Channels {
+        channels: s.channel_infos().await,
+    });
+    Ok(StatusCode::NO_CONTENT)
+}
+
+/// `GET /api/channels/<id>/generator.mjpeg`: the channel's test generator
+/// as Motion JPEG (its web pages show it; 25 a second, the main size up to
+/// 1280 wide). Public like the outputs when they are.
+async fn generator_mjpeg(
+    State(s): State<Shared>,
+    MaybeUser(me): MaybeUser,
+    Path(id): Path<String>,
+) -> Response {
+    if me.is_none() && !s.config.public_outputs {
+        return (StatusCode::UNAUTHORIZED, "sign in").into_response();
+    }
+    let Some(ch) = s.channel(&id).cloned() else {
+        return not_found("channel").into_response();
+    };
+    let rate = ch.config.frame_rate;
+    let k = (1280.0 / ch.config.width.max(1) as f32).min(1.0);
+    let out = strata_mv_render::OutputFormat {
+        width: ((ch.config.width as f32 * k) as u32) & !1,
+        height: ((ch.config.height as f32 * k) as u32) & !1,
+    };
+    let tz = s.config.timezone.clone();
+    let assets = s.assets_dir();
+    let mut closing = s.closing.subscribe();
+    let fps = rate.num as f64 / rate.den.max(1) as f64;
+    let step = std::time::Duration::from_secs_f64(1.0 / fps.clamp(1.0, 25.0));
+    let started = std::time::Instant::now();
+    let stream = futures_util::stream::unfold(
+        (strata_mv_render::Renderer::new(assets), 0u64),
+        move |(mut r, k)| {
+            let stop = *closing.borrow_and_update();
+            let (ch, tz) = (ch.clone(), tz.clone());
+            async move {
+                if stop {
+                    return None;
+                }
+                let due = started + step * k as u32;
+                tokio::time::sleep_until(due.into()).await;
+                let g = ch
+                    .generator
+                    .read()
+                    .unwrap_or_else(|p| p.into_inner())
+                    .clone();
+                // The frame of the channel's own count at this moment.
+                let n = (started.elapsed().as_secs_f64() * fps) as u64;
+                let (r, jpeg) = tokio::task::spawn_blocking(move || {
+                    let now = crate::api::now_ms();
+                    let f = r.render_generator(&g, out, n, rate.num, rate.den, now, &tz);
+                    let pm = tiny_skia::Pixmap::from_vec(
+                        f.data.clone(),
+                        tiny_skia::IntSize::from_wh(f.width, f.height)?,
+                    )?;
+                    let j = strata_mv_render::jpeg(&pm, f.width, 85)?;
+                    Some((r, j))
+                })
+                .await
+                .ok()
+                .flatten()?;
+                let mut b = format!(
+                    "--frame\r\nContent-Type: image/jpeg\r\nContent-Length: {}\r\n\r\n",
+                    jpeg.len()
+                )
+                .into_bytes();
+                b.extend_from_slice(&jpeg);
+                b.extend_from_slice(b"\r\n");
+                Some((
+                    Ok::<_, std::io::Error>(axum::body::Bytes::from(b)),
+                    (r, k + 1),
+                ))
+            }
+        },
+    );
+    (
+        [
+            (
+                header::CONTENT_TYPE,
+                "multipart/x-mixed-replace; boundary=frame",
+            ),
+            (header::CACHE_CONTROL, "no-store"),
+        ],
+        axum::body::Body::from_stream(stream),
+    )
+        .into_response()
+}
+
 #[derive(Deserialize)]
 struct SlateQuery {
     /// Rendition id (default: the main picture).
@@ -1698,10 +1816,16 @@ async fn put_system_config(
     cfg.normalize();
     cfg.validate().map_err(bad)?;
     // The projects on air are not settings (they change at once): kept as
-    // they are now, « no project » included.
+    // they are now, « no project » included. Nor is the test generator (switched at once on its own).
     for c in &mut cfg.channels {
         if let Some(ch) = s.channel(&c.id) {
             c.project_id = ch.project_id.read().await.clone();
+            c.generator = ch
+                .generator
+                .read()
+                .unwrap_or_else(|p| p.into_inner())
+                .as_ref()
+                .clone();
         }
     }
     if let Some(bind) = cfg.bind.filter(|b| *b != s.bind) {

@@ -747,3 +747,48 @@
 .wc-err {
   white-space: pre-wrap;
 }
+
+/* The channel's test generator (outputs/Generator.tsx). */
+.gen {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+  margin: 4px 0 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--panel-2);
+}
+.gen.on {
+  border-color: var(--live);
+  box-shadow: 0 0 0 1px var(--live-soft);
+}
+.gen-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.gen-preview {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: contain;
+  background: #000;
+  border-radius: 4px;
+}
+.gen-checks {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: var(--fs-12);
+}
+.gen-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.gen-file {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

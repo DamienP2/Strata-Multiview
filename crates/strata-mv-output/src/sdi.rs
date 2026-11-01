@@ -276,6 +276,9 @@ fn send(
     let mut pending: Option<(Arc<Frame>, SystemTime)> = None;
     let mut woven: Option<(Arc<Frame>, Arc<Frame>)> = None;
     let (mut failed, mut warned_at) = (0u32, None::<Instant>);
+    // The frames' sound (the test generator) not sent yet, and the last
+    // taken (its address: a frame shown again brings no new sound).
+    let (mut sound, mut heard) = (Vec::<i16>::new(), 0usize);
     loop {
         let frame = {
             let mut s = lock(&slot.state);
@@ -291,6 +294,13 @@ fn send(
         };
         let Some((frame, at)) = frame else { break };
         let start = Instant::now();
+        if let Some(a) = &frame.audio {
+            let key = Arc::as_ptr(a) as usize;
+            if key != heard {
+                heard = key;
+                sound.extend_from_slice(a);
+            }
+        }
         if frame.width != card.width || frame.height != card.height {
             if warned_at.is_none_or(|t| t.elapsed() > Duration::from_secs(10)) {
                 tracing::warn!(
@@ -337,6 +347,10 @@ fn send(
                 _ => swizzle(&frame.data, &mut bgra, opaque),
             }
             last = Some(frame.clone());
+        }
+        if !sound.is_empty() {
+            card.push_audio(&sound);
+            sound.clear();
         }
         match card.push(&bgra, card.width as usize * 4) {
             Pushed::Queued | Pushed::Dropped => failed = 0,

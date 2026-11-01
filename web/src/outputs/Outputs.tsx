@@ -14,6 +14,7 @@ import { friendlyError } from '../ui/serverError';
 import { InfoTip } from '../ui/InfoTip';
 import { InputsMode } from './Inputs';
 import { OnSwitch } from './OnSwitch';
+import { GeneratorPanel } from './Generator';
 import { useMetrics, type OutputMetrics } from '../engine/metrics';
 import { corePct, fps as fpsText, fpsTone, num, outputTone, pct, pictureTone } from '../perf/format';
 import './streams.css';
@@ -341,7 +342,7 @@ export function Outputs({ mode }: { mode: Mode }) {
           title: ch.name,
           sub: formatLabel(ch),
           tone: liveCh?.projectId ? 'ok' : 'idle',
-          status: !liveCh ? t('Not applied yet') : projectName(liveCh.projectId) ? t('Used by the multiview “{name}”', { name: projectName(liveCh.projectId)! }) : t('No multiview'),
+          status: !liveCh ? t('Not applied yet') : liveCh.generator?.enabled ? t('Test generator on air') : projectName(liveCh.projectId) ? t('Used by the multiview “{name}”', { name: projectName(liveCh.projectId)! }) : t('No multiview'),
         },
         ...allDests.map((d) => {
           const st = destStatus(d);
@@ -673,7 +674,7 @@ export function Outputs({ mode }: { mode: Mode }) {
                     <span className="chip">{locations.find((l) => l.id === (ch.location || locations[0].id))?.name}</span>
                   </div>
                   <span className="muted small">
-                    {formatLabel(ch)} · {projectName(liveCh?.projectId) ? t('Used by the multiview “{name}”', { name: projectName(liveCh?.projectId)! }) : t('No multiview')} · {tn(allDests.length, '{n} destination', '{n} destinations')}
+                    {formatLabel(ch)} · {liveCh?.generator?.enabled ? t('Test generator on air') : projectName(liveCh?.projectId) ? t('Used by the multiview “{name}”', { name: projectName(liveCh?.projectId)! }) : t('No multiview')} · {tn(allDests.length, '{n} destination', '{n} destinations')}
                   </span>
                 </div>
                 <div className="spacer" />
@@ -926,6 +927,7 @@ export function Outputs({ mode }: { mode: Mode }) {
                           ))}
                         </select>
                       </Field>
+                      <GeneratorPanel channelId={ch.id} />
                       <div className="set-field">
                         <span className="set-label">
                           {t('Still picture without multiview')}

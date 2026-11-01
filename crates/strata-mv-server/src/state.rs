@@ -149,6 +149,8 @@ pub struct ChannelInfo {
     pub slate: String,
     /// The design shown while no project is loaded.
     pub slate_style: SlateStyle,
+    /// The test generator (sent instead of the multiview when enabled).
+    pub generator: strata_mv_core::generator::GeneratorConfig,
 }
 
 pub struct ChannelRt {
@@ -161,6 +163,9 @@ pub struct ChannelRt {
     pub published: Mutex<Option<ChannelState>>,
     /// Changed since it was last saved to disk.
     pub dirty: std::sync::atomic::AtomicBool,
+    /// The test generator (read by the clock at each frame: switched
+    /// without stopping the outputs; shown when `enabled`).
+    pub generator: std::sync::RwLock<Arc<strata_mv_core::generator::GeneratorConfig>>,
 }
 
 /// What a channel has on air, kept on disk so a restart (or a crash) puts
@@ -268,6 +273,12 @@ impl ChannelRt {
             outputs,
             slate: c.slate.clone(),
             slate_style: slate_style(c.slate_style, &c.slate),
+            generator: self
+                .generator
+                .read()
+                .unwrap_or_else(|p| p.into_inner())
+                .as_ref()
+                .clone(),
         }
     }
 }

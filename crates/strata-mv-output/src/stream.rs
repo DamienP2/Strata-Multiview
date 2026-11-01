@@ -767,6 +767,7 @@ mod tests {
             height: 2,
             data: rgba.repeat(8),
             captured_at: std::time::SystemTime::now(),
+            audio: None,
         };
         let mut out = Vec::new();
         let near = |a: u8, b: u8| a.abs_diff(b) <= 1;
@@ -882,6 +883,7 @@ mod tests {
             height: 180,
             data: vec![0; 320 * 180 * 4],
             captured_at: std::time::SystemTime::now(),
+            audio: None,
         };
         let f = Arc::new(f);
         for _ in 0..50 {

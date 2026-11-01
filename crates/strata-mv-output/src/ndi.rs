@@ -318,6 +318,8 @@ pub struct NdiSender {
     /// The sound sent with the picture.
     audio: Option<AudioSource>,
     planes: Vec<f32>,
+    /// The frame sound sent last (its address: not sent twice).
+    frame_audio: usize,
 }
 
 // The instance is used from the render thread that owns the sender only.
@@ -361,6 +363,7 @@ impl NdiSender {
             last: None,
             audio: None,
             planes: Vec::new(),
+            frame_audio: 0,
         })
     }
 
@@ -372,10 +375,18 @@ impl NdiSender {
 
     /// Sends the sound that came since the last picture.
     fn send_sound(&mut self) {
-        let (Some(source), Some(send)) = (self.audio.as_mut(), self.lib.send_audio) else {
+        let Some(source) = self.audio.as_mut() else {
             return;
         };
         let pcm = source();
+        self.send_pcm(&pcm);
+    }
+
+    /// Sends sound (interleaved stereo, 16-bit, 48 kHz).
+    fn send_pcm(&mut self, pcm: &[i16]) {
+        let Some(send) = self.lib.send_audio else {
+            return;
+        };
         let n = pcm.len() / 2;
         if n == 0 {
             return;
@@ -520,7 +531,18 @@ impl OutputSink for NdiSender {
         };
         // SAFETY: synchronous send: NDI has finished with the buffer on return.
         unsafe { (self.lib.send)(self.instance, &video) };
-        self.send_sound();
+        match &frame.audio {
+            // The frame's own sound (the test generator), once.
+            Some(a) => {
+                let key = Arc::as_ptr(a) as usize;
+                if key != self.frame_audio {
+                    self.frame_audio = key;
+                    let pcm = a.clone();
+                    self.send_pcm(&pcm);
+                }
+            }
+            None => self.send_sound(),
+        }
         Ok(())
     }
 }

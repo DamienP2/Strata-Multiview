@@ -174,7 +174,15 @@ pub fn start(state: &Shared) -> Vec<tokio::task::JoinHandle<()>> {
 /// (tick, project, state, when the frame is shown: Unix ms — widgets that
 /// move by the clock, a ticker, a timer, are drawn at that instant, not when
 /// the frame happens to be rendered).
-type RenderJob = (u64, Option<Arc<Project>>, ChannelState, f64);
+/// Tick, project, its state, when shown (ms since 1970), the generator
+/// when on (shown instead).
+type RenderJob = (
+    u64,
+    Option<Arc<Project>>,
+    ChannelState,
+    f64,
+    Option<Arc<strata_mv_core::generator::GeneratorConfig>>,
+);
 
 // ---------------------------------------------------------------- outputs --
 
@@ -361,6 +369,7 @@ impl Picture {
 fn render_loop(
     mut renderer: Renderer,
     out: OutputFormat,
+    rate: strata_mv_core::FrameRate,
     tz: String,
     slate: Option<Slate>,
     rx: Arc<Mutex<mpsc::Receiver<RenderJob>>>,
@@ -373,10 +382,28 @@ fn render_loop(
     let mut idle: Option<Arc<Frame>> = None;
     loop {
         let job = lock(&rx).recv();
-        let Ok((tick, project, channel, shown_ms)) = job else {
+        let Ok((tick, project, channel, shown_ms, generator)) = job else {
             return;
         };
         let t = Instant::now();
+        if let Some(g) = generator {
+            let frame = Arc::new(renderer.render_generator(
+                &g,
+                out,
+                tick,
+                rate.num,
+                rate.den,
+                shown_ms as i64,
+                &tz,
+            ));
+            stats.rendered(t.elapsed());
+            let mut d = lock(&done);
+            d.insert(tick, frame);
+            while d.len() > 5 {
+                d.pop_first();
+            }
+            continue;
+        }
         let frame = match project {
             Some(p) => renderer.render_channel_cached(&p, &channel, out, &tz, shown_ms, &cache),
             None => idle
@@ -439,6 +466,7 @@ fn start_pictures(state: &Shared, cfg: &ChannelConfig) -> Vec<Picture> {
                     .spawn({
                         let assets = state.assets_dir();
                         let out = OutputFormat { width, height };
+                        let rate = cfg.frame_rate;
                         let tz = state.config.timezone.clone();
                         let slate = cfg.slate_of(id);
                         let live = state.inputs.clone();
@@ -447,7 +475,7 @@ fn start_pictures(state: &Shared, cfg: &ChannelConfig) -> Vec<Picture> {
                         move || {
                             let mut r = Renderer::new(assets);
                             r.set_live(live);
-                            render_loop(r, out, tz, slate, rx, done, stats, cache)
+                            render_loop(r, out, rate, tz, slate, rx, done, stats, cache)
                         }
                     })
                     .expect("spawn render thread")
@@ -658,13 +686,23 @@ fn clock(
             p.dispatch(n, at);
         }
         let (project, snapshot) = rt.block_on(advance(state, ch, &mut saved_at));
+        let generator = {
+            let g = ch.generator.read().unwrap_or_else(|p| p.into_inner());
+            g.enabled.then(|| g.clone())
+        };
         for p in &pictures {
             // Shown `ahead` ticks from now.
             let shown = at + period * p.ahead as u32;
             let shown_ms = shown
                 .duration_since(std::time::UNIX_EPOCH)
                 .map_or(0.0, |d| d.as_secs_f64() * 1000.0);
-            p.request((n, project.clone(), snapshot.clone(), shown_ms));
+            p.request((
+                n,
+                project.clone(),
+                snapshot.clone(),
+                shown_ms,
+                generator.clone(),
+            ));
         }
     }
     for p in pictures {

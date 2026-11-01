@@ -127,6 +127,7 @@ impl Renderer {
             height: h,
             data: p.pm.take(),
             captured_at: SystemTime::now(),
+            audio: None,
         }
     }
 }

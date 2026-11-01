@@ -326,6 +326,21 @@ Le panneau de la chaîne choisit le **multiview à l'antenne** : il y passe auss
 
 Quand aucun multiview n'est chargé, la chaîne envoie une **mire**. Une **avance de rendu** d'une ou deux images garde une cadence régulière.
 
+
+### 8.2 Générateur de test
+
+Chaque chaîne a un **générateur de test** (panneau de la chaîne, Flux vidéo) : allumé, toutes ses destinations l'envoient **aussitôt** à la place du multiview, sans redémarrer les sorties (`PUT /api/channels/{id}/generator`) ; éteint, le multiview revient à l'image suivante. Pour tester une seule sortie physique, une chaîne dédiée suffit.
+
+| | |
+| --- | --- |
+| **Mires** | barres **SMPTE HD** (RP 219 : barres 75 %, +I, rampe, PLUGE), barres **EBU 75 %** (100/0/75/0), barres **100 %**, **échelle de gris** et rampe, **PLUGE** (−2 %, +2 %, +4 %, références blanche et grise), **grille** et zones de sécurité (action 93 %, titre 90 %, cercle, croix centrale), **zone plate** (fréquences jusqu'à la demi-fréquence d'échantillonnage) |
+| **Image** | **couleur unie**, **image fixe** de la bibliothèque |
+| **Synchro son/image** | un flash au début de chaque seconde (≈ 40 ms) avec un **bip calé à l'échantillon**, un curseur qui avance d'un pas par image et le numéro de l'image dans la seconde : le décalage se lit image par image |
+| **Incrustations** | identification (texte), **heure et image** (HH:MM:SS:FF), un **carré mobile** (la sortie est vivante, pas figée) |
+| **Son** | tonalité **1 kHz** (ou 400 / 440 Hz) à **−18 dBFS** (EBU R68), −20 (SMPTE RP 155), −12 ou −24 ; **ident stéréo EBU** (gauche coupée 250 ms toutes les 3 s) ; **bip** chaque seconde ; silence ; ou pas de son |
+
+Le son est fabriqué image par image, au nombre d'échantillons exact de chaque image (29,97 i/s alterne 1601 et 1602 échantillons) : il est envoyé en **NDI** et **embarqué en SDI** (DeckLink, 8 canaux, son sur 1-2, horodaté avec l'image). Les flux SRT / RTMP / HLS et ST 2110 envoient l'image seule. La page web de la chaîne montre la mire dessinée par le serveur.
+
 ### 8.2 Entrées vidéo
 
 Les **entrées en direct** : SRT, UDP, RTMP, HLS, RTSP, toute URL lue par ffmpeg, les **directs web** (YouTube, TikTok, Twitch, Facebook, Instagram, Kick, Dailymotion, X, Vimeo, Rumble… : le simple lien du direct suffit), **NDI** (sources découvertes sur le réseau) et **SDI** (DeckLink). Chaque entrée est décodée à la taille et à la cadence de la source, avec un tampon de lissage réglable ; la page montre une vignette, l'état, les images reçues et les pertes. Une entrée qui tombe se reconnecte seule.

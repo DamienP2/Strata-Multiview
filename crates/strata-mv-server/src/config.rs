@@ -142,6 +142,10 @@ pub struct ChannelConfig {
     /// not started.
     #[serde(default, skip_serializing_if = "OutputsConfig::is_empty")]
     pub unwired: OutputsConfig,
+    /// The test generator: when on, the outputs send it instead of the
+    /// multiview (changed at once, the outputs going on).
+    #[serde(default)]
+    pub generator: strata_mv_core::generator::GeneratorConfig,
 }
 
 fn default_render_ahead() -> u32 {
@@ -198,6 +202,7 @@ impl ChannelConfig {
             render_ahead: default_render_ahead(),
             clock: None,
             unwired: OutputsConfig::default(),
+            generator: Default::default(),
         }
     }
 

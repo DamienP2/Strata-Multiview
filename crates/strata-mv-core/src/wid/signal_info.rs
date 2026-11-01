@@ -445,7 +445,13 @@ mod tests {
         let mut v2 = v.clone();
         v2.luma = Some([-2.4, 104.0]);
         v2.illegal = Some(0.42);
-        assert_eq!(levels_text(&v2, true), ("\u{2212}2 % – 104 % · 0.4 % hors normes".to_string(), "#fbbf24"));
+        assert_eq!(
+            levels_text(&v2, true),
+            (
+                "\u{2212}2 % – 104 % · 0.4 % hors normes".to_string(),
+                "#fbbf24"
+            )
+        );
         assert_eq!(get("Mastering (ST 2086)"), "P3 · 0.0001–1000 nits");
         assert_eq!(get("MaxCLL / MaxFALL"), "1000 / 400 nits");
         assert_eq!(

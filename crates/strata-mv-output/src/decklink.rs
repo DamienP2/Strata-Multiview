@@ -219,10 +219,17 @@ mod ffi {
             keyer: c_int,
             set_ref_offset: c_int,
             ref_offset: c_int,
+            audio_channels: c_int,
             err: *mut c_char,
             errlen: c_int,
         ) -> *mut c_void;
         pub fn dl_output_push(h: *mut c_void, bgra: *const u8, stride: c_int) -> c_int;
+        pub fn dl_output_push_audio(
+            h: *mut c_void,
+            pcm: *const i16,
+            frames: c_int,
+            channels: c_int,
+        ) -> c_int;
         pub fn dl_output_wait(h: *mut c_void, timeout_ms: c_int, frames: *mut u64) -> c_int;
         pub fn dl_reference_locked(h: *mut c_void) -> c_int;
         pub fn dl_output_close(h: *mut c_void);
@@ -533,6 +540,8 @@ impl OutputHandle {
                         keyer as _,
                         ref_offset.is_some() as _,
                         ref_offset.unwrap_or(0) as _,
+                        // Embedded audio: 8 channels (the sound on the first two).
+                        8,
                         err.as_mut_ptr(),
                         err.len() as _,
                     )
@@ -574,6 +583,26 @@ impl OutputHandle {
         }
         #[cfg(not(decklink_shim))]
         Pushed::Failed
+    }
+
+    /// The sound of the next picture pushed (interleaved stereo, 16-bit,
+    /// 48 kHz), embedded with it; false when the card sends none.
+    pub fn push_audio(&self, pcm: &[i16]) -> bool {
+        #[cfg(decklink_shim)]
+        {
+            if pcm.len() < 2 {
+                return false;
+            }
+            // SAFETY: `pcm` holds len/2 stereo frames.
+            unsafe {
+                ffi::dl_output_push_audio(self.raw, pcm.as_ptr(), (pcm.len() / 2) as _, 2) == 0
+            }
+        }
+        #[cfg(not(decklink_shim))]
+        {
+            let _ = pcm;
+            false
+        }
     }
 
     /// Waits for the card's next frame boundary; false on timeout.

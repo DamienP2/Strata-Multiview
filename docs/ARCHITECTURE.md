@@ -102,6 +102,10 @@ Le serveur relève chaque seconde (`perf.rs`, `CurveStore`) les processeurs, la 
 
 `signals::evaluate` (toutes les 240 ms) relève les conditions de chaque entrée (`Inputs::watched` : image, cadence mesurée et nominale, redémarrages, corrélation, sous-titres, erreurs TR 101 290) et de l'installation (`Plant` : PTP, NTP, processeurs, mémoire, images perdues par les sorties), note depuis quand chacune est vraie, et lève l'alarme quand elle a duré le délai de sa règle (`strata_mv_core::alarm` : profils partagés par les entrées, règles de l'installation). Les alarmes levées, terminées ou acquittées vont au journal (mille lignes, sauvé dans `alarms-journal.json`) et à `alarms.rs`, qui appelle les systèmes configurés (GET ou POST, 5 s au plus, dans un fil à part). Les pages reçoivent le journal avec les signaux, seulement quand il change (et toutes les 5 s).
 
+### Générateur de test
+
+Le réglage du générateur vit dans la chaîne (`ChannelConfig::generator`, gardé dans config.json) et, à chaud, dans `ChannelRt::generator`. L'horloge de la chaîne le joint à chaque demande de rendu (`RenderJob`) ; les fils de rendu dessinent alors la mire (`Renderer::render_generator`, `strata-mv-render/src/generator.rs` : le motif fixe une fois par réglage et par taille, puis ce qui bouge) au lieu du multiview. Le son de l'image `n` (`strata_mv_core::generator::sound`) part dans la trame (`Frame::audio`) : la sortie NDI l'envoie une fois par trame ; la sortie SDI l'accumule (deux trames en entrelacé) et le passe au shim DeckLink (`dl_output_push_audio`), qui le programme avec l'image (`ScheduleAudioSamples` à l'heure de l'image). Changer le générateur ne redémarre aucune sortie ; l'enregistrement des réglages système garde le générateur en cours.
+
 ## Feuille de route
 
 - [ ] Plusieurs pistes audio par flux (aujourd'hui la première, tous ses canaux).

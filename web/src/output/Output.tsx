@@ -55,6 +55,13 @@ export function Output({ channelId: page }: { channelId: string }) {
   const pictureId = 'main';
   const key = [channel.name, picture.width, picture.height, channel.frameRate.num, channel.frameRate.den, picture.slateStyle].join(' ');
   const slate = channel.projectId ? '' : picture.slateStyle === 'custom' ? (picture.slate ?? '') : `/api/channels/${encodeURIComponent(channelId)}/slate.png?${new URLSearchParams({ picture: pictureId, v: key })}`;
+  // The test generator on: what the other outputs send, drawn by the server.
+  if (channel.generator?.enabled)
+    return (
+      <div style={{ position: 'fixed', inset: 0, background: '#000', overflow: 'hidden' }}>
+        <img src={`/api/channels/${encodeURIComponent(channelId)}/generator.mjpeg`} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain' }} />
+      </div>
+    );
   return (
     <div style={{ position: 'fixed', inset: 0, background: bg, overflow: 'hidden' }}>
       <Viewport width={picture.width} height={picture.height} scale={scale}>

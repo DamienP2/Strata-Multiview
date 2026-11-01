@@ -8,6 +8,7 @@
 #![allow(clippy::too_many_arguments, clippy::type_complexity)]
 
 mod cache;
+mod generator;
 mod mask;
 pub mod pool;
 mod scaled;
@@ -133,6 +134,9 @@ pub struct Frame {
     pub data: Vec<u8>,
     /// Wall-clock time the frame was produced (drives RTP timestamps).
     pub captured_at: SystemTime,
+    /// The sound that goes with it (the test generator): interleaved
+    /// stereo, 16-bit, 48 kHz, this frame's duration exactly.
+    pub audio: Option<Arc<Vec<i16>>>,
 }
 
 /// Its buffer goes back to the pool, for the next frame (`pool`).
@@ -149,6 +153,7 @@ impl Frame {
             height,
             data: vec![0; (width * height * 4) as usize],
             captured_at: SystemTime::now(),
+            audio: None,
         }
     }
 
@@ -211,6 +216,8 @@ pub struct Renderer {
     sprites: sprite::Sprites,
     /// Scale of the output over the project (sprites of moving layers).
     root_scale: f32,
+    /// The test generator's pattern, drawn once per setting and size.
+    generator: Option<generator::Drawn>,
     /// Drawing a sprite (no sprite inside one, pictures at their best).
     in_sprite: bool,
     /// Sprites off: every layer drawn straight (to compare, to measure).
@@ -430,6 +437,7 @@ impl Renderer {
             masks: Default::default(),
             sprites: Default::default(),
             root_scale: 1.0,
+            generator: None,
             in_sprite: false,
             sprites_on: true,
         }
@@ -528,6 +536,7 @@ impl Renderer {
             height: h,
             data: pm.take(),
             captured_at: SystemTime::now(),
+            audio: None,
         }
     }
 
@@ -965,6 +974,7 @@ impl Renderer {
             height: out.height,
             data: pm.take(),
             captured_at: SystemTime::now(),
+            audio: None,
         });
         if let Some((kept, scene)) = planned {
             if let Some((at, Some(picture))) = keep {
@@ -1067,6 +1077,7 @@ impl Renderer {
             height,
             data: pm.take(),
             captured_at: SystemTime::now(),
+            audio: None,
         }
     }
 

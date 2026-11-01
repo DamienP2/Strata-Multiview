@@ -357,6 +357,22 @@ export interface ChannelInfo {
   slate?: string;
   /** The design shown while no project is loaded ("custom": the still picture). */
   slateStyle?: string;
+  /** The test generator (sent instead of the multiview when enabled). */
+  generator?: GeneratorConfig;
+}
+
+/** A channel's test generator (mirrors strata_mv_core::generator::GeneratorConfig). */
+export interface GeneratorConfig {
+  enabled: boolean;
+  pattern: 'smpteHd' | 'ebu75' | 'bars100' | 'greyScale' | 'pluge' | 'grid' | 'zonePlate' | 'solid' | 'image' | 'lipsync';
+  color: string;
+  image: string;
+  ident: string;
+  clock: boolean;
+  motion: boolean;
+  tone: 'none' | 'silence' | 'tone' | 'ebuIdent' | 'beep';
+  level: number;
+  frequency: number;
 }
 
 export type Role = 'admin' | 'designer' | 'operator' | 'viewer';

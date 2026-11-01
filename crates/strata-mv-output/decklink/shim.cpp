@@ -320,6 +320,10 @@ class Output final : public IDeckLinkVideoOutputCallback {
     int width = 0, height = 0;
     BMDTimeValue duration = 0;
     BMDTimeScale scale = 0;
+    // Embedded audio: channels (0: none), and the samples of the next
+    // picture pushed (interleaved 16-bit, 48 kHz), scheduled with it.
+    int audio_channels = 0;
+    std::vector<int16_t> pending_audio;
 
     std::mutex m;
     std::condition_variable cv;
@@ -475,6 +479,14 @@ class Output final : public IDeckLinkVideoOutputCallback {
             free_frames.push_back(f);
             return -1;
         }
+        // Its sound, from the picture's own time: in step to the sample.
+        if (audio_channels > 0 && !pending_audio.empty()) {
+            uint32_t written = 0;
+            out->ScheduleAudioSamples(pending_audio.data(),
+                                      (uint32_t)(pending_audio.size() / (size_t)audio_channels), at, scale,
+                                      &written);
+            pending_audio.clear();
+        }
         return 0;
     }
 
@@ -489,6 +501,9 @@ class Output final : public IDeckLinkVideoOutputCallback {
             BMDTimeValue stopped = 0;
             out->StopScheduledPlayback(0, &stopped, 0);
             out->SetScheduledFrameCompletionCallback(NULL);
+            if (audio_channels > 0) {
+                out->DisableAudioOutput();
+            }
             out->DisableVideoOutput();
         }
         if (keyer) {
@@ -953,7 +968,7 @@ int dl_device_modes(int index, int input, dl_mode *out, int cap, char *err, int 
 // `set_ref_offset`: also set the reference input timing offset (genlock
 // offset, `ref_offset` lines).
 void *dl_output_open(int index, uint32_t mode, int width, int height, int keyer, int set_ref_offset,
-                     int ref_offset, char *err, int errlen) {
+                     int ref_offset, int audio_channels, char *err, int errlen) {
     set_err(err, errlen, "");
     IDeckLink *dev = device_at(index, err, errlen);
     if (!dev) {
@@ -998,6 +1013,13 @@ void *dl_output_open(int index, uint32_t mode, int width, int height, int keyer,
     if (o->out->EnableVideoOutput(m, bmdVideoOutputFlagDefault) != S_OK) {
         set_err(err, errlen, "cannot enable the video output (device in use by another application?)");
         goto fail;
+    }
+    // Embedded audio (48 kHz, 16-bit, stamped with the pictures' times): a
+    // card without it still sends the pictures.
+    if (audio_channels > 0 &&
+        o->out->EnableAudioOutput(bmdAudioSampleRate48kHz, bmdAudioSampleType16bitInteger,
+                                  (uint32_t)audio_channels, bmdAudioOutputStreamTimestamped) == S_OK) {
+        o->audio_channels = audio_channels;
     }
     if (keyer) {
         if (dev->QueryInterface(IID_IDeckLinkKeyer, (void **)&o->keyer) != S_OK) {
@@ -1073,6 +1095,26 @@ int dl_output_push(void *h, const uint8_t *bgra, int stride) {
         std::memcpy((uint8_t *)bytes + (size_t)y * row, bgra + (size_t)y * (size_t)stride, line);
     }
     return o->schedule(f, true);
+}
+
+// The sound of the next picture pushed (interleaved `channels`-channel
+// 16-bit samples, 48 kHz): it is scheduled with it. 0 taken, -1 no audio.
+int dl_output_push_audio(void *h, const int16_t *pcm, int frames, int channels) {
+    Output *o = (Output *)h;
+    if (o->audio_channels <= 0 || frames <= 0 || channels <= 0) {
+        return -1;
+    }
+    // Into the card's channel count (the first channels; the rest silent).
+    size_t start = o->pending_audio.size();
+    o->pending_audio.resize(start + (size_t)frames * (size_t)o->audio_channels, 0);
+    int n = channels < o->audio_channels ? channels : o->audio_channels;
+    for (int i = 0; i < frames; i++) {
+        for (int c = 0; c < n; c++) {
+            o->pending_audio[start + (size_t)i * (size_t)o->audio_channels + (size_t)c] =
+                pcm[(size_t)i * (size_t)channels + (size_t)c];
+        }
+    }
+    return 0;
 }
 
 // Waits for the next frame boundary of the card (a completed frame; locked

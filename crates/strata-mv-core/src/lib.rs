@@ -4,6 +4,7 @@
 pub mod alarm;
 pub mod anim;
 pub mod easing;
+pub mod generator;
 pub mod model;
 pub mod palette;
 pub mod playout;
