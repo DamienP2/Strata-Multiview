@@ -1,6 +1,6 @@
-//! The picture measuring tools of a multiview: waveform (luma), RGB and
-//! Y'CbCr parades, vectorscope, histogram, CIE 1931 chromaticity and false
-//! colour, of a live input.
+//! The measuring tools of a multiview: waveform (luma), RGB and Y'CbCr
+//! parades, vectorscope, histogram, CIE 1931 chromaticity and false colour
+//! of a live input's picture; goniometer and phase correlation of its sound.
 //!
 //! The trace (what the picture's pixels make) is computed by the server from
 //! the input's pictures (`strata-mv-render/src/scopes.rs`) into the widget's
@@ -32,6 +32,9 @@ pub enum ScopeKind {
     Cie,
     /// The picture in false colours by exposure.
     FalseColor,
+    /// The sound's left against its right (Lissajous), and the phase
+    /// correlation of the two.
+    Goniometer,
 }
 
 /// How the picture's code values read.
@@ -152,7 +155,7 @@ pub fn trace_area(c: &ScopeConfig, w: f32, h: f32) -> Area {
     let left = if c.labels
         && !matches!(
             c.kind,
-            ScopeKind::Vector | ScopeKind::Cie | ScopeKind::FalseColor
+            ScopeKind::Vector | ScopeKind::Cie | ScopeKind::FalseColor | ScopeKind::Goniometer
         ) {
         (h * 0.09).clamp(18.0, 48.0)
     } else {
@@ -166,6 +169,9 @@ pub fn trace_area(c: &ScopeConfig, w: f32, h: f32) -> Area {
     };
     let bottom = if c.labels && c.kind == ScopeKind::Histogram {
         (h * 0.07).clamp(10.0, 28.0)
+    } else if c.kind == ScopeKind::Goniometer {
+        // The correlation meter.
+        correlation_height(h)
     } else {
         0.0
     };
@@ -180,11 +186,39 @@ pub fn trace_area(c: &ScopeConfig, w: f32, h: f32) -> Area {
         (w - 2.0 * pad - left - right).max(1.0),
         (h - 2.0 * pad - top - bottom).max(1.0),
     ];
-    if matches!(c.kind, ScopeKind::Vector | ScopeKind::Cie) {
+    if matches!(
+        c.kind,
+        ScopeKind::Vector | ScopeKind::Cie | ScopeKind::Goniometer
+    ) {
         let s = a[2].min(a[3]);
         [a[0] + (a[2] - s) / 2.0, a[1] + (a[3] - s) / 2.0, s, s]
     } else {
         a
+    }
+}
+
+/// The height of the goniometer's correlation meter.
+pub fn correlation_height(h: f32) -> f32 {
+    (h * 0.12).clamp(16.0, 44.0)
+}
+
+/// A sample (left, right, −1 to 1) on the goniometer in `a`: mono up the
+/// middle (M), left alone on the upper left diagonal, right on the right.
+pub fn gonio_point(l: f32, r: f32, a: Area) -> [f32; 2] {
+    let half = a[2].min(a[3]) / 2.0 * 0.95;
+    let (cx, cy) = (a[0] + a[2] / 2.0, a[1] + a[3] / 2.0);
+    [cx + (r - l) / 2.0 * half, cy - (l + r) / 2.0 * half]
+}
+
+/// The colour of a phase correlation: out of phase red, wide amber, in
+/// phase green.
+pub fn correlation_color(v: f32) -> &'static str {
+    if v < 0.0 {
+        "#ff3b3b"
+    } else if v < 0.3 {
+        "#fbbf24"
+    } else {
+        "#2bd96b"
     }
 }
 
@@ -308,7 +342,13 @@ pub fn false_colors(t: Transfer) -> Vec<(f32, &'static str, String)> {
 
 /// The graticule and labels of a scope (`under`: its background, drawn
 /// before the trace; `over`: drawn over it).
-pub fn layout(c: &ScopeConfig, w: f32, h: f32, t: Transfer) -> (Vec<Item>, Vec<Item>) {
+pub fn layout(
+    c: &ScopeConfig,
+    w: f32,
+    h: f32,
+    t: Transfer,
+    correlation: Option<f32>,
+) -> (Vec<Item>, Vec<Item>) {
     let mut under = vec![rect([0.0, 0.0, w, h], 0.0, &c.background)];
     let mut over = Vec::new();
     let a = trace_area(c, w, h);
@@ -494,6 +534,141 @@ pub fn layout(c: &ScopeConfig, w: f32, h: f32, t: Transfer) -> (Vec<Item>, Vec<I
                 over.push(circle(wp, (a[2] * 0.008).max(2.0), lw, "#ffffff"));
             }
         }
+        ScopeKind::Goniometer => {
+            let center = [a[0] + a[2] / 2.0, a[1] + a[3] / 2.0];
+            let r = a[2].min(a[3]) / 2.0 * 0.95;
+            if c.graticule {
+                // The square of full scale, its diagonals (L, R), M and S.
+                let k = r / std::f32::consts::SQRT_2;
+                let corner = |dx: f32, dy: f32| [center[0] + dx * r, center[1] + dy * r];
+                over.push(path(
+                    vec![
+                        corner(0.0, -1.0),
+                        corner(1.0, 0.0),
+                        corner(0.0, 1.0),
+                        corner(-1.0, 0.0),
+                    ],
+                    true,
+                    lw,
+                    GRID_STRONG,
+                ));
+                over.push(path(
+                    vec![corner(0.0, -1.0), corner(0.0, 1.0)],
+                    false,
+                    lw,
+                    GRID,
+                ));
+                over.push(path(
+                    vec![corner(-1.0, 0.0), corner(1.0, 0.0)],
+                    false,
+                    lw,
+                    GRID,
+                ));
+                over.push(path(
+                    vec![
+                        [center[0] - k, center[1] - k],
+                        [center[0] + k, center[1] + k],
+                    ],
+                    false,
+                    lw,
+                    GRID,
+                ));
+                over.push(path(
+                    vec![
+                        [center[0] + k, center[1] - k],
+                        [center[0] - k, center[1] + k],
+                    ],
+                    false,
+                    lw,
+                    GRID,
+                ));
+                if c.labels {
+                    let d = k + size * 0.7;
+                    for (name, x, y) in [
+                        ("L", center[0] - d, center[1] - d),
+                        ("R", center[0] + d, center[1] - d),
+                        ("M", center[0], center[1] - r - size * 0.2),
+                        ("S", center[0] + r + size * 0.6, center[1]),
+                    ] {
+                        label(
+                            &mut over,
+                            [x - 20.0, y - size * 0.6, 40.0, size * 1.2],
+                            name,
+                            TextAlign::Center,
+                        );
+                    }
+                }
+            }
+            // The correlation meter, under it: −1 to +1.
+            let mh = correlation_height(h);
+            let pad = (w.min(h) * 0.04).clamp(2.0, 16.0);
+            let lab = if c.labels { size * 2.2 } else { 0.0 };
+            let bar = [
+                pad + lab,
+                h - pad - mh * 0.62,
+                (w - 2.0 * pad - 2.0 * lab).max(1.0),
+                mh * 0.36,
+            ];
+            under.push(rect(bar, bar[3] / 2.0, "#ffffff14"));
+            let mid = bar[0] + bar[2] / 2.0;
+            over.push(rect(
+                [mid - 0.5, bar[1] - 2.0, 1.0, bar[3] + 4.0],
+                0.0,
+                GRID_STRONG,
+            ));
+            if let Some(v) = correlation {
+                let v = v.clamp(-1.0, 1.0);
+                let x = mid + v * bar[2] / 2.0;
+                let col = correlation_color(v);
+                let (x0, x1) = if v < 0.0 { (x, mid) } else { (mid, x) };
+                over.push(rect(
+                    [x0, bar[1], (x1 - x0).max(1.0), bar[3]],
+                    bar[3] / 2.0,
+                    col,
+                ));
+                over.push(rect(
+                    [x - 1.5, bar[1] - 3.0, 3.0, bar[3] + 6.0],
+                    1.0,
+                    "#ffffff",
+                ));
+            }
+            if c.labels {
+                label(
+                    &mut over,
+                    [pad, bar[1] - size * 0.4, lab - 4.0, bar[3] + size * 0.8],
+                    "−1",
+                    TextAlign::Right,
+                );
+                label(
+                    &mut over,
+                    [
+                        bar[0] + bar[2] + 4.0,
+                        bar[1] - size * 0.4,
+                        lab - 4.0,
+                        bar[3] + size * 0.8,
+                    ],
+                    "+1",
+                    TextAlign::Left,
+                );
+                let value = correlation.map_or("—".to_string(), |v| {
+                    let v = (v.clamp(-1.0, 1.0) * 100.0).round() / 100.0;
+                    if v < 0.0 {
+                        format!("\u{2212}{:.2}", -v)
+                    } else {
+                        format!("{v:.2}")
+                    }
+                });
+                over.push(text(
+                    [w - pad - 90.0, pad, 88.0, size * 1.3],
+                    value,
+                    size * 1.1,
+                    700,
+                    true,
+                    correlation.map_or(LABEL, correlation_color),
+                    TextAlign::Right,
+                ));
+            }
+        }
         ScopeKind::FalseColor => {
             if c.labels {
                 let bands = false_colors(t);
@@ -532,6 +707,20 @@ mod tests {
     }
 
     #[test]
+    fn mono_goes_up_the_middle_of_the_goniometer() {
+        let a = [0.0, 0.0, 200.0, 200.0];
+        assert_eq!(gonio_point(0.0, 0.0, a), [100.0, 100.0]);
+        let p = gonio_point(1.0, 1.0, a);
+        assert!((p[0] - 100.0).abs() < 1e-3 && p[1] < 10.0, "{p:?}");
+        // Left alone: up and left.
+        let p = gonio_point(1.0, 0.0, a);
+        assert!(p[0] < 100.0 && p[1] < 100.0, "{p:?}");
+        // Out of phase: across.
+        let p = gonio_point(1.0, -1.0, a);
+        assert!((p[1] - 100.0).abs() < 1e-3 && p[0] < 10.0, "{p:?}");
+    }
+
+    #[test]
     fn transfers_by_name() {
         assert_eq!(Transfer::of("smpte2084"), Transfer::Pq);
         assert_eq!(Transfer::of("arib-std-b67"), Transfer::Hlg);
@@ -563,13 +752,14 @@ mod tests {
             ScopeKind::Histogram,
             ScopeKind::Cie,
             ScopeKind::FalseColor,
+            ScopeKind::Goniometer,
         ] {
             for t in [Transfer::Sdr, Transfer::Pq, Transfer::Hlg] {
                 let c = ScopeConfig {
                     kind,
                     ..Default::default()
                 };
-                let (under, over) = layout(&c, 640.0, 360.0, t);
+                let (under, over) = layout(&c, 640.0, 360.0, t, Some(0.5));
                 assert!(!under.is_empty());
                 let a = trace_area(&c, 640.0, 360.0);
                 assert!(a[2] > 0.0 && a[3] > 0.0);

@@ -188,6 +188,9 @@ pub struct SourceView {
     pub alarms: Vec<Alarm>,
     /// What its picture and sound are (colour, HDR, codecs).
     pub video: VideoInfo,
+    /// The phase correlation of its left and right (−1 to 1) over the last
+    /// 300 ms, none when silent.
+    pub correlation: Option<f32>,
 }
 
 /// What a live input's picture and sound are: the Signal widget, the scopes'

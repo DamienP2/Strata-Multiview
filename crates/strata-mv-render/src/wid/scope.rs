@@ -19,9 +19,10 @@ pub(crate) fn draw(d: &mut Draw) -> bool {
     let view = (!input.is_empty())
         .then(|| d.rd.live_source(&input))
         .flatten();
+    let correlation = view.as_ref().and_then(|v| v.correlation);
     let video = view.map(|v| v.video).unwrap_or_default();
     let t = Transfer::of(&video.transfer);
-    let (under, over) = layout(&c, d.w, d.h, t);
+    let (under, over) = layout(&c, d.w, d.h, t, correlation);
     paint(d, &under);
     let a = trace_area(&c, d.w, d.h);
     // The trace at the size it shows on this output.

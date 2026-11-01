@@ -15,7 +15,7 @@ import { ColorPick, defineWidget, Num, Section, Select, Toggle, withDefaults } f
 type Area = [number, number, number, number];
 type Pt = [number, number];
 
-export type ScopeKind = 'waveform' | 'parade' | 'ycbcrParade' | 'vector' | 'histogram' | 'cie' | 'falseColor';
+export type ScopeKind = 'waveform' | 'parade' | 'ycbcrParade' | 'vector' | 'histogram' | 'cie' | 'falseColor' | 'goniometer';
 export type Transfer = 'sdr' | 'pq' | 'hlg';
 
 export interface ScopeConfig {
@@ -58,17 +58,22 @@ const unit = (tr: Transfer) => (tr === 'pq' ? 'nits' : tr === 'hlg' ? '% HLG' : 
 /** Where the trace goes (mirrors trace_area). */
 export function traceArea(c: Required<ScopeConfig>, w: number, h: number): Area {
   const pad = clamp(Math.min(w, h) * 0.04, 2, 16);
-  const left = c.labels && !['vector', 'cie', 'falseColor'].includes(c.kind) ? clamp(h * 0.09, 18, 48) : 0;
+  const left = c.labels && !['vector', 'cie', 'falseColor', 'goniometer'].includes(c.kind) ? clamp(h * 0.09, 18, 48) : 0;
   const top = c.labels && (c.kind === 'parade' || c.kind === 'ycbcrParade') ? clamp(h * 0.07, 10, 28) : 0;
-  const bottom = c.labels && c.kind === 'histogram' ? clamp(h * 0.07, 10, 28) : 0;
+  const bottom = c.labels && c.kind === 'histogram' ? clamp(h * 0.07, 10, 28) : c.kind === 'goniometer' ? correlationHeight(h) : 0;
   const right = c.kind === 'falseColor' && c.labels ? clamp(w * 0.1, 28, 90) : 0;
   const a: Area = [pad + left, pad + top, Math.max(1, w - 2 * pad - left - right), Math.max(1, h - 2 * pad - top - bottom)];
-  if (c.kind === 'vector' || c.kind === 'cie') {
+  if (c.kind === 'vector' || c.kind === 'cie' || c.kind === 'goniometer') {
     const s = Math.min(a[2], a[3]);
     return [a[0] + (a[2] - s) / 2, a[1] + (a[3] - s) / 2, s, s];
   }
   return a;
 }
+
+/** The goniometer's correlation meter height (mirrors correlation_height). */
+const correlationHeight = (h: number) => clamp(h * 0.12, 16, 44);
+/** Out of phase red, wide amber, in phase green (mirrors correlation_color). */
+const correlationColor = (v: number) => (v < 0 ? '#ff3b3b' : v < 0.3 ? '#fbbf24' : '#2bd96b');
 
 /** The parades' three panels (mirrors panels). */
 export function panels(a: Area): [Area, Area, Area] {
@@ -114,7 +119,7 @@ function falseColors(tr: Transfer): [number, string, string][] {
 }
 
 /** The graticule and labels: under the trace, over it (mirrors layout). */
-export function layout(c: Required<ScopeConfig>, w: number, h: number, tr: Transfer): [Item[], Item[]] {
+export function layout(c: Required<ScopeConfig>, w: number, h: number, tr: Transfer, correlation?: number): [Item[], Item[]] {
   const under: Item[] = [rect([0, 0, w, h], 0, c.background)];
   const over: Item[] = [];
   const a = traceArea(c, w, h);
@@ -175,6 +180,52 @@ export function layout(c: Required<ScopeConfig>, w: number, h: number, tr: Trans
       });
       over.push(circle(ciePoint(0.3127, 0.329, a), Math.max(2, a[2] * 0.008), lw, '#ffffff'));
     }
+  } else if (c.kind === 'goniometer') {
+    const center: Pt = [a[0] + a[2] / 2, a[1] + a[3] / 2];
+    const r = (Math.min(a[2], a[3]) / 2) * 0.95;
+    if (c.graticule) {
+      const k = r / Math.SQRT2;
+      const corner = (dx: number, dy: number): Pt => [center[0] + dx * r, center[1] + dy * r];
+      over.push(path([corner(0, -1), corner(1, 0), corner(0, 1), corner(-1, 0)], true, lw, GRID_STRONG));
+      over.push(path([corner(0, -1), corner(0, 1)], false, lw, GRID));
+      over.push(path([corner(-1, 0), corner(1, 0)], false, lw, GRID));
+      over.push(path([[center[0] - k, center[1] - k], [center[0] + k, center[1] + k]], false, lw, GRID));
+      over.push(path([[center[0] + k, center[1] - k], [center[0] - k, center[1] + k]], false, lw, GRID));
+      if (c.labels) {
+        const d = k + size * 0.7;
+        for (const [name, x, y] of [
+          ['L', center[0] - d, center[1] - d],
+          ['R', center[0] + d, center[1] - d],
+          ['M', center[0], center[1] - r - size * 0.2],
+          ['S', center[0] + r + size * 0.6, center[1]],
+        ] as const)
+          label([x - 20, y - size * 0.6, 40, size * 1.2], name, 'center');
+      }
+    }
+    const mh = correlationHeight(h);
+    const pad = clamp(Math.min(w, h) * 0.04, 2, 16);
+    const lab = c.labels ? size * 2.2 : 0;
+    const bar: Area = [pad + lab, h - pad - mh * 0.62, Math.max(1, w - 2 * pad - 2 * lab), mh * 0.36];
+    under.push(rect(bar, bar[3] / 2, '#ffffff14'));
+    const mid = bar[0] + bar[2] / 2;
+    over.push(rect([mid - 0.5, bar[1] - 2, 1, bar[3] + 4], 0, GRID_STRONG));
+    if (correlation !== undefined) {
+      const v = clamp(correlation, -1, 1);
+      const x = mid + (v * bar[2]) / 2;
+      const [x0, x1] = v < 0 ? [x, mid] : [mid, x];
+      over.push(rect([x0, bar[1], Math.max(1, x1 - x0), bar[3]], bar[3] / 2, correlationColor(v)));
+      over.push(rect([x - 1.5, bar[1] - 3, 3, bar[3] + 6], 1, '#ffffff'));
+    }
+    if (c.labels) {
+      label([pad, bar[1] - size * 0.4, lab - 4, bar[3] + size * 0.8], '−1', 'right');
+      label([bar[0] + bar[2] + 4, bar[1] - size * 0.4, lab - 4, bar[3] + size * 0.8], '+1', 'left');
+      let value = '—';
+      if (correlation !== undefined) {
+        const v = Math.round(clamp(correlation, -1, 1) * 100) / 100;
+        value = v < 0 ? `−${(-v).toFixed(2)}` : v.toFixed(2);
+      }
+      over.push(text([w - pad - 90, pad, 88, size * 1.3], value, size * 1.1, 700, true, correlation === undefined ? LABEL : correlationColor(correlation), 'right'));
+    }
   } else if (c.labels) {
     const bands = falseColors(tr);
     const x = a[0] + a[2] + 6;
@@ -197,7 +248,7 @@ function ScopeView({ cfg, w, h }: { cfg: ScopeConfig; w: number; h: number }) {
   const id = c.input.trim();
   const signal = useSignal(id);
   const tr = transferOf(signal.video?.transfer);
-  const [under, over] = layout(c, w, h, tr);
+  const [under, over] = layout(c, w, h, tr, signal.correlation ?? undefined);
   const a = traceArea(c, w, h);
   const url = useScope(id ? { input: id, kind: c.kind, w: step(a[2]), h: step(a[3]), i: Math.round(c.intensity * 100), color: c.color.replace('#', '').slice(0, 6) } : null);
   const look = (cfg as { panel?: Panel }).panel;
@@ -225,6 +276,7 @@ const KINDS: [ScopeKind, string][] = [
   ['histogram', 'Histogram'],
   ['cie', 'CIE 1931 chromaticity'],
   ['falseColor', 'False colour'],
+  ['goniometer', 'Goniometer and phase'],
 ];
 
 export const scopeWidget = defineWidget({

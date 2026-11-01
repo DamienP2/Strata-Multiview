@@ -498,6 +498,8 @@ export interface SignalView {
   alarms?: Alarm[];
   /** What its picture and sound are (sent when it changes; kept here). */
   video?: VideoInfo;
+  /** The phase correlation of its left and right (−1 to 1). */
+  correlation?: number;
 }
 
 /** What an input's picture and sound are (mirrors strata_mv_core::signal::VideoInfo). */

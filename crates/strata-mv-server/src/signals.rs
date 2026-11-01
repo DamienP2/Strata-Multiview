@@ -169,6 +169,9 @@ pub struct SignalView {
     /// seconds for the pages just opened (the browsers keep the last one).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub video: Option<strata_mv_core::signal::VideoInfo>,
+    /// The phase correlation of its left and right (−1 to 1, two decimals).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub correlation: Option<f32>,
 }
 
 fn is_off(t: &Tally) -> bool {
@@ -860,6 +863,12 @@ pub async fn broadcast(s: crate::state::Shared) {
         let mut now = signals.snapshot();
         for (id, vi) in new_video {
             now.entry(id).or_default().video = Some(vi);
+        }
+        // With the meters: the inputs heard.
+        for (id, c) in s.inputs.correlations() {
+            if let Some(v) = now.get_mut(&id).filter(|v| !v.levels.is_empty()) {
+                v.correlation = Some((c * 100.0).round() / 100.0);
+            }
         }
         let system = signals.system();
         // The same as sent, a history aside (sent when it changes only).

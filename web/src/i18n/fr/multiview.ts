@@ -247,4 +247,6 @@ export const multiview: Record<string, string> = {
   'Colour space, transfer, range': 'Colorimétrie, transfert, plage',
   'Mastering display, MaxCLL / MaxFALL': 'Écran de mastering, MaxCLL / MaxFALL',
   'Tracks, Dolby, Atmos': 'Pistes, Dolby, Atmos',
+  'Goniometer and phase': 'Goniomètre et phase',
+  'The sound’s left against its right, and their phase correlation': 'La gauche du son face à sa droite, et leur corrélation de phase',
 };

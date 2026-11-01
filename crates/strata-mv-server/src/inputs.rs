@@ -416,6 +416,11 @@ struct Live {
     /// The scopes' traces made of its pictures: of which picture (its
     /// address), asked how, made when.
     scopes: Mutex<VecDeque<Trace>>,
+    /// The last second and a half of its sound, timed (the goniometer and
+    /// the phase correlation, as late as the pictures shown).
+    heard: Mutex<VecDeque<(Instant, axum::body::Bytes)>>,
+    /// The phase correlation, measured at most every 40 ms.
+    phase: Mutex<Option<(Instant, Option<f32>)>>,
     /// The number of the newest picture and when it came (ms since 1970):
     /// the web streams wake on it.
     frames: tokio::sync::watch::Sender<(u64, u64)>,
@@ -842,15 +847,120 @@ impl Live {
         }
     }
 
-    /// The trace of a scope of the picture shown now: made once per picture
-    /// and request, at most every 70 ms (a scope needs no more).
+    /// Its sound as it comes: to the people listening and the outputs
+    /// sending it, and kept a moment (the goniometer, the phase).
+    fn sound(&self, at: Instant, data: axum::body::Bytes) {
+        {
+            let mut h = self.heard.lock().unwrap_or_else(|p| p.into_inner());
+            h.push_back((at, data.clone()));
+            while h.front().is_some_and(|(t, _)| {
+                at.saturating_duration_since(*t) > Duration::from_millis(1500)
+            }) {
+                h.pop_front();
+            }
+        }
+        if self.audio.receiver_count() > 0 {
+            let _ = self.audio.send(Pcm {
+                at,
+                at_ms: epoch_ms(at),
+                data,
+            });
+        }
+    }
+
+    /// The last `span` of its sound heard with the picture shown now
+    /// (interleaved stereo, 16-bit).
+    fn heard(&self, span: Duration) -> Vec<i16> {
+        let Some(due) = Instant::now().checked_sub(self.shown_wait()) else {
+            return Vec::new();
+        };
+        let want = (span.as_secs_f64() * PCM_RATE as f64) as usize * 2;
+        let h = self.heard.lock().unwrap_or_else(|p| p.into_inner());
+        // The chunks begun by then, the newest last; of them, the last `span`.
+        let mut out: Vec<i16> = Vec::new();
+        for (_, data) in h.iter().rev().filter(|(t, _)| *t <= due) {
+            let mut chunk: Vec<i16> = data
+                .chunks_exact(2)
+                .map(|b| i16::from_le_bytes([b[0], b[1]]))
+                .collect();
+            chunk.extend_from_slice(&out);
+            out = chunk;
+            if out.len() >= want {
+                break;
+            }
+        }
+        if out.len() > want {
+            out.drain(..out.len() - want);
+        }
+        out
+    }
+
+    /// The phase correlation of the last 300 ms heard (none when silent),
+    /// measured again at most every 40 ms.
+    fn correlation(&self) -> Option<f32> {
+        let mut p = self.phase.lock().unwrap_or_else(|p| p.into_inner());
+        if let Some((at, v)) = *p {
+            if at.elapsed() < Duration::from_millis(40) {
+                return v;
+            }
+        }
+        let s = self.heard(Duration::from_millis(300));
+        let (mut lr, mut ll, mut rr) = (0.0f64, 0.0f64, 0.0f64);
+        for c in s.chunks_exact(2) {
+            let (l, r) = (c[0] as f64, c[1] as f64);
+            lr += l * r;
+            ll += l * l;
+            rr += r * r;
+        }
+        let n = (s.len() / 2).max(1) as f64;
+        // Under −60 dBFS on both sides: silence, no phase.
+        let quiet = (32768.0f64 * 0.001).powi(2);
+        let v = if ll / n < quiet && rr / n < quiet {
+            None
+        } else if ll / n < quiet || rr / n < quiet {
+            // One side only: no correlation to speak of.
+            Some(0.0)
+        } else {
+            Some((lr / (ll * rr).sqrt()) as f32)
+        };
+        *p = Some((Instant::now(), v));
+        v
+    }
+
+    /// The trace of a scope of the picture shown now (the goniometer: of
+    /// the sound heard with it): made once per picture and request, at most
+    /// every 70 ms (a scope needs no more).
     fn scope(&self, r: &strata_mv_render::scopes::ScopeRequest) -> Option<Arc<Pixmap>> {
+        let r = r.clone().bounded();
+        if r.kind == strata_mv_core::wid::scope::ScopeKind::Goniometer {
+            {
+                let made = self.scopes.lock().unwrap_or_else(|p| p.into_inner());
+                if let Some((_, _, _, t)) = made
+                    .iter()
+                    .rev()
+                    .find(|(_, q, at, _)| q == &r && at.elapsed() < Duration::from_millis(70))
+                {
+                    return Some(t.clone());
+                }
+            }
+            let s = self.heard(Duration::from_millis(80));
+            if s.is_empty() {
+                return None;
+            }
+            let t = Arc::new(strata_mv_render::scopes::goniometer(&s, &r)?);
+            let mut made = self.scopes.lock().unwrap_or_else(|p| p.into_inner());
+            made.retain(|(_, q, _, _)| q != &r);
+            made.push_back((0, r, Instant::now(), t.clone()));
+            while made.len() > 24 {
+                made.pop_front();
+            }
+            return Some(t);
+        }
         if !self.fresh() {
             return None;
         }
         let pic = self.current()?;
         let key = Arc::as_ptr(&pic) as usize;
-        let r = r.clone().bounded();
         {
             let made = self.scopes.lock().unwrap_or_else(|p| p.into_inner());
             if let Some((_, _, _, t)) = made.iter().rev().find(|(k, q, at, _)| {
@@ -926,6 +1036,8 @@ impl Inputs {
                 facts: Arc::new(Mutex::new(crate::probe::Facts::default())),
                 video: Mutex::new(None),
                 scopes: Mutex::new(VecDeque::new()),
+                heard: Mutex::new(VecDeque::new()),
+                phase: Mutex::new(None),
                 frames: tokio::sync::watch::channel((0, 0)).0,
                 jpegs: Mutex::new(VecDeque::new()),
                 recent: Mutex::new(VecDeque::new()),
@@ -1282,6 +1394,7 @@ impl strata_mv_render::LiveInputs for Inputs {
             timecode: self.signals.timecode_of(id),
             alarms: self.signals.alarms(id),
             video: l.video(),
+            correlation: l.correlation(),
         })
     }
 
@@ -1301,6 +1414,20 @@ impl strata_mv_render::LiveInputs for Inputs {
 }
 
 impl Inputs {
+    /// The phase correlation of each input heard now (none when silent).
+    pub fn correlations(&self) -> Vec<(String, f32)> {
+        let list: Vec<Arc<Live>> = self
+            .live
+            .read()
+            .unwrap_or_else(|p| p.into_inner())
+            .values()
+            .cloned()
+            .collect();
+        list.iter()
+            .filter_map(|l| Some((l.config.id.clone(), l.correlation()?)))
+            .collect()
+    }
+
     /// What the inputs receiving now are (colour, HDR, codecs).
     pub fn videos(&self) -> Vec<(String, strata_mv_core::signal::VideoInfo)> {
         let list: Vec<Arc<Live>> = self
@@ -2390,13 +2517,7 @@ fn read_pcm(l: &Live, listener: std::net::TcpListener) {
                     }
                     .unwrap_or(fallback);
                     read += n;
-                    if l.audio.receiver_count() > 0 {
-                        let _ = l.audio.send(Pcm {
-                            at,
-                            at_ms: epoch_ms(at),
-                            data: axum::body::Bytes::copy_from_slice(&buf[..whole]),
-                        });
-                    }
+                    l.sound(at, axum::body::Bytes::copy_from_slice(&buf[..whole]));
                     buf.copy_within(whole..have, 0);
                     have -= whole;
                 }
@@ -2615,17 +2736,11 @@ fn run_ndi(l: &Live) {
                 },
                 |a| {
                     sound_of = Some((a.sample_rate, a.channels, a.samples));
-                    // To the people listening to it.
-                    if l.audio.receiver_count() > 0 {
-                        let pcm = ndi_pcm(&a);
-                        if !pcm.is_empty() {
-                            let at = ndi_clock.time(pcm.len() / 4);
-                            let _ = l.audio.send(Pcm {
-                                at,
-                                at_ms: epoch_ms(at),
-                                data: axum::body::Bytes::from(pcm),
-                            });
-                        }
+                    // To the people listening to it, the goniometer.
+                    let pcm = ndi_pcm(&a);
+                    if !pcm.is_empty() {
+                        let at = ndi_clock.time(pcm.len() / 4);
+                        l.sound(at, axum::body::Bytes::from(pcm));
                     }
                     let levels: Vec<_> = (0..a.channels)
                         .map(|c| strata_mv_core::signal::Level::of(a.channel(c).iter().copied()))
@@ -3016,6 +3131,8 @@ mod tests {
             facts: Arc::new(Mutex::new(crate::probe::Facts::default())),
             video: Mutex::new(None),
             scopes: Mutex::new(VecDeque::new()),
+            heard: Mutex::new(VecDeque::new()),
+            phase: Mutex::new(None),
             frames: tokio::sync::watch::channel((0, 0)).0,
             jpegs: Mutex::new(VecDeque::new()),
             recent: Mutex::new(VecDeque::new()),

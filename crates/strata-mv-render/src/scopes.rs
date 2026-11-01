@@ -9,7 +9,8 @@
 //! `cie_point`, `panels`), so the trace sits on the graticule laid out there.
 
 use strata_mv_core::wid::scope::{
-    cie_point, false_colors, level_y, panels, pq_nits, vector_point, ycbcr, ScopeKind, Transfer,
+    cie_point, false_colors, gonio_point, level_y, panels, pq_nits, vector_point, ycbcr, ScopeKind,
+    Transfer,
 };
 use tiny_skia::Pixmap;
 
@@ -169,6 +170,42 @@ const GREEN: [f32; 3] = [0.32, 1.0, 0.45];
 const BLUE: [f32; 3] = [0.35, 0.6, 1.0];
 const WHITE: [f32; 3] = [0.92, 0.94, 1.0];
 
+/// The goniometer of interleaved stereo samples (16-bit): each sample pair
+/// a dot, brighter where they gather, in the trace colour; scaled up when
+/// quiet.
+pub fn goniometer(samples: &[i16], r: &ScopeRequest) -> Option<Pixmap> {
+    let r = r.clone().bounded();
+    let (w, h) = (r.w as usize, r.h as usize);
+    let a = [0.0, 0.0, w as f32, h as f32];
+    let mut acc = Acc::new(w, h);
+    let pairs = samples.len() / 2;
+    // Automatic gain, as goniometers do: the loudest sample near the edge,
+    // a quiet sound still shows its shape (up to 24 dB more).
+    let peak = samples.iter().map(|v| v.unsigned_abs()).max().unwrap_or(0) as f32 / 32768.0;
+    let boost = if peak > 0.0 {
+        (0.9 / peak).clamp(1.0, 16.0)
+    } else {
+        1.0
+    };
+    for i in 0..pairs {
+        let (l, rr) = (
+            samples[2 * i] as f32 / 32768.0 * boost,
+            samples[2 * i + 1] as f32 / 32768.0 * boost,
+        );
+        let p = gonio_point(l, rr, a);
+        for (dx, dy, wt) in SPLAT {
+            acc.add(p[0] + dx as f32, p[1] + dy as f32, 0, wt);
+        }
+    }
+    let gain = r.intensity as f32 / 100.0;
+    let k = gain * 25.0 * (w * h) as f32 / (pairs.max(1) as f32 * 100.0);
+    let one = r.color.map(|c| c as f32 / 255.0);
+    picture(w, h, |i| {
+        let g = glow(acc.n[i][0], k);
+        one.map(|c| c * g)
+    })
+}
+
 /// The trace of `pic`: an opaque picture `w` × `h` (false colour: the
 /// picture's shape fitted in it), black where nothing is.
 pub fn trace(pic: &Pixmap, r: &ScopeRequest) -> Option<Pixmap> {
@@ -318,6 +355,8 @@ pub fn trace(pic: &Pixmap, r: &ScopeRequest) -> Option<Pixmap> {
                 o
             })
         }
+        // Of the sound (`goniometer`), not of a picture.
+        ScopeKind::Goniometer => None,
         ScopeKind::FalseColor => {
             let (pw, ph) = (pic.width() as f32, pic.height() as f32);
             if pw < 1.0 || ph < 1.0 {
@@ -436,6 +475,22 @@ mod tests {
         assert_eq!((t.width(), t.height()), (177, 100));
         let d = t.data();
         assert_eq!(&d[0..3], &rgb_of("#ff2a2a")[..]);
+    }
+
+    #[test]
+    fn mono_is_a_vertical_line_on_the_goniometer() {
+        let mut r = req(ScopeKind::Goniometer);
+        r.w = 100;
+        r.h = 100;
+        let s: Vec<i16> = (0..4800)
+            .flat_map(|i| {
+                let v = ((i as f32 * 0.05).sin() * 20000.0) as i16;
+                [v, v]
+            })
+            .collect();
+        let t = goniometer(&s, &r).unwrap();
+        assert!(lit(&t, 50, 20));
+        assert!(!lit(&t, 20, 50));
     }
 
     #[test]
