@@ -64,6 +64,12 @@ pub fn router() -> Router<Shared> {
         .route("/api/inputs/{id}/analysis", get(crate::inputs::analysis))
         .route("/api/inputs/{id}/backup", put(crate::inputs::switch_backup))
         .route("/api/loudness/report", get(crate::loudlog::get_report))
+        .route("/api/incidents", get(crate::incidents::list))
+        .route(
+            "/api/incidents/{id}",
+            axum::routing::delete(crate::incidents::delete),
+        )
+        .route("/api/incidents/{id}/{n}", get(crate::incidents::picture))
         .route("/api/users", get(list_users).post(create_user))
         .route("/api/users/{id}", put(update_user).delete(delete_user))
         .route("/api/keys", get(list_keys).post(create_key))

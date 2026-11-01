@@ -1214,6 +1214,7 @@ pub async fn broadcast(s: crate::state::Shared) {
             };
             let watched = s.inputs.watched(&fps);
             let events = signals.evaluate(&watched, &plant);
+            s.incidents.raised(&events);
             s.alarms.dispatch(events);
         }
         // The journal saved now and then.

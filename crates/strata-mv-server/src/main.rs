@@ -11,6 +11,7 @@ mod firewall;
 mod hardware;
 mod health;
 mod iconlib;
+mod incidents;
 mod inputs;
 mod library;
 mod locks;
@@ -435,6 +436,8 @@ pub async fn serve(
     let perf = Arc::new(perf::Perf::default());
     perf::spawn_sampler(perf.clone(), inputs.clone());
     loudlog::spawn(data_dir.clone(), inputs.clone());
+    let incidents = incidents::Incidents::new(&data_dir);
+    incidents.spawn(inputs.clone());
     // Tally and UMD from the switchers, kept across engine restarts.
     let tally = tally::Tally::load(&data_dir, inputs.clone());
     tally.start();
@@ -562,6 +565,7 @@ pub async fn serve(
             inputs: inputs.clone(),
             tally: tally.clone(),
             alarms: alarms.clone(),
+            incidents: incidents.clone(),
             perf: perf.clone(),
             config,
             bind,

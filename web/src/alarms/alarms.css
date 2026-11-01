@@ -274,3 +274,87 @@
   stroke-width: 1;
   vector-effect: non-scaling-stroke;
 }
+.inc-thumb {
+  position: relative;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: #000;
+  cursor: pointer;
+  display: inline-flex;
+  vertical-align: middle;
+  margin-right: 8px;
+}
+.inc-thumb img {
+  width: 64px;
+  height: 36px;
+  object-fit: cover;
+  border-radius: 3px;
+  display: block;
+}
+.inc-thumb svg {
+  position: absolute;
+  right: 2px;
+  bottom: 2px;
+  color: #fff;
+  filter: drop-shadow(0 0 2px #000);
+}
+.inc-modal {
+  position: fixed;
+  inset: 0;
+  background: #000a;
+  display: grid;
+  place-items: center;
+  z-index: 100;
+}
+.inc-box {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 14px;
+  width: min(900px, 94vw);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.inc-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.inc-head .muted {
+  flex: 1;
+}
+.inc-pic {
+  position: relative;
+  background: #000;
+  border-radius: 8px;
+  overflow: hidden;
+}
+.inc-pic img {
+  width: 100%;
+  display: block;
+  aspect-ratio: 16 / 9;
+  object-fit: contain;
+}
+.inc-time {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  font-family: var(--mono);
+  background: #000b;
+  color: #fff;
+  padding: 2px 8px;
+  border-radius: 6px;
+}
+.inc-time.after {
+  color: #fbbf24;
+}
+.inc-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.inc-bar input[type='range'] {
+  flex: 1;
+}

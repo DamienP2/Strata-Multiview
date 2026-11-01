@@ -313,6 +313,8 @@ pub struct AppState {
     pub tally: Arc<crate::tally::Tally>,
     /// The alarm settings, journal and actions (kept across engine restarts).
     pub alarms: Arc<crate::alarms::Alarms>,
+    /// The pictures of the inputs around their faults.
+    pub incidents: Arc<crate::incidents::Incidents>,
     /// Load of the machine, the channels, outputs and inputs (kept across engine restarts).
     pub perf: Arc<crate::perf::Perf>,
     /// Settings this engine cycle was started with.

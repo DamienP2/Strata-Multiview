@@ -28,6 +28,7 @@ import {
 import { useEffect, useMemo, useState } from 'react';
 import { useAlarmSound } from '../engine/alarmSound';
 import { LoudnessReport } from './LoudnessReport';
+import { incidentOf, Player, Thumb, useIncidents, type Incident } from './Incidents';
 import { alarmText, useInputs, useSystem, type AlarmKind, type JournalEntry, type Severity } from '../engine/liveInputs';
 import { t } from '../i18n';
 import { NavItem, NavSection, PageHead, SidePage } from '../pages/SidePage';
@@ -447,8 +448,11 @@ function JournalView({ journal }: { journal: JournalEntry[] }) {
   const kinds = [...INPUT_ALARMS, ...SYSTEM_ALARMS];
   const list = journal.filter((e) => (!period || now - e.at <= period) && (!kind || e.kind === kind) && (!sev || e.severity === sev) && (!text || e.input.toLowerCase().includes(text.toLowerCase())));
   const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const incidents = useIncidents();
+  const [playing, setPlaying] = useState<Incident | null>(null);
   return (
     <>
+      {playing && <Player inc={playing} onClose={() => setPlaying(null)} />}
       <PageHead title={t('Journal of the alarms')} sub={t('The last thousand faults, kept when the server restarts.')}>
         <a className="btn" href={`/api/alarms/journal.csv?tz=${encodeURIComponent(tz)}`} download>
           <Download size={14} /> {t('Export (CSV)')}
@@ -494,7 +498,13 @@ function JournalView({ journal }: { journal: JournalEntry[] }) {
             <tr key={`${e.inputId}-${e.kind}-${e.at}`} className={e.ended == null ? 'al-open' : ''}>
               <td className="mono">{when(e.at)}</td>
               <td className="mono">{e.ended == null ? <span className="al-on">{t('on now')}</span> : duration(e.ended - e.at)}</td>
-              <td>{e.input || '—'}</td>
+              <td>
+                {(() => {
+                  const inc = incidentOf(incidents, e);
+                  return inc && <Thumb inc={inc} onOpen={() => setPlaying(inc)} />;
+                })()}
+                {e.input || '—'}
+              </td>
               <td>{kindName(e.kind)}</td>
               <td>
                 <Sev s={e.severity} />

@@ -35,4 +35,7 @@ export const ops: Record<string, string> = {
   'Short-term loudness, minute by minute': 'Loudness court terme, minute par minute',
   'line: mean of the minute; light: its highest; band: target ±1 LU': 'trait : moyenne de la minute ; clair : son maximum ; bande : cible ±1 LU',
   'Last 6 hours': '6 dernières heures',
+  'Play the pictures around the fault': 'Revoir les images autour de l’alarme',
+  'The fault': 'L’alarme',
+  'Still recording: the following pictures come in.': 'Enregistrement en cours : les images suivantes arrivent.',
 };
