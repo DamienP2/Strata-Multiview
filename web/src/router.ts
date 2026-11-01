@@ -7,6 +7,7 @@ export type Route =
   | { page: 'inputs' }
   | { page: 'tally' }
   | { page: 'alarms' }
+  | { page: 'salvos' }
   | { page: 'hardware' }
   | { page: 'performance' }
   | { page: 'health' }
@@ -35,6 +36,8 @@ export function parseRoute(path = location.pathname): Route {
       return { page: 'tally' };
     case 'alarms':
       return { page: 'alarms' };
+    case 'salvos':
+      return { page: 'salvos' };
     case 'hardware':
       return { page: 'hardware' };
     case 'performance':

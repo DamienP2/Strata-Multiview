@@ -26,6 +26,7 @@ mod perf;
 mod prefs;
 mod probe;
 mod rt;
+mod salvos;
 mod security;
 mod service;
 mod signals;
@@ -437,6 +438,7 @@ pub async fn serve(
     perf::spawn_sampler(perf.clone(), inputs.clone());
     loudlog::spawn(data_dir.clone(), inputs.clone());
     let incidents = incidents::Incidents::new(&data_dir);
+    let salvos = salvos::Salvos::load(&data_dir);
     incidents.spawn(inputs.clone());
     // Tally and UMD from the switchers, kept across engine restarts.
     let tally = tally::Tally::load(&data_dir, inputs.clone());
@@ -566,6 +568,7 @@ pub async fn serve(
             tally: tally.clone(),
             alarms: alarms.clone(),
             incidents: incidents.clone(),
+            salvos: salvos.clone(),
             perf: perf.clone(),
             config,
             bind,
@@ -614,6 +617,7 @@ pub async fn serve(
         tracing::info!("listening on http://{bind} — projects: /projects, outputs: /outputs, settings: /settings, HTML5 output: /output/<channel>");
         nmos::spawn_registration(shared.clone());
         ember::spawn(shared.clone());
+        salvos::spawn_schedule(shared.clone());
         let stop = state::until_true(stop_rx.clone());
         let cycle = shared.clone();
         let loopback = local.map(|l| {

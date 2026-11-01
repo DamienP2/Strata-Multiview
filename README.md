@@ -386,6 +386,18 @@ Les entrées **SRT, UDP et TCP** passent par un relais : un premier ffmpeg reço
 
 ---
 
+### 8.5 Salvos
+
+**Diffusion › Salvos** : plusieurs actions d'un coup — le multiview de chaque chaîne (ou son carton), le générateur de test allumé ou éteint, le secours d'une entrée, l'acquittement de toutes les alarmes. Un salvo se lance :
+- d'un gros bouton de la page ;
+- d'une **touche** du clavier (F1, 1, Ctrl+Maj+A…) tant que la page est affichée ;
+- d'une **adresse**, pour un Stream Deck (Bitfocus Companion, action « HTTP GET ») ou un automate : `GET` ou `POST /api/salvos/{id}/run?key=smv_…` (clé d'API d'un opérateur) ;
+- à **heure fixe**, certains jours ou tous les jours, dans le fuseau horaire du serveur.
+
+Réglages dans `<données>/salvos.json` ; chaque lancement est au journal d'audit.
+
+---
+
 ## 9. Système
 
 - **Performances** : processeurs, mémoire, part de Strata et de ffmpeg, avertissements (rendu en retard, images perdues, entrée en défaut, horloge) ; par chaîne la cadence réelle et le temps de rendu ; par sortie ou entrée les images par seconde et les pertes ; la capacité restante de la machine.

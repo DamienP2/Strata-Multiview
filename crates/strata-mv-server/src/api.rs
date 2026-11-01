@@ -66,6 +66,14 @@ pub fn router() -> Router<Shared> {
         .route("/api/loudness/report", get(crate::loudlog::get_report))
         .route("/api/incidents", get(crate::incidents::list))
         .route(
+            "/api/salvos",
+            get(crate::salvos::get_list).put(crate::salvos::put_list),
+        )
+        .route(
+            "/api/salvos/{id}/run",
+            get(crate::salvos::post_run).post(crate::salvos::post_run),
+        )
+        .route(
             "/api/incidents/{id}",
             axum::routing::delete(crate::incidents::delete),
         )
@@ -461,7 +469,12 @@ pub async fn audit_layer(
     let path = req.uri().path().to_string();
     // The return from single sign-on is a GET, but a sign-in all the same.
     let sso = path == "/api/auth/oidc/callback";
+    // A Stream Deck runs a salvo with a GET: audited all the same.
+    let salvo = method == axum::http::Method::GET
+        && path.starts_with("/api/salvos/")
+        && path.ends_with("/run");
     let changes = sso
+        || salvo
         || (matches!(method.as_str(), "POST" | "PUT" | "PATCH" | "DELETE")
             && (path.starts_with("/api/") || path.starts_with("/x-nmos/")));
     // Reading, and the live pages' own chatter: not audited.

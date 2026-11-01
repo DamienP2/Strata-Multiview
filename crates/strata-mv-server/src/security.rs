@@ -753,6 +753,8 @@ pub fn action_of(method: &str, path: &str) -> String {
         _ if p.starts_with("/api/users") => "Utilisateurs",
         _ if p.starts_with("/api/keys") => "Clés d’API",
         _ if p.starts_with("/api/alarms/ack") => "Alarme acquittée",
+        _ if p.starts_with("/api/salvos") && p.ends_with("/run") => "Salvo lancé",
+        _ if p.starts_with("/api/salvos") => "Salvos",
         _ if p.starts_with("/api/alarms") => "Réglages des alarmes",
         _ if p.starts_with("/api/tally") => "Tally",
         _ if has("generator") => "Générateur de test",

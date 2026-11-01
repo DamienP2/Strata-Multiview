@@ -315,6 +315,8 @@ pub struct AppState {
     pub alarms: Arc<crate::alarms::Alarms>,
     /// The pictures of the inputs around their faults.
     pub incidents: Arc<crate::incidents::Incidents>,
+    /// Several actions at once.
+    pub salvos: Arc<crate::salvos::Salvos>,
     /// Load of the machine, the channels, outputs and inputs (kept across engine restarts).
     pub perf: Arc<crate::perf::Perf>,
     /// Settings this engine cycle was started with.

@@ -1,4 +1,4 @@
-import { ArrowRightToLine, BellRing, Braces, Cable, CircuitBoard, FolderOpen, Gauge, HeartPulse, Library as LibraryIcon, MonitorPlay, Radio, Server, Settings as SettingsIcon, TriangleAlert, Users as UsersIcon } from 'lucide-react';
+import { ArrowRightToLine, BellRing, Zap, Braces, Cable, CircuitBoard, FolderOpen, Gauge, HeartPulse, Library as LibraryIcon, MonitorPlay, Radio, Server, Settings as SettingsIcon, TriangleAlert, Users as UsersIcon } from 'lucide-react';
 import { needsLook, useHealth, useHealthStore } from './perf/health';
 import { Brand } from './ui/Brand';
 import { DialogHost } from './ui/dialogs';
@@ -39,6 +39,7 @@ const ApiPage = lazy(() => import('./pages/ApiPage').then((m) => ({ default: m.A
 const MediaLibrary = lazy(() => import('./pages/Media').then((m) => ({ default: m.MediaLibrary })));
 const TallyPage = lazy(() => import('./tally/TallyPage').then((m) => ({ default: m.TallyPage })));
 const AlarmsPage = lazy(() => import('./alarms/AlarmsPage').then((m) => ({ default: m.AlarmsPage })));
+const SalvosPage = lazy(() => import('./salvos/Salvos').then((m) => ({ default: m.SalvosPage })));
 const Outputs = lazy(() => import('./outputs/Outputs').then((m) => ({ default: m.Outputs })));
 const Performance = lazy(() => import('./perf/Performance').then((m) => ({ default: m.Performance })));
 const Health = lazy(() => import('./perf/Health').then((m) => ({ default: m.Health })));
@@ -127,7 +128,7 @@ function Toasts({ quiet }: { quiet: boolean }) {
 }
 
 /** Projects, users and server settings. A project opens in its own browser tab. */
-function Home({ route }: { route: Extract<Route, { page: 'projects' | 'media' | 'outputs' | 'inputs' | 'tally' | 'alarms' | 'hardware' | 'performance' | 'health' | 'users' | 'api' | 'settings' }> }) {
+function Home({ route }: { route: Extract<Route, { page: 'projects' | 'media' | 'outputs' | 'inputs' | 'tally' | 'alarms' | 'salvos' | 'hardware' | 'performance' | 'health' | 'users' | 'api' | 'settings' }> }) {
   const user = useApp((s) => s.auth?.user);
   useEffect(() => {
     document.title = 'Strata Multiview';
@@ -143,6 +144,7 @@ function Home({ route }: { route: Extract<Route, { page: 'projects' | 'media' | 
   const broadcast = [
     ...(admin ? [entry('outputs', '/outputs', <MonitorPlay size={14} />, t('Output streams')), entry('inputs', '/inputs', <ArrowRightToLine size={14} />, t('Video inputs')), entry('tally', '/tally', <Cable size={14} />, t('Tally & UMD'))] : []),
     entry('alarms', '/alarms', <BellRing size={14} />, t('Alarms')),
+    entry('salvos', '/salvos', <Zap size={14} />, t('Salvos')),
   ];
   const system = [
     ...(admin ? [entry('hardware', '/hardware', <CircuitBoard size={14} />, t('Hardware')), entry('performance', '/performance', <Gauge size={14} />, t('Performance')), entry('health', '/health', <HeartPulse size={14} />, t('Health'))] : []),
@@ -171,6 +173,7 @@ function Home({ route }: { route: Extract<Route, { page: 'projects' | 'media' | 
           {(route.page === 'outputs' || route.page === 'inputs') && <Outputs mode={route.page} />}
           {route.page === 'tally' && <TallyPage />}
           {route.page === 'alarms' && <AlarmsPage />}
+          {route.page === 'salvos' && <SalvosPage />}
           {route.page === 'hardware' && <Hardware />}
           {route.page === 'performance' && <Performance />}
           {route.page === 'health' && <Health />}

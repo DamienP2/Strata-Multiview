@@ -1,0 +1,113 @@
+.salvos-page {
+  padding: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.salvo-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px;
+}
+.salvo-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  text-align: left;
+  padding: 14px;
+  min-height: 120px;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--c) 60%, transparent);
+  background: color-mix(in srgb, var(--c) 18%, var(--panel));
+  color: var(--text);
+  cursor: pointer;
+  transition: transform 0.08s, background 0.2s;
+}
+.salvo-btn:hover {
+  background: color-mix(in srgb, var(--c) 28%, var(--panel));
+}
+.salvo-btn:active,
+.salvo-btn.ran {
+  transform: scale(0.97);
+  background: color-mix(in srgb, var(--c) 55%, var(--panel));
+}
+.salvo-btn svg {
+  color: var(--c);
+}
+.salvo-btn b {
+  font-size: 16px;
+}
+.salvo-btn span {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.salvo-btn kbd {
+  font-family: var(--mono);
+  font-size: 11px;
+  padding: 1px 6px;
+  border-radius: 5px;
+  background: #0006;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+.salvo-btn small {
+  color: var(--text-3);
+  font-size: 11.5px;
+  line-height: 1.4;
+}
+.salvo-sub {
+  margin: 14px 0 6px;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-3);
+}
+.salvo-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 6px;
+}
+.salvo-colors {
+  display: flex;
+  gap: 6px;
+}
+.salvo-colors button {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+}
+.salvo-colors button.on {
+  border-color: var(--text);
+}
+.salvo-days {
+  display: flex;
+  gap: 2px;
+}
+.salvo-days button {
+  padding: 3px 7px;
+  border-radius: 5px;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--text-3);
+  cursor: pointer;
+  font-size: 12px;
+}
+.salvo-days button.on {
+  background: var(--accent-soft);
+  color: var(--accent);
+  border-color: var(--accent);
+}
+.salvo-hint {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
