@@ -160,6 +160,8 @@ pub enum AlarmKind {
     NoColorInfo,
     /// The input lost its signal: its tiles show its backup.
     OnBackup,
+    /// SRT packets lost for good (not recovered in time).
+    SrtDrops,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord, Serialize, Deserialize)]
@@ -170,7 +172,7 @@ pub enum Severity {
 }
 
 /// The faults of an input, in the order of the settings.
-pub const INPUT_ALARMS: [AlarmKind; 22] = [
+pub const INPUT_ALARMS: [AlarmKind; 23] = [
     AlarmKind::Loss,
     AlarmKind::OnBackup,
     AlarmKind::Black,
@@ -193,6 +195,7 @@ pub const INPUT_ALARMS: [AlarmKind; 22] = [
     AlarmKind::NoColorInfo,
     AlarmKind::TsPriority1,
     AlarmKind::TsPriority2,
+    AlarmKind::SrtDrops,
 ];
 
 /// The faults of the plant.
@@ -239,6 +242,7 @@ impl AlarmKind {
             AlarmKind::Fps => ("CADENCE ANORMALE", "ABNORMAL FRAME RATE"),
             AlarmKind::Reconnecting => ("RECONNEXIONS", "RECONNECTING"),
             AlarmKind::OnBackup => ("SUR SECOURS", "ON BACKUP"),
+            AlarmKind::SrtDrops => ("SRT : PAQUETS PERDUS", "SRT PACKETS LOST"),
             AlarmKind::NoTimecode => ("SANS TIMECODE", "NO TIMECODE"),
             AlarmKind::NoCaptions => ("SANS SOUS-TITRES", "NO CAPTIONS"),
             AlarmKind::TsPriority1 => ("TR 101 290 P1", "TR 101 290 P1"),

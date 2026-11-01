@@ -9,7 +9,8 @@ import { t } from '../i18n';
 import { AMBER, Items, path, RED, rect, text, type Item } from './broadcast';
 import { ColorPick, defineWidget, Flags, Num, Section, Select, Text, withDefaults } from './kit';
 
-export type ChartMetric = 'ptpOffset' | 'ntpOffset' | 'cpu' | 'memory' | 'serverCpu' | 'ffmpegCpu' | 'renderTime' | 'inputFps' | 'loudness';
+export type ChartMetric = 'ptpOffset' | 'ntpOffset' | 'cpu' | 'memory' | 'serverCpu' | 'ffmpegCpu' | 'renderTime' | 'inputFps' | 'loudness' | 'srtRtt' | 'srtLoss';
+const WITH_INPUT: ChartMetric[] = ['inputFps', 'loudness', 'srtRtt', 'srtLoss'];
 
 export interface ChartConfig {
   metric?: ChartMetric;
@@ -58,6 +59,10 @@ function keyOf(c: C, curves: Curves | undefined): string | null {
     }
     case 'inputFps':
       return `fps:${c.input.trim()}`;
+    case 'srtRtt':
+      return `srtRtt:${c.input.trim()}`;
+    case 'srtLoss':
+      return `srtLoss:${c.input.trim()}`;
     default:
       return null;
   }
@@ -72,6 +77,8 @@ const NAMES: Record<ChartMetric, [string, string]> = {
   ffmpegCpu: ['Décodeurs (ffmpeg)', 'Decoders (ffmpeg)'],
   renderTime: ['Temps de rendu', 'Render time'],
   inputFps: ['Images par seconde', 'Pictures a second'],
+  srtRtt: ['RTT SRT', 'SRT RTT'],
+  srtLoss: ['Pertes SRT', 'SRT loss'],
   loudness: ['Loudness court terme', 'Short-term loudness'],
 };
 
@@ -87,6 +94,8 @@ export function valueText(m: ChartMetric, v: number): string {
   if (PERCENT.includes(m)) return minus(`${v.toFixed(0)} %`);
   if (m === 'renderTime') return minus(`${v.toFixed(1)} ms`);
   if (m === 'inputFps') return minus(`${v.toFixed(1)} fps`);
+  if (m === 'srtRtt') return minus(`${v.toFixed(1)} ms`);
+  if (m === 'srtLoss') return minus(`${v.toFixed(1)} %`);
   return minus(`${v.toFixed(1)} LUFS`);
 }
 
@@ -111,6 +120,8 @@ function scale(c: C, vals: (number | null)[]): [number, number] {
   }
   if (c.metric === 'renderTime') return [0, known.length ? Math.max(hi * 1.25, 10) : 40];
   if (c.metric === 'inputFps') return known.length ? [Math.floor(Math.max(lo - 2, 0)), Math.ceil(hi + 2)] : [0, 60];
+  if (c.metric === 'srtRtt') return [0, known.length ? Math.max(hi * 1.25, 10) : 50];
+  if (c.metric === 'srtLoss') return [0, known.length ? Math.max(hi * 1.25, 1) : 5];
   return known.length ? [Math.floor(Math.min(lo - 3, -30)), Math.ceil(Math.max(hi + 3, -15))] : [-40, -10];
 }
 
@@ -133,7 +144,7 @@ export function chart(cfg: ChartConfig, w: number, h: number, curves: Curves | u
   let title = c.title.trim();
   if (!title) {
     title = NAMES[c.metric][fr ? 0 : 1];
-    if ((c.metric === 'inputFps' || c.metric === 'loudness') && sourceName) title = `${title} · ${sourceName}`;
+    if (WITH_INPUT.includes(c.metric) && sourceName) title = `${title} · ${sourceName}`;
   }
   const vw = (w - 2 * pad) * 0.42;
   out.push(text([pad, pad, w - 2 * pad - vw, head], title, fs, 600, false, WHITE, 'left'));
@@ -207,6 +218,8 @@ const METRICS: [ChartMetric, string][] = [
   ['renderTime', 'Render time'],
   ['inputFps', 'Pictures a second of an input'],
   ['loudness', 'Short-term loudness of an input'],
+  ['srtRtt', 'SRT round trip time of an input'],
+  ['srtLoss', 'SRT packets lost by an input (%)'],
 ];
 
 export const chartWidget = defineWidget({
@@ -222,8 +235,8 @@ export const chartWidget = defineWidget({
   Inspector: ({ layer, set }) => {
     const c = withDefaults(D_CHART, layer as ChartConfig) as C;
     const inputs = useInputs();
-    const withInput = c.metric === 'inputFps' || c.metric === 'loudness';
-    const unit = c.metric === 'ptpOffset' ? ' ns' : c.metric === 'ntpOffset' || c.metric === 'renderTime' ? ' ms' : PERCENT.includes(c.metric) ? ' %' : '';
+    const withInput = WITH_INPUT.includes(c.metric);
+    const unit = c.metric === 'ptpOffset' ? ' ns' : c.metric === 'ntpOffset' || c.metric === 'renderTime' || c.metric === 'srtRtt' ? ' ms' : PERCENT.includes(c.metric) || c.metric === 'srtLoss' ? ' %' : '';
     return (
       <Section id="chart" title={t('Chart')}>
         <Select label={t('Measure')} value={c.metric} onChange={(v) => set('metric', v)} options={METRICS.map(([k, l]) => [k, t(l)] as [ChartMetric, string])} />

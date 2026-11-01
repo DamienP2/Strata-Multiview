@@ -21,6 +21,25 @@ export interface InputInfo {
   /** Pictures a second (fields when interlaced). */
   fps?: number;
   interlaced?: boolean;
+  /** SRT received by libsrt: its statistics (crates/strata-mv-server/src/srt.rs). */
+  srt?: SrtStats;
+}
+
+export interface SrtStats {
+  connected: boolean;
+  peer: string;
+  rttMs: number;
+  rateMbps: number;
+  received: number;
+  lost: number;
+  retransmitted: number;
+  dropped: number;
+  lostPerS: number;
+  droppedPerS: number;
+  lossPct10s: number;
+  dropped10s: number;
+  bufferMs: number;
+  latencyMs: number;
 }
 
 /** Server messages, in the interface language. */
@@ -484,6 +503,7 @@ export type AlarmKind =
   | 'fps'
   | 'reconnecting'
   | 'onBackup'
+  | 'srtDrops'
   | 'noTimecode'
   | 'noCaptions'
   | 'tsPriority1'
@@ -716,6 +736,7 @@ export function alarmText(kind: AlarmKind, lang = 'fr'): string {
     fps: ['CADENCE ANORMALE', 'ABNORMAL FRAME RATE'],
     reconnecting: ['RECONNEXIONS', 'RECONNECTING'],
     onBackup: ['SUR SECOURS', 'ON BACKUP'],
+    srtDrops: ['SRT : PAQUETS PERDUS', 'SRT PACKETS LOST'],
     noTimecode: ['SANS TIMECODE', 'NO TIMECODE'],
     noCaptions: ['SANS SOUS-TITRES', 'NO CAPTIONS'],
     tsPriority1: ['TR 101 290 P1', 'TR 101 290 P1'],

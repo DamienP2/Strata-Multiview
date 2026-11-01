@@ -67,6 +67,7 @@ ldap3 = { version = "0.12", default-features = false, features = ["tls-rustls-ri
 [target.'cfg(unix)'.dependencies]
 # Thread priorities of the playout (src/rt.rs).
 libc = "0.2"
+libloading = "0.8"
 
 [target.'cfg(windows)'.dependencies]
 windows-service = "0.8"

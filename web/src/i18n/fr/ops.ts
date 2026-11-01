@@ -106,4 +106,15 @@ export const ops: Record<string, string> = {
     'Rebouclez une sortie de cette chaîne sur une entrée (via la grille, l’encodeur, le réseau…) : chaque flash est chronométré de son départ à sa réception par l’entrée, décodage compris.',
   'average {avg} ms · {min}–{max} ms · {n} flashes': 'moyenne {avg} ms · {min}–{max} ms · {n} flashs',
   'No input receives the flash back yet.': 'Aucune entrée ne reçoit encore le flash.',
+  'Packets lost on the way, most of them sent again in time (over 10 s).': 'Paquets perdus en route, presque tous renvoyés à temps (sur 10 s).',
+  Lost: 'Pertes',
+  'Packets that came too late: missing from the picture (over 10 s; since connected: {n}).': 'Paquets arrivés trop tard : absents de l’image (sur 10 s ; depuis la connexion : {n}).',
+  Dropped: 'Perdus',
+  'What the receiver holds, of its latency.': 'Ce que contient le récepteur, sur sa latence.',
+  Sender: 'Émetteur',
+  'SRT packets lost': 'Paquets SRT perdus',
+  'SRT packets that came too late to be sent again (missing from the picture) in 10 s, at least the threshold. Raise the input’s latency.':
+    'Paquets SRT arrivés trop tard pour être renvoyés (absents de l’image) en 10 s, au moins le seuil. Augmentez la latence de l’entrée.',
+  'SRT round trip time of an input': 'RTT SRT d’une entrée',
+  'SRT packets lost by an input (%)': 'Paquets SRT perdus par une entrée (%)',
 };

@@ -431,6 +431,9 @@ pub struct InputStatus {
     /// The source is interlaced (its fields come as pictures of their own).
     #[serde(skip_serializing_if = "std::ops::Not::not")]
     pub interlaced: bool,
+    /// SRT received by libsrt: its statistics.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub srt: Option<crate::srt::Stats>,
 }
 
 /// Pictures waiting for their time, and the one on show.
@@ -489,6 +492,8 @@ struct Live {
     no_levels: AtomicBool,
     /// The ffmpeg receiving a relayed stream.
     relay: Mutex<Option<Child>>,
+    /// SRT received by libsrt: its statistics.
+    srt: Arc<Mutex<crate::srt::Stats>>,
     /// What it carries (`probe`).
     facts: Arc<Mutex<crate::probe::Facts>>,
     /// What its picture and sound are, read from `facts` once a second.
@@ -1151,6 +1156,7 @@ impl Inputs {
                 no_fps_mode: AtomicBool::new(false),
                 no_levels: AtomicBool::new(false),
                 relay: Mutex::new(None),
+                srt: Default::default(),
                 facts: Arc::new(Mutex::new(crate::probe::Facts::default())),
                 video: Mutex::new(None),
                 scopes: Mutex::new(VecDeque::new()),
@@ -1194,6 +1200,10 @@ impl Inputs {
                     frames: l.received.load(Ordering::Relaxed),
                     fps: *l.rate.lock().unwrap_or_else(|p| p.into_inner()),
                     interlaced: l.interlaced.load(Ordering::Relaxed),
+                    srt: {
+                        let s = l.srt.lock().unwrap_or_else(|p| p.into_inner()).clone();
+                        (s.connected || s.received > 0).then_some(s)
+                    },
                 }
             })
             .collect()
@@ -1561,6 +1571,19 @@ impl Inputs {
 }
 
 impl Inputs {
+    /// The SRT statistics of the inputs received by libsrt, connected now.
+    pub fn srt_stats(&self) -> Vec<(String, crate::srt::Stats)> {
+        self.live
+            .read()
+            .unwrap_or_else(|p| p.into_inner())
+            .values()
+            .filter_map(|l| {
+                let s = l.srt.lock().unwrap_or_else(|p| p.into_inner()).clone();
+                s.connected.then(|| (l.config.id.clone(), s))
+            })
+            .collect()
+    }
+
     /// The phase correlation of each input heard now (none when silent).
     pub fn correlations(&self) -> Vec<(String, f32)> {
         let list: Vec<Arc<Live>> = self
@@ -1627,6 +1650,10 @@ impl Inputs {
                     ts,
                     video: l.video(),
                     on_backup: false,
+                    srt_dropped: {
+                        let s = l.srt.lock().unwrap_or_else(|p| p.into_inner());
+                        s.connected.then_some(s.dropped_10s)
+                    },
                 }
             })
             .collect();
@@ -2526,9 +2553,20 @@ fn run_stream(l: &Live) {
         pull.levels = info && !l.no_levels.load(Ordering::Relaxed);
         let args = c.ffmpeg_args_from(&pull, audio, info).unwrap_or_default();
         let log = Arc::new(Mutex::new(String::new()));
+        // SRT received by libsrt itself (its statistics), when it is there.
+        let native = args
+            .relay
+            .as_ref()
+            .filter(|_| crate::srt::available())
+            .and_then(|ra| {
+                ra.iter()
+                    .position(|a| a == "-i")
+                    .and_then(|i| ra.get(i + 1))
+            })
+            .and_then(|u| crate::srt::parse(u));
         // The relay first: the decoder reads what it writes.
         let mut relay = None;
-        if let Some(ra) = &args.relay {
+        if let (Some(ra), None) = (&args.relay, &native) {
             match strata_mv_output::ffmpeg::command()
                 .args(ra)
                 .stdin(Stdio::null())
@@ -2558,7 +2596,7 @@ fn run_stream(l: &Live) {
         }
         let spawned = strata_mv_output::ffmpeg::command()
             .args(&args.decode)
-            .stdin(if relay.is_some() {
+            .stdin(if relay.is_some() || native.is_some() {
                 Stdio::piped()
             } else {
                 Stdio::null()
@@ -2585,11 +2623,14 @@ fn run_stream(l: &Live) {
         } else {
             "Connecting…"
         });
-        l.facts().reset(relay.is_some());
+        l.facts().reset(relay.is_some() || native.is_some());
         *l.media.lock().unwrap_or_else(|p| p.into_inner()) = MediaClock::default();
         let mut out = child.stdout.take();
         let into_decoder = child.stdin.take();
-        let from_relay = relay.as_mut().and_then(|r| r.stdout.take());
+        let from_relay: Option<Box<dyn Read + Send>> = relay
+            .as_mut()
+            .and_then(|r| r.stdout.take())
+            .map(|o| Box::new(o) as Box<dyn Read + Send>);
         // The picture ffmpeg sends: told in its log before the first one.
         let (format_tx, format_rx) = std::sync::mpsc::channel::<(u32, u32, Option<f64>)>();
         if let Some(err) = child.stderr.take() {
@@ -2666,6 +2707,16 @@ fn run_stream(l: &Live) {
                 scope.spawn(move || read_pcm(l, listener));
             }
             // The relayed bytes: read, then on to the decoder.
+            let srt_stats = l.srt.clone();
+            let from_relay = from_relay.or_else(|| {
+                let t = native.clone()?;
+                Some(Box::new(SrtSource {
+                    target: t,
+                    stats: srt_stats,
+                    live: l,
+                    open: None,
+                }) as Box<dyn Read + Send + '_>)
+            });
             if let (Some(mut from), Some(mut to)) = (from_relay, into_decoder) {
                 scope.spawn(move || {
                     let mut buf = vec![0u8; 64 * 1024];
@@ -2803,6 +2854,32 @@ fn run_stream(l: &Live) {
         if !l.pause(Duration::from_secs(2)) {
             return;
         }
+    }
+}
+
+/// SRT received by libsrt, opened on the first read (a listener waits for
+/// its sender there, the input stopping ends the wait).
+struct SrtSource<'a> {
+    target: crate::srt::Target,
+    stats: Arc<Mutex<crate::srt::Stats>>,
+    live: &'a Live,
+    open: Option<crate::srt::Receiver>,
+}
+
+impl Read for SrtSource<'_> {
+    fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
+        if self.open.is_none() {
+            match crate::srt::Receiver::open(&self.target, self.stats.clone(), || {
+                self.live.stopped()
+            }) {
+                Ok(r) => self.open = Some(r),
+                Err(e) => {
+                    self.live.say(format!("SRT: {e}"));
+                    return Ok(0);
+                }
+            }
+        }
+        self.open.as_mut().map_or(Ok(0), |r| r.read(buf))
     }
 }
 
@@ -3466,6 +3543,7 @@ mod tests {
             no_fps_mode: AtomicBool::new(false),
             no_levels: AtomicBool::new(false),
             relay: Mutex::new(None),
+            srt: Default::default(),
             facts: Arc::new(Mutex::new(crate::probe::Facts::default())),
             video: Mutex::new(None),
             scopes: Mutex::new(VecDeque::new()),

@@ -142,6 +142,8 @@ pub struct Watched {
     pub video: strata_mv_core::signal::VideoInfo,
     /// Its tiles show its backup.
     pub on_backup: bool,
+    /// SRT packets lost for good in the last 10 s (received by libsrt).
+    pub srt_dropped: Option<i64>,
 }
 
 /// What is known of the plant to look at its faults.
@@ -684,6 +686,11 @@ impl Signals {
                 let rule = |k: AlarmKind| settings.rule(&w.id, k);
                 if w.on_backup {
                     on(AlarmKind::OnBackup, None);
+                }
+                if w.srt_dropped
+                    .is_some_and(|d| d as f32 >= rule(AlarmKind::SrtDrops).threshold.max(1.0))
+                {
+                    on(AlarmKind::SrtDrops, None);
                 }
                 if !w.fresh {
                     // No picture: the other faults of the picture do not count;
@@ -1550,6 +1557,7 @@ mod tests {
             ts: (false, false),
             video: Default::default(),
             on_backup: false,
+            srt_dropped: None,
         }
     }
 

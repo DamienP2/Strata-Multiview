@@ -356,6 +356,8 @@ Les **entrées en direct** : SRT, UDP, RTMP, HLS, RTSP, toute URL lue par ffmpeg
 
 **Audio des entrées** (page Entrées, flux) : **piste audio** mesurée et écoutée (un flux peut porter plusieurs langues) et **ce qu'on écoute** : toute la piste réduite en stéréo, ou une paire de voies telle quelle (1-2, 3-4… d'une piste multicanal). À l'écoute (pages de sortie), **L / L R / R / M** : gauche seule, stéréo, droite seule, mono. Sur la tuile, les vu-mètres peuvent partir d'une autre voie (« À partir de la voie »), pour montrer par exemple les voies 3-4 d'une piste 8 voies.
 
+**Statistiques SRT** : les entrées SRT sont reçues par libsrt elle-même (chargée au démarrage, la bibliothèque qu'utilise ffmpeg ; sans elle, ffmpeg reçoit le SRT, sans statistiques). La page Entrées montre RTT, débit, pertes sur 10 s (paquets renvoyés à temps), paquets perdus pour de bon, tampon du récepteur et émetteur ; l'alarme **SRT : paquets perdus** se lève dès qu'un paquet manque à l'image (seuil par 10 s) ; le widget Graphique trace le RTT et les pertes ; Prometheus a les compteurs (`strata_srt_*`). `STRATA_SRT_NATIVE=0` revient à ffmpeg.
+
 **Entrée de secours** (page Entrées) : une entrée peut en désigner une autre comme secours. Sans image depuis le délai réglé (2 s par défaut) et le secours vivant, ses tuiles montrent l'image, le son et les alarmes du secours, avec son nom et son tally ; l'alarme **Sur secours** se lève. Retour automatique après une image stable pendant le délai de retour (10 s ; 0 : retour à la main). Bascule manuelle depuis la page Entrées ou par `PUT /api/inputs/{id}/backup` (`{"backup": true}`, tenue jusqu'au retour manuel).
 
 ### 8.3 Contenu du signal

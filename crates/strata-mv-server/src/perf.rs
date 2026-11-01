@@ -309,6 +309,8 @@ pub struct Perf {
     sampled: RwLock<Sampled>,
     /// NTP / PTP status.
     pub sync: Arc<crate::sync::Watch>,
+    /// SRT inputs of the last second: (input, RTT ms, loss % over 10 s).
+    srt: Mutex<Vec<(String, f32, f32)>>,
 }
 
 impl Default for Perf {
@@ -321,6 +323,7 @@ impl Default for Perf {
             sys: Mutex::new(System::new()),
             tracks: Default::default(),
             sampled: Default::default(),
+            srt: Default::default(),
         }
     }
 }
@@ -601,6 +604,10 @@ impl Perf {
                 .iter()
                 .map(|(id, r)| (format!("fps:{id}"), Some(r.fps as f32))),
         );
+        for (id, rtt, loss) in lock(&self.srt).iter() {
+            now.push((format!("srtRtt:{id}"), Some(*rtt)));
+            now.push((format!("srtLoss:{id}"), Some(*loss)));
+        }
         let at = std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
             .map_or(0, |d| d.as_millis() as i64);
@@ -634,6 +641,11 @@ pub fn spawn_sampler(perf: Arc<Perf>, inputs: Arc<crate::inputs::Inputs>) {
                 std::thread::sleep(Duration::from_secs(1));
                 let dt = at.elapsed().as_secs_f64();
                 at = Instant::now();
+                *lock(&perf.srt) = inputs
+                    .srt_stats()
+                    .into_iter()
+                    .map(|(id, s)| (id, s.rtt_ms as f32, s.loss_pct_10s as f32))
+                    .collect();
                 perf.sample(dt, inputs.counts());
                 perf.watch();
             }

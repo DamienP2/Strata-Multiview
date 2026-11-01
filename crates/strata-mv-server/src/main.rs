@@ -31,6 +31,7 @@ mod salvos;
 mod security;
 mod service;
 mod signals;
+mod srt;
 mod state;
 mod sync;
 mod tally;

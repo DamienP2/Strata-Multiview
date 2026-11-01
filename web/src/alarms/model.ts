@@ -102,6 +102,7 @@ export const INPUT_ALARMS: AlarmKind[] = [
   'noColorInfo',
   'tsPriority1',
   'tsPriority2',
+  'srtDrops',
 ];
 /** The faults of the plant (mirrors SYSTEM_ALARMS). */
 export const SYSTEM_ALARMS: AlarmKind[] = ['ptpUnlocked', 'ntpUnsynced', 'cpuHigh', 'memoryHigh', 'outputDropped'];
@@ -161,6 +162,8 @@ export function defaultRule(k: AlarmKind): Rule {
       return r(true, 10, 90);
     case 'outputDropped':
       return r(true, 0, 5);
+    case 'srtDrops':
+      return r(true, 0, 1);
     case 'colorSpace':
       return { ...r(true, 5, 0), expect: 'bt709' };
     case 'illegalLevels':
@@ -195,6 +198,7 @@ export function thresholdUnit(k: AlarmKind): string {
     case 'phase':
       return 'corr.';
     case 'outputDropped':
+    case 'srtDrops':
       return '/10 s';
     case 'illegalLevels':
       return '% px';
@@ -230,6 +234,7 @@ export const KIND_INFO: Record<AlarmKind, [string, string]> = {
   noCaptions: ['No closed captions', 'The pictures carry no A/53 closed captions.'],
   tsPriority1: ['TR 101 290 priority 1', 'Transport stream: sync, PAT, continuity, PMT or PID errors.'],
   tsPriority2: ['TR 101 290 priority 2', 'Transport stream: transport, CRC or PCR errors.'],
+  srtDrops: ['SRT packets lost', 'SRT packets that came too late to be sent again (missing from the picture) in 10 s, at least the threshold. Raise the input’s latency.'],
   ptpUnlocked: ['PTP unlocked', 'ptp4l runs but follows no grandmaster.'],
   ntpUnsynced: ['NTP not synchronised', 'The system clock is not synchronised by NTP.'],
   cpuHigh: ['Processors busy', 'The machine’s processors above the threshold (over 10 s).'],

@@ -140,6 +140,8 @@ export interface InputInfo {
   frames: number;
   /** Frames a second of the source (streams: as detected). */
   fps?: number;
+  /** SRT received by libsrt: its statistics. */
+  srt?: import('../engine/liveInputs').SrtStats;
 }
 
 /** What a format shows while no project is loaded: a built-in design (drawn by the server) or its still picture. */

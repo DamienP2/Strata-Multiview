@@ -34,6 +34,10 @@ pub enum ChartMetric {
     InputFps,
     /// The short-term loudness of an input (LUFS).
     Loudness,
+    /// The round trip time of an SRT input (ms).
+    SrtRtt,
+    /// The packets an SRT input lost over the last 10 s (%, most sent again).
+    SrtLoss,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -105,6 +109,8 @@ pub fn key_of(c: &ChartConfig, curves: &Curves) -> Option<String> {
             }
         }
         ChartMetric::InputFps => format!("fps:{}", c.input.trim()),
+        ChartMetric::SrtRtt => format!("srtRtt:{}", c.input.trim()),
+        ChartMetric::SrtLoss => format!("srtLoss:{}", c.input.trim()),
         ChartMetric::Loudness => return None,
     })
 }
@@ -127,6 +133,10 @@ pub fn metric_name(m: ChartMetric, fr: bool) -> &'static str {
         (ChartMetric::RenderTime, false) => "Render time",
         (ChartMetric::InputFps, true) => "Images par seconde",
         (ChartMetric::InputFps, false) => "Pictures a second",
+        (ChartMetric::SrtRtt, true) => "RTT SRT",
+        (ChartMetric::SrtRtt, false) => "SRT RTT",
+        (ChartMetric::SrtLoss, true) => "Pertes SRT",
+        (ChartMetric::SrtLoss, false) => "SRT loss",
         (ChartMetric::Loudness, true) => "Loudness court terme",
         (ChartMetric::Loudness, false) => "Short-term loudness",
     }
@@ -162,6 +172,8 @@ pub fn value_text(m: ChartMetric, v: f32) -> String {
         }
         ChartMetric::RenderTime => format!("{v:.1} ms"),
         ChartMetric::InputFps => format!("{v:.1} fps"),
+        ChartMetric::SrtRtt => format!("{v:.1} ms"),
+        ChartMetric::SrtLoss => format!("{v:.1} %"),
         ChartMetric::Loudness => format!("{v:.1} LUFS"),
     })
 }
@@ -223,6 +235,22 @@ pub fn scale(c: &ChartConfig, vals: &[Option<f32>]) -> (f32, f32) {
                 ((lo - 2.0).max(0.0).floor(), (hi + 2.0).ceil())
             }
         }
+        ChartMetric::SrtRtt => (
+            0.0,
+            if known.is_empty() {
+                50.0
+            } else {
+                (hi * 1.25).max(10.0)
+            },
+        ),
+        ChartMetric::SrtLoss => (
+            0.0,
+            if known.is_empty() {
+                5.0
+            } else {
+                (hi * 1.25).max(1.0)
+            },
+        ),
         ChartMetric::Loudness => {
             if known.is_empty() {
                 (-40.0, -10.0)
@@ -268,7 +296,13 @@ pub fn chart(
     let mut title = c.title.trim().to_string();
     if title.is_empty() {
         title = metric_name(c.metric, fr).to_string();
-        if matches!(c.metric, ChartMetric::InputFps | ChartMetric::Loudness) {
+        if matches!(
+            c.metric,
+            ChartMetric::InputFps
+                | ChartMetric::Loudness
+                | ChartMetric::SrtRtt
+                | ChartMetric::SrtLoss
+        ) {
             if let Some(s) = source.filter(|s| !s.name.is_empty()) {
                 title = format!("{title} · {}", s.name);
             }

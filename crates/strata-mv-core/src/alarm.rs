@@ -96,6 +96,8 @@ pub fn default_rule(k: AlarmKind) -> Rule {
         // Reconnections within a minute.
         AlarmKind::Reconnecting => r(true, 0.0, 3.0),
         AlarmKind::OnBackup => r(true, 0.0, 0.0),
+        // Packets lost for good in 10 s.
+        AlarmKind::SrtDrops => r(true, 0.0, 1.0),
         // dBFS under which a channel is silent.
         AlarmKind::Silence => r(true, 5.0, -60.0),
         AlarmKind::ChannelSilent => r(true, 10.0, -60.0),
@@ -143,7 +145,7 @@ pub fn threshold_unit(k: AlarmKind) -> &'static str {
         AlarmKind::Loud | AlarmKind::Quiet => "LU",
         AlarmKind::Peak => "dBTP",
         AlarmKind::Phase => "corr.",
-        AlarmKind::OutputDropped => "/10 s",
+        AlarmKind::OutputDropped | AlarmKind::SrtDrops => "/10 s",
         AlarmKind::IllegalLevels => "% px",
         _ => "",
     }

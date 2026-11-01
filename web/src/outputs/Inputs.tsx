@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { api } from '../store';
 import { t, tc, tn } from '../i18n';
 import { InfoTip } from '../ui/InfoTip';
-import { inputMessage as messageText, useLiveFrame, useSignal } from '../engine/liveInputs';
+import { inputMessage as messageText, useLiveFrame, useSignal, type SrtStats } from '../engine/liveInputs';
 import type { InputConfig, InputInfo, InputKind, ServerConfig } from './types';
 import { useMetrics, type InputMetrics } from '../engine/metrics';
 import { corePct, fps as fpsText, fpsTone, inputTone, num } from '../perf/format';
@@ -386,6 +386,7 @@ function Inspector({
         <span className="grow">{state.text}</span>
         {!!state.info?.frames && <span className="vs-res">{tn(state.info.frames, '{n} frame', '{n} frames')}</span>}
       </div>
+      {state.info?.srt?.connected && <SrtLine s={state.info.srt} />}
       {state.live && detected(state.info) && (
         <div className="vs-detected">
           <small>{t('Detected')}</small>
@@ -663,6 +664,42 @@ function Preview({ id, live }: { id: string; live: boolean }) {
         </span>
       )}
     </span>
+  );
+}
+
+/** The statistics of an SRT input received by libsrt. */
+function SrtLine({ s }: { s: SrtStats }) {
+  const bad = s.dropped10s > 0;
+  const warn = s.lossPct10s >= 1;
+  return (
+    <div className="vs-perf vs-srt">
+      <div>
+        <small>RTT</small>
+        <strong>{s.rttMs.toFixed(1)} ms</strong>
+      </div>
+      <div>
+        <small>{t('Rate')}</small>
+        <strong>{s.rateMbps.toFixed(2)} Mb/s</strong>
+      </div>
+      <div title={t('Packets lost on the way, most of them sent again in time (over 10 s).')}>
+        <small>{t('Lost')}</small>
+        <strong className={warn ? 'tone-warn' : ''}>{s.lossPct10s.toFixed(1)} %</strong>
+      </div>
+      <div title={t('Packets that came too late: missing from the picture (over 10 s; since connected: {n}).', { n: s.dropped })}>
+        <small>{t('Dropped')}</small>
+        <strong className={bad ? 'tone-bad' : ''}>{s.dropped10s}</strong>
+      </div>
+      <div title={t('What the receiver holds, of its latency.')}>
+        <small>{t('Buffer')}</small>
+        <strong>
+          {s.bufferMs} / {s.latencyMs} ms
+        </strong>
+      </div>
+      <div>
+        <small>{t('Sender')}</small>
+        <strong className="mono">{s.peer}</strong>
+      </div>
+    </div>
   );
 }
 

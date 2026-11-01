@@ -303,6 +303,58 @@ pub async fn metrics(State(s): State<Shared>, CurrentUser(_me): CurrentUser) -> 
         }
     }
 
+    // SRT inputs received by libsrt.
+    for (id, st) in s.inputs.srt_stats() {
+        let name = names.get(id.as_str()).copied().unwrap_or(&id);
+        let l = [("input", id.as_str()), ("name", name)];
+        m.gauge(
+            "strata_srt_rtt_seconds",
+            "SRT round trip time.",
+            &l,
+            st.rtt_ms / 1e3,
+        );
+        m.gauge(
+            "strata_srt_rate_bits",
+            "SRT receive rate, bits a second.",
+            &l,
+            st.rate_mbps * 1e6,
+        );
+        m.add(
+            "strata_srt_packets_received_total",
+            "counter",
+            "SRT packets received.",
+            &l,
+            st.received as f64,
+        );
+        m.add(
+            "strata_srt_packets_lost_total",
+            "counter",
+            "SRT packets lost (most sent again).",
+            &l,
+            st.lost as f64,
+        );
+        m.add(
+            "strata_srt_packets_retransmitted_total",
+            "counter",
+            "SRT packets received again.",
+            &l,
+            st.retransmitted as f64,
+        );
+        m.add(
+            "strata_srt_packets_dropped_total",
+            "counter",
+            "SRT packets lost for good (too late).",
+            &l,
+            st.dropped as f64,
+        );
+        m.gauge(
+            "strata_srt_buffer_seconds",
+            "What the SRT receiver holds.",
+            &l,
+            st.buffer_ms as f64 / 1e3,
+        );
+    }
+
     // Latency measured with the lip sync flash (lately).
     let now = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
