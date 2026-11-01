@@ -101,4 +101,9 @@ export const ops: Record<string, string> = {
   'The part of the channel’s picture this output sends: a large channel (3840×1080…) split over several screens. The output takes the size of its part.':
     'La partie de l’image de la chaîne que cette sortie envoie : une grande chaîne (3840×1080…) répartie sur plusieurs écrans. La sortie prend la taille de sa partie.',
   'Sends {w}×{h} from ({x}, {y}) of the {W}×{H} picture.': 'Envoie {w}×{h} depuis ({x}, {y}) de l’image {W}×{H}.',
+  'Latency measured': 'Latence mesurée',
+  'Loop an output of this channel back to an input (through the router, the encoder, the network…): each flash is timed from when it leaves to when the input receives it, decoding included.':
+    'Rebouclez une sortie de cette chaîne sur une entrée (via la grille, l’encodeur, le réseau…) : chaque flash est chronométré de son départ à sa réception par l’entrée, décodage compris.',
+  'average {avg} ms · {min}–{max} ms · {n} flashes': 'moyenne {avg} ms · {min}–{max} ms · {n} flashs',
+  'No input receives the flash back yet.': 'Aucune entrée ne reçoit encore le flash.',
 };

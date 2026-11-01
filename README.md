@@ -388,6 +388,10 @@ Les entrées **SRT, UDP et TCP** passent par un relais : un premier ffmpeg reço
 
 ---
 
+### Mesure de latence
+
+Le générateur de test en **Lip sync** envoie un flash blanc au début de chaque seconde ; Strata note quand il part. En rebouclant une sortie de la chaîne sur une entrée (par la grille, un encodeur, le réseau, un autre site…), l'entrée voit revenir le flash : la latence de toute la chaîne, décodage compris, s'affiche dans le panneau du générateur (dernière, moyenne, min–max des 20 derniers flashs), sur `GET /api/latency` et dans Prometheus (`strata_input_latency_seconds`). Essai : sortie flux H.264 en UDP rebouclée sur une entrée du même serveur, 120 à 155 ms.
+
 ### Murs d'écrans
 
 Une chaîne peut être plus grande qu'un écran (3840×1080, 5760×1080, 3840×2160…) : chaque sortie (SDI, NDI, flux, ST 2110) peut n'en envoyer qu'une **partie** — moitié, quart, tiers ou zone libre (page Flux de sortie › la sortie › Mur d'écrans). La sortie prend la taille de sa partie (une sortie SDI 1080p par écran d'un mur 3840×1080), son fichier SDP et sa description NMOS aussi. Les pages web (HTML5) montrent toujours toute l'image.

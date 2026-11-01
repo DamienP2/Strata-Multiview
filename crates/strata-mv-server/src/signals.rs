@@ -476,6 +476,7 @@ impl Signals {
     /// A new picture of an input: is it black, has it changed?
     pub fn picture(&self, id: &str, pm: &tiny_skia::Pixmap) {
         let (print, black, plain) = print_of(pm);
+        crate::latency::picture(id, &print, std::time::SystemTime::now());
         let still_kind = plain || is_bars(pm);
         let now = Instant::now();
         let mut looks = write(&self.looks);

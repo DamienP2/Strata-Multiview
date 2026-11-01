@@ -744,6 +744,16 @@ fn clock(
         for p in &mut pictures {
             p.dispatch(n, at);
         }
+        // The lip sync flash leaves: its time, to measure the latency.
+        {
+            let g = ch.generator.read().unwrap_or_else(|p| p.into_inner());
+            if g.enabled
+                && g.pattern == strata_mv_core::generator::Pattern::Lipsync
+                && strata_mv_core::generator::starts_second(n, rate.num, rate.den)
+            {
+                crate::latency::sent(&ch.config.id, at);
+            }
+        }
         let (project, snapshot) = rt.block_on(advance(state, ch, &mut saved_at));
         let generator = {
             let g = ch.generator.read().unwrap_or_else(|p| p.into_inner());

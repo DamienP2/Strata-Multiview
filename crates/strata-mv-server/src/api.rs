@@ -65,6 +65,7 @@ pub fn router() -> Router<Shared> {
         .route("/api/inputs/{id}/backup", put(crate::inputs::switch_backup))
         .route("/api/loudness/report", get(crate::loudlog::get_report))
         .route("/api/incidents", get(crate::incidents::list))
+        .route("/api/latency", get(crate::latency::get))
         .route(
             "/api/salvos",
             get(crate::salvos::get_list).put(crate::salvos::put_list),

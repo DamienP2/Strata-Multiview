@@ -303,6 +303,22 @@ pub async fn metrics(State(s): State<Shared>, CurrentUser(_me): CurrentUser) -> 
         }
     }
 
+    // Latency measured with the lip sync flash (lately).
+    let now = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map_or(0, |d| d.as_millis() as i64);
+    for l in crate::latency::all()
+        .into_iter()
+        .filter(|l| now - l.at < 30_000)
+    {
+        m.gauge(
+            "strata_input_latency_seconds",
+            "End-to-end latency measured with the generator's lip sync flash.",
+            &[("input", &l.input), ("channel", &l.channel)],
+            l.avg_ms / 1e3,
+        );
+    }
+
     // Faults on now.
     let (_, journal) = signals.journal();
     let mut count = [0u32; 2];

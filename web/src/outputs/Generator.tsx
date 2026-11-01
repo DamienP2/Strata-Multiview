@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from 'react';
 import { AssetLibrary } from '../designer/AssetPicker';
 import type { GeneratorConfig } from '../engine/types';
 import { t } from '../i18n';
+import { useInputs } from '../engine/liveInputs';
 import { api, useApp } from '../store';
 import { HexColorField } from '../ui/fields';
 import { InfoTip } from '../ui/InfoTip';
@@ -46,8 +47,7 @@ export function GeneratorPanel({ channelId }: { channelId: string }) {
     if (live) setG(live);
   }, [live]);
 
-  const send = (next: GeneratorConfig) =>
-    api('PUT', `/api/channels/${encodeURIComponent(channelId)}/generator`, next).catch((e) => toast(friendlyError((e as Error).message), 'error'));
+  const send = (next: GeneratorConfig) => api('PUT', `/api/channels/${encodeURIComponent(channelId)}/generator`, next).catch((e) => toast(friendlyError((e as Error).message), 'error'));
   /** Applied at once; words and numbers a moment after the last key. */
   const set = (patch: Partial<GeneratorConfig>, typing = false) => {
     const next = { ...g, ...patch };
@@ -141,6 +141,7 @@ export function GeneratorPanel({ channelId }: { channelId: string }) {
           </label>
         </div>
       )}
+      {g.enabled && g.pattern === 'lipsync' && <LatencyList channelId={channelId} />}
       {picking && (
         <AssetLibrary
           kind="image"
@@ -152,6 +153,55 @@ export function GeneratorPanel({ channelId }: { channelId: string }) {
             setPicking(false);
           }}
         />
+      )}
+    </div>
+  );
+}
+
+interface Latency {
+  input: string;
+  channel: string;
+  lastMs: number;
+  avgMs: number;
+  minMs: number;
+  maxMs: number;
+  count: number;
+  at: number;
+}
+
+/** The latency of the inputs that receive this channel's flash back (an output looped to an input). */
+function LatencyList({ channelId }: { channelId: string }) {
+  const [list, setList] = useState<Latency[]>([]);
+  const inputs = useInputs();
+  useEffect(() => {
+    const read = () =>
+      api<Latency[]>('GET', '/api/latency')
+        .then((l) => setList(l.filter((x) => x.channel === channelId && Date.now() - x.at < 10_000)))
+        .catch(() => {});
+    void read();
+    const id = setInterval(read, 1000);
+    return () => clearInterval(id);
+  }, [channelId]);
+  return (
+    <div className="set-field">
+      <span className="set-label">
+        {t('Latency measured')}
+        <InfoTip
+          text={t(
+            'Loop an output of this channel back to an input (through the router, the encoder, the network…): each flash is timed from when it leaves to when the input receives it, decoding included.',
+          )}
+        />
+      </span>
+      {list.length ? (
+        list.map((l) => (
+          <div key={l.input} className="gen-latency">
+            <b>{inputs.find((i) => i.id === l.input)?.name ?? l.input}</b>
+            <span className="mono">{Math.round(l.lastMs)} ms</span>
+            <span className="muted">{t('average {avg} ms · {min}–{max} ms · {n} flashes', { avg: Math.round(l.avgMs), min: Math.round(l.minMs), max: Math.round(l.maxMs), n: l.count })}</span>
+          </div>
+        ))
+      ) : (
+        <span className="muted">{t('No input receives the flash back yet.')}</span>
       )}
     </div>
   );

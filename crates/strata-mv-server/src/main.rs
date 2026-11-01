@@ -13,6 +13,7 @@ mod health;
 mod iconlib;
 mod incidents;
 mod inputs;
+mod latency;
 mod library;
 mod locks;
 mod logs;
