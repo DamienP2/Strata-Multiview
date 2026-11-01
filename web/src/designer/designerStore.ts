@@ -282,6 +282,7 @@ export const LABELS: Record<LayerType, string> = {
   alarmLog: 'Alarm log',
   scope: 'Scope',
   signalInfo: 'Signal',
+  chart: 'Chart',
   group: 'Group',
   rect: 'Rectangle',
   ellipse: 'Ellipse',

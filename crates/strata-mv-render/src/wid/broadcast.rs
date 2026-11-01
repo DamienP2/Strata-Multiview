@@ -132,6 +132,13 @@ pub(crate) fn draw(d: &mut Draw) -> bool {
             let s = d.rd.live_system();
             status(x, w, h, &s, lang)
         }
+        LayerKind::Chart { x } => {
+            let s = d.rd.live_system();
+            let v = (!x.input.trim().is_empty())
+                .then(|| d.rd.live_source(x.input.trim()))
+                .flatten();
+            strata_mv_core::wid::chart::chart(x, w, h, &s.curves, v.as_ref(), lang)
+        }
         LayerKind::SignalInfo { x } => {
             let v = d.rd.live_source(x.input.trim());
             strata_mv_core::wid::signal_info::signal_info(x, w, h, v.as_ref(), lang)

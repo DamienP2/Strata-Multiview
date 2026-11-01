@@ -537,6 +537,14 @@ export interface SystemView {
   ptp: { running: boolean; locked: boolean; state: string; grandmaster: string; domain: number; offsetNs?: number | null };
   ntp: { synced?: boolean | null; source: string; offsetMs?: number | null };
   journal: JournalEntry[];
+  /** The plant's measures, one a second, the newest last (sent when they change; kept here). */
+  curves?: Curves;
+}
+
+/** Measures of the plant (mirrors signal::Curves): "cpu", "memory", "server", "ffmpeg", "ptp", "ntp", "render:<channel>", "fps:<input>". */
+export interface Curves {
+  endMs: number;
+  series: Record<string, (number | null)[]>;
 }
 
 let signals: Record<string, SignalView> = {};
@@ -625,7 +633,8 @@ function applySignals(all: Record<string, SignalView>, sys?: SystemView) {
   // What an input is stays known while it says nothing else.
   for (const [id, v] of Object.entries(signals)) if (!next[id] && v.video) next[id] = { video: v.video };
   signals = next;
-  if (sys) system = sys;
+  // The curves come once a second: those of before stay until then.
+  if (sys) system = sys.curves?.endMs ? sys : { ...sys, curves: system.curves };
   signalSubs.forEach((f) => f());
 }
 

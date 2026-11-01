@@ -221,7 +221,7 @@ pub(crate) fn draw(d: &mut Draw) -> bool {
         "timer" => timer::draw(d, &state(&raw)),
         "ticker" => ticker::draw(d, &state(&raw)),
         "source" => source::draw(d),
-        "audioMeter" | "loudness" | "timecode" | "status" | "alarmLog" | "signalInfo" => {
+        "audioMeter" | "loudness" | "timecode" | "status" | "alarmLog" | "signalInfo" | "chart" => {
             broadcast::draw(d)
         }
         "scope" => scope::draw(d),
@@ -246,9 +246,8 @@ pub(crate) fn motion(d: &mut Draw) -> Option<Motion> {
         "text" => text::motion(d),
         "image" => image::motion(d, &state(raw)),
         "source" => source::motion(d),
-        "audioMeter" | "loudness" | "timecode" | "status" | "alarmLog" | "scope" | "signalInfo" => {
-            broadcast::motion(d)
-        }
+        "audioMeter" | "loudness" | "timecode" | "status" | "alarmLog" | "scope" | "signalInfo"
+        | "chart" => broadcast::motion(d),
         "timer" => timer::motion(d, &state(raw)),
         // Tickers: by the time on air.
         _ => Some(Motion::Moving),

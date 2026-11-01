@@ -90,7 +90,8 @@ export type LayerKind =
   | ({ type: 'status' } & import('../widgets/broadcast').StatusConfig)
   | ({ type: 'alarmLog' } & import('../widgets/broadcast').AlarmLogConfig)
   | ({ type: 'scope' } & import('../widgets/scope').ScopeConfig)
-  | ({ type: 'signalInfo' } & import('../widgets/signalInfo').SignalConfig);
+  | ({ type: 'signalInfo' } & import('../widgets/signalInfo').SignalConfig)
+  | ({ type: 'chart' } & import('../widgets/chart').ChartConfig);
 
 export type LayerType = LayerKind['type'];
 

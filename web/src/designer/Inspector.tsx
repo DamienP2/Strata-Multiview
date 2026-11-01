@@ -597,9 +597,9 @@ function SpecInspector({ layer }: { layer: Layer }) {
 }
 
 /** Widgets with a frame (fill, border, corners); those with their own background colour; those with texts of their own. */
-const FRAMED = new Set(['source', 'audioMeter', 'loudness', 'timecode', 'status', 'alarmLog', 'scope', 'signalInfo', 'clock', 'text', 'image']);
-const OWN_BACKGROUND = new Set(['source', 'audioMeter', 'loudness', 'timecode', 'status', 'alarmLog', 'scope', 'signalInfo']);
-const TYPED = new Set(['audioMeter', 'loudness', 'timecode', 'status', 'alarmLog', 'scope', 'signalInfo']);
+const FRAMED = new Set(['source', 'audioMeter', 'loudness', 'timecode', 'status', 'alarmLog', 'scope', 'signalInfo', 'chart', 'clock', 'text', 'image']);
+const OWN_BACKGROUND = new Set(['source', 'audioMeter', 'loudness', 'timecode', 'status', 'alarmLog', 'scope', 'signalInfo', 'chart']);
+const TYPED = new Set(['audioMeter', 'loudness', 'timecode', 'status', 'alarmLog', 'scope', 'signalInfo', 'chart']);
 
 /** The frame of a widget and the typography of its texts (model::Panel), the same for every widget. */
 function LookSections({ layer, set }: { layer: Layer; set: (path: string, v: unknown, coalesce?: boolean) => void }) {

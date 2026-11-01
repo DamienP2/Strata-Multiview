@@ -7,6 +7,7 @@
 //! logic lives here only. Both renderers read the state as JSON.
 
 pub mod broadcast;
+pub mod chart;
 pub mod ellipse;
 pub mod image;
 pub mod polygon;
@@ -56,6 +57,7 @@ pub fn widget_id(kind: &LayerKind) -> Option<&'static str> {
         LayerKind::AlarmLog { .. } => "alarmLog",
         LayerKind::Scope { .. } => "scope",
         LayerKind::SignalInfo { .. } => "signalInfo",
+        LayerKind::Chart { .. } => "chart",
         _ => return None,
     })
 }

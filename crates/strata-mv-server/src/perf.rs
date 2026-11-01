@@ -253,7 +253,55 @@ impl Tracks {
     }
 }
 
+/// Seconds of measures kept for the charts.
+const CURVE_LEN: usize = 300;
+
+/// The plant's measures, one a second (`strata_mv_core::signal::Curves`).
+#[derive(Default)]
+struct CurveStore {
+    end_ms: i64,
+    /// Measures recorded so far (each series as long, at most CURVE_LEN).
+    len: usize,
+    series: BTreeMap<String, VecDeque<Option<f32>>>,
+}
+
+impl CurveStore {
+    fn record(&mut self, now: Vec<(String, Option<f32>)>, at_ms: i64) {
+        // Three figures are enough on a chart (and in the messages).
+        let round = |v: f32| {
+            if v.abs() >= 100.0 {
+                v.round()
+            } else {
+                (v * 100.0).round() / 100.0
+            }
+        };
+        let len = self.len;
+        for (k, _) in &now {
+            self.series
+                .entry(k.clone())
+                .or_insert_with(|| std::iter::repeat_n(None, len).collect());
+        }
+        for (k, s) in self.series.iter_mut() {
+            let v = now
+                .iter()
+                .find(|(n, _)| n == k)
+                .and_then(|(_, v)| *v)
+                .filter(|v| v.is_finite())
+                .map(round);
+            s.push_back(v);
+            while s.len() > CURVE_LEN {
+                s.pop_front();
+            }
+        }
+        self.len = (self.len + 1).min(CURVE_LEN);
+        // What has measured nothing for the whole window goes (a removed input).
+        self.series.retain(|_, s| s.iter().any(Option::is_some));
+        self.end_ms = at_ms;
+    }
+}
+
 pub struct Perf {
+    curves: Mutex<CurveStore>,
     pictures: Mutex<BTreeMap<(String, String), Arc<PictureStats>>>,
     clocks: Mutex<BTreeMap<String, Arc<ClockStats>>>,
     sys: Mutex<System>,
@@ -266,6 +314,7 @@ pub struct Perf {
 impl Default for Perf {
     fn default() -> Self {
         Self {
+            curves: Default::default(),
             sync: Default::default(),
             pictures: Default::default(),
             clocks: Default::default(),
@@ -512,7 +561,63 @@ impl Perf {
             t.push(cpu as f64);
             out.cpu10 = (t.sum() / t.hist.len().max(1) as f64) as f32;
         }
+        self.record(&out);
         *self.sampled.write().unwrap_or_else(|p| p.into_inner()) = out;
+    }
+
+    /// The second's measures into the charts' curves.
+    fn record(&self, out: &Sampled) {
+        let st = self.sync.get();
+        let mem = (out.machine.mem_total > 0)
+            .then(|| out.machine.mem_used as f32 / out.machine.mem_total as f32 * 100.0);
+        let mut now: Vec<(String, Option<f32>)> = vec![
+            ("cpu".into(), Some(out.machine.cpu)),
+            ("memory".into(), mem),
+            ("server".into(), Some(out.process.cpu)),
+            ("ffmpeg".into(), Some(out.process.ffmpeg_cpu)),
+            (
+                "ptp".into(),
+                st.ptp
+                    .offset_ns
+                    .filter(|_| st.ptp.running)
+                    .map(|v| v as f32),
+            ),
+            ("ntp".into(), st.ntp.offset_ms.map(|v| v as f32)),
+        ];
+        // The slowest picture of each channel.
+        let mut render: BTreeMap<&str, f64> = BTreeMap::new();
+        for (key, r) in &out.pictures {
+            let ch = key.split('/').next().unwrap_or(key);
+            let e = render.entry(ch).or_insert(0.0);
+            *e = e.max(r.ms);
+        }
+        now.extend(
+            render
+                .into_iter()
+                .map(|(ch, ms)| (format!("render:{ch}"), Some(ms as f32))),
+        );
+        now.extend(
+            out.inputs
+                .iter()
+                .map(|(id, r)| (format!("fps:{id}"), Some(r.fps as f32))),
+        );
+        let at = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map_or(0, |d| d.as_millis() as i64);
+        lock(&self.curves).record(now, at);
+    }
+
+    /// The plant's measures of the last minutes.
+    pub fn curves(&self) -> strata_mv_core::signal::Curves {
+        let c = lock(&self.curves);
+        strata_mv_core::signal::Curves {
+            end_ms: c.end_ms,
+            series: c
+                .series
+                .iter()
+                .map(|(k, v)| (k.clone(), v.iter().copied().collect()))
+                .collect(),
+        }
     }
 }
 

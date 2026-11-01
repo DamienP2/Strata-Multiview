@@ -533,6 +533,12 @@ pub enum LayerKind {
         #[serde(flatten)]
         x: Box<crate::wid::signal_info::SignalConfig>,
     },
+    /// A measure of the plant over the last minutes (PTP, NTP, processors…).
+    #[serde(rename_all = "camelCase")]
+    Chart {
+        #[serde(flatten)]
+        x: Box<crate::wid::chart::ChartConfig>,
+    },
 }
 
 /// Font settings shared by the text-based widgets.

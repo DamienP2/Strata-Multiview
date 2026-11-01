@@ -318,6 +318,20 @@ pub struct SystemView {
     pub ntp: NtpView,
     /// The newest first (two hundred at most).
     pub journal: Vec<JournalEntry>,
+    /// The plant's measures, one a second (the Chart widget).
+    pub curves: Curves,
+}
+
+/// Measures of the plant, one a second, the newest last (five minutes at
+/// most): "cpu", "memory", "server", "ffmpeg" (% of the machine), "ptp"
+/// (offset from the master, ns), "ntp" (offset, ms), "render:<channel>"
+/// (ms to draw a picture), "fps:<input>".
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+#[serde(default, rename_all = "camelCase")]
+pub struct Curves {
+    /// The time of the newest, ms since 1970 (0: none yet).
+    pub end_ms: i64,
+    pub series: std::collections::BTreeMap<String, Vec<Option<f32>>>,
 }
 
 #[cfg(test)]

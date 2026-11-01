@@ -94,6 +94,10 @@ Le widget **Scope** (`LayerKind::Scope`) montre l'oscilloscope, les parades RVB 
 - **Le goniomètre** est tracé du son entendu avec l'image affichée (les 80 dernières ms, `Live::heard`, gardé 1,5 s par entrée) ; la **corrélation de phase** (300 ms) part avec les vu-mètres (`SourceView::correlation`, `SignalView::correlation`).
 - **`VideoInfo`** (codec, profil, échantillonnage, profondeur, plage, matrice, primaires, transfert, HDR10 / HLG / Dolby Vision / HDR10+, ST 2086, MaxCLL / MaxFALL, pistes audio dont Dolby et Atmos) est relu une fois par seconde et envoyé aux pages quand il change (et toutes les 5 s pour celles qui viennent de s'ouvrir).
 
+### Tableau de bord (courbes)
+
+Le serveur relève chaque seconde (`perf.rs`, `CurveStore`) les processeurs, la mémoire, les processeurs de Strata Multiview et des ffmpeg, l'écart PTP (pmc interrogé chaque seconde ; NTP toutes les dix), l'écart NTP, le temps de rendu de chaque canal et les images par seconde de chaque entrée ; cinq minutes sont gardées (`signal::Curves`). Le moteur Rust les lit dans `SystemView::curves` ; les pages les reçoivent une fois par seconde avec les signaux (pas avec chaque vu-mètre) et gardent les dernières. Le widget **Courbe** (`wid/chart.rs`, `web/src/widgets/chart.tsx`) en trace une, avec ses seuils.
+
 ## Feuille de route
 
 - [ ] Plusieurs pistes audio par flux (aujourd'hui la première, tous ses canaux).

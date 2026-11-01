@@ -98,7 +98,8 @@ impl Watch {
         self.domain.store(domain, Ordering::Relaxed);
     }
 
-    fn check(&self) {
+    /// Reads PTP again, and NTP too when `ntp` (a slower tool).
+    fn check(&self, ntp_too: bool) {
         let domain = self.domain.load(Ordering::Relaxed);
         let mut ptp = ptp(domain);
         {
@@ -114,8 +115,9 @@ impl Watch {
             }
             ptp.jitter_ns = spread(&offsets);
         }
+        let ntp = if ntp_too { ntp() } else { self.get().ntp };
         let status = SyncStatus {
-            ntp: ntp(),
+            ntp,
             ptp,
             checked_at: SystemTime::now()
                 .duration_since(SystemTime::UNIX_EPOCH)
@@ -128,9 +130,14 @@ impl Watch {
 pub fn spawn(watch: Arc<Watch>) {
     let spawned = std::thread::Builder::new()
         .name("mv-sync".into())
-        .spawn(move || loop {
-            watch.check();
-            std::thread::sleep(Duration::from_secs(10));
+        .spawn(move || {
+            // PTP every second (its curve), NTP every ten.
+            let mut n = 0u64;
+            loop {
+                watch.check(n.is_multiple_of(10));
+                n += 1;
+                std::thread::sleep(Duration::from_secs(1));
+            }
         });
     if let Err(e) = spawned {
         tracing::warn!("cannot watch the clock synchronisation: {e}");

@@ -2094,7 +2094,8 @@ impl Renderer {
             | LayerKind::Status { .. }
             | LayerKind::AlarmLog { .. }
             | LayerKind::Scope { .. }
-            | LayerKind::SignalInfo { .. } => {}
+            | LayerKind::SignalInfo { .. }
+            | LayerKind::Chart { .. } => {}
         }
     }
 

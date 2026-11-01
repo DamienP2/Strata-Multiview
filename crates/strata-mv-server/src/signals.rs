@@ -133,6 +133,8 @@ pub struct Signals {
     active: RwLock<BTreeMap<String, Active>>,
     journal: RwLock<VecDeque<JournalEntry>>,
     ptp: RwLock<(PtpView, NtpView)>,
+    /// The plant's measures, one a second (the charts).
+    curves: RwLock<strata_mv_core::signal::Curves>,
     /// Bumped at each change (the broadcaster sends when it moves).
     version: AtomicU64,
 }
@@ -694,13 +696,23 @@ impl Signals {
         }
     }
 
-    /// PTP, NTP and the journal.
+    /// The plant's measures of the last minutes (once a second).
+    pub fn set_curves(&self, c: strata_mv_core::signal::Curves) {
+        let mut s = write(&self.curves);
+        if s.end_ms != c.end_ms {
+            *s = c;
+            self.bump();
+        }
+    }
+
+    /// PTP, NTP, the journal and the plant's measures.
     pub fn system(&self) -> SystemView {
         let (ptp, ntp) = read(&self.ptp).clone();
         SystemView {
             ptp,
             ntp,
             journal: read(&self.journal).iter().cloned().collect(),
+            curves: read(&self.curves).clone(),
         }
     }
 
@@ -818,6 +830,7 @@ pub async fn broadcast(s: crate::state::Shared) {
     tick.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Skip);
     let mut n = 0u64;
     let mut videos: BTreeMap<String, strata_mv_core::signal::VideoInfo> = BTreeMap::new();
+    let mut curves_sent = 0i64;
     loop {
         tick.tick().await;
         n += 1;
@@ -834,7 +847,8 @@ pub async fn broadcast(s: crate::state::Shared) {
                 videos.insert(id, v);
             }
         }
-        if n % 50 == 1 {
+        if n % 25 == 1 {
+            signals.set_curves(s.perf.curves());
             let st = s.perf.sync.get();
             signals.set_sync(
                 PtpView {
@@ -860,6 +874,11 @@ pub async fn broadcast(s: crate::state::Shared) {
             continue;
         }
         sent = v;
+        // The curves go once a second, when they change, not with every
+        // meter (the pages keep the last ones).
+        let mut system = signals.system();
+        let curves = std::mem::take(&mut system.curves);
+        let new_curves = curves.end_ms != curves_sent;
         let mut now = signals.snapshot();
         for (id, vi) in new_video {
             now.entry(id).or_default().video = Some(vi);
@@ -870,7 +889,6 @@ pub async fn broadcast(s: crate::state::Shared) {
                 v.correlation = Some((c * 100.0).round() / 100.0);
             }
         }
-        let system = signals.system();
         // The same as sent, a history aside (sent when it changes only).
         let new_history = now
             .values()
@@ -880,10 +898,15 @@ pub async fn broadcast(s: crate::state::Shared) {
             v.history = None;
             v.video = None;
         }
-        if new_history || bare != last || system != last_system {
+        if new_history || bare != last || system != last_system || new_curves {
+            let mut out = system.clone();
+            if new_curves {
+                curves_sent = curves.end_ms;
+                out.curves = curves;
+            }
             let _ = s.events.send(crate::state::Event::Signals {
                 sources: now,
-                system: system.clone(),
+                system: out,
                 at: std::time::SystemTime::now()
                     .duration_since(std::time::UNIX_EPOCH)
                     .map_or(0.0, |d| d.as_secs_f64() * 1000.0),
