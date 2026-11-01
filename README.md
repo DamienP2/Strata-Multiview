@@ -410,6 +410,16 @@ Les entrées **SRT, UDP et TCP** passent par un relais : un premier ffmpeg reço
 
 Le générateur de test en **Lip sync** envoie un flash blanc au début de chaque seconde ; Strata note quand il part. En rebouclant une sortie de la chaîne sur une entrée (par la grille, un encodeur, le réseau, un autre site…), l'entrée voit revenir le flash : la latence de toute la chaîne, décodage compris, s'affiche dans le panneau du générateur (dernière, moyenne, min–max des 20 derniers flashs), sur `GET /api/latency` et dans Prometheus (`strata_input_latency_seconds`). Essai : sortie flux H.264 en UDP rebouclée sur une entrée du même serveur, 120 à 155 ms.
 
+### Sous-titres CEA-608 / 708
+
+Les sous-titres codés que portent les images (ATSC A/53 : SEI des flux **H.264** et **HEVC**, user data des flux **MPEG-2**) sont lus et décodés par le serveur : **CEA-608** sur CC1 à CC4 (pop-on, roll-up, paint-on, couleurs, italique, soulignement, caractères spéciaux et accentués) et **CEA-708** sur les services 1 à 6 (fenêtres, positions, couleurs). Les images B sont remises dans l'ordre d'affichage (par PTS) avant le décodage.
+
+- Une entrée **SRT, UDP ou TCP** est lue dans le flux de transport relayé, sans rien de plus ; une entrée **HLS, RTMP, RTSP ou fichier** reçoit de ffmpeg une copie de ses images, sans décodage, en MPEG-TS sur un port local. Le réglage **Sous-titres : Lus / Ignorés** de l'entrée (Entrées vidéo) l'arrête.
+- Les canaux présents s'affichent dans les réglages de l'entrée et dans **Contenu du signal** (CC1, CC3, 708 · 1…).
+- Une tuile **Source** les montre par-dessus l'image (inspecteur › **Sous-titres**) : canal (aucun, **automatique** — le premier qui en porte —, CC1 à CC4, service 1 à 6), taille et fond. Ils sont calés sur l'image affichée et dessinés de la même façon par le moteur Rust (sorties) et par la page web (Designer, sortie HTML5) : 15 rangées dans 80 % de la hauteur, la grille 608 dans le 4:3 central d'une image large, la grille 708 sur toute la zone sûre.
+
+Un flux de test (CC1 pop-on en couleur, CC3 roll-up, service 708 n° 1) : `python3 scripts/cc-test-stream.py captions.ts 30`, à envoyer par exemple avec `ffmpeg -re -stream_loop -1 -i captions.ts -c copy -f mpegts udp://127.0.0.1:5000`. `cargo run -p strata-mv-core --example cc-dump -- fichier.ts` affiche les sous-titres d'un fichier à chaque changement.
+
 ### Murs d'écrans
 
 Une chaîne peut être plus grande qu'un écran (3840×1080, 5760×1080, 3840×2160…) : chaque sortie (SDI, NDI, flux, ST 2110) peut n'en envoyer qu'une **partie** — moitié, quart, tiers ou zone libre (page Flux de sortie › la sortie › Mur d'écrans). La sortie prend la taille de sa partie (une sortie SDI 1080p par écran d'un mur 3840×1080), son fichier SDP et sa description NMOS aussi. Les pages web (HTML5) montrent toujours toute l'image.

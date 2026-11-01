@@ -13,6 +13,7 @@ import { FontPick } from '../ui/FontPick';
 import { t, tc, tl } from '../i18n';
 import { ColorPick, defineWidget, Flags, hex, Num, Row, Section, Seg, Select, Text, withDefaults } from './kit';
 import { FitLine } from './text-fit';
+import { captionBoxes, note, pickCaptions } from './captions';
 import { SmoothMeters } from './SmoothMeters';
 
 export type Fit = 'contain' | 'cover' | 'stretch';
@@ -78,7 +79,18 @@ export interface Config {
   alarms?: boolean;
   /** Lines over the picture (mirrors wid::source::Markers). */
   markers?: Partial<Markers>;
+  /** The closed captions over the picture (mirrors wid::source::Captions). */
+  captions?: Partial<Captions>;
 }
+
+export interface Captions {
+  /** '' none, 'auto' the first channel carrying some, 'cc1'…'cc4' (CEA-608), 's1'…'s6' (CEA-708). */
+  channel: string;
+  /** % of the usual size. */
+  size: number;
+  background: string;
+}
+const D_CAPTIONS: Captions = { channel: '', size: 100, background: '#000000cc' };
 
 export interface Markers {
   /** Action safe, 93 %. */
@@ -167,10 +179,10 @@ const D_UMD: Umd = { position: 'bottom', size: 11, outside: false, text: '', fon
 const D_VU: Vu = { position: 'right', width: 6, gap: 2, margin: 6, min: -60, yellow: -18, red: -9, hold: true, max: 0, first: 1 };
 const D = { input: '', fit: 'contain' as Fit, background: '#0b0d12', border: 4, badge: false, noSignal: '', noSignalLook: 'bars' as 'bars' | 'plain', timecode: 'off' as 'off' | 'input' | 'station', loudness: false, alarms: true };
 
-export type Full = typeof D & { tally: TallyLook; umd: Umd; vu: Vu; markers: Markers };
+export type Full = typeof D & { tally: TallyLook; umd: Umd; vu: Vu; markers: Markers; captions: Captions };
 
 export const cfg = (c: Config): Full =>
-  ({ ...withDefaults(D, c), tally: withDefaults(D_TALLY, c.tally ?? {}), umd: withDefaults(D_UMD, c.umd ?? {}), vu: withDefaults(D_VU, c.vu ?? {}), markers: withDefaults(D_MARKERS, c.markers ?? {}) }) as Full;
+  ({ ...withDefaults(D, c), tally: withDefaults(D_TALLY, c.tally ?? {}), umd: withDefaults(D_UMD, c.umd ?? {}), vu: withDefaults(D_VU, c.vu ?? {}), markers: withDefaults(D_MARKERS, c.markers ?? {}), captions: withDefaults(D_CAPTIONS, c.captions ?? {}) }) as Full;
 
 /** The meters' colours (green, yellow, red), their track, a lamp that is off (mirrors METER, TRACK, LAMP_OFF). */
 export const METER = ['#2bd96b', '#f2c12e', '#ff3b3b'];
@@ -444,6 +456,9 @@ function SourceView({ layer, w, h, data, designer, lang, nowMs, tz, fps, seed }:
   }
   // The markers, over the picture (where it is drawn; 16:9 without one).
   const ml = anyMarker(c.markers) && v[2] > 0 && v[3] > 0 ? markerLines(c.markers, pictureArea(c.fit, v, picture ? size : null), info ? signal.video?.afd : undefined, overlay(c, l, h).size) : null;
+  // The closed captions, over the picture (where it is drawn).
+  const caps = c.captions.channel && info && v[2] > 0 && v[3] > 0 ? pickCaptions(signal.captions, c.captions.channel) : null;
+  const capBoxes = caps ? captionBoxes(caps, pictureArea(c.fit, v, picture ? size : null), c.captions.size / 100) : [];
   const fmt = c.badge ? formatName(info) : '';
   const bsize = clamp(h * 0.045, 9, 28);
   const bpad = Math.round(bsize * 0.4);
@@ -474,6 +489,41 @@ function SourceView({ layer, w, h, data, designer, lang, nowMs, tz, fps, seed }:
         </div>
       )}
       {ml?.label && tag(ml.label[0], ml.label[1], overlay(c, l, h).size, '#000000b3', AFD_COLOR, false)}
+      {capBoxes.length > 0 && (
+        <div style={box(v, { overflow: 'hidden' })}>
+          {capBoxes.map((b, i) => (
+            <div key={`c${i}`}>
+              <div style={box([b.a[0] - v[0], b.a[1] - v[1], b.a[2], b.a[3]], { background: hex(c.captions.background) })} />
+              <div
+                style={box([b.t[0] - v[0], b.t[1] - v[1], b.t[2] + b.size, b.t[3]], {
+                  font: `500 ${b.size}px "JetBrains Mono", monospace`,
+                  lineHeight: `${b.t[3]}px`,
+                  color: hex(b.color),
+                  whiteSpace: 'pre',
+                  transform: b.italic ? 'skewX(-11.31deg)' : undefined,
+                })}
+              >
+                {b.text}
+              </div>
+              {b.underline && <div style={box([b.underline[0] - v[0], b.underline[1] - v[1], b.underline[2], b.underline[3]], { background: hex(b.color) })} />}
+              {b.notes.length > 0 && (
+                <svg style={{ position: 'absolute', left: 0, top: 0, width: v[2], height: v[3], overflow: 'visible', pointerEvents: 'none' }}>
+                  {b.notes.map((cell, j) => {
+                    const n = note([cell[0] - v[0], cell[1] - v[1], cell[2], cell[3]], b.size);
+                    return (
+                      <g key={j} fill={hex(b.color)}>
+                        <ellipse cx={n.head[0]} cy={n.head[1]} rx={n.head[2]} ry={n.head[3]} />
+                        <rect x={n.stem[0]} y={n.stem[1]} width={n.stem[2]} height={n.stem[3]} />
+                        <polygon points={n.flag.map((p) => p.join(',')).join(' ')} />
+                      </g>
+                    );
+                  })}
+                </svg>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
       {fmt && (
         <div style={box([v[0] + bpad, v[1] + bpad, 0, bsize * 1.5], { width: 'auto', padding: `0 ${bpad}px`, background: hex('#000000b3'), borderRadius: bsize * 0.25, font: `700 ${bsize}px Inter, sans-serif`, color: '#fff', display: 'flex', alignItems: 'center', whiteSpace: 'pre' })}>{fmt}</div>
       )}
@@ -509,6 +559,14 @@ function SourceView({ layer, w, h, data, designer, lang, nowMs, tz, fps, seed }:
       )}
     </div>
   );
+}
+
+/** The caption channels the tile's input carries. */
+function CaptionChannels({ input }: { input: string }) {
+  const sig = useSignal(input);
+  const list = sig.video?.captions ?? [];
+  const name = (c: string) => (c.startsWith('cc') ? c.toUpperCase() : `708 · ${c.slice(1)}`);
+  return <p className="muted small">{!input ? t('Choose an input.') : list.length ? t('Carried by the input: {list}', { list: list.map(name).join(', ') }) : t('The input carries no captions (read from SRT, UDP, RTMP, HLS, RTSP… streams in H.264, HEVC or MPEG-2).')}</p>;
 }
 
 function InputPick({ value, onChange }: { value: string; onChange: (v: string) => void }) {
@@ -599,6 +657,29 @@ export default defineWidget({
             ]}
           />
           {anyMarker(c.markers) && <ColorPick label={t('Colour')} value={c.markers.color} onChange={(v) => set('markers.color', v)} />}
+        </Section>
+        <Section id="source-captions" title={t('Closed captions')}>
+          <Select
+            label={t('Channel')}
+            value={c.captions.channel}
+            onChange={(v) => set('captions.channel', v)}
+            options={[
+              ['', t('None')],
+              ['auto', t('Automatic (the first carrying captions)')],
+              ['cc1', 'CC1 (CEA-608)'],
+              ['cc2', 'CC2 (CEA-608)'],
+              ['cc3', 'CC3 (CEA-608)'],
+              ['cc4', 'CC4 (CEA-608)'],
+              ...[1, 2, 3, 4, 5, 6].map((n) => [`s${n}`, t('Service {n} (CEA-708)', { n })] as [string, string]),
+            ]}
+          />
+          {c.captions.channel && (
+            <>
+              <Num label={t('Size')} value={c.captions.size} min={25} max={400} unit=" %" onChange={(v) => set('captions.size', v)} />
+              <ColorPick label={t('Background')} value={c.captions.background} onChange={(v) => set('captions.background', v)} />
+              <CaptionChannels input={c.input} />
+            </>
+          )}
         </Section>
         <Section id="source-audio" title={t('Audio meters')}>
           <Seg

@@ -3,6 +3,7 @@
 
 pub mod alarm;
 pub mod anim;
+pub mod captions;
 pub mod easing;
 pub mod generator;
 pub mod model;

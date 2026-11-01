@@ -308,6 +308,10 @@ pub struct SourceView {
     /// Shown instead: its backup's name (the picture, sound and faults
     /// are the backup's; "" = itself).
     pub backup: String,
+    /// What its caption channels show now ("cc1"…"cc4", "s1"…"s6"; those
+    /// showing nothing left out).
+    #[serde(skip_serializing_if = "std::collections::BTreeMap::is_empty")]
+    pub captions: std::collections::BTreeMap<String, crate::captions::CaptionScreen>,
 }
 
 /// What a live input's picture and sound are: the Signal widget, the scopes'
@@ -354,6 +358,10 @@ pub struct VideoInfo {
     /// Active Format Description carried by the pictures (SMPTE ST 2016).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub afd: Option<u8>,
+    /// The closed caption channels it carries: "cc1"…"cc4" (CEA-608),
+    /// "s1"…"s6" (CEA-708).
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub captions: Vec<String>,
 }
 
 /// A sound track of an input.

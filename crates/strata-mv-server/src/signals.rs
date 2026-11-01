@@ -258,6 +258,10 @@ pub struct SignalView {
     /// Lost its signal: the id of the backup its tiles show.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub backup: Option<String>,
+    /// What its caption channels show (with the picture on show).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub captions:
+        Option<std::collections::BTreeMap<String, strata_mv_core::captions::CaptionScreen>>,
 }
 
 fn is_off(t: &Tally) -> bool {
@@ -1155,6 +1159,7 @@ pub async fn broadcast(s: crate::state::Shared) {
     let mut n = 0u64;
     let mut videos: BTreeMap<String, strata_mv_core::signal::VideoInfo> = BTreeMap::new();
     let mut curves_sent = 0i64;
+    let mut captions_sent: Vec<(String, usize)> = Vec::new();
     let mut system_at = Instant::now();
     loop {
         tick.tick().await;
@@ -1233,9 +1238,16 @@ pub async fn broadcast(s: crate::state::Shared) {
             tokio::task::spawn_blocking(move || s2.alarms.save_journal(s2.inputs.signals()));
         }
         let v = signals.version();
-        if v == sent && new_video.is_empty() {
+        // The captions change on their own (an input without sound).
+        let captions = s.inputs.captions();
+        let captions_key: Vec<(String, usize)> = captions
+            .iter()
+            .map(|(id, c)| (id.clone(), std::sync::Arc::as_ptr(c) as usize))
+            .collect();
+        if v == sent && new_video.is_empty() && captions_key == captions_sent {
             continue;
         }
+        captions_sent = captions_key;
         sent = v;
         // The curves go once a second, when they change, not with every
         // meter (the pages keep the last ones).
@@ -1249,6 +1261,9 @@ pub async fn broadcast(s: crate::state::Shared) {
         // The inputs on their backup: their tiles show it.
         for (id, b) in s.inputs.failovers() {
             now.entry(id).or_default().backup = Some(b);
+        }
+        for (id, c) in captions {
+            now.entry(id).or_default().captions = Some((*c).clone());
         }
         // With the meters: the inputs heard.
         for (id, c) in s.inputs.correlations() {

@@ -267,6 +267,77 @@ pub(crate) fn draw(d: &mut Draw) -> bool {
         }
     }
 
+    // The closed captions, over the picture (where it is drawn).
+    if !c.captions.channel.is_empty() && v[2] > 0.0 && v[3] > 0.0 {
+        if let Some(screen) = view
+            .as_ref()
+            .and_then(|v| strata_mv_core::captions::pick(&v.captions, &c.captions.channel))
+        {
+            let size = picture
+                .as_ref()
+                .map(|i| (i.width() as f32, i.height() as f32));
+            let p = picture_area(c.fit, v, size);
+            let clip = d.clip(v[0], v[1], v[2], v[3]);
+            let bg = Draw::hex(&c.captions.background);
+            for b in strata_mv_core::captions::caption_boxes(screen, p, c.captions.size / 100.0) {
+                fill_area(d, b.a, 0.0, bg, clip.as_ref());
+                let Some(f) = d.font("JetBrains Mono", 500) else {
+                    continue;
+                };
+                // Wider than needed: one line, never wrapped.
+                let t = (b.t[0], b.t[1], b.t[2] + b.size, b.t[3]);
+                if let Some(mut path) = Draw::text_path(
+                    &f,
+                    &b.text,
+                    b.size,
+                    0.0,
+                    TextAlign::Left,
+                    VerticalAlign::Middle,
+                    t,
+                    crate::text::LINE_HEIGHT,
+                ) {
+                    // Italics: slanted (no italic face), about the line's middle.
+                    if b.italic {
+                        let cy = b.t[1] + b.t[3] / 2.0;
+                        let skew = Transform::from_translate(0.0, cy)
+                            .pre_concat(Transform::from_row(1.0, 0.0, -0.2, 1.0, 0.0, 0.0))
+                            .pre_concat(Transform::from_translate(0.0, -cy));
+                        if let Some(p) = path.clone().transform(skew) {
+                            path = p;
+                        }
+                    }
+                    d.fill(&path, Draw::hex(&b.color), FillRule::Winding, clip.as_ref());
+                }
+                if let Some(u) = b.underline {
+                    fill_area(d, u, 0.0, Draw::hex(&b.color), clip.as_ref());
+                }
+                for cell in &b.notes {
+                    let (head, stem, flag) = strata_mv_core::captions::note(*cell, b.size);
+                    let col = Draw::hex(&b.color);
+                    if let Some(p) = tiny_skia::Rect::from_xywh(
+                        head[0] - head[2],
+                        head[1] - head[3],
+                        2.0 * head[2],
+                        2.0 * head[3],
+                    )
+                    .and_then(tiny_skia::PathBuilder::from_oval)
+                    {
+                        d.fill(&p, col, FillRule::Winding, clip.as_ref());
+                    }
+                    fill_area(d, stem, 0.0, col, clip.as_ref());
+                    let mut pb = tiny_skia::PathBuilder::new();
+                    pb.move_to(flag[0][0], flag[0][1]);
+                    pb.line_to(flag[1][0], flag[1][1]);
+                    pb.line_to(flag[2][0], flag[2][1]);
+                    pb.close();
+                    if let Some(p) = pb.finish() {
+                        d.fill(&p, col, FillRule::Winding, clip.as_ref());
+                    }
+                }
+            }
+        }
+    }
+
     // The format, top left.
     if c.badge {
         if let Some(fmt) = view

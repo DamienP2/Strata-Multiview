@@ -115,6 +115,8 @@ export interface InputConfig {
   buffer: number;
   /** Streams: decode on the GPU when the machine has a decoder (ffmpeg falls back to the processor). */
   hwDecode: boolean;
+  /** Streams: read the closed captions the pictures carry (CEA-608 / 708). Absent: on. */
+  captions?: boolean;
   /** Another input its tiles show when it loses its signal ('' = none). */
   backup?: string;
   /** Seconds without a picture before switching to the backup (2). */

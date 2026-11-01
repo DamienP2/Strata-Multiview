@@ -6,6 +6,7 @@
 // - the Designer and the Video streams page ask for the newest picture a
 //   few times a second: short requests that get through any proxy and never
 //   hold one of the few connections a browser opens to a server.
+import type { CaptionScreen } from '../widgets/captions';
 import { useEffect, useState, useSyncExternalStore } from 'react';
 import { t } from '../i18n';
 
@@ -551,6 +552,8 @@ export interface SignalView {
   correlation?: number;
   /** Lost its signal: the id of the backup its tiles show. */
   backup?: string;
+  /** What its caption channels show ("cc1"…"cc4", "s1"…"s6"; those showing nothing left out). */
+  captions?: Record<string, CaptionScreen>;
 }
 
 /** What an input's picture and sound are (mirrors strata_mv_core::signal::VideoInfo). */
@@ -578,6 +581,8 @@ export interface VideoInfo {
   illegal?: number | null;
   /** Active Format Description carried by the pictures. */
   afd?: number;
+  /** The closed caption channels it carries: "cc1"…"cc4" (CEA-608), "s1"…"s6" (CEA-708). */
+  captions?: string[];
 }
 
 /** A line of the alarm journal (mirrors signal::JournalEntry). */

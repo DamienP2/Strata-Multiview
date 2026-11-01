@@ -214,6 +214,10 @@ pub struct Report {
     /// A web platform's live: the page and the stream found on it.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub web: Option<crate::weblive::Resolved>,
+    /// The closed caption channels read from its pictures: "cc1"…"cc4"
+    /// (CEA-608), "s1"…"s6" (CEA-708).
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub caption_channels: Vec<String>,
 }
 
 /// What a running input has told so far.

@@ -129,6 +129,10 @@ pub struct InputConfig {
     /// channels 1-2 as they are, 2 channels 3-4…
     #[serde(default, skip_serializing_if = "is_zero")]
     pub listen_pair: u32,
+    /// Streams: read the closed captions the pictures carry (CEA-608 and
+    /// CEA-708 in H.264, HEVC or MPEG-2).
+    #[serde(default = "strata_mv_output::on")]
+    pub captions: bool,
 }
 
 fn is_zero(v: &u32) -> bool {
@@ -207,6 +211,9 @@ pub struct Pull {
     /// pictures a second, reduced without interpolation): out of the
     /// broadcast range, lowest and highest luma.
     pub levels: bool,
+    /// Where ffmpeg sends the pictures as they come (copied into MPEG-TS)
+    /// for their closed captions (a local port).
+    pub cc: Option<u16>,
 }
 
 /// The decoder's filters: each picture told (`showinfo`), and its levels
@@ -513,6 +520,24 @@ impl InputConfig {
                 a.push(format!("tcp://127.0.0.1:{port}"));
             }
         }
+        // The pictures as they come, not decoded: their closed captions
+        // (a relayed stream's are read from the bytes relayed).
+        if let (Some(port), None) = (pull.cc, &relay) {
+            a.extend(
+                [
+                    "-map",
+                    "0:v:0",
+                    "-c:v",
+                    "copy",
+                    "-flush_packets",
+                    "1",
+                    "-f",
+                    "mpegts",
+                ]
+                .map(String::from),
+            );
+            a.push(format!("tcp://127.0.0.1:{port}"));
+        }
         Ok(StreamArgs { decode: a, relay })
     }
 }
@@ -595,6 +620,10 @@ struct Live {
     no_fps_mode: AtomicBool,
     /// This ffmpeg cannot measure the levels (`signalstats`): without them.
     no_levels: AtomicBool,
+    /// Its closed captions.
+    cc: Mutex<CcState>,
+    /// The copy of the pictures for the captions failed: without it.
+    no_captions: AtomicBool,
     /// The ffmpeg receiving a relayed stream.
     relay: Mutex<Option<Child>>,
     /// SRT received by libsrt: its statistics.
@@ -827,7 +856,87 @@ fn epoch_ms(t: Instant) -> f64 {
     }
 }
 
+/// An input's closed captions: read from its stream, decoded, and what they
+/// showed lately, by time (shown with the pictures of that time).
+#[derive(Default)]
+struct CcState {
+    extractor: strata_mv_core::captions::Extractor,
+    decoder: strata_mv_core::captions::Decoder,
+    /// When each change came, and what the channels showed from then.
+    history: VecDeque<(Instant, Arc<Captions>)>,
+    /// The channels carrying something.
+    channels: Vec<String>,
+}
+
+type Captions = std::collections::BTreeMap<String, strata_mv_core::captions::CaptionScreen>;
+
 impl Live {
+    /// A new run of the stream: its captions start again.
+    fn captions_reset(&self) {
+        *self.cc.lock().unwrap_or_else(|p| p.into_inner()) = CcState::default();
+    }
+
+    /// Bytes of its stream (MPEG-TS): the captions of its pictures.
+    fn captions_feed(&self, data: &[u8]) {
+        let wide = self
+            .picture
+            .read()
+            .unwrap_or_else(|p| p.into_inner())
+            .as_ref()
+            .is_none_or(|p| p.width() as f32 / p.height().max(1) as f32 > 1.5);
+        let mut st = self.cc.lock().unwrap_or_else(|p| p.into_inner());
+        let pictures = st.extractor.feed(data);
+        if pictures.is_empty() {
+            return;
+        }
+        for (_, cc) in &pictures {
+            st.decoder.feed(cc);
+        }
+        let all = st.decoder.screens(wide);
+        st.channels = all.keys().cloned().collect();
+        let shown: Captions = all.into_iter().filter(|(_, s)| !s.is_empty()).collect();
+        let now = Instant::now();
+        if st.history.back().is_none_or(|(_, h)| **h != shown) {
+            st.history.push_back((now, Arc::new(shown)));
+        }
+        // Ten seconds back, the last one kept.
+        while st.history.len() > 1
+            && st
+                .history
+                .get(1)
+                .is_some_and(|(t, _)| now.saturating_duration_since(*t) > Duration::from_secs(10))
+        {
+            st.history.pop_front();
+        }
+    }
+
+    /// What its captions show with the picture on show now (none without
+    /// a picture).
+    fn captions_now(&self) -> Arc<Captions> {
+        if !self.fresh() {
+            return Arc::default();
+        }
+        let at = Instant::now()
+            .checked_sub(self.shown_wait())
+            .unwrap_or_else(Instant::now);
+        let st = self.cc.lock().unwrap_or_else(|p| p.into_inner());
+        st.history
+            .iter()
+            .rev()
+            .find(|(t, _)| *t <= at)
+            .map(|(_, c)| c.clone())
+            .unwrap_or_default()
+    }
+
+    /// The caption channels it carries.
+    fn caption_channels(&self) -> Vec<String> {
+        self.cc
+            .lock()
+            .unwrap_or_else(|p| p.into_inner())
+            .channels
+            .clone()
+    }
+
     fn say(&self, m: impl Into<String>) {
         *self.message.lock().unwrap_or_else(|p| p.into_inner()) = m.into();
     }
@@ -1032,7 +1141,8 @@ impl Live {
             Some((at, info)) if at.elapsed() < Duration::from_secs(1) => info.clone(),
             _ => {
                 let now = Instant::now();
-                let info = self.facts().video_info(now);
+                let mut info = self.facts().video_info(now);
+                info.captions = self.caption_channels();
                 *v = Some((now, info.clone()));
                 info
             }
@@ -1262,6 +1372,8 @@ impl Inputs {
                 no_info: AtomicBool::new(false),
                 no_fps_mode: AtomicBool::new(false),
                 no_levels: AtomicBool::new(false),
+                cc: Default::default(),
+                no_captions: AtomicBool::new(false),
                 relay: Mutex::new(None),
                 srt: Default::default(),
                 facts: Arc::new(Mutex::new(crate::probe::Facts::default())),
@@ -1516,6 +1628,7 @@ impl Inputs {
             }
         }
         let mut r = l.facts().report(Instant::now());
+        r.caption_channels = l.caption_channels();
         r.id = c.id.clone();
         r.name = c.name.clone();
         r.kind = match c.kind {
@@ -1675,6 +1788,7 @@ impl Inputs {
             video: l.video(),
             correlation: l.correlation(),
             backup: String::new(),
+            captions: (*l.captions_now()).clone(),
         })
     }
 }
@@ -1694,6 +1808,17 @@ impl Inputs {
     }
 
     /// The phase correlation of each input heard now (none when silent).
+    /// What the inputs' captions show now (those showing nothing left out).
+    pub fn captions(&self) -> Vec<(String, Arc<Captions>)> {
+        self.live
+            .read()
+            .unwrap_or_else(|p| p.into_inner())
+            .iter()
+            .map(|(id, l)| (id.clone(), l.captions_now()))
+            .filter(|(_, c)| !c.is_empty())
+            .collect()
+    }
+
     pub fn correlations(&self) -> Vec<(String, f32)> {
         let list: Vec<Arc<Live>> = self
             .live
@@ -2659,6 +2784,16 @@ fn run_stream(l: &Live) {
             .as_ref()
             .and_then(|t| t.local_addr().ok())
             .map(|a| a.port());
+        // The pictures copied for their captions: ffmpeg sends them to this
+        // port (a relayed stream's are read from the bytes relayed).
+        let cc = (c.captions && !c.relayed() && !l.no_captions.load(Ordering::Relaxed))
+            .then(|| std::net::TcpListener::bind("127.0.0.1:0").ok())
+            .flatten();
+        pull.cc = cc
+            .as_ref()
+            .and_then(|t| t.local_addr().ok())
+            .map(|a| a.port());
+        l.captions_reset();
         pull.fps_mode = !l.no_fps_mode.load(Ordering::Relaxed);
         pull.levels = info && !l.no_levels.load(Ordering::Relaxed);
         let args = c.ffmpeg_args_from(&pull, audio, info).unwrap_or_default();
@@ -2816,6 +2951,9 @@ fn run_stream(l: &Live) {
             if let Some(listener) = pcm {
                 scope.spawn(move || read_pcm(l, listener));
             }
+            if let Some(listener) = cc {
+                scope.spawn(move || read_cc(l, listener));
+            }
             // The relayed bytes: read, then on to the decoder.
             let srt_stats = l.srt.clone();
             let from_relay = from_relay.or_else(|| {
@@ -2836,6 +2974,9 @@ fn run_stream(l: &Live) {
                         }
                         if let Some(ts) = l.facts().ts.as_mut() {
                             ts.feed(&buf[..n], Instant::now());
+                        }
+                        if l.config.captions {
+                            l.captions_feed(&buf[..n]);
                         }
                         if to.write_all(&buf[..n]).is_err() {
                             break;
@@ -2943,6 +3084,19 @@ fn run_stream(l: &Live) {
             l.no_audio.store(true, Ordering::Relaxed);
             continue;
         }
+        // The pictures could not be copied into MPEG-TS (their codec): again,
+        // without the captions.
+        if pull.cc.is_some()
+            && (said.contains("mpegts") || said.contains("Could not write header"))
+            && !l.no_captions.swap(true, Ordering::Relaxed)
+        {
+            tracing::info!(
+                "input {}: closed captions not read ({})",
+                l.config.id,
+                strata_mv_output::ffmpeg::tail(&said)
+            );
+            continue;
+        }
         // An ffmpeg without -fps_mode (before 5.1): again, without it.
         if pull.fps_mode && said.contains("fps_mode") {
             l.no_fps_mode.store(true, Ordering::Relaxed);
@@ -3039,6 +3193,41 @@ fn read_pcm(l: &Live, listener: std::net::TcpListener) {
                     have -= whole;
                 }
             }
+            Err(e)
+                if matches!(
+                    e.kind(),
+                    std::io::ErrorKind::WouldBlock | std::io::ErrorKind::TimedOut
+                ) =>
+            {
+                if gone() {
+                    return;
+                }
+            }
+            Err(_) => return,
+        }
+    }
+}
+
+/// The pictures ffmpeg copies into MPEG-TS on `listener`: their captions.
+fn read_cc(l: &Live, listener: std::net::TcpListener) {
+    let _ = listener.set_nonblocking(true);
+    let gone = || l.stopped() || l.child.lock().unwrap_or_else(|p| p.into_inner()).is_none();
+    let mut conn = loop {
+        match listener.accept() {
+            Ok((c, _)) => break c,
+            Err(e) if e.kind() == std::io::ErrorKind::WouldBlock && !gone() => {
+                std::thread::sleep(Duration::from_millis(100));
+            }
+            Err(_) => return,
+        }
+    };
+    let _ = conn.set_nonblocking(false);
+    let _ = conn.set_read_timeout(Some(Duration::from_secs(1)));
+    let mut buf = vec![0u8; 188 * 64];
+    loop {
+        match conn.read(&mut buf) {
+            Ok(0) => return,
+            Ok(n) => l.captions_feed(&buf[..n]),
             Err(e)
                 if matches!(
                     e.kind(),
@@ -3629,6 +3818,7 @@ mod tests {
             sdp: String::new(),
             channels: 2,
             encoding: String::new(),
+            captions: true,
         }
     }
 
@@ -3655,6 +3845,8 @@ mod tests {
             no_info: AtomicBool::new(false),
             no_fps_mode: AtomicBool::new(false),
             no_levels: AtomicBool::new(false),
+            cc: Default::default(),
+            no_captions: AtomicBool::new(false),
             relay: Mutex::new(None),
             srt: Default::default(),
             facts: Arc::new(Mutex::new(crate::probe::Facts::default())),

@@ -369,7 +369,9 @@ function Inspector({
   const live = i.kind === 'web' ? platformOf(i.url) : null;
   const choices = hwChoices(i.kind);
   const port = portOf(i);
-  const tracks = useSignal(i.id).video?.audio ?? [];
+  const sig = useSignal(i.id);
+  const tracks = sig.video?.audio ?? [];
+  const ccs = sig.video?.captions ?? [];
   return (
     <>
       <div className="oc-ins-head" style={{ ['--k' as string]: COLOR }}>
@@ -586,6 +588,27 @@ function Inspector({
             {[true, false].map((gpu) => (
               <button key={String(gpu)} type="button" className={!!i.hwDecode === gpu ? 'on' : ''} onClick={() => editInput((x) => void (x.hwDecode = gpu))}>
                 {gpu ? 'GPU' : 'CPU'}
+              </button>
+            ))}
+          </div>
+        </Group>
+      )}
+
+      {isStream(i.kind) && (
+        <Group
+          label={t('Closed captions')}
+          hint={
+            i.captions !== false
+              ? ccs.length
+                ? t('Carried: {list}. Shown in the tiles that ask for them (Source › Closed captions).', { list: ccs.map((c) => (c.startsWith('cc') ? c.toUpperCase() : `708 · ${c.slice(1)}`)).join(', ') })
+                : t('CEA-608 and CEA-708 read from the pictures (H.264, HEVC, MPEG-2). None seen in this stream yet.')
+              : t('Not read.')
+          }
+        >
+          <div className="seg vs-seg">
+            {[true, false].map((on) => (
+              <button key={String(on)} type="button" className={(i.captions !== false) === on ? 'on' : ''} onClick={() => editInput((x) => void (x.captions = on))}>
+                {on ? t('Read') : t('Skipped')}
               </button>
             ))}
           </div>

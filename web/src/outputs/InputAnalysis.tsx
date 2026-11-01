@@ -294,6 +294,8 @@ export interface Report {
   /** A web platform's live: the stream found on its page. */
   web?: { platform: string; title: string; channel?: string; live: boolean; width: number; height: number; fps?: number; protocol: string };
   sdi?: Sdi;
+  /** The closed caption channels read from its pictures: "cc1"…"cc4" (CEA-608), "s1"…"s6" (CEA-708). */
+  captionChannels?: string[];
 }
 
 type Tab = 'summary' | 'programs' | 'streams' | 'pictures' | 'transport' | 'hls' | 'ndi' | 'sdi';
@@ -450,7 +452,8 @@ function Summary({ r }: { r: Report }) {
   const p2 = r.ts?.checks.filter((c) => c.priority === 2).reduce((n, c) => n + c.count, 0) ?? 0;
   const now = r.programs.find((p) => p.now)?.now;
   const tc = r.frames?.timecode || r.ndi?.timecode || r.sdi?.timecode;
-  const captions = video.some((v) => v.captions) || r.frames?.captions || r.sdi?.anc.some((a) => a.did === 0x61);
+  const channels = (r.captionChannels ?? []).map((c) => (c.startsWith('cc') ? c.toUpperCase() : `708 · ${c.slice(1)}`));
+  const captions = channels.length > 0 || video.some((v) => v.captions) || r.frames?.captions || r.sdi?.anc.some((a) => a.did === 0x61);
   return (
     <>
       <div className="ia-tiles">
@@ -462,7 +465,11 @@ function Summary({ r }: { r: Report }) {
         {r.ndi && <Tile label="NDI" value={`${r.ndi.width}×${r.ndi.height}`} sub={`${r.ndi.rate[1] ? +(r.ndi.rate[0] / r.ndi.rate[1]).toFixed(3) : '?'} i/s · ${r.ndi.format}`} />}
         {r.sdi && <Tile label="SDI" value={r.sdi.mode} sub={[r.sdi.signal, r.sdi.hdr].filter(Boolean).join(' · ')} />}
         <Tile label={t('Audio')} value={audio.length ? t('{n} tracks', { n: audio.length }) : r.ndi ? t('{n} channels', { n: r.ndi.audioChannels }) : r.sdi ? t('{n} channels', { n: r.sdi.audioChannels }) : t('None')} sub={audio.map((a) => `${a.codecName || a.codec}${a.language ? ` (${a.language})` : ''}`).join(', ')} />
-        <Tile label={t('Subtitles and captions')} value={[subs.length ? t('{n} tracks', { n: subs.length }) : '', captions ? 'CC' : ''].filter(Boolean).join(' + ') || t('None')} sub={subs.map((s) => `${s.codecName || s.codec}${s.language ? ` (${s.language})` : ''}`).join(', ')} />
+        <Tile
+          label={t('Subtitles and captions')}
+          value={[subs.length ? t('{n} tracks', { n: subs.length }) : '', channels.length ? channels.join(', ') : captions ? 'CC' : ''].filter(Boolean).join(' + ') || t('None')}
+          sub={[...subs.map((s) => `${s.codecName || s.codec}${s.language ? ` (${s.language})` : ''}`), channels.length ? 'CEA-608 / 708' : ''].filter(Boolean).join(', ')}
+        />
         <Tile label={t('Data')} value={data.length ? t('{n} streams', { n: data.length }) : t('None')} sub={data.map((d) => d.codecName || d.codec).join(', ')} />
         <Tile label="Timecode" value={tc || '—'} sub={r.frames?.timecodeKind || r.sdi?.timecodeKind || (r.ndi?.timecode ? 'NDI' : '')} mono />
         {r.frames?.gop != null && <Tile label="GOP" value={`${+r.frames.gop.toFixed(1)}`} sub={`I ${r.frames.i} · P ${r.frames.p} · B ${r.frames.b}`} />}

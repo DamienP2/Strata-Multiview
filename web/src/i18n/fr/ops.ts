@@ -134,4 +134,15 @@ export const ops: Record<string, string> = {
   'Dante Virtual Soundcard (or Dante Via, or an audio interface) installed on the server: its Dante channels are those of this sound card.':
     'Dante Virtual Soundcard (ou Dante Via, ou une interface audio) installé sur le serveur : ses voies Dante sont celles de cette carte son.',
   'As many as Dante Virtual Soundcard opens (Preferences › Audio Channels): 2 to 64.': 'Autant que Dante Virtual Soundcard en ouvre (Preferences › Audio Channels) : 2 à 64.',
+  'Closed captions': 'Sous-titres',
+  'Carried: {list}. Shown in the tiles that ask for them (Source › Closed captions).': 'Présents : {list}. Affichés dans les tuiles qui les demandent (Source › Sous-titres).',
+  'CEA-608 and CEA-708 read from the pictures (H.264, HEVC, MPEG-2). None seen in this stream yet.': 'CEA-608 et CEA-708 lus dans les images (H.264, HEVC, MPEG-2). Aucun vu dans ce flux pour l’instant.',
+  'Not read.': 'Non lus.',
+  Read: 'Lus',
+  Skipped: 'Ignorés',
+  'Choose an input.': 'Choisissez une entrée.',
+  'Carried by the input: {list}': 'Présents dans l’entrée : {list}',
+  'The input carries no captions (read from SRT, UDP, RTMP, HLS, RTSP… streams in H.264, HEVC or MPEG-2).': 'L’entrée ne porte pas de sous-titres (lus dans les flux SRT, UDP, RTMP, HLS, RTSP… en H.264, HEVC ou MPEG-2).',
+  'Automatic (the first carrying captions)': 'Automatique (le premier qui en porte)',
+  'Service {n} (CEA-708)': 'Service {n} (CEA-708)',
 };

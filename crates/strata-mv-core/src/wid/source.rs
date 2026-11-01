@@ -202,6 +202,7 @@ pub struct Config {
     pub alarms: bool,
     /// Lines over the picture: safe areas, other aspect ratios, centre, AFD.
     pub markers: Markers,
+    pub captions: Captions,
 }
 
 /// Lines drawn over the picture (EBU R95 safe areas, the 4:3 and 14:9
@@ -243,6 +244,29 @@ impl Markers {
             || self.fourteen_nine
             || self.centre
             || self.afd
+    }
+}
+
+/// The closed captions over the picture.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(default, rename_all = "camelCase")]
+pub struct Captions {
+    /// "" (none), "auto" (the first channel carrying some), "cc1"…"cc4"
+    /// (CEA-608), "s1"…"s6" (CEA-708 services).
+    pub channel: String,
+    /// Their size, % of the usual one (15 rows in 80 % of the picture).
+    pub size: f32,
+    /// Behind the characters.
+    pub background: String,
+}
+
+impl Default for Captions {
+    fn default() -> Self {
+        Self {
+            channel: String::new(),
+            size: 100.0,
+            background: "#000000cc".into(),
+        }
     }
 }
 
@@ -407,6 +431,7 @@ impl Default for Config {
             loudness: false,
             alarms: true,
             markers: Markers::default(),
+            captions: Captions::default(),
         }
     }
 }
