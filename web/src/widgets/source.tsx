@@ -380,12 +380,17 @@ const box = (a: Area, extra?: React.CSSProperties): React.CSSProperties => ({ po
 
 function SourceView({ layer, w, h, data, designer, lang, nowMs, tz, fps, seed }: { layer: Config & { name: string }; w: number; h: number; data: Data; designer?: boolean; lang?: string; nowMs: number; tz: string; fps: number; seed: number }) {
   const c = cfg(layer);
-  const id = c.input.trim();
+  const own = c.input.trim();
+  const inputs = useInputs();
+  const ownSignal = useSignal(own);
+  // On its backup (it lost its signal): the backup's picture, sound and faults; its own name and tally.
+  const id = ownSignal.backup || own;
+  const backupSignal = useSignal(ownSignal.backup ? id : '');
+  const signal: SignalView = ownSignal.backup ? { ...backupSignal, tally: ownSignal.tally, alarms: [...(ownSignal.alarms ?? []).filter((a) => a.kind === 'onBackup'), ...(backupSignal.alarms ?? [])] } : ownSignal;
   // The Designer: a preview, ten a second. The outputs: every picture, played out evenly.
   const live = useLiveFrame(designer ? id : '', 'preview');
-  const inputs = useInputs();
-  const signal = useSignal(id);
   const info = id ? inputs.find((i) => i.id === id) : undefined;
+  const ownInfo = own ? inputs.find((i) => i.id === own) : undefined;
   const levels = info ? (signal.levels ?? []) : [];
   // The meters always show (two channels at rest without audio): the tile looks the same with or without sound.
   const l = layout(c, w, h, Math.max(levels.length, SILENT_CHANNELS));
@@ -440,7 +445,7 @@ function SourceView({ layer, w, h, data, designer, lang, nowMs, tz, fps, seed }:
   const fmt = c.badge ? formatName(info) : '';
   const bsize = clamp(h * 0.045, 9, 28);
   const bpad = Math.round(bsize * 0.4);
-  const name = umdText(c, info, signal, data) || (designer && !id ? layer.name : '');
+  const name = umdText(c, ownInfo, signal, data) || (designer && !own ? layer.name : '');
   const lamp = (a: Area, lit: boolean | undefined, col: string) => <div style={box(a, { background: hex(lit ? col : LAMP_OFF), borderRadius: a[2] * 0.2 })} />;
   const alarms = info ? (signal.alarms ?? []) : [];
   const o = overlay(c, l, h);

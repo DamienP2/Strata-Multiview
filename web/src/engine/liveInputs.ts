@@ -529,6 +529,8 @@ export interface SignalView {
   video?: VideoInfo;
   /** The phase correlation of its left and right (−1 to 1). */
   correlation?: number;
+  /** Lost its signal: the id of the backup its tiles show. */
+  backup?: string;
 }
 
 /** What an input's picture and sound are (mirrors strata_mv_core::signal::VideoInfo). */

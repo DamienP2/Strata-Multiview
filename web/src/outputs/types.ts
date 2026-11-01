@@ -115,6 +115,12 @@ export interface InputConfig {
   buffer: number;
   /** Streams: decode on the GPU when the machine has a decoder (ffmpeg falls back to the processor). */
   hwDecode: boolean;
+  /** Another input its tiles show when it loses its signal ('' = none). */
+  backup?: string;
+  /** Seconds without a picture before switching to the backup (2). */
+  failoverAfter?: number;
+  /** Seconds of steady pictures before coming back (10; 0 = by hand). */
+  failbackAfter?: number;
 }
 
 /** `GET /api/inputs`. */

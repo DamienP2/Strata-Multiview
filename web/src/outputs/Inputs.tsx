@@ -327,6 +327,7 @@ export function InputsMode({ cfg, saved, edit }: { cfg: ServerConfig; saved: Ser
                 hwChoices={hwChoices}
                 setKind={setKind}
                 remove={remove}
+                others={inputs.filter((x) => x.id !== current.id)}
               />
             ) : (
               <p className="oc-hint">{t('Add an input to set it up here.')}</p>
@@ -347,6 +348,7 @@ function Inspector({
   hwChoices,
   setKind,
   remove,
+  others,
 }: {
   input: InputConfig;
   state: { tone: Tone; text: string; live: boolean; info?: InputInfo };
@@ -356,6 +358,7 @@ function Inspector({
   hwChoices: (k: InputKind) => { id: string; name: string }[];
   setKind: (k: InputKind) => void;
   remove: () => void;
+  others: InputConfig[];
 }) {
   const listId = `vs-ndi-${i.id}`;
   const [picking, setPicking] = useState(false);
@@ -578,6 +581,37 @@ function Inspector({
             ))}
           </div>
         </Group>
+      )}
+
+      <Field label={t('Backup input')} hint={t('Shown in its tiles when this input loses its signal: picture, sound and faults of the backup, with the name and tally of this input. The alarm « On backup » is raised.')}>
+        <select value={i.backup ?? ''} onChange={(e) => editInput((x) => void (x.backup = e.target.value))}>
+          <option value="">{t('None')}</option>
+          {others.map((o) => (
+            <option key={o.id} value={o.id}>
+              {o.name}
+            </option>
+          ))}
+        </select>
+      </Field>
+      {!!i.backup && (
+        <>
+          <Field label={t('Switch after')} hint={t('Seconds without a picture before its backup is shown.')}>
+            <input type="number" min={0} max={60} value={i.failoverAfter ?? 2} onChange={(e) => editInput((x) => void (x.failoverAfter = Math.max(0, Math.min(60, Number(e.target.value) || 0))))} />
+          </Field>
+          <Field label={t('Come back after')} hint={t('Seconds of steady pictures before this input is shown again; 0: it stays on its backup until switched back by hand.')}>
+            <input type="number" min={0} max={600} value={i.failbackAfter ?? 10} onChange={(e) => editInput((x) => void (x.failbackAfter = Math.max(0, Math.min(600, Number(e.target.value) || 0))))} />
+          </Field>
+          <Group label={t('Show now')}>
+            <div className="seg vs-seg">
+              <button type="button" onClick={() => void api('PUT', `/api/inputs/${encodeURIComponent(i.id)}/backup`, { backup: false }).catch(() => {})}>
+                {t('This input')}
+              </button>
+              <button type="button" onClick={() => void api('PUT', `/api/inputs/${encodeURIComponent(i.id)}/backup`, { backup: true }).catch(() => {})}>
+                {t('Its backup')}
+              </button>
+            </div>
+          </Group>
+        </>
       )}
 
       <button className="btn small danger" onClick={remove}>
