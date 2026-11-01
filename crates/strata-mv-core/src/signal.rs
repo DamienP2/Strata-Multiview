@@ -148,6 +148,16 @@ pub enum AlarmKind {
     MemoryHigh,
     /// An output drops pictures.
     OutputDropped,
+    /// Colour space or transfer other than the one expected.
+    ColorSpace,
+    /// Levels out of the broadcast range (EBU R103).
+    IllegalLevels,
+    /// Full range (PC) where limited (TV) is expected.
+    FullRange,
+    /// HDR (PQ) without its static metadata (ST 2086, MaxCLL).
+    HdrMetadata,
+    /// No colour information carried.
+    NoColorInfo,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord, Serialize, Deserialize)]
@@ -158,7 +168,7 @@ pub enum Severity {
 }
 
 /// The faults of an input, in the order of the settings.
-pub const INPUT_ALARMS: [AlarmKind; 16] = [
+pub const INPUT_ALARMS: [AlarmKind; 21] = [
     AlarmKind::Loss,
     AlarmKind::Black,
     AlarmKind::Freeze,
@@ -173,6 +183,11 @@ pub const INPUT_ALARMS: [AlarmKind; 16] = [
     AlarmKind::Phase,
     AlarmKind::NoTimecode,
     AlarmKind::NoCaptions,
+    AlarmKind::ColorSpace,
+    AlarmKind::IllegalLevels,
+    AlarmKind::FullRange,
+    AlarmKind::HdrMetadata,
+    AlarmKind::NoColorInfo,
     AlarmKind::TsPriority1,
     AlarmKind::TsPriority2,
 ];
@@ -229,6 +244,11 @@ impl AlarmKind {
             AlarmKind::CpuHigh => ("PROCESSEURS SATURÉS", "PROCESSORS BUSY"),
             AlarmKind::MemoryHigh => ("MÉMOIRE PLEINE", "MEMORY FULL"),
             AlarmKind::OutputDropped => ("IMAGES PERDUES EN SORTIE", "OUTPUT DROPS FRAMES"),
+            AlarmKind::ColorSpace => ("ESPACE COULEUR", "COLOUR SPACE"),
+            AlarmKind::IllegalLevels => ("NIVEAUX HORS NORMES", "ILLEGAL LEVELS"),
+            AlarmKind::FullRange => ("PLAGE COMPLÈTE", "FULL RANGE"),
+            AlarmKind::HdrMetadata => ("MÉTADONNÉES HDR", "HDR METADATA"),
+            AlarmKind::NoColorInfo => ("COLORIMÉTRIE NON SIGNALÉE", "NO COLOUR INFO"),
         };
         if fr {
             f
@@ -314,6 +334,12 @@ pub struct VideoInfo {
     pub max_fall: u32,
     /// Its sound tracks.
     pub audio: Vec<AudioTrack>,
+    /// Lowest and highest luma lately, % of the nominal range (0 % black,
+    /// 100 % white; EBU R103 allows −1 % to 103 %).
+    pub luma: Option<[f32; 2]>,
+    /// Pixels out of the broadcast range lately (luma 16–235, chroma 16–240
+    /// in 8 bits), %.
+    pub illegal: Option<f32>,
 }
 
 /// A sound track of an input.

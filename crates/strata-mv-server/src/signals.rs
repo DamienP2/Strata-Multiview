@@ -138,6 +138,8 @@ pub struct Watched {
     pub captions: bool,
     /// TR 101 290 errors lately: first, second priority.
     pub ts: (bool, bool),
+    /// What its picture is (colour space, levels).
+    pub video: strata_mv_core::signal::VideoInfo,
 }
 
 /// What is known of the plant to look at its faults.
@@ -706,6 +708,33 @@ impl Signals {
                     }
                     if !w.captions {
                         on(AlarmKind::NoCaptions, None);
+                    }
+                    // Its colours.
+                    let v = &w.video;
+                    if !strata_mv_core::alarm::color_space_ok(
+                        &rule(AlarmKind::ColorSpace).expect,
+                        v,
+                    ) {
+                        on(AlarmKind::ColorSpace, None);
+                    }
+                    if v.range != "pc"
+                        && v.illegal
+                            .is_some_and(|x| x > rule(AlarmKind::IllegalLevels).threshold)
+                    {
+                        on(AlarmKind::IllegalLevels, None);
+                    }
+                    if v.range == "pc" {
+                        on(AlarmKind::FullRange, None);
+                    }
+                    if v.transfer.contains("2084") && v.max_cll == 0 && v.mastering.is_empty() {
+                        on(AlarmKind::HdrMetadata, None);
+                    }
+                    if !v.pix_fmt.is_empty()
+                        && v.matrix.is_empty()
+                        && v.primaries.is_empty()
+                        && v.transfer.is_empty()
+                    {
+                        on(AlarmKind::NoColorInfo, None);
                     }
                 }
                 if w.restarts as f32 >= rule(AlarmKind::Reconnecting).threshold.max(1.0) {
@@ -1505,6 +1534,7 @@ mod tests {
             correlation: None,
             captions: false,
             ts: (false, false),
+            video: Default::default(),
         }
     }
 
@@ -1565,6 +1595,42 @@ mod tests {
         assert_eq!(s.alarms("cam")[0].severity, Severity::Warning);
         assert_eq!(events.len(), 1);
         assert_eq!(events[0].state, "raised");
+    }
+
+    #[test]
+    fn colours_out_of_the_norms() {
+        use strata_mv_core::signal::VideoInfo;
+        let s = Signals::default();
+        let mut hdr = w("uhd", "UHD", true, None);
+        hdr.video = VideoInfo {
+            pix_fmt: "yuv420p10le".into(),
+            primaries: "bt2020".into(),
+            transfer: "smpte2084".into(),
+            range: "tv".into(),
+            illegal: Some(4.0),
+            ..Default::default()
+        };
+        s.evaluate(&[hdr], &Plant::default());
+        let on: Vec<AlarmKind> = s
+            .conds
+            .lock()
+            .unwrap()
+            .keys()
+            .filter(|(id, _)| id == "uhd")
+            .map(|(_, k)| *k)
+            .collect();
+        // Not BT.709 SDR (the default expected), levels out of range, no
+        // HDR metadata; limited range and colours carried: fine.
+        for k in [
+            AlarmKind::ColorSpace,
+            AlarmKind::IllegalLevels,
+            AlarmKind::HdrMetadata,
+        ] {
+            assert!(on.contains(&k), "{k:?} {on:?}");
+        }
+        for k in [AlarmKind::FullRange, AlarmKind::NoColorInfo] {
+            assert!(!on.contains(&k), "{k:?}");
+        }
     }
 
     #[test]

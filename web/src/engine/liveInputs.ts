@@ -491,7 +491,12 @@ export type AlarmKind =
   | 'ntpUnsynced'
   | 'cpuHigh'
   | 'memoryHigh'
-  | 'outputDropped';
+  | 'outputDropped'
+  | 'colorSpace'
+  | 'illegalLevels'
+  | 'fullRange'
+  | 'hdrMetadata'
+  | 'noColorInfo';
 export type Severity = 'warning' | 'critical';
 export interface Alarm {
   kind: AlarmKind;
@@ -544,6 +549,10 @@ export interface VideoInfo {
   maxCll: number;
   maxFall: number;
   audio: { codec: string; layout: string; rate: number; language: string; dolby: boolean; atmos: boolean }[];
+  /** Lowest and highest luma lately, % (0 black, 100 white). */
+  luma?: [number, number] | null;
+  /** Pixels out of the broadcast range lately, %. */
+  illegal?: number | null;
 }
 
 /** A line of the alarm journal (mirrors signal::JournalEntry). */
@@ -710,6 +719,11 @@ export function alarmText(kind: AlarmKind, lang = 'fr'): string {
     cpuHigh: ['PROCESSEURS SATURÉS', 'PROCESSORS BUSY'],
     memoryHigh: ['MÉMOIRE PLEINE', 'MEMORY FULL'],
     outputDropped: ['IMAGES PERDUES EN SORTIE', 'OUTPUT DROPS FRAMES'],
+    colorSpace: ['ESPACE COULEUR', 'COLOUR SPACE'],
+    illegalLevels: ['NIVEAUX HORS NORMES', 'ILLEGAL LEVELS'],
+    fullRange: ['PLAGE COMPLÈTE', 'FULL RANGE'],
+    hdrMetadata: ['MÉTADONNÉES HDR', 'HDR METADATA'],
+    noColorInfo: ['COLORIMÉTRIE NON SIGNALÉE', 'NO COLOUR INFO'],
   };
   return words[kind][fr ? 0 : 1];
 }

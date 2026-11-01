@@ -8,7 +8,19 @@ export interface Rule {
   after: number;
   severity: Severity;
   threshold: number;
+  /** What is expected (the colour space: an id of COLOR_SPACES). */
+  expect?: string;
 }
+
+/** The colour spaces an input may be expected in (mirrors COLOR_SPACES). */
+export const COLOR_SPACES: [string, string][] = [
+  ['bt709', 'SDR BT.709 (BT.601 in SD)'],
+  ['bt2020', 'SDR BT.2020'],
+  ['pq', 'HDR10 PQ BT.2020'],
+  ['hlg', 'HLG BT.2020'],
+  ['hdr', 'HDR (PQ or HLG)'],
+  ['any', 'Any'],
+];
 
 export interface Profile {
   id: string;
@@ -52,6 +64,11 @@ export const INPUT_ALARMS: AlarmKind[] = [
   'phase',
   'noTimecode',
   'noCaptions',
+  'colorSpace',
+  'illegalLevels',
+  'fullRange',
+  'hdrMetadata',
+  'noColorInfo',
   'tsPriority1',
   'tsPriority2',
 ];
@@ -111,6 +128,16 @@ export function defaultRule(k: AlarmKind): Rule {
       return r(true, 10, 90);
     case 'outputDropped':
       return r(true, 0, 5);
+    case 'colorSpace':
+      return { ...r(true, 5, 0), expect: 'bt709' };
+    case 'illegalLevels':
+      return r(true, 5, 1);
+    case 'fullRange':
+      return r(false, 5, 0);
+    case 'hdrMetadata':
+      return r(true, 10, 0);
+    case 'noColorInfo':
+      return r(false, 10, 0);
   }
 }
 
@@ -136,6 +163,8 @@ export function thresholdUnit(k: AlarmKind): string {
       return 'corr.';
     case 'outputDropped':
       return '/10 s';
+    case 'illegalLevels':
+      return '% px';
     default:
       return '';
   }
@@ -172,4 +201,9 @@ export const KIND_INFO: Record<AlarmKind, [string, string]> = {
   cpuHigh: ['Processors busy', 'The machine’s processors above the threshold (over 10 s).'],
   memoryHigh: ['Memory full', 'The machine’s memory above the threshold.'],
   outputDropped: ['Output drops frames', 'An output dropped this many pictures in 10 s.'],
+  colorSpace: ['Colour space', 'Colour space or transfer other than the one expected (an input carrying none is not wrong).'],
+  illegalLevels: ['Illegal levels', 'Pixels out of the broadcast range (EBU R103: luma 16–235, chroma 16–240 in 8 bits) above the threshold, measured before any conversion.'],
+  fullRange: ['Full range', 'The picture is coded in full range (PC) instead of limited (TV).'],
+  hdrMetadata: ['HDR metadata missing', 'HDR10 (PQ) without its static metadata (ST 2086, MaxCLL / MaxFALL).'],
+  noColorInfo: ['Colour not signalled', 'The stream carries no colour space, primaries nor transfer.'],
 };

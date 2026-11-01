@@ -230,6 +230,10 @@ pub struct Facts {
     pub hls: Option<(Instant, hls::HlsView, Option<ts::TsView>)>,
     /// A web platform's live: the stream found on its page.
     pub web: Option<crate::weblive::Resolved>,
+    /// The levels measured lately (`signalstats`): lowest and highest luma
+    /// (code values), share of the pixels out of the broadcast range (0–1),
+    /// when.
+    pub levels: Option<([f32; 3], Instant)>,
 }
 
 impl Facts {
@@ -247,6 +251,26 @@ impl Facts {
     /// A line of the decoder's log; true when it is taken (not for the
     /// log shown to people). A timecode it carries goes to `timecode`.
     pub fn line(&mut self, line: &str, now: Instant, timecode: impl FnOnce(String)) -> bool {
+        if line.starts_with("[Parsed_metadata_") {
+            // "lavfi.signalstats.YMAX=235"; the "frame:…" lines are taken too.
+            if let Some((k, v)) = line
+                .split_once("lavfi.signalstats.")
+                .and_then(|(_, r)| r.split_once('='))
+            {
+                let i = match k {
+                    "YMIN" => Some(0),
+                    "YMAX" => Some(1),
+                    "BRNG" => Some(2),
+                    _ => None,
+                };
+                if let (Some(i), Ok(v)) = (i, v.trim().parse::<f32>()) {
+                    let l = self.levels.get_or_insert(([f32::NAN; 3], now));
+                    l.0[i] = v;
+                    l.1 = now;
+                }
+            }
+            return true;
+        }
         if let Some(said) = self.frames.line(line, now) {
             if let frames::Said::Timecode(tc) = said {
                 timecode(tc);
@@ -383,6 +407,16 @@ impl Facts {
         }
         if v.hdr.is_empty() && !v.transfer.is_empty() {
             v.hdr = banner::hdr(&v.transfer).to_string();
+        }
+        // The levels of the last seconds, luma in % of the nominal range
+        // (0 % black, 100 % white).
+        if let Some((l, at)) = self.levels {
+            if now.duration_since(at).as_secs() < 3 && l.iter().all(|x| x.is_finite()) {
+                let k = 2f32.powi(v.bits.max(8) as i32 - 8);
+                let pct = |y: f32| (y - 16.0 * k) / (219.0 * k) * 100.0;
+                v.luma = Some([pct(l[0]), pct(l[1])]);
+                v.illegal = Some(l[2] * 100.0);
+            }
         }
         v
     }

@@ -173,7 +173,7 @@ Tous les widgets sont rendus à l'identique en HTML5 et par le moteur Rust (la g
 | **Supervision** | **État** : PTP (verrouillage, domaine, écart), NTP, alarmes en cours ; **Journal des alarmes** : les défauts des entrées, les plus récents d'abord, avec leur début et leur fin |
 | **Contrôle de l'image** | **Scope** d'une entrée, au choix : **oscilloscope** (luminance), **parade RVB**, **parade Y'CbCr**, **vectorscope** (cibles 75 % et 100 %, ligne des tons chair), **histogramme** (luminance et R, V, B), **chromaticité CIE 1931** (gamuts BT.709, P3, BT.2020, point blanc D65), **fausses couleurs** (bandes d'exposition), **goniomètre** (gauche contre droite, gain automatique) avec **corrélation de phase** (−1 à +1, rouge hors phase) ; graticule selon le transfert du signal : % en SDR et HLG (blanc de référence 75 %), **nits en PQ / HDR10** (1 à 10 000, blanc de référence 203) |
 | **Tableau de bord** | **Courbe** : une mesure sur les dernières minutes (30 s à 5 min), en temps réel : **écart PTP** (lu chaque seconde), **écart NTP**, processeurs, mémoire, processeurs de Strata Multiview et des décodeurs, temps de rendu d'un canal, images par seconde ou loudness court terme d'une entrée ; valeur actuelle, échelle, seuils orange et rouge, minimum, moyenne et maximum. Plusieurs courbes font un tableau de bord dans un multiview |
-| **Signal** | **Fiche signal** d'une entrée : codec et profil, taille, profondeur et échantillonnage (4:2:0, 4:2:2…), **colorimétrie** (matrice, primaires BT.709 / BT.2020 / P3), **transfert** (SDR, **PQ**, **HLG**), plage, badge **SDR / HDR10 / HLG / HDR10+ / Dolby Vision**, métadonnées **ST 2086** et **MaxCLL / MaxFALL**, pistes son avec marques **DOLBY** (Digital, Digital Plus, TrueHD, AC-4, E) et **ATMOS** |
+| **Signal** | **Fiche signal** d'une entrée : codec et profil, taille, profondeur et échantillonnage (4:2:0, 4:2:2…), **colorimétrie** (matrice, primaires BT.709 / BT.2020 / P3), **transfert** (SDR, **PQ**, **HLG**), plage, badge **SDR / HDR10 / HLG / HDR10+ / Dolby Vision**, métadonnées **ST 2086** et **MaxCLL / MaxFALL**, **niveaux mesurés** (luminance mini et maxi en %, part de pixels hors normes, en orange hors EBU R103), pistes son avec marques **DOLBY** (Digital, Digital Plus, TrueHD, AC-4, E) et **ATMOS** |
 | **Labels et logos** | Texte, Image (PNG, JPEG, SVG, GIF, vidéo en boucle) |
 | **Formes** | rectangle, cercle, trait, dégradés |
 
@@ -287,6 +287,10 @@ Chaque entrée et l'installation sont surveillées en permanence (**Diffusion �
 | **Saturation** | alerte | crête d'échantillon à −0,1 dBFS |
 | **Opposition de phase** | alerte | corrélation gauche/droite sous −0,3 depuis 3 s |
 | **Sans timecode** / **Sans sous-titres** | alerte | désactivées par défaut (à activer pour les entrées qui doivent en porter) |
+| **Espace couleur** | alerte | colorimétrie ou transfert autre que celui attendu par le profil : SDR BT.709 (BT.601 accepté en SD, par défaut), SDR BT.2020, HDR10 PQ, HLG, HDR (PQ ou HLG) ou tous |
+| **Niveaux hors normes** | alerte | plus de 1 % des pixels hors de la plage broadcast (EBU R103 : luminance 16–235, chrominance 16–240 en 8 bits) depuis 5 s, mesurés avant toute conversion (`signalstats`, 5 images par seconde) |
+| **Métadonnées HDR absentes** | alerte | HDR10 (PQ) sans ST 2086 ni MaxCLL / MaxFALL |
+| **Plage complète** / **Colorimétrie non signalée** | alerte | image en plage PC au lieu de TV / flux sans espace couleur, primaires ni transfert ; désactivées par défaut |
 | **TR 101 290 P1** / **P2** | alerte | erreurs de priorité 1 (synchro, PAT, continuité, PMT, PID) ; P2 (transport, CRC, PCR) désactivée par défaut, beaucoup de contributions IP espaçant leur PCR de plus de 40 ms |
 | **PTP non verrouillé** | critique | ptp4l tourne sans suivre de grandmaster depuis 5 s |
 | **NTP non synchronisé** | alerte | depuis 60 s |

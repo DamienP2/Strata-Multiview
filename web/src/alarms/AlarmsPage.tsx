@@ -12,7 +12,7 @@ import { NavItem, NavSection, PageHead, SidePage } from '../pages/SidePage';
 import { Card, Field, SaveBar } from '../settings/ui';
 import { api, can, useApp } from '../store';
 import { friendlyError } from '../ui/serverError';
-import { DEFAULT_PROFILE, INPUT_ALARMS, KIND_INFO, SYSTEM_ALARMS, defaultRule, ruleOf, thresholdUnit, type AlarmSettings, type Profile, type Rule, type Webhook } from './model';
+import { COLOR_SPACES, DEFAULT_PROFILE, INPUT_ALARMS, KIND_INFO, SYSTEM_ALARMS, defaultRule, ruleOf, thresholdUnit, type AlarmSettings, type Profile, type Rule, type Webhook } from './model';
 import './alarms.css';
 
 interface AlarmsView {
@@ -535,7 +535,7 @@ function RulesTable({ kinds, get, set }: { kinds: AlarmKind[]; get: (k: AlarmKin
           <th>{t('On')}</th>
           <th>{t('After')}</th>
           <th>{t('Severity')}</th>
-          <th>{t('Threshold')}</th>
+          <th>{t('Threshold / expected')}</th>
         </tr>
       </thead>
       <tbody>
@@ -564,7 +564,15 @@ function RulesTable({ kinds, get, set }: { kinds: AlarmKind[]; get: (k: AlarmKin
                 </select>
               </td>
               <td>
-                {unit ? (
+                {k === 'colorSpace' ? (
+                  <select value={r.expect || 'bt709'} disabled={!r.enabled} onChange={(e) => put({ expect: e.target.value })} title={t('Expected')}>
+                    {COLOR_SPACES.map(([id, name]) => (
+                      <option key={id} value={id}>
+                        {t(name)}
+                      </option>
+                    ))}
+                  </select>
+                ) : unit ? (
                   <span className="al-num">
                     <input type="number" step={k === 'phase' || k === 'clipping' ? 0.1 : 1} value={r.threshold} disabled={!r.enabled} onChange={(e) => put({ threshold: +e.target.value || 0 })} />{' '}
                     {unit}

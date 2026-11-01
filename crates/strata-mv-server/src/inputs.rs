@@ -133,6 +133,25 @@ pub struct Pull {
     pub pcm: Option<u16>,
     /// This ffmpeg knows `-fps_mode` (5.1 and later).
     pub fps_mode: bool,
+    /// The levels measured before any conversion (`signalstats`, five
+    /// pictures a second, reduced without interpolation): out of the
+    /// broadcast range, lowest and highest luma.
+    pub levels: bool,
+}
+
+/// The decoder's filters: each picture told (`showinfo`), and its levels
+/// measured apart (the colour alarms, the Signal widget).
+fn info_filter(levels: bool) -> String {
+    if levels {
+        "showinfo=checksum=0,split=2[o][s];[s]select='not(mod(n\\,5))',\
+         scale=320:-2:flags=neighbor,signalstats=stat=brng,\
+         metadata=mode=print:key=lavfi.signalstats.YMIN,\
+         metadata=mode=print:key=lavfi.signalstats.YMAX,\
+         metadata=mode=print:key=lavfi.signalstats.BRNG,nullsink;[o]null"
+            .into()
+    } else {
+        "showinfo=checksum=0".into()
+    }
 }
 
 /// The sound of an input as listened to: 16-bit stereo at 48 kHz.
@@ -300,7 +319,7 @@ impl InputConfig {
         let from = if pull.audio.is_some() { "1" } else { "0" };
         a.extend(["-map".into(), "0:v:0".into()]);
         if info {
-            a.extend(["-vf", "showinfo=checksum=0"].map(String::from));
+            a.extend(["-vf".to_string(), info_filter(pull.levels)]);
         }
         // Every picture once, none added nor dropped: each is the one
         // `showinfo` told of (its own time).
@@ -407,6 +426,8 @@ struct Live {
     no_info: AtomicBool,
     /// This ffmpeg has no `-fps_mode` (before 5.1): without it.
     no_fps_mode: AtomicBool,
+    /// This ffmpeg cannot measure the levels (`signalstats`): without them.
+    no_levels: AtomicBool,
     /// The ffmpeg receiving a relayed stream.
     relay: Mutex<Option<Child>>,
     /// What it carries (`probe`).
@@ -1053,6 +1074,7 @@ impl Inputs {
                 no_audio: AtomicBool::new(false),
                 no_info: AtomicBool::new(false),
                 no_fps_mode: AtomicBool::new(false),
+                no_levels: AtomicBool::new(false),
                 relay: Mutex::new(None),
                 facts: Arc::new(Mutex::new(crate::probe::Facts::default())),
                 video: Mutex::new(None),
@@ -1499,6 +1521,7 @@ impl Inputs {
                     correlation: l.correlation(),
                     captions,
                     ts,
+                    video: l.video(),
                 }
             })
             .collect()
@@ -2273,6 +2296,7 @@ fn run_stream(l: &Live) {
             .and_then(|t| t.local_addr().ok())
             .map(|a| a.port());
         pull.fps_mode = !l.no_fps_mode.load(Ordering::Relaxed);
+        pull.levels = info && !l.no_levels.load(Ordering::Relaxed);
         let args = c.ffmpeg_args_from(&pull, audio, info).unwrap_or_default();
         let log = Arc::new(Mutex::new(String::new()));
         // The relay first: the decoder reads what it writes.
@@ -2507,6 +2531,11 @@ fn run_stream(l: &Live) {
         // An ffmpeg without -fps_mode (before 5.1): again, without it.
         if pull.fps_mode && said.contains("fps_mode") {
             l.no_fps_mode.store(true, Ordering::Relaxed);
+            continue;
+        }
+        // An ffmpeg that cannot measure the levels: again, without them.
+        if pull.levels && (said.contains("signalstats") || said.contains("nullsink")) {
+            l.no_levels.store(true, Ordering::Relaxed);
             continue;
         }
         // An ffmpeg without showinfo (or its options): again, without it.
@@ -3175,6 +3204,7 @@ mod tests {
             no_audio: AtomicBool::new(false),
             no_info: AtomicBool::new(false),
             no_fps_mode: AtomicBool::new(false),
+            no_levels: AtomicBool::new(false),
             relay: Mutex::new(None),
             facts: Arc::new(Mutex::new(crate::probe::Facts::default())),
             video: Mutex::new(None),

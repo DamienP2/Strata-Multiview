@@ -22,6 +22,48 @@ pub struct Rule {
     pub severity: Severity,
     /// Its threshold, in the fault's unit (see `threshold_unit`).
     pub threshold: f32,
+    /// What is expected (the colour space: see `COLOR_SPACES`).
+    pub expect: String,
+}
+
+/// The colour spaces an input may be expected in: id, name.
+pub const COLOR_SPACES: [(&str, &str); 6] = [
+    ("bt709", "SDR BT.709 (BT.601 en SD)"),
+    ("bt2020", "SDR BT.2020"),
+    ("pq", "HDR10 PQ BT.2020"),
+    ("hlg", "HLG BT.2020"),
+    ("hdr", "HDR (PQ ou HLG)"),
+    ("any", "Toutes"),
+];
+
+/// The colour space is the one expected (`expect`, an id of
+/// `COLOR_SPACES`); unknown (not carried) is never wrong here.
+pub fn color_space_ok(expect: &str, v: &crate::signal::VideoInfo) -> bool {
+    if v.primaries.is_empty() && v.transfer.is_empty() {
+        return true;
+    }
+    let wide = v.primaries.contains("2020");
+    let pq = v.transfer.contains("2084");
+    let hlg = v.transfer.contains("b67");
+    let sd = v
+        .size
+        .split_once('x')
+        .and_then(|(_, h)| h.parse::<u32>().ok())
+        .is_some_and(|h| h < 720);
+    let sdr709 = !wide
+        && !pq
+        && !hlg
+        && (v.primaries.is_empty()
+            || v.primaries == "bt709"
+            || (sd && (v.primaries == "bt470bg" || v.primaries == "smpte170m")));
+    match expect {
+        "bt709" => sdr709,
+        "bt2020" => wide && !pq && !hlg,
+        "pq" => pq && (wide || v.primaries.is_empty()),
+        "hlg" => hlg && (wide || v.primaries.is_empty()),
+        "hdr" => pq || hlg,
+        _ => true,
+    }
 }
 
 impl Default for Rule {
@@ -31,6 +73,7 @@ impl Default for Rule {
             after: 0.0,
             severity: Severity::Warning,
             threshold: 0.0,
+            expect: String::new(),
         }
     }
 }
@@ -42,6 +85,7 @@ pub fn default_rule(k: AlarmKind) -> Rule {
         after,
         severity: k.severity(),
         threshold,
+        expect: String::new(),
     };
     match k {
         AlarmKind::Loss => r(true, 0.0, 0.0),
@@ -77,6 +121,15 @@ pub fn default_rule(k: AlarmKind) -> Rule {
         AlarmKind::MemoryHigh => r(true, 10.0, 90.0),
         // Pictures dropped in 10 s.
         AlarmKind::OutputDropped => r(true, 0.0, 5.0),
+        AlarmKind::ColorSpace => Rule {
+            expect: "bt709".into(),
+            ..r(true, 5.0, 0.0)
+        },
+        // % of the pixels out of the broadcast range (EBU R103: 1 %).
+        AlarmKind::IllegalLevels => r(true, 5.0, 1.0),
+        AlarmKind::FullRange => r(false, 5.0, 0.0),
+        AlarmKind::HdrMetadata => r(true, 10.0, 0.0),
+        AlarmKind::NoColorInfo => r(false, 10.0, 0.0),
     }
 }
 
@@ -90,6 +143,7 @@ pub fn threshold_unit(k: AlarmKind) -> &'static str {
         AlarmKind::Peak => "dBTP",
         AlarmKind::Phase => "corr.",
         AlarmKind::OutputDropped => "/10 s",
+        AlarmKind::IllegalLevels => "% px",
         _ => "",
     }
 }
@@ -258,6 +312,36 @@ mod tests {
         s.normalize();
         assert!(s.rule("cam2", AlarmKind::Freeze).enabled);
         assert!(s.inputs.is_empty());
+    }
+
+    #[test]
+    fn colour_spaces_as_expected() {
+        use crate::signal::VideoInfo;
+        let v = |p: &str, t: &str, size: &str| VideoInfo {
+            primaries: p.into(),
+            transfer: t.into(),
+            size: size.into(),
+            ..Default::default()
+        };
+        let hd709 = v("bt709", "bt709", "1920x1080");
+        let sd601 = v("bt470bg", "bt470bg", "720x576");
+        let hdr10 = v("bt2020", "smpte2084", "3840x2160");
+        let hlg = v("bt2020", "arib-std-b67", "3840x2160");
+        let unknown = v("", "", "1920x1080");
+        assert!(color_space_ok("bt709", &hd709));
+        assert!(color_space_ok("bt709", &sd601));
+        assert!(!color_space_ok("bt709", &hdr10));
+        assert!(color_space_ok("pq", &hdr10));
+        assert!(!color_space_ok("pq", &hlg));
+        assert!(color_space_ok("hdr", &hlg));
+        assert!(!color_space_ok("hdr", &hd709));
+        assert!(color_space_ok("bt709", &unknown));
+        assert!(color_space_ok("any", &hdr10));
+        // BT.601 in HD is not BT.709.
+        assert!(!color_space_ok(
+            "bt709",
+            &v("smpte170m", "bt709", "1920x1080")
+        ));
     }
 
     #[test]

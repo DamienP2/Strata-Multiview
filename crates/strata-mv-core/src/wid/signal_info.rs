@@ -139,6 +139,32 @@ pub fn mastering_text(m: &str) -> String {
     }
 }
 
+/// The levels measured: "−2 % – 104 % · 0.4 % hors normes", amber out of
+/// EBU R103 (luma −1 % to 103 %, 1 % of the pixels at most).
+pub fn levels_text(v: &VideoInfo, fr: bool) -> (String, &'static str) {
+    let pct = |x: f32| {
+        let s = format!("{x:.0}");
+        match s.strip_prefix('-') {
+            Some(r) if r != "0" => format!("\u{2212}{r} %"),
+            Some(_) => "0 %".to_string(),
+            None => format!("{s} %"),
+        }
+    };
+    let Some([lo, hi]) = v.luma else {
+        return (DASH.into(), WHITE);
+    };
+    let mut s = format!("{} – {}", pct(lo), pct(hi));
+    let illegal = v.illegal.unwrap_or(0.0);
+    if illegal >= 0.05 {
+        s.push_str(&format!(
+            " · {illegal:.1} % {}",
+            if fr { "hors normes" } else { "out of range" }
+        ));
+    }
+    let bad = lo < -1.0 || hi > 103.0 || illegal > 1.0;
+    (s, if bad { "#fbbf24" } else { WHITE })
+}
+
 /// A sound track in a line: "E-AC-3 (Dolby Digital Plus) · 5.1(side) · 48 kHz · fra".
 pub fn audio_line(a: &crate::signal::AudioTrack) -> String {
     let mut parts = vec![a.codec.clone()];
@@ -210,6 +236,8 @@ pub fn lines(c: &SignalConfig, v: &VideoInfo, fr: bool) -> Vec<(String, String, 
             _ => DASH.into(),
         };
         out.push((l("Plage", "Range"), range, WHITE));
+        let (levels, col) = levels_text(v, fr);
+        out.push((l("Niveaux (R103)", "Levels (R103)"), levels, col));
     }
     if c.hdr {
         out.push((
@@ -413,6 +441,11 @@ mod tests {
         assert_eq!(get("Colorimétrie"), "BT.2020 NCL · BT.2020");
         assert_eq!(get("Transfert"), "PQ (ST 2084)");
         assert_eq!(get("Plage"), "Limitée (TV)");
+        assert_eq!(get("Niveaux (R103)"), "—");
+        let mut v2 = v.clone();
+        v2.luma = Some([-2.4, 104.0]);
+        v2.illegal = Some(0.42);
+        assert_eq!(levels_text(&v2, true), ("\u{2212}2 % – 104 % · 0.4 % hors normes".to_string(), "#fbbf24"));
         assert_eq!(get("Mastering (ST 2086)"), "P3 · 0.0001–1000 nits");
         assert_eq!(get("MaxCLL / MaxFALL"), "1000 / 400 nits");
         assert_eq!(

@@ -68,6 +68,20 @@ export function masteringText(m: string): string {
   return gamut && lum ? `${gamut} · ${lum}` : gamut || lum;
 }
 
+/** The levels measured, amber out of EBU R103 (mirrors levels_text). */
+export function levelsText(v: Partial<VideoInfo>, fr: boolean): [string, string] {
+  const pct = (x: number) => {
+    const s = x.toFixed(0);
+    return s.startsWith('-') ? (s === '-0' ? '0 %' : `−${s.slice(1)} %`) : `${s} %`;
+  };
+  if (!v.luma) return [DASH, WHITE];
+  const [lo, hi] = v.luma;
+  let s = `${pct(lo)} – ${pct(hi)}`;
+  const illegal = v.illegal ?? 0;
+  if (illegal >= 0.05) s += ` · ${illegal.toFixed(1)} % ${fr ? 'hors normes' : 'out of range'}`;
+  return [s, lo < -1 || hi > 103 || illegal > 1 ? '#fbbf24' : WHITE];
+}
+
 const audioLine = (a: VideoInfo['audio'][number]) =>
   [a.codec, a.layout, a.rate > 0 ? `${a.rate / 1000} kHz` : '', a.language && a.language !== 'und' ? a.language : ''].filter(Boolean).join(' · ');
 
@@ -88,6 +102,8 @@ export function lines(c: Required<SignalConfig>, v: Partial<VideoInfo>, fr: bool
     out.push([l('Colorimétrie', 'Colour space'), orDash(space), WHITE]);
     out.push([l('Transfert', 'Transfer'), named(TRANSFER, v.transfer ?? ''), WHITE]);
     out.push([l('Plage', 'Range'), v.range === 'tv' ? l('Limitée (TV)', 'Limited (TV)') : v.range === 'pc' ? l('Complète (PC)', 'Full (PC)') : DASH, WHITE]);
+    const [levels, col] = levelsText(v, fr);
+    out.push([l('Niveaux (R103)', 'Levels (R103)'), levels, col]);
   }
   if (c.hdr) {
     out.push(['Mastering (ST 2086)', masteringText(v.mastering ?? ''), WHITE]);
