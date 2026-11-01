@@ -20,7 +20,7 @@
 //! Inputs keep running across engine restarts; saving the settings only
 //! restarts the ones that changed.
 
-use std::collections::{BTreeMap, VecDeque};
+use std::collections::{BTreeMap, HashMap, VecDeque};
 use std::io::{BufRead, Read, Write};
 use std::process::{Child, Stdio};
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
@@ -97,6 +97,47 @@ pub struct InputConfig {
     /// to the processor).
     #[serde(default)]
     pub hw_decode: bool,
+    /// Another input its tiles show when it loses its signal ("" = none).
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub backup: String,
+    /// Seconds without a picture before switching to the backup.
+    #[serde(default = "default_failover")]
+    pub failover_after: u32,
+    /// Seconds of steady pictures before coming back (0: stays on the
+    /// backup until switched back by hand).
+    #[serde(default = "default_failback")]
+    pub failback_after: u32,
+}
+
+fn default_failover() -> u32 {
+    2
+}
+fn default_failback() -> u32 {
+    10
+}
+
+impl InputConfig {
+    /// The same stream to receive (the backup settings aside: changing them
+    /// does not restart the input).
+    fn same_stream(&self, other: &InputConfig) -> bool {
+        let strip = |c: &InputConfig| InputConfig {
+            backup: String::new(),
+            failover_after: 0,
+            failback_after: 0,
+            ..c.clone()
+        };
+        strip(self) == strip(other)
+    }
+}
+
+/// Where an input with a backup is.
+#[derive(Debug, Default)]
+struct Failover {
+    on_backup: bool,
+    /// Switched by hand: no automatic return.
+    held: bool,
+    /// Pictures steadily since.
+    ok_since: Option<Instant>,
 }
 
 fn default_buffer() -> u32 {
@@ -1036,6 +1077,9 @@ pub struct Inputs {
     live: RwLock<BTreeMap<String, Arc<Live>>>,
     /// Their tally, UMD and audio levels.
     signals: Arc<crate::signals::Signals>,
+    /// Inputs with a backup: (backup, seconds before, seconds back).
+    backups: RwLock<BTreeMap<String, (String, u32, u32)>>,
+    failover: Mutex<HashMap<String, Failover>>,
 }
 
 impl Inputs {
@@ -1044,8 +1088,20 @@ impl Inputs {
         let mut map = self.live.write().unwrap_or_else(|p| p.into_inner());
         // Switched off: stopped like removed ones.
         let configs: Vec<&InputConfig> = configs.iter().filter(|c| c.enabled).collect();
+        *self.backups.write().unwrap_or_else(|p| p.into_inner()) = configs
+            .iter()
+            .filter(|c| !c.backup.is_empty() && c.backup != c.id)
+            .map(|c| {
+                (
+                    c.id.clone(),
+                    (c.backup.clone(), c.failover_after, c.failback_after),
+                )
+            })
+            .collect();
         map.retain(|id, l| {
-            let keep = configs.iter().any(|c| &c.id == id && **c == l.config);
+            let keep = configs
+                .iter()
+                .any(|c| &c.id == id && c.same_stream(&l.config));
             if !keep {
                 l.halt();
             }
@@ -1389,6 +1445,8 @@ impl Inputs {
 
 impl strata_mv_render::LiveInputs for Inputs {
     fn picture(&self, id: &str) -> Option<Arc<Pixmap>> {
+        let shown = self.backup_of(id);
+        let id = shown.as_deref().unwrap_or(id);
         let live = self
             .live
             .read()
@@ -1404,6 +1462,45 @@ impl strata_mv_render::LiveInputs for Inputs {
     }
 
     fn source(&self, id: &str) -> Option<strata_mv_core::signal::SourceView> {
+        let Some(b) = self.backup_of(id) else {
+            return self.source_of(id);
+        };
+        // The backup's picture, sound and faults; its own tally and name,
+        // and the fault that says it is on its backup.
+        let mut v = self.source_of(&b)?;
+        v.backup = v.name.clone();
+        if let Some(own) = self.source_of(id) {
+            v.name = own.name;
+            v.tally = own.tally;
+        }
+        let mut alarms: Vec<_> = self
+            .signals
+            .alarms(id)
+            .into_iter()
+            .filter(|a| a.kind == strata_mv_core::signal::AlarmKind::OnBackup)
+            .collect();
+        alarms.extend(v.alarms);
+        v.alarms = alarms;
+        Some(v)
+    }
+
+    fn scope(&self, id: &str, r: &strata_mv_render::scopes::ScopeRequest) -> Option<Arc<Pixmap>> {
+        let l = self
+            .live
+            .read()
+            .unwrap_or_else(|p| p.into_inner())
+            .get(id)?
+            .clone();
+        l.scope(r)
+    }
+
+    fn system(&self) -> strata_mv_core::signal::SystemView {
+        self.signals.system()
+    }
+}
+
+impl Inputs {
+    fn source_of(&self, id: &str) -> Option<strata_mv_core::signal::SourceView> {
         let l = self
             .live
             .read()
@@ -1439,21 +1536,8 @@ impl strata_mv_render::LiveInputs for Inputs {
             alarms: self.signals.alarms(id),
             video: l.video(),
             correlation: l.correlation(),
+            backup: String::new(),
         })
-    }
-
-    fn scope(&self, id: &str, r: &strata_mv_render::scopes::ScopeRequest) -> Option<Arc<Pixmap>> {
-        let l = self
-            .live
-            .read()
-            .unwrap_or_else(|p| p.into_inner())
-            .get(id)?
-            .clone();
-        l.scope(r)
-    }
-
-    fn system(&self) -> strata_mv_core::signal::SystemView {
-        self.signals.system()
     }
 }
 
@@ -1501,7 +1585,8 @@ impl Inputs {
             .cloned()
             .collect();
         let now = Instant::now();
-        list.iter()
+        let mut out: Vec<crate::signals::Watched> = list
+            .iter()
             .map(|l| {
                 let last = *l.last_at.lock().unwrap_or_else(|p| p.into_inner());
                 let rate = *l.rate.lock().unwrap_or_else(|p| p.into_inner());
@@ -1522,9 +1607,114 @@ impl Inputs {
                     captions,
                     ts,
                     video: l.video(),
+                    on_backup: false,
                 }
             })
+            .collect();
+        self.step_failover(&mut out, now);
+        out
+    }
+
+    /// Switches the inputs that lost their signal to their backup, and back
+    /// once they have been steady long enough.
+    fn step_failover(&self, list: &mut [crate::signals::Watched], now: Instant) {
+        let backups = self
+            .backups
+            .read()
+            .unwrap_or_else(|p| p.into_inner())
+            .clone();
+        let state: HashMap<String, (bool, Option<Instant>)> = list
+            .iter()
+            .map(|w| (w.id.clone(), (w.fresh, w.lost_at)))
+            .collect();
+        let mut fo = self.failover.lock().unwrap_or_else(|p| p.into_inner());
+        fo.retain(|id, _| backups.contains_key(id));
+        for (id, (backup, after, back)) in &backups {
+            let (fresh, last) = state.get(id).copied().unwrap_or((false, None));
+            let backup_fresh = state.get(backup).is_some_and(|s| s.0);
+            let st = fo.entry(id.clone()).or_default();
+            if fresh {
+                st.ok_since.get_or_insert(now);
+            } else {
+                st.ok_since = None;
+            }
+            if !st.on_backup {
+                // Down for long enough (never seen: at once), the backup live.
+                let down = !fresh
+                    && last.is_none_or(|t| now.duration_since(t).as_secs_f32() >= *after as f32);
+                if down && backup_fresh {
+                    st.on_backup = true;
+                    st.held = false;
+                    tracing::warn!("input {id}: no signal, its backup {backup} shown");
+                }
+            } else if !st.held
+                && *back > 0
+                && st
+                    .ok_since
+                    .is_some_and(|t| now.duration_since(t).as_secs() >= *back as u64)
+            {
+                st.on_backup = false;
+                tracing::info!("input {id}: steady again, shown again");
+            }
+        }
+        for w in list.iter_mut() {
+            w.on_backup = fo.get(&w.id).is_some_and(|s| s.on_backup);
+        }
+    }
+
+    /// The inputs shown through their backup: (input, backup).
+    pub fn failovers(&self) -> Vec<(String, String)> {
+        let backups = self.backups.read().unwrap_or_else(|p| p.into_inner());
+        self.failover
+            .lock()
+            .unwrap_or_else(|p| p.into_inner())
+            .iter()
+            .filter(|(_, s)| s.on_backup)
+            .filter_map(|(id, _)| backups.get(id).map(|b| (id.clone(), b.0.clone())))
             .collect()
+    }
+
+    /// The backup shown instead of `id`, if it is.
+    pub fn backup_of(&self, id: &str) -> Option<String> {
+        let on = self
+            .failover
+            .lock()
+            .unwrap_or_else(|p| p.into_inner())
+            .get(id)
+            .is_some_and(|s| s.on_backup);
+        on.then(|| {
+            self.backups
+                .read()
+                .unwrap_or_else(|p| p.into_inner())
+                .get(id)
+                .map(|b| b.0.clone())
+        })
+        .flatten()
+    }
+
+    /// Switches an input to its backup (held until switched back) or back.
+    pub fn switch(&self, id: &str, to_backup: bool) -> Result<(), String> {
+        if !self
+            .backups
+            .read()
+            .unwrap_or_else(|p| p.into_inner())
+            .contains_key(id)
+        {
+            return Err("this input has no backup".into());
+        }
+        let mut fo = self.failover.lock().unwrap_or_else(|p| p.into_inner());
+        let st = fo.entry(id.to_string()).or_default();
+        st.on_backup = to_backup;
+        st.held = to_backup;
+        tracing::info!(
+            "input {id}: {} by hand",
+            if to_backup {
+                "backup shown"
+            } else {
+                "shown again"
+            }
+        );
+        Ok(())
     }
 }
 
@@ -1705,6 +1895,24 @@ pub async fn playlist_channels(
 pub struct AnalysisQuery {
     #[serde(default)]
     refresh: bool,
+}
+
+#[derive(Deserialize)]
+pub struct SwitchBody {
+    /// true: its backup shown (held until switched back); false: itself.
+    backup: bool,
+}
+
+/// `PUT /api/inputs/{id}/backup`: shows an input's backup, or the input again.
+pub async fn switch_backup(
+    State(s): State<Shared>,
+    CurrentUser(me): CurrentUser,
+    UrlPath(id): UrlPath<String>,
+    Json(b): Json<SwitchBody>,
+) -> ApiResult<StatusCode> {
+    crate::api::require(me.role != crate::auth::Role::Viewer)?;
+    s.inputs.switch(&id, b.backup).map_err(crate::api::bad)?;
+    Ok(StatusCode::NO_CONTENT)
 }
 
 /// What an input carries (Video inputs page).
@@ -3180,6 +3388,9 @@ mod tests {
             enabled: true,
             port: 0,
             latency: 120,
+            backup: String::new(),
+            failover_after: 2,
+            failback_after: 10,
         }
     }
 

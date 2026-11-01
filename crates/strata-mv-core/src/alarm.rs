@@ -95,6 +95,7 @@ pub fn default_rule(k: AlarmKind) -> Rule {
         AlarmKind::Fps => r(true, 5.0, 10.0),
         // Reconnections within a minute.
         AlarmKind::Reconnecting => r(true, 0.0, 3.0),
+        AlarmKind::OnBackup => r(true, 0.0, 0.0),
         // dBFS under which a channel is silent.
         AlarmKind::Silence => r(true, 5.0, -60.0),
         AlarmKind::ChannelSilent => r(true, 10.0, -60.0),

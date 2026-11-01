@@ -62,6 +62,7 @@ pub fn router() -> Router<Shared> {
         .route("/api/inputs/{id}/audio", get(crate::inputs::audio))
         .route("/api/scopes", get(crate::inputs::scopes_ws))
         .route("/api/inputs/{id}/analysis", get(crate::inputs::analysis))
+        .route("/api/inputs/{id}/backup", put(crate::inputs::switch_backup))
         .route("/api/users", get(list_users).post(create_user))
         .route("/api/users/{id}", put(update_user).delete(delete_user))
         .route("/api/keys", get(list_keys).post(create_key))

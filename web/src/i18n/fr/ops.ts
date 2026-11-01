@@ -7,4 +7,6 @@ export const ops: Record<string, string> = {
   '4:3 frame': 'Cadre 4:3',
   '14:9 frame': 'Cadre 14:9',
   'AFD: the active area the picture signals, and its code': 'AFD : la zone active signalée par l’image, et son code',
+  'On backup': 'Sur secours',
+  'The input lost its signal: its tiles show its backup input.': 'L’entrée a perdu son signal : ses tuiles montrent son entrée de secours.',
 };

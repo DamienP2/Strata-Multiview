@@ -140,6 +140,8 @@ pub struct Watched {
     pub ts: (bool, bool),
     /// What its picture is (colour space, levels).
     pub video: strata_mv_core::signal::VideoInfo,
+    /// Its tiles show its backup.
+    pub on_backup: bool,
 }
 
 /// What is known of the plant to look at its faults.
@@ -249,6 +251,9 @@ pub struct SignalView {
     /// The phase correlation of its left and right (−1 to 1, two decimals).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub correlation: Option<f32>,
+    /// Lost its signal: the id of the backup its tiles show.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub backup: Option<String>,
 }
 
 fn is_off(t: &Tally) -> bool {
@@ -676,6 +681,9 @@ impl Signals {
                     seen.push((w.id.clone(), w.name.clone(), k, since));
                 };
                 let rule = |k: AlarmKind| settings.rule(&w.id, k);
+                if w.on_backup {
+                    on(AlarmKind::OnBackup, None);
+                }
                 if !w.fresh {
                     // No picture: the other faults of the picture do not count;
                     // none yet while it starts (it connects).
@@ -1227,6 +1235,10 @@ pub async fn broadcast(s: crate::state::Shared) {
         for (id, vi) in new_video {
             now.entry(id).or_default().video = Some(vi);
         }
+        // The inputs on their backup: their tiles show it.
+        for (id, b) in s.inputs.failovers() {
+            now.entry(id).or_default().backup = Some(b);
+        }
         // With the meters: the inputs heard.
         for (id, c) in s.inputs.correlations() {
             if let Some(v) = now.get_mut(&id).filter(|v| !v.levels.is_empty()) {
@@ -1535,6 +1547,7 @@ mod tests {
             captions: false,
             ts: (false, false),
             video: Default::default(),
+            on_backup: false,
         }
     }
 

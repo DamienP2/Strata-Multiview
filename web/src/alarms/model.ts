@@ -81,6 +81,7 @@ export const DEFAULT_PROFILE = 'default';
 /** The faults of an input, in the order of the settings (mirrors INPUT_ALARMS). */
 export const INPUT_ALARMS: AlarmKind[] = [
   'loss',
+  'onBackup',
   'black',
   'freeze',
   'fps',
@@ -126,6 +127,8 @@ export function defaultRule(k: AlarmKind): Rule {
       return r(true, 5, 10);
     case 'reconnecting':
       return r(true, 0, 3);
+    case 'onBackup':
+      return r(true, 0, 0);
     case 'silence':
       return r(true, 5, -60);
     case 'channelSilent':
@@ -215,6 +218,7 @@ export const KIND_INFO: Record<AlarmKind, [string, string]> = {
   freeze: ['Frozen picture', 'A picture that moved stops (only noise left), or repeats to the pixel; never colour bars or a plain picture.'],
   fps: ['Abnormal frame rate', 'Pictures a second away from the format’s rate by more than the threshold.'],
   reconnecting: ['Reconnecting', 'The input stopped and started again this many times in a minute.'],
+  onBackup: ['On backup', 'The input lost its signal: its tiles show its backup input.'],
   silence: ['Silence', 'Every audio channel under the threshold.'],
   channelSilent: ['Channel silent', 'One channel under the threshold while another is heard (the LFE of 5.1 aside).'],
   loud: ['Too loud', 'Short-term loudness above the target (−23 LUFS) by more than the threshold.'],

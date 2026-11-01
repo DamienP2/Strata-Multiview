@@ -483,6 +483,7 @@ export type AlarmKind =
   | 'phase'
   | 'fps'
   | 'reconnecting'
+  | 'onBackup'
   | 'noTimecode'
   | 'noCaptions'
   | 'tsPriority1'
@@ -712,6 +713,7 @@ export function alarmText(kind: AlarmKind, lang = 'fr'): string {
     phase: ['OPPOSITION DE PHASE', 'OUT OF PHASE'],
     fps: ['CADENCE ANORMALE', 'ABNORMAL FRAME RATE'],
     reconnecting: ['RECONNEXIONS', 'RECONNECTING'],
+    onBackup: ['SUR SECOURS', 'ON BACKUP'],
     noTimecode: ['SANS TIMECODE', 'NO TIMECODE'],
     noCaptions: ['SANS SOUS-TITRES', 'NO CAPTIONS'],
     tsPriority1: ['TR 101 290 P1', 'TR 101 290 P1'],

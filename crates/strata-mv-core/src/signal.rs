@@ -158,6 +158,8 @@ pub enum AlarmKind {
     HdrMetadata,
     /// No colour information carried.
     NoColorInfo,
+    /// The input lost its signal: its tiles show its backup.
+    OnBackup,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord, Serialize, Deserialize)]
@@ -168,8 +170,9 @@ pub enum Severity {
 }
 
 /// The faults of an input, in the order of the settings.
-pub const INPUT_ALARMS: [AlarmKind; 21] = [
+pub const INPUT_ALARMS: [AlarmKind; 22] = [
     AlarmKind::Loss,
+    AlarmKind::OnBackup,
     AlarmKind::Black,
     AlarmKind::Freeze,
     AlarmKind::Fps,
@@ -235,6 +238,7 @@ impl AlarmKind {
             AlarmKind::Phase => ("OPPOSITION DE PHASE", "OUT OF PHASE"),
             AlarmKind::Fps => ("CADENCE ANORMALE", "ABNORMAL FRAME RATE"),
             AlarmKind::Reconnecting => ("RECONNEXIONS", "RECONNECTING"),
+            AlarmKind::OnBackup => ("SUR SECOURS", "ON BACKUP"),
             AlarmKind::NoTimecode => ("SANS TIMECODE", "NO TIMECODE"),
             AlarmKind::NoCaptions => ("SANS SOUS-TITRES", "NO CAPTIONS"),
             AlarmKind::TsPriority1 => ("TR 101 290 P1", "TR 101 290 P1"),
@@ -297,6 +301,9 @@ pub struct SourceView {
     /// The phase correlation of its left and right (−1 to 1) over the last
     /// 300 ms, none when silent.
     pub correlation: Option<f32>,
+    /// Shown instead: its backup's name (the picture, sound and faults
+    /// are the backup's; "" = itself).
+    pub backup: String,
 }
 
 /// What a live input's picture and sound are: the Signal widget, the scopes'
