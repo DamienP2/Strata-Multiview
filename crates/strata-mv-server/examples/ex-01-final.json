@@ -4,24 +4,28 @@
   "name": "Régie finale d’une chaîne",
   "category": "Régie finale",
   "tags": [
-   "8 tuiles"
+   "8 sources",
+   "Repères",
+   "Fiche signal"
   ],
-  "summary": "PGM, PVW, playout A et B, quatre retours, 16 canaux audio, loudness, alarmes.",
-  "description": "Le contrôle final d’une chaîne : le programme en grand avec son timecode, son loudness et ses alarmes ; la préparation, les deux playouts et quatre retours ; les 16 canaux audio du programme, son loudness EBU R128, l’état de la synchro et le journal des alarmes.",
+  "description": "Le contrôle final d’une chaîne : le programme en grand avec ses zones de sécurité, son timecode et son loudness ; la préparation, les deux playouts et quatre retours ; les mesures clés en valeurs (loudness intégré, true peak, format, pire alarme), la fiche signal du programme, ses 16 canaux audio, son loudness EBU R128 et le journal des alarmes.",
+  "summary": "PGM avec zones de sécurité, PVW, deux playouts, quatre retours, 16 canaux, loudness et fiche signal.",
   "en": {
    "name": "Final control of a channel",
-   "summary": "PGM, PVW, playout A and B, four returns, 16 audio channels, loudness, alarms.",
-   "description": "The final control of a channel: the programme large with its timecode, loudness and alarms; preview, both playouts and four returns; the programme’s 16 audio channels, its EBU R128 loudness, the state of sync and the alarm log.",
    "category": "Final control",
    "tags": [
-    "8 tiles"
-   ]
+    "8 sources",
+    "Safe areas",
+    "Signal sheet"
+   ],
+   "summary": "PGM with safe areas, PVW, two playouts, four returns, 16 channels, loudness and signal sheet.",
+   "description": "The final control of a channel: the programme large with its safe areas, timecode and loudness; preview, both playouts and four returns; the key measures as values (integrated loudness, true peak, format, worst fault), the programme’s signal sheet, its 16 audio channels, its EBU R128 loudness and the alarm log."
   }
  },
  "project": {
   "id": "",
   "name": "Régie finale d’une chaîne",
-  "description": "",
+  "description": "PGM avec zones de sécurité, PVW, deux playouts, quatre retours, 16 canaux, loudness et fiche signal.",
   "width": 1920,
   "height": 1080,
   "frameRate": {
@@ -30,21 +34,14 @@
   },
   "templates": [
    {
-    "id": "6b1d2514f040",
+    "id": "1fab57b4d11f",
     "name": "Régie finale d’une chaîne",
     "duration": 50.0,
-    "markers": [
-     {
-      "id": "27f4962693d6",
-      "frame": 25.0,
-      "name": "On air",
-      "kind": "out"
-     }
-    ],
+    "markers": [],
     "fields": [],
     "layers": [
      {
-      "id": "hj4lfytyv9j5",
+      "id": "d988e105963b",
       "name": "Bandeau",
       "parent": null,
       "type": "rect",
@@ -85,9 +82,9 @@
        "width": 1920.0,
        "height": 60.0,
        "fill": [
-        0.0627451,
-        0.078431375,
-        0.105882354,
+        0.062745,
+        0.078431,
+        0.105882,
         1.0
        ]
       },
@@ -95,7 +92,98 @@
       "bindings": {}
      },
      {
-      "id": "tpqkszxwv9j6",
+      "id": "0b3f6b26d258",
+      "name": "Accent",
+      "parent": null,
+      "type": "rect",
+      "shape": "rect",
+      "perCorner": false,
+      "corners": [
+       0.0,
+       0.0,
+       0.0,
+       0.0
+      ],
+      "skewUnit": "px",
+      "skewPx": 120.0,
+      "skewDeg": 15.0,
+      "trapMode": "percent",
+      "trapTop": 70.0,
+      "trapLeft": 80.0,
+      "trapRight": 200.0,
+      "vertexRound": 0.0,
+      "fillStyle": {
+       "kind": "solid",
+       "color2": "#ff3b5c",
+       "angle": 90.0,
+       "image": "",
+       "fit": "cover"
+      },
+      "strokeStyle": {
+       "position": "inside",
+       "dash": "solid",
+       "join": "miter",
+       "cap": "butt"
+      },
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 6.0,
+       "height": 60.0,
+       "fill": [
+        1.0,
+        0.231373,
+        0.360784,
+        1.0
+       ]
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "45489160d997",
+      "name": "Heure station",
+      "parent": null,
+      "type": "timecode",
+      "input": "",
+      "label": "",
+      "color": "#ff3b5c",
+      "background": "#00000000",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 1564.0,
+       "y": 6.0,
+       "width": 340.0,
+       "height": 48.0
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "d1ef85cdd6aa",
+      "name": "État",
+      "parent": null,
+      "type": "status",
+      "ptp": false,
+      "ntp": false,
+      "alarms": true,
+      "background": "#00000000",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 1148.0,
+       "y": 6.0,
+       "width": 400.0,
+       "height": 48.0
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "ed9264fc72f0",
       "name": "Régie finale · Canal 1",
       "parent": null,
       "type": "text",
@@ -137,14 +225,14 @@
       "visible": true,
       "locked": false,
       "props": {
-       "x": 20.0,
+       "x": 24.0,
        "y": 6.0,
-       "width": 1000.0,
+       "width": 1108.0,
        "height": 48.0,
        "fill": [
-        0.9607843,
-        0.96862745,
-        0.98039216,
+        0.960784,
+        0.968627,
+        0.980392,
         1.0
        ],
        "fontSize": 30.0
@@ -153,47 +241,7 @@
       "bindings": {}
      },
      {
-      "id": "vb8pmpp8v9j6",
-      "name": "État",
-      "parent": null,
-      "type": "status",
-      "ptp": false,
-      "ntp": false,
-      "alarms": true,
-      "background": "#00000000",
-      "visible": true,
-      "locked": false,
-      "props": {
-       "x": 1060.0,
-       "y": 6.0,
-       "width": 420.0,
-       "height": 48.0
-      },
-      "tracks": {},
-      "bindings": {}
-     },
-     {
-      "id": "ln2g2kl2v9j6",
-      "name": "Timecode",
-      "parent": null,
-      "type": "timecode",
-      "input": "",
-      "label": "",
-      "color": "#fbbf24",
-      "background": "#00000000",
-      "visible": true,
-      "locked": false,
-      "props": {
-       "x": 1496.0,
-       "y": 6.0,
-       "width": 408.0,
-       "height": 48.0
-      },
-      "tracks": {},
-      "bindings": {}
-     },
-     {
-      "id": "5hspyjn1v9j6",
+      "id": "5e53c7081ca3",
       "name": "Source 1",
       "parent": null,
       "type": "source",
@@ -229,7 +277,8 @@
        "yellow": -18.0,
        "red": -9.0,
        "hold": true,
-       "max": 0
+       "max": 0,
+       "first": 0
       },
       "badge": false,
       "noSignal": "",
@@ -237,19 +286,415 @@
       "timecode": "station",
       "loudness": true,
       "alarms": true,
+      "markers": {
+       "action": true,
+       "title": true,
+       "fourThree": false,
+       "fourteenNine": false,
+       "centre": false,
+       "afd": false,
+       "color": "#ffffffb3"
+      },
       "visible": true,
       "locked": false,
       "props": {
        "x": 16.0,
        "y": 72.0,
-       "width": 960.0,
-       "height": 540.0
+       "width": 1024.0,
+       "height": 576.0
       },
       "tracks": {},
       "bindings": {}
      },
      {
-      "id": "89ljdvouv9j6",
+      "id": "bbea042e64be",
+      "name": "Valeur · Loudness I",
+      "parent": null,
+      "type": "value",
+      "input": "{{input:1}}",
+      "kind": "integrated",
+      "label": "Loudness I",
+      "showLabel": true,
+      "stack": false,
+      "align": "center",
+      "warn": 0.0,
+      "crit": 0.0,
+      "color": "#ffffff",
+      "background": "#0b0d12d9",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 16.0,
+       "y": 660.0,
+       "width": 247.0,
+       "height": 64.0
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "1c6e46e0e6cd",
+      "name": "Valeur · True peak",
+      "parent": null,
+      "type": "value",
+      "input": "{{input:1}}",
+      "kind": "truePeak",
+      "label": "True peak",
+      "showLabel": true,
+      "stack": false,
+      "align": "center",
+      "warn": 0.0,
+      "crit": 0.0,
+      "color": "#ffffff",
+      "background": "#0b0d12d9",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 275.0,
+       "y": 660.0,
+       "width": 247.0,
+       "height": 64.0
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "16b65dfa95eb",
+      "name": "Valeur · format",
+      "parent": null,
+      "type": "value",
+      "input": "{{input:1}}",
+      "kind": "format",
+      "label": "",
+      "showLabel": true,
+      "stack": false,
+      "align": "center",
+      "warn": 0.0,
+      "crit": 0.0,
+      "color": "#ffffff",
+      "background": "#0b0d12d9",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 534.0,
+       "y": 660.0,
+       "width": 247.0,
+       "height": 64.0
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "ecc9fb9c48a8",
+      "name": "Valeur · PGM",
+      "parent": null,
+      "type": "value",
+      "input": "{{input:1}}",
+      "kind": "alarm",
+      "label": "PGM",
+      "showLabel": true,
+      "stack": false,
+      "align": "center",
+      "warn": 0.0,
+      "crit": 0.0,
+      "color": "#ffffff",
+      "background": "#0b0d12d9",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 793.0,
+       "y": 660.0,
+       "width": 247.0,
+       "height": 64.0
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "c2684ecaa695",
+      "name": "Source 5",
+      "parent": null,
+      "type": "source",
+      "input": "{{input:5}}",
+      "fit": "contain",
+      "background": "#0b0d12",
+      "border": 4.0,
+      "tally": {
+       "border": true,
+       "program": "#e5212b",
+       "preview": "#17b14a",
+       "aux": "#f2b705",
+       "off": "#262a33"
+      },
+      "umd": {
+       "position": "bottom",
+       "size": 11.0,
+       "outside": false,
+       "text": "RETOUR SAT",
+       "font": "Inter",
+       "weight": 600,
+       "align": "center",
+       "color": "#ffffff",
+       "background": "#000000b3",
+       "lamps": true
+      },
+      "vu": {
+       "position": "right",
+       "width": 6.0,
+       "gap": 2.0,
+       "margin": 6.0,
+       "min": -60.0,
+       "yellow": -18.0,
+       "red": -9.0,
+       "hold": true,
+       "max": 2,
+       "first": 0
+      },
+      "badge": false,
+      "noSignal": "",
+      "noSignalLook": "bars",
+      "timecode": "off",
+      "loudness": false,
+      "alarms": true,
+      "markers": {
+       "action": false,
+       "title": false,
+       "fourThree": false,
+       "fourteenNine": false,
+       "centre": false,
+       "afd": false,
+       "color": "#ffffffb3"
+      },
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 16.0,
+       "y": 736.0,
+       "width": 247.0,
+       "height": 144.0
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "51eb3e45ea93",
+      "name": "Source 6",
+      "parent": null,
+      "type": "source",
+      "input": "{{input:6}}",
+      "fit": "contain",
+      "background": "#0b0d12",
+      "border": 4.0,
+      "tally": {
+       "border": true,
+       "program": "#e5212b",
+       "preview": "#17b14a",
+       "aux": "#f2b705",
+       "off": "#262a33"
+      },
+      "umd": {
+       "position": "bottom",
+       "size": 11.0,
+       "outside": false,
+       "text": "RETOUR TNT",
+       "font": "Inter",
+       "weight": 600,
+       "align": "center",
+       "color": "#ffffff",
+       "background": "#000000b3",
+       "lamps": true
+      },
+      "vu": {
+       "position": "right",
+       "width": 6.0,
+       "gap": 2.0,
+       "margin": 6.0,
+       "min": -60.0,
+       "yellow": -18.0,
+       "red": -9.0,
+       "hold": true,
+       "max": 2,
+       "first": 0
+      },
+      "badge": false,
+      "noSignal": "",
+      "noSignalLook": "bars",
+      "timecode": "off",
+      "loudness": false,
+      "alarms": true,
+      "markers": {
+       "action": false,
+       "title": false,
+       "fourThree": false,
+       "fourteenNine": false,
+       "centre": false,
+       "afd": false,
+       "color": "#ffffffb3"
+      },
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 275.0,
+       "y": 736.0,
+       "width": 247.0,
+       "height": 144.0
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "194d90a08e2f",
+      "name": "Source 7",
+      "parent": null,
+      "type": "source",
+      "input": "{{input:7}}",
+      "fit": "contain",
+      "background": "#0b0d12",
+      "border": 4.0,
+      "tally": {
+       "border": true,
+       "program": "#e5212b",
+       "preview": "#17b14a",
+       "aux": "#f2b705",
+       "off": "#262a33"
+      },
+      "umd": {
+       "position": "bottom",
+       "size": 11.0,
+       "outside": false,
+       "text": "RETOUR IPTV",
+       "font": "Inter",
+       "weight": 600,
+       "align": "center",
+       "color": "#ffffff",
+       "background": "#000000b3",
+       "lamps": true
+      },
+      "vu": {
+       "position": "right",
+       "width": 6.0,
+       "gap": 2.0,
+       "margin": 6.0,
+       "min": -60.0,
+       "yellow": -18.0,
+       "red": -9.0,
+       "hold": true,
+       "max": 2,
+       "first": 0
+      },
+      "badge": false,
+      "noSignal": "",
+      "noSignalLook": "bars",
+      "timecode": "off",
+      "loudness": false,
+      "alarms": true,
+      "markers": {
+       "action": false,
+       "title": false,
+       "fourThree": false,
+       "fourteenNine": false,
+       "centre": false,
+       "afd": false,
+       "color": "#ffffffb3"
+      },
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 534.0,
+       "y": 736.0,
+       "width": 247.0,
+       "height": 144.0
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "2bfbaea2ce64",
+      "name": "Source 8",
+      "parent": null,
+      "type": "source",
+      "input": "{{input:8}}",
+      "fit": "contain",
+      "background": "#0b0d12",
+      "border": 4.0,
+      "tally": {
+       "border": true,
+       "program": "#e5212b",
+       "preview": "#17b14a",
+       "aux": "#f2b705",
+       "off": "#262a33"
+      },
+      "umd": {
+       "position": "bottom",
+       "size": 11.0,
+       "outside": false,
+       "text": "RETOUR OTT",
+       "font": "Inter",
+       "weight": 600,
+       "align": "center",
+       "color": "#ffffff",
+       "background": "#000000b3",
+       "lamps": true
+      },
+      "vu": {
+       "position": "right",
+       "width": 6.0,
+       "gap": 2.0,
+       "margin": 6.0,
+       "min": -60.0,
+       "yellow": -18.0,
+       "red": -9.0,
+       "hold": true,
+       "max": 2,
+       "first": 0
+      },
+      "badge": false,
+      "noSignal": "",
+      "noSignalLook": "bars",
+      "timecode": "off",
+      "loudness": false,
+      "alarms": true,
+      "markers": {
+       "action": false,
+       "title": false,
+       "fourThree": false,
+       "fourteenNine": false,
+       "centre": false,
+       "afd": false,
+       "color": "#ffffffb3"
+      },
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 793.0,
+       "y": 736.0,
+       "width": 247.0,
+       "height": 144.0
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "7aba9effb9c2",
+      "name": "Journal des alarmes",
+      "parent": null,
+      "type": "alarmLog",
+      "rows": 5,
+      "ended": true,
+      "background": "#0b0d12d9",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 16.0,
+       "y": 892.0,
+       "width": 1024.0,
+       "height": 172.0
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "f34f0b55a874",
       "name": "Source 2",
       "parent": null,
       "type": "source",
@@ -285,7 +730,8 @@
        "yellow": -18.0,
        "red": -9.0,
        "hold": true,
-       "max": 0
+       "max": 2,
+       "first": 0
       },
       "badge": false,
       "noSignal": "",
@@ -293,19 +739,28 @@
       "timecode": "off",
       "loudness": false,
       "alarms": true,
+      "markers": {
+       "action": false,
+       "title": false,
+       "fourThree": false,
+       "fourteenNine": false,
+       "centre": false,
+       "afd": false,
+       "color": "#ffffffb3"
+      },
       "visible": true,
       "locked": false,
       "props": {
-       "x": 988.0,
+       "x": 1052.0,
        "y": 72.0,
-       "width": 448.0,
-       "height": 252.0
+       "width": 432.0,
+       "height": 245.0
       },
       "tracks": {},
       "bindings": {}
      },
      {
-      "id": "fnqx5af7v9j6",
+      "id": "0effa0776125",
       "name": "Source 3",
       "parent": null,
       "type": "source",
@@ -341,7 +796,8 @@
        "yellow": -18.0,
        "red": -9.0,
        "hold": true,
-       "max": 0
+       "max": 2,
+       "first": 0
       },
       "badge": false,
       "noSignal": "",
@@ -349,19 +805,28 @@
       "timecode": "off",
       "loudness": false,
       "alarms": true,
+      "markers": {
+       "action": false,
+       "title": false,
+       "fourThree": false,
+       "fourteenNine": false,
+       "centre": false,
+       "afd": false,
+       "color": "#ffffffb3"
+      },
       "visible": true,
       "locked": false,
       "props": {
-       "x": 988.0,
-       "y": 336.0,
-       "width": 448.0,
-       "height": 252.0
+       "x": 1052.0,
+       "y": 329.0,
+       "width": 432.0,
+       "height": 245.0
       },
       "tracks": {},
       "bindings": {}
      },
      {
-      "id": "28djluvwv9j6",
+      "id": "e1cdb05473bd",
       "name": "Source 4",
       "parent": null,
       "type": "source",
@@ -397,7 +862,8 @@
        "yellow": -18.0,
        "red": -9.0,
        "hold": true,
-       "max": 0
+       "max": 2,
+       "first": 0
       },
       "badge": false,
       "noSignal": "",
@@ -405,243 +871,154 @@
       "timecode": "off",
       "loudness": false,
       "alarms": true,
+      "markers": {
+       "action": false,
+       "title": false,
+       "fourThree": false,
+       "fourteenNine": false,
+       "centre": false,
+       "afd": false,
+       "color": "#ffffffb3"
+      },
       "visible": true,
       "locked": false,
       "props": {
-       "x": 988.0,
-       "y": 600.0,
-       "width": 448.0,
-       "height": 252.0
+       "x": 1052.0,
+       "y": 587.0,
+       "width": 432.0,
+       "height": 245.0
       },
       "tracks": {},
       "bindings": {}
      },
      {
-      "id": "4fmednpqv9j6",
-      "name": "Source 5",
+      "id": "0eb1965b8de1",
+      "name": "Valeur · Synchro",
       "parent": null,
-      "type": "source",
-      "input": "{{input:5}}",
-      "fit": "contain",
-      "background": "#0b0d12",
-      "border": 4.0,
-      "tally": {
-       "border": true,
-       "program": "#e5212b",
-       "preview": "#17b14a",
-       "aux": "#f2b705",
-       "off": "#262a33"
-      },
-      "umd": {
-       "position": "bottom",
-       "size": 11.0,
-       "outside": false,
-       "text": "",
-       "font": "Inter",
-       "weight": 600,
-       "align": "center",
-       "color": "#ffffff",
-       "background": "#000000b3",
-       "lamps": true
-      },
-      "vu": {
-       "position": "right",
-       "width": 6.0,
-       "gap": 2.0,
-       "margin": 6.0,
-       "min": -60.0,
-       "yellow": -18.0,
-       "red": -9.0,
-       "hold": true,
-       "max": 2
-      },
-      "badge": false,
-      "noSignal": "",
-      "noSignalLook": "bars",
-      "timecode": "off",
-      "loudness": false,
-      "alarms": true,
+      "type": "value",
+      "input": "",
+      "kind": "ptp",
+      "label": "Synchro",
+      "showLabel": true,
+      "stack": true,
+      "align": "center",
+      "warn": 0.0,
+      "crit": 0.0,
+      "color": "#ffffff",
+      "background": "#0b0d12d9",
       "visible": true,
       "locked": false,
       "props": {
-       "x": 16.0,
-       "y": 624.0,
-       "width": 230.0,
-       "height": 130.0
+       "x": 1052.0,
+       "y": 844.0,
+       "width": 210.0,
+       "height": 100.0
       },
       "tracks": {},
       "bindings": {}
      },
      {
-      "id": "pxmkrrv9v9j6",
-      "name": "Source 6",
+      "id": "0bc25bc9c549",
+      "name": "Valeur · TC station",
       "parent": null,
-      "type": "source",
-      "input": "{{input:6}}",
-      "fit": "contain",
-      "background": "#0b0d12",
-      "border": 4.0,
-      "tally": {
-       "border": true,
-       "program": "#e5212b",
-       "preview": "#17b14a",
-       "aux": "#f2b705",
-       "off": "#262a33"
-      },
-      "umd": {
-       "position": "bottom",
-       "size": 11.0,
-       "outside": false,
-       "text": "",
-       "font": "Inter",
-       "weight": 600,
-       "align": "center",
-       "color": "#ffffff",
-       "background": "#000000b3",
-       "lamps": true
-      },
-      "vu": {
-       "position": "right",
-       "width": 6.0,
-       "gap": 2.0,
-       "margin": 6.0,
-       "min": -60.0,
-       "yellow": -18.0,
-       "red": -9.0,
-       "hold": true,
-       "max": 2
-      },
-      "badge": false,
-      "noSignal": "",
-      "noSignalLook": "bars",
-      "timecode": "off",
-      "loudness": false,
-      "alarms": true,
+      "type": "value",
+      "input": "",
+      "kind": "stationTimecode",
+      "label": "TC station",
+      "showLabel": true,
+      "stack": true,
+      "align": "center",
+      "warn": 0.0,
+      "crit": 0.0,
+      "color": "#ffffff",
+      "background": "#0b0d12d9",
       "visible": true,
       "locked": false,
       "props": {
-       "x": 258.0,
-       "y": 624.0,
-       "width": 230.0,
-       "height": 130.0
+       "x": 1274.0,
+       "y": 844.0,
+       "width": 210.0,
+       "height": 100.0
       },
       "tracks": {},
       "bindings": {}
      },
      {
-      "id": "vu5duhhrv9j6",
-      "name": "Source 7",
+      "id": "ec9883d3502c",
+      "name": "Valeur · codec",
       "parent": null,
-      "type": "source",
-      "input": "{{input:7}}",
-      "fit": "contain",
-      "background": "#0b0d12",
-      "border": 4.0,
-      "tally": {
-       "border": true,
-       "program": "#e5212b",
-       "preview": "#17b14a",
-       "aux": "#f2b705",
-       "off": "#262a33"
-      },
-      "umd": {
-       "position": "bottom",
-       "size": 11.0,
-       "outside": false,
-       "text": "",
-       "font": "Inter",
-       "weight": 600,
-       "align": "center",
-       "color": "#ffffff",
-       "background": "#000000b3",
-       "lamps": true
-      },
-      "vu": {
-       "position": "right",
-       "width": 6.0,
-       "gap": 2.0,
-       "margin": 6.0,
-       "min": -60.0,
-       "yellow": -18.0,
-       "red": -9.0,
-       "hold": true,
-       "max": 2
-      },
-      "badge": false,
-      "noSignal": "",
-      "noSignalLook": "bars",
-      "timecode": "off",
-      "loudness": false,
-      "alarms": true,
+      "type": "value",
+      "input": "{{input:1}}",
+      "kind": "codec",
+      "label": "",
+      "showLabel": true,
+      "stack": true,
+      "align": "center",
+      "warn": 0.0,
+      "crit": 0.0,
+      "color": "#ffffff",
+      "background": "#0b0d12d9",
       "visible": true,
       "locked": false,
       "props": {
-       "x": 500.0,
-       "y": 624.0,
-       "width": 230.0,
-       "height": 130.0
+       "x": 1052.0,
+       "y": 956.0,
+       "width": 210.0,
+       "height": 108.0
       },
       "tracks": {},
       "bindings": {}
      },
      {
-      "id": "cqs9wig0v9j6",
-      "name": "Source 8",
+      "id": "0be70fd6da87",
+      "name": "Valeur · dynamic",
       "parent": null,
-      "type": "source",
-      "input": "{{input:8}}",
-      "fit": "contain",
-      "background": "#0b0d12",
-      "border": 4.0,
-      "tally": {
-       "border": true,
-       "program": "#e5212b",
-       "preview": "#17b14a",
-       "aux": "#f2b705",
-       "off": "#262a33"
-      },
-      "umd": {
-       "position": "bottom",
-       "size": 11.0,
-       "outside": false,
-       "text": "",
-       "font": "Inter",
-       "weight": 600,
-       "align": "center",
-       "color": "#ffffff",
-       "background": "#000000b3",
-       "lamps": true
-      },
-      "vu": {
-       "position": "right",
-       "width": 6.0,
-       "gap": 2.0,
-       "margin": 6.0,
-       "min": -60.0,
-       "yellow": -18.0,
-       "red": -9.0,
-       "hold": true,
-       "max": 2
-      },
-      "badge": false,
-      "noSignal": "",
-      "noSignalLook": "bars",
-      "timecode": "off",
-      "loudness": false,
-      "alarms": true,
+      "type": "value",
+      "input": "{{input:1}}",
+      "kind": "dynamic",
+      "label": "",
+      "showLabel": true,
+      "stack": true,
+      "align": "center",
+      "warn": 0.0,
+      "crit": 0.0,
+      "color": "#ffffff",
+      "background": "#0b0d12d9",
       "visible": true,
       "locked": false,
       "props": {
-       "x": 742.0,
-       "y": 624.0,
-       "width": 230.0,
-       "height": 130.0
+       "x": 1274.0,
+       "y": 956.0,
+       "width": 210.0,
+       "height": 108.0
       },
       "tracks": {},
       "bindings": {}
      },
      {
-      "id": "wp7qn3bbv9j6",
+      "id": "141af1d70dd7",
+      "name": "Fiche signal",
+      "parent": null,
+      "type": "signalInfo",
+      "input": "{{input:1}}",
+      "video": true,
+      "color": true,
+      "hdr": false,
+      "audio": true,
+      "background": "#0b0d12d9",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 1496.0,
+       "y": 72.0,
+       "width": 408.0,
+       "height": 420.0
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "359f882fa7a4",
       "name": "Vu-mètres",
       "parent": null,
       "type": "audioMeter",
@@ -659,16 +1036,16 @@
       "visible": true,
       "locked": false,
       "props": {
-       "x": 1448.0,
-       "y": 72.0,
-       "width": 456.0,
-       "height": 700.0
+       "x": 1496.0,
+       "y": 504.0,
+       "width": 408.0,
+       "height": 352.0
       },
       "tracks": {},
       "bindings": {}
      },
      {
-      "id": "w8ge8o4yv9j6",
+      "id": "092da11e1b0e",
       "name": "Loudness",
       "parent": null,
       "type": "loudness",
@@ -680,57 +1057,28 @@
       "visible": true,
       "locked": false,
       "props": {
-       "x": 1448.0,
-       "y": 784.0,
-       "width": 456.0,
-       "height": 288.0
-      },
-      "tracks": {},
-      "bindings": {}
-     },
-     {
-      "id": "ci9bg253v9j6",
-      "name": "Journal des alarmes",
-      "parent": null,
-      "type": "alarmLog",
-      "rows": 6,
-      "ended": true,
-      "background": "#0b0d12d9",
-      "visible": true,
-      "locked": false,
-      "props": {
-       "x": 16.0,
-       "y": 766.0,
-       "width": 960.0,
-       "height": 306.0
-      },
-      "tracks": {},
-      "bindings": {}
-     },
-     {
-      "id": "ewmwcxu2v9j6",
-      "name": "État",
-      "parent": null,
-      "type": "status",
-      "ptp": true,
-      "ntp": true,
-      "alarms": true,
-      "background": "#0b0d12d9",
-      "visible": true,
-      "locked": false,
-      "props": {
-       "x": 988.0,
-       "y": 864.0,
-       "width": 448.0,
-       "height": 208.0
+       "x": 1496.0,
+       "y": 868.0,
+       "width": 408.0,
+       "height": 196.0
       },
       "tracks": {},
       "bindings": {}
      }
     ],
     "zone": "full-screen",
-    "revision": 2,
-    "markerModel": 2
+    "revision": 1,
+    "markerModel": 2,
+    "background": {
+     "color": "#0b0d12",
+     "fillStyle": {
+      "kind": "solid",
+      "color2": "#000000",
+      "angle": 90.0,
+      "image": "",
+      "fit": "cover"
+     }
+    }
    }
   ],
   "zones": [

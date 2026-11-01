@@ -1,50 +1,49 @@
 {
  "meta": {
   "id": "ex-10-uhd",
-  "name": "UHD HDR et SDR",
-  "category": "UHD",
+  "name": "Contrôle UHD 2160p",
+  "category": "Vision",
   "tags": [
-   "2 tuiles"
+   "UHD",
+   "3840 × 2160",
+   "Waveform",
+   "Repères"
   ],
-  "summary": "Le programme UHD et sa conversion SDR, le loudness, 16 canaux, l’état de l’installation.",
-  "description": "Une chaîne UHD : le programme HDR et sa conversion SDR, son loudness, ses 16 canaux audio et l’état de l’installation.",
+  "description": "Un multiview en 3840 × 2160 pour un écran 4K : la source UHD en grand avec ses zones de sécurité et sa croix de centre, à côté de sa waveform, de son vecteurscope, de sa fiche signal et de ses vu-mètres, et trois sources HD en bas.",
+  "summary": "Un multiview UHD : la source 4K en grand avec ses repères, waveform, vecteurscope et fiche signal.",
   "en": {
-   "name": "UHD HDR and SDR",
-   "summary": "The UHD programme and its SDR conversion, loudness, 16 channels, the state of the plant.",
-   "description": "A UHD channel: the HDR programme and its SDR conversion, its loudness, its 16 audio channels and the state of the plant.",
-   "category": "UHD",
+   "name": "UHD 2160p control",
+   "category": "Vision",
    "tags": [
-    "2 tiles"
-   ]
+    "UHD",
+    "3840 × 2160",
+    "Waveform",
+    "Markers"
+   ],
+   "summary": "A UHD multiview: the 4K source large with its markers, waveform, vectorscope and signal sheet.",
+   "description": "A 3840 × 2160 multiview for a 4K screen: the UHD source large with its safe areas and centre cross, next to its waveform, vectorscope, signal sheet and meters, and three HD sources at the bottom."
   }
  },
  "project": {
   "id": "",
-  "name": "UHD HDR et SDR",
-  "description": "",
-  "width": 1920,
-  "height": 1080,
+  "name": "Contrôle UHD 2160p",
+  "description": "Un multiview UHD : la source 4K en grand avec ses repères, waveform, vecteurscope et fiche signal.",
+  "width": 3840,
+  "height": 2160,
   "frameRate": {
    "num": 50,
    "den": 1
   },
   "templates": [
    {
-    "id": "f4b2dc3da857",
-    "name": "UHD HDR et SDR",
+    "id": "55fc4968f61b",
+    "name": "Contrôle UHD 2160p",
     "duration": 50.0,
-    "markers": [
-     {
-      "id": "4bcf16c4582c",
-      "frame": 25.0,
-      "name": "On air",
-      "kind": "out"
-     }
-    ],
+    "markers": [],
     "fields": [],
     "layers": [
      {
-      "id": "1734ptgcvptu",
+      "id": "3784f5894136",
       "name": "Bandeau",
       "parent": null,
       "type": "rect",
@@ -82,12 +81,12 @@
       "props": {
        "x": 0.0,
        "y": 0.0,
-       "width": 1920.0,
-       "height": 60.0,
+       "width": 3840.0,
+       "height": 110.0,
        "fill": [
-        0.0627451,
-        0.078431375,
-        0.105882354,
+        0.062745,
+        0.078431,
+        0.105882,
         1.0
        ]
       },
@@ -95,11 +94,102 @@
       "bindings": {}
      },
      {
-      "id": "ozotvn3rvptu",
-      "name": "Chaîne UHD · HDR et SDR",
+      "id": "60ccfd839668",
+      "name": "Accent",
+      "parent": null,
+      "type": "rect",
+      "shape": "rect",
+      "perCorner": false,
+      "corners": [
+       0.0,
+       0.0,
+       0.0,
+       0.0
+      ],
+      "skewUnit": "px",
+      "skewPx": 120.0,
+      "skewDeg": 15.0,
+      "trapMode": "percent",
+      "trapTop": 70.0,
+      "trapLeft": 80.0,
+      "trapRight": 200.0,
+      "vertexRound": 0.0,
+      "fillStyle": {
+       "kind": "solid",
+       "color2": "#ff3b5c",
+       "angle": 90.0,
+       "image": "",
+       "fit": "cover"
+      },
+      "strokeStyle": {
+       "position": "inside",
+       "dash": "solid",
+       "join": "miter",
+       "cap": "butt"
+      },
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 6.0,
+       "height": 110.0,
+       "fill": [
+        1.0,
+        0.231373,
+        0.360784,
+        1.0
+       ]
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "56f28b56d26e",
+      "name": "Heure station",
+      "parent": null,
+      "type": "timecode",
+      "input": "",
+      "label": "",
+      "color": "#ff3b5c",
+      "background": "#00000000",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 3484.0,
+       "y": 6.0,
+       "width": 340.0,
+       "height": 98.0
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "ca6250addb9e",
+      "name": "État",
+      "parent": null,
+      "type": "status",
+      "ptp": false,
+      "ntp": false,
+      "alarms": true,
+      "background": "#00000000",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 3068.0,
+       "y": 6.0,
+       "width": 400.0,
+       "height": 98.0
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "8c520c6993df",
+      "name": "UHD · 2160p50",
       "parent": null,
       "type": "text",
-      "text": "Chaîne UHD · HDR et SDR",
+      "text": "UHD · 2160p50",
       "fontFamily": "Inter",
       "fontWeight": 700,
       "align": "left",
@@ -137,70 +227,30 @@
       "visible": true,
       "locked": false,
       "props": {
-       "x": 20.0,
+       "x": 24.0,
        "y": 6.0,
-       "width": 1000.0,
-       "height": 48.0,
+       "width": 3028.0,
+       "height": 98.0,
        "fill": [
-        0.9607843,
-        0.96862745,
-        0.98039216,
+        0.960784,
+        0.968627,
+        0.980392,
         1.0
        ],
-       "fontSize": 30.0
+       "fontSize": 55.0
       },
       "tracks": {},
       "bindings": {}
      },
      {
-      "id": "us8aot4ivptu",
-      "name": "État",
-      "parent": null,
-      "type": "status",
-      "ptp": false,
-      "ntp": false,
-      "alarms": true,
-      "background": "#00000000",
-      "visible": true,
-      "locked": false,
-      "props": {
-       "x": 1060.0,
-       "y": 6.0,
-       "width": 420.0,
-       "height": 48.0
-      },
-      "tracks": {},
-      "bindings": {}
-     },
-     {
-      "id": "bww6nd43vptu",
-      "name": "Timecode",
-      "parent": null,
-      "type": "timecode",
-      "input": "",
-      "label": "",
-      "color": "#fbbf24",
-      "background": "#00000000",
-      "visible": true,
-      "locked": false,
-      "props": {
-       "x": 1496.0,
-       "y": 6.0,
-       "width": 408.0,
-       "height": 48.0
-      },
-      "tracks": {},
-      "bindings": {}
-     },
-     {
-      "id": "bol75icivptu",
+      "id": "ee3292206a7f",
       "name": "Source 1",
       "parent": null,
       "type": "source",
       "input": "{{input:1}}",
       "fit": "contain",
       "background": "#0b0d12",
-      "border": 4.0,
+      "border": 6.0,
       "tally": {
        "border": true,
        "program": "#e5212b",
@@ -212,7 +262,7 @@
        "position": "bottom",
        "size": 11.0,
        "outside": false,
-       "text": "PGM UHD",
+       "text": "UHD PGM",
        "font": "Inter",
        "weight": 600,
        "align": "center",
@@ -229,27 +279,128 @@
        "yellow": -18.0,
        "red": -9.0,
        "hold": true,
-       "max": 0
+       "max": 0,
+       "first": 0
       },
-      "badge": true,
+      "badge": false,
       "noSignal": "",
       "noSignalLook": "bars",
       "timecode": "station",
       "loudness": true,
       "alarms": true,
+      "markers": {
+       "action": true,
+       "title": true,
+       "fourThree": false,
+       "fourteenNine": false,
+       "centre": true,
+       "afd": false,
+       "color": "#ffffffb3"
+      },
       "visible": true,
       "locked": false,
       "props": {
-       "x": 16.0,
-       "y": 72.0,
-       "width": 1264.0,
-       "height": 711.0
+       "x": 32.0,
+       "y": 140.0,
+       "width": 2560.0,
+       "height": 1440.0
       },
       "tracks": {},
       "bindings": {}
      },
      {
-      "id": "eucu22yjvptu",
+      "id": "20c3ca677232",
+      "name": "Waveform",
+      "parent": null,
+      "type": "scope",
+      "input": "{{input:1}}",
+      "kind": "waveform",
+      "graticule": true,
+      "labels": true,
+      "intensity": 1.0,
+      "color": "#6dff8f",
+      "background": "#05070b",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 2624.0,
+       "y": 140.0,
+       "width": 1184.0,
+       "height": 560.0
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "1a0882e84504",
+      "name": "Vecteurscope",
+      "parent": null,
+      "type": "scope",
+      "input": "{{input:1}}",
+      "kind": "vector",
+      "graticule": true,
+      "labels": true,
+      "intensity": 1.0,
+      "color": "#ffe066",
+      "background": "#05070b",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 2624.0,
+       "y": 724.0,
+       "width": 576.0,
+       "height": 576.0
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "3e898f58ac62",
+      "name": "Histogramme",
+      "parent": null,
+      "type": "scope",
+      "input": "{{input:1}}",
+      "kind": "histogram",
+      "graticule": true,
+      "labels": true,
+      "intensity": 1.0,
+      "color": "#ffffff",
+      "background": "#05070b",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 3224.0,
+       "y": 724.0,
+       "width": 584.0,
+       "height": 576.0
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "7f5d96cbfd0c",
+      "name": "Fiche signal",
+      "parent": null,
+      "type": "signalInfo",
+      "input": "{{input:1}}",
+      "video": true,
+      "color": true,
+      "hdr": true,
+      "audio": true,
+      "background": "#0b0d12d9",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 2624.0,
+       "y": 1324.0,
+       "width": 1184.0,
+       "height": 804.0
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "767cf55d520b",
       "name": "Source 2",
       "parent": null,
       "type": "source",
@@ -268,7 +419,7 @@
        "position": "bottom",
        "size": 11.0,
        "outside": false,
-       "text": "SDR",
+       "text": "HD 1",
        "font": "Inter",
        "weight": 600,
        "align": "center",
@@ -285,97 +436,181 @@
        "yellow": -18.0,
        "red": -9.0,
        "hold": true,
-       "max": 0
+       "max": 2,
+       "first": 0
       },
-      "badge": true,
+      "badge": false,
       "noSignal": "",
       "noSignalLook": "bars",
       "timecode": "off",
       "loudness": false,
       "alarms": true,
+      "markers": {
+       "action": false,
+       "title": false,
+       "fourThree": false,
+       "fourteenNine": false,
+       "centre": false,
+       "afd": false,
+       "color": "#ffffffb3"
+      },
       "visible": true,
       "locked": false,
       "props": {
-       "x": 1292.0,
-       "y": 72.0,
-       "width": 612.0,
-       "height": 344.0
+       "x": 32.0,
+       "y": 1604.0,
+       "width": 837.0,
+       "height": 471.0
       },
       "tracks": {},
       "bindings": {}
      },
      {
-      "id": "feako3vtvptu",
-      "name": "État",
+      "id": "4ba534a8bc8b",
+      "name": "Source 3",
       "parent": null,
-      "type": "status",
-      "ptp": true,
-      "ntp": true,
+      "type": "source",
+      "input": "{{input:3}}",
+      "fit": "contain",
+      "background": "#0b0d12",
+      "border": 4.0,
+      "tally": {
+       "border": true,
+       "program": "#e5212b",
+       "preview": "#17b14a",
+       "aux": "#f2b705",
+       "off": "#262a33"
+      },
+      "umd": {
+       "position": "bottom",
+       "size": 11.0,
+       "outside": false,
+       "text": "HD 2",
+       "font": "Inter",
+       "weight": 600,
+       "align": "center",
+       "color": "#ffffff",
+       "background": "#000000b3",
+       "lamps": true
+      },
+      "vu": {
+       "position": "right",
+       "width": 6.0,
+       "gap": 2.0,
+       "margin": 6.0,
+       "min": -60.0,
+       "yellow": -18.0,
+       "red": -9.0,
+       "hold": true,
+       "max": 2,
+       "first": 0
+      },
+      "badge": false,
+      "noSignal": "",
+      "noSignalLook": "bars",
+      "timecode": "off",
+      "loudness": false,
       "alarms": true,
-      "background": "#0b0d12d9",
+      "markers": {
+       "action": false,
+       "title": false,
+       "fourThree": false,
+       "fourteenNine": false,
+       "centre": false,
+       "afd": false,
+       "color": "#ffffffb3"
+      },
       "visible": true,
       "locked": false,
       "props": {
-       "x": 1292.0,
-       "y": 428.0,
-       "width": 612.0,
-       "height": 180.0
+       "x": 893.0,
+       "y": 1604.0,
+       "width": 837.0,
+       "height": 471.0
       },
       "tracks": {},
       "bindings": {}
      },
      {
-      "id": "552kyx76vptu",
-      "name": "Loudness",
+      "id": "b31124ae7efd",
+      "name": "Source 4",
       "parent": null,
-      "type": "loudness",
-      "input": "{{input:1}}",
-      "target": -23.0,
-      "tolerance": 1.0,
-      "history": true,
-      "background": "#0b0d12d9",
-      "visible": true,
-      "locked": false,
-      "props": {
-       "x": 1292.0,
-       "y": 620.0,
-       "width": 612.0,
-       "height": 452.0
+      "type": "source",
+      "input": "{{input:4}}",
+      "fit": "contain",
+      "background": "#0b0d12",
+      "border": 4.0,
+      "tally": {
+       "border": true,
+       "program": "#e5212b",
+       "preview": "#17b14a",
+       "aux": "#f2b705",
+       "off": "#262a33"
       },
-      "tracks": {},
-      "bindings": {}
-     },
-     {
-      "id": "xdc9kzfvvptu",
-      "name": "Vu-mètres",
-      "parent": null,
-      "type": "audioMeter",
-      "input": "{{input:1}}",
-      "channels": 16,
-      "labels": "L, R, C, LFE, Ls, Rs, L, R, AD, AD, VO, VO, 13, 14, 15, 16",
-      "scale": false,
-      "values": false,
-      "hold": true,
-      "loudness": true,
-      "min": -60.0,
-      "yellow": -18.0,
-      "red": -9.0,
-      "background": "#0b0d12d9",
+      "umd": {
+       "position": "bottom",
+       "size": 11.0,
+       "outside": false,
+       "text": "HD 3",
+       "font": "Inter",
+       "weight": 600,
+       "align": "center",
+       "color": "#ffffff",
+       "background": "#000000b3",
+       "lamps": true
+      },
+      "vu": {
+       "position": "right",
+       "width": 6.0,
+       "gap": 2.0,
+       "margin": 6.0,
+       "min": -60.0,
+       "yellow": -18.0,
+       "red": -9.0,
+       "hold": true,
+       "max": 2,
+       "first": 0
+      },
+      "badge": false,
+      "noSignal": "",
+      "noSignalLook": "bars",
+      "timecode": "off",
+      "loudness": false,
+      "alarms": true,
+      "markers": {
+       "action": false,
+       "title": false,
+       "fourThree": false,
+       "fourteenNine": false,
+       "centre": false,
+       "afd": false,
+       "color": "#ffffffb3"
+      },
       "visible": true,
       "locked": false,
       "props": {
-       "x": 16.0,
-       "y": 795.0,
-       "width": 1264.0,
-       "height": 277.0
+       "x": 1755.0,
+       "y": 1604.0,
+       "width": 837.0,
+       "height": 471.0
       },
       "tracks": {},
       "bindings": {}
      }
     ],
     "zone": "full-screen",
-    "revision": 2,
-    "markerModel": 2
+    "revision": 1,
+    "markerModel": 2,
+    "background": {
+     "color": "#0b0d12",
+     "fillStyle": {
+      "kind": "solid",
+      "color2": "#000000",
+      "angle": 90.0,
+      "image": "",
+      "fit": "cover"
+     }
+    }
    }
   ],
   "zones": [

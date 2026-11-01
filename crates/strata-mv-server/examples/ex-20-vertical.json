@@ -1,50 +1,49 @@
 {
  "meta": {
-  "id": "ex-04-returns",
-  "name": "Retours antenne",
-  "category": "Contrôle off-air",
+  "id": "ex-20-vertical",
+  "name": "Écran vertical réseaux sociaux",
+  "category": "Réseau",
   "tags": [
-   "5 tuiles"
+   "Vertical",
+   "1080 × 1920",
+   "TikTok",
+   "Instagram"
   ],
-  "summary": "Le programme face à ses retours (TNT, satellite, IPTV, OTT), loudness et journal.",
-  "description": "Ce que voient les téléspectateurs : le programme face à ses retours de diffusion (TNT, satellite, IPTV, OTT), son loudness, l’état de la synchro, le timecode station et le journal.",
+  "description": "Un multiview en portrait pour un écran vertical : le direct vertical en grand (TikTok, Instagram, YouTube Shorts) avec ses zones de sécurité, deux autres directs à côté, le programme horizontal, le loudness et les images par seconde de chaque flux.",
+  "summary": "Un multiview vertical en 1080 × 1920 pour suivre les directs TikTok, Instagram et YouTube Shorts.",
   "en": {
-   "name": "Off-air returns",
-   "summary": "The programme against its returns (DTT, satellite, IPTV, OTT), loudness and log.",
-   "description": "What viewers see: the programme against its off-air returns (DTT, satellite, IPTV, OTT), its loudness, the state of sync, the station timecode and the log.",
-   "category": "Off-air",
+   "name": "Vertical social media screen",
+   "category": "Network",
    "tags": [
-    "5 tiles"
-   ]
+    "Vertical",
+    "1080 × 1920",
+    "TikTok",
+    "Instagram"
+   ],
+   "summary": "A vertical 1080 × 1920 multiview to follow TikTok, Instagram and YouTube Shorts lives.",
+   "description": "A portrait multiview for a vertical screen: the vertical live large (TikTok, Instagram, YouTube Shorts) with its safe areas, two other lives beside it, the horizontal programme, the loudness and the frames a second of each stream."
   }
  },
  "project": {
   "id": "",
-  "name": "Retours antenne",
-  "description": "",
-  "width": 1920,
-  "height": 1080,
+  "name": "Écran vertical réseaux sociaux",
+  "description": "Un multiview vertical en 1080 × 1920 pour suivre les directs TikTok, Instagram et YouTube Shorts.",
+  "width": 1080,
+  "height": 1920,
   "frameRate": {
-   "num": 50,
+   "num": 30,
    "den": 1
   },
   "templates": [
    {
-    "id": "67715885cb1f",
-    "name": "Retours antenne",
+    "id": "79eeae8792ba",
+    "name": "Écran vertical réseaux sociaux",
     "duration": 50.0,
-    "markers": [
-     {
-      "id": "ad24d0c58312",
-      "frame": 25.0,
-      "name": "On air",
-      "kind": "out"
-     }
-    ],
+    "markers": [],
     "fields": [],
     "layers": [
      {
-      "id": "dlszbg1vveyz",
+      "id": "f3987183ee19",
       "name": "Bandeau",
       "parent": null,
       "type": "rect",
@@ -82,12 +81,12 @@
       "props": {
        "x": 0.0,
        "y": 0.0,
-       "width": 1920.0,
+       "width": 1080.0,
        "height": 60.0,
        "fill": [
-        0.0627451,
-        0.078431375,
-        0.105882354,
+        0.062745,
+        0.078431,
+        0.105882,
         1.0
        ]
       },
@@ -95,11 +94,62 @@
       "bindings": {}
      },
      {
-      "id": "qi26f13gveyz",
-      "name": "Contrôle off-air · ce que voient les téléspectateurs",
+      "id": "cfddca19e6f6",
+      "name": "Accent",
+      "parent": null,
+      "type": "rect",
+      "shape": "rect",
+      "perCorner": false,
+      "corners": [
+       0.0,
+       0.0,
+       0.0,
+       0.0
+      ],
+      "skewUnit": "px",
+      "skewPx": 120.0,
+      "skewDeg": 15.0,
+      "trapMode": "percent",
+      "trapTop": 70.0,
+      "trapLeft": 80.0,
+      "trapRight": 200.0,
+      "vertexRound": 0.0,
+      "fillStyle": {
+       "kind": "solid",
+       "color2": "#ff3b5c",
+       "angle": 90.0,
+       "image": "",
+       "fit": "cover"
+      },
+      "strokeStyle": {
+       "position": "inside",
+       "dash": "solid",
+       "join": "miter",
+       "cap": "butt"
+      },
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 6.0,
+       "height": 60.0,
+       "fill": [
+        1.0,
+        0.231373,
+        0.360784,
+        1.0
+       ]
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "b37600a28c4a",
+      "name": "Social · vertical",
       "parent": null,
       "type": "text",
-      "text": "Contrôle off-air · ce que voient les téléspectateurs",
+      "text": "Social · vertical",
       "fontFamily": "Inter",
       "fontWeight": 700,
       "align": "left",
@@ -137,14 +187,14 @@
       "visible": true,
       "locked": false,
       "props": {
-       "x": 20.0,
+       "x": 24.0,
        "y": 6.0,
-       "width": 1000.0,
+       "width": 1040.0,
        "height": 48.0,
        "fill": [
-        0.9607843,
-        0.96862745,
-        0.98039216,
+        0.960784,
+        0.968627,
+        0.980392,
         1.0
        ],
        "fontSize": 30.0
@@ -153,52 +203,12 @@
       "bindings": {}
      },
      {
-      "id": "2sqmz5dzveyz",
-      "name": "État",
-      "parent": null,
-      "type": "status",
-      "ptp": false,
-      "ntp": false,
-      "alarms": true,
-      "background": "#00000000",
-      "visible": true,
-      "locked": false,
-      "props": {
-       "x": 1060.0,
-       "y": 6.0,
-       "width": 420.0,
-       "height": 48.0
-      },
-      "tracks": {},
-      "bindings": {}
-     },
-     {
-      "id": "1nyetfknveyz",
-      "name": "Timecode",
-      "parent": null,
-      "type": "timecode",
-      "input": "",
-      "label": "",
-      "color": "#fbbf24",
-      "background": "#00000000",
-      "visible": true,
-      "locked": false,
-      "props": {
-       "x": 1496.0,
-       "y": 6.0,
-       "width": 408.0,
-       "height": 48.0
-      },
-      "tracks": {},
-      "bindings": {}
-     },
-     {
-      "id": "bt76wddyveyz",
+      "id": "bf4c4b721dde",
       "name": "Source 1",
       "parent": null,
       "type": "source",
       "input": "{{input:1}}",
-      "fit": "contain",
+      "fit": "cover",
       "background": "#0b0d12",
       "border": 4.0,
       "tally": {
@@ -212,7 +222,7 @@
        "position": "bottom",
        "size": 11.0,
        "outside": false,
-       "text": "PGM",
+       "text": "TIKTOK LIVE",
        "font": "Inter",
        "weight": 600,
        "align": "center",
@@ -229,32 +239,42 @@
        "yellow": -18.0,
        "red": -9.0,
        "hold": true,
-       "max": 0
+       "max": 0,
+       "first": 0
       },
       "badge": false,
       "noSignal": "",
       "noSignalLook": "bars",
-      "timecode": "station",
+      "timecode": "off",
       "loudness": true,
       "alarms": true,
+      "markers": {
+       "action": true,
+       "title": true,
+       "fourThree": false,
+       "fourteenNine": false,
+       "centre": false,
+       "afd": false,
+       "color": "#ffffffb3"
+      },
       "visible": true,
       "locked": false,
       "props": {
        "x": 16.0,
        "y": 72.0,
-       "width": 1120.0,
-       "height": 630.0
+       "width": 640.0,
+       "height": 1138.0
       },
       "tracks": {},
       "bindings": {}
      },
      {
-      "id": "65wk4eukveyz",
+      "id": "58a74cf3ded7",
       "name": "Source 2",
       "parent": null,
       "type": "source",
       "input": "{{input:2}}",
-      "fit": "contain",
+      "fit": "cover",
       "background": "#0b0d12",
       "border": 4.0,
       "tally": {
@@ -268,7 +288,7 @@
        "position": "bottom",
        "size": 11.0,
        "outside": false,
-       "text": "DTT",
+       "text": "INSTAGRAM",
        "font": "Inter",
        "weight": 600,
        "align": "center",
@@ -285,32 +305,42 @@
        "yellow": -18.0,
        "red": -9.0,
        "hold": true,
-       "max": 0
+       "max": 0,
+       "first": 0
       },
       "badge": false,
       "noSignal": "",
       "noSignalLook": "bars",
       "timecode": "off",
-      "loudness": true,
+      "loudness": false,
       "alarms": true,
+      "markers": {
+       "action": false,
+       "title": false,
+       "fourThree": false,
+       "fourteenNine": false,
+       "centre": false,
+       "afd": false,
+       "color": "#ffffffb3"
+      },
       "visible": true,
       "locked": false,
       "props": {
-       "x": 1148.0,
+       "x": 668.0,
        "y": 72.0,
-       "width": 374.0,
-       "height": 210.0
+       "width": 396.0,
+       "height": 563.0
       },
       "tracks": {},
       "bindings": {}
      },
      {
-      "id": "y5cjlcjwveyz",
+      "id": "2b95c8f1d499",
       "name": "Source 3",
       "parent": null,
       "type": "source",
       "input": "{{input:3}}",
-      "fit": "contain",
+      "fit": "cover",
       "background": "#0b0d12",
       "border": 4.0,
       "tally": {
@@ -324,7 +354,7 @@
        "position": "bottom",
        "size": 11.0,
        "outside": false,
-       "text": "SATELLITE",
+       "text": "SHORTS",
        "font": "Inter",
        "weight": 600,
        "align": "center",
@@ -341,27 +371,37 @@
        "yellow": -18.0,
        "red": -9.0,
        "hold": true,
-       "max": 0
+       "max": 0,
+       "first": 0
       },
       "badge": false,
       "noSignal": "",
       "noSignalLook": "bars",
       "timecode": "off",
-      "loudness": true,
+      "loudness": false,
       "alarms": true,
+      "markers": {
+       "action": false,
+       "title": false,
+       "fourThree": false,
+       "fourteenNine": false,
+       "centre": false,
+       "afd": false,
+       "color": "#ffffffb3"
+      },
       "visible": true,
       "locked": false,
       "props": {
-       "x": 1530.0,
-       "y": 72.0,
-       "width": 374.0,
-       "height": 210.0
+       "x": 668.0,
+       "y": 647.0,
+       "width": 396.0,
+       "height": 563.0
       },
       "tracks": {},
       "bindings": {}
      },
      {
-      "id": "sytt7s2dveyz",
+      "id": "d1c7a6645edd",
       "name": "Source 4",
       "parent": null,
       "type": "source",
@@ -380,7 +420,7 @@
        "position": "bottom",
        "size": 11.0,
        "outside": false,
-       "text": "IPTV",
+       "text": "PGM HORIZONTAL",
        "font": "Inter",
        "weight": 600,
        "align": "center",
@@ -397,165 +437,214 @@
        "yellow": -18.0,
        "red": -9.0,
        "hold": true,
-       "max": 0
+       "max": 2,
+       "first": 0
       },
       "badge": false,
       "noSignal": "",
       "noSignalLook": "bars",
-      "timecode": "off",
-      "loudness": true,
+      "timecode": "station",
+      "loudness": false,
       "alarms": true,
+      "markers": {
+       "action": false,
+       "title": false,
+       "fourThree": false,
+       "fourteenNine": false,
+       "centre": false,
+       "afd": false,
+       "color": "#ffffffb3"
+      },
       "visible": true,
       "locked": false,
       "props": {
-       "x": 1148.0,
-       "y": 292.0,
-       "width": 374.0,
-       "height": 210.0
+       "x": 16.0,
+       "y": 1222.0,
+       "width": 640.0,
+       "height": 360.0
       },
       "tracks": {},
       "bindings": {}
      },
      {
-      "id": "0b7zdnv3veyz",
-      "name": "Source 5",
+      "id": "18308b89a9c1",
+      "name": "Valeur · time",
       "parent": null,
-      "type": "source",
-      "input": "{{input:5}}",
-      "fit": "contain",
-      "background": "#0b0d12",
-      "border": 4.0,
-      "tally": {
-       "border": true,
-       "program": "#e5212b",
-       "preview": "#17b14a",
-       "aux": "#f2b705",
-       "off": "#262a33"
-      },
-      "umd": {
-       "position": "bottom",
-       "size": 11.0,
-       "outside": false,
-       "text": "OTT",
-       "font": "Inter",
-       "weight": 600,
-       "align": "center",
-       "color": "#ffffff",
-       "background": "#000000b3",
-       "lamps": true
-      },
-      "vu": {
-       "position": "right",
-       "width": 6.0,
-       "gap": 2.0,
-       "margin": 6.0,
-       "min": -60.0,
-       "yellow": -18.0,
-       "red": -9.0,
-       "hold": true,
-       "max": 0
-      },
-      "badge": false,
-      "noSignal": "",
-      "noSignalLook": "bars",
-      "timecode": "off",
-      "loudness": true,
-      "alarms": true,
-      "visible": true,
-      "locked": false,
-      "props": {
-       "x": 1530.0,
-       "y": 292.0,
-       "width": 374.0,
-       "height": 210.0
-      },
-      "tracks": {},
-      "bindings": {}
-     },
-     {
-      "id": "qtyklimuveyz",
-      "name": "Loudness",
-      "parent": null,
-      "type": "loudness",
-      "input": "{{input:1}}",
-      "target": -23.0,
-      "tolerance": 1.0,
-      "history": false,
+      "type": "value",
+      "input": "",
+      "kind": "time",
+      "label": "",
+      "showLabel": false,
+      "stack": false,
+      "align": "center",
+      "warn": 0.0,
+      "crit": 0.0,
+      "color": "#ffffff",
       "background": "#0b0d12d9",
       "visible": true,
       "locked": false,
       "props": {
-       "x": 1148.0,
-       "y": 512.0,
-       "width": 756.0,
-       "height": 190.0
+       "x": 668.0,
+       "y": 1222.0,
+       "width": 396.0,
+       "height": 110.0
       },
       "tracks": {},
       "bindings": {}
      },
      {
-      "id": "up99yc2tveyz",
-      "name": "Journal des alarmes",
+      "id": "5bffb1c1008e",
+      "name": "Valeur · Loudness I",
       "parent": null,
-      "type": "alarmLog",
-      "rows": 7,
-      "ended": true,
+      "type": "value",
+      "input": "{{input:1}}",
+      "kind": "integrated",
+      "label": "Loudness I",
+      "showLabel": true,
+      "stack": true,
+      "align": "center",
+      "warn": 0.0,
+      "crit": 0.0,
+      "color": "#ffffff",
+      "background": "#0b0d12d9",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 668.0,
+       "y": 1344.0,
+       "width": 192.0,
+       "height": 238.0
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "964b056a7d6a",
+      "name": "Valeur · TikTok",
+      "parent": null,
+      "type": "value",
+      "input": "{{input:1}}",
+      "kind": "alarm",
+      "label": "TikTok",
+      "showLabel": true,
+      "stack": true,
+      "align": "center",
+      "warn": 0.0,
+      "crit": 0.0,
+      "color": "#ffffff",
+      "background": "#0b0d12d9",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 872.0,
+       "y": 1344.0,
+       "width": 192.0,
+       "height": 238.0
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "3941da3753c1",
+      "name": "Courbe · TikTok",
+      "parent": null,
+      "type": "chart",
+      "metric": "inputFps",
+      "input": "{{input:1}}",
+      "channel": "",
+      "title": "TikTok",
+      "window": 120,
+      "min": 0.0,
+      "max": 60.0,
+      "warn": 0.0,
+      "crit": 20.0,
+      "color": "#ff3b5c",
+      "fill": true,
+      "stats": false,
       "background": "#0b0d12d9",
       "visible": true,
       "locked": false,
       "props": {
        "x": 16.0,
-       "y": 714.0,
-       "width": 1120.0,
-       "height": 358.0
+       "y": 1594.0,
+       "width": 341.0,
+       "height": 310.0
       },
       "tracks": {},
       "bindings": {}
      },
      {
-      "id": "7z9lyr0iveyz",
-      "name": "État",
+      "id": "150d15b373e8",
+      "name": "Courbe · Instagram",
       "parent": null,
-      "type": "status",
-      "ptp": true,
-      "ntp": true,
-      "alarms": true,
+      "type": "chart",
+      "metric": "inputFps",
+      "input": "{{input:2}}",
+      "channel": "",
+      "title": "Instagram",
+      "window": 120,
+      "min": 0.0,
+      "max": 60.0,
+      "warn": 0.0,
+      "crit": 20.0,
+      "color": "#a594ff",
+      "fill": true,
+      "stats": false,
       "background": "#0b0d12d9",
       "visible": true,
       "locked": false,
       "props": {
-       "x": 1148.0,
-       "y": 714.0,
-       "width": 756.0,
-       "height": 170.0
+       "x": 369.0,
+       "y": 1594.0,
+       "width": 341.0,
+       "height": 310.0
       },
       "tracks": {},
       "bindings": {}
      },
      {
-      "id": "0m2283qeveyz",
-      "name": "Timecode",
+      "id": "851b4d21e9f7",
+      "name": "Courbe · Shorts",
       "parent": null,
-      "type": "timecode",
-      "input": "",
-      "label": "TC",
-      "color": "#fbbf24",
+      "type": "chart",
+      "metric": "inputFps",
+      "input": "{{input:3}}",
+      "channel": "",
+      "title": "Shorts",
+      "window": 120,
+      "min": 0.0,
+      "max": 60.0,
+      "warn": 0.0,
+      "crit": 20.0,
+      "color": "#ffd84e",
+      "fill": true,
+      "stats": false,
       "background": "#0b0d12d9",
       "visible": true,
       "locked": false,
       "props": {
-       "x": 1148.0,
-       "y": 896.0,
-       "width": 756.0,
-       "height": 176.0
+       "x": 723.0,
+       "y": 1594.0,
+       "width": 341.0,
+       "height": 310.0
       },
       "tracks": {},
       "bindings": {}
      }
     ],
     "zone": "full-screen",
-    "revision": 2,
-    "markerModel": 2
+    "revision": 1,
+    "markerModel": 2,
+    "background": {
+     "color": "#0b0d12",
+     "fillStyle": {
+      "kind": "solid",
+      "color2": "#000000",
+      "angle": 90.0,
+      "image": "",
+      "fit": "cover"
+     }
+    }
    }
   ],
   "zones": [

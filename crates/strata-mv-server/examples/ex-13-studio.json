@@ -1,0 +1,873 @@
+{
+ "meta": {
+  "id": "ex-13-studio",
+  "name": "Plateau et prompteur",
+  "category": "Production",
+  "tags": [
+   "Plateau",
+   "Prompteur",
+   "Tally",
+   "UMD en haut"
+  ],
+  "description": "Pour l’écran du plateau : six caméras avec leur tally bien visible et leur nom en haut, le prompteur, le programme et le retour antenne, avec l’heure en grand pour le présentateur.",
+  "summary": "Six caméras plateau avec tally et UMD en haut, prompteur, programme et retour antenne.",
+  "en": {
+   "name": "Studio floor and prompter",
+   "category": "Production",
+   "tags": [
+    "Studio",
+    "Prompter",
+    "Tally",
+    "UMD on top"
+   ],
+   "summary": "Six studio cameras with tally and UMD on top, prompter, programme and air return.",
+   "description": "For the studio floor screen: six cameras with their tally clearly visible and their name on top, the prompter, the programme and the air return, with the time large for the presenter."
+  }
+ },
+ "project": {
+  "id": "",
+  "name": "Plateau et prompteur",
+  "description": "Six caméras plateau avec tally et UMD en haut, prompteur, programme et retour antenne.",
+  "width": 1920,
+  "height": 1080,
+  "frameRate": {
+   "num": 50,
+   "den": 1
+  },
+  "templates": [
+   {
+    "id": "1cb36acaa1dd",
+    "name": "Plateau et prompteur",
+    "duration": 50.0,
+    "markers": [],
+    "fields": [],
+    "layers": [
+     {
+      "id": "3e44d78f0883",
+      "name": "Bandeau",
+      "parent": null,
+      "type": "rect",
+      "shape": "rect",
+      "perCorner": false,
+      "corners": [
+       0.0,
+       0.0,
+       0.0,
+       0.0
+      ],
+      "skewUnit": "px",
+      "skewPx": 120.0,
+      "skewDeg": 15.0,
+      "trapMode": "percent",
+      "trapTop": 70.0,
+      "trapLeft": 80.0,
+      "trapRight": 200.0,
+      "vertexRound": 0.0,
+      "fillStyle": {
+       "kind": "solid",
+       "color2": "#ff3b5c",
+       "angle": 90.0,
+       "image": "",
+       "fit": "cover"
+      },
+      "strokeStyle": {
+       "position": "inside",
+       "dash": "solid",
+       "join": "miter",
+       "cap": "butt"
+      },
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 1920.0,
+       "height": 60.0,
+       "fill": [
+        0.062745,
+        0.078431,
+        0.105882,
+        1.0
+       ]
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "78b8eeb46c22",
+      "name": "Accent",
+      "parent": null,
+      "type": "rect",
+      "shape": "rect",
+      "perCorner": false,
+      "corners": [
+       0.0,
+       0.0,
+       0.0,
+       0.0
+      ],
+      "skewUnit": "px",
+      "skewPx": 120.0,
+      "skewDeg": 15.0,
+      "trapMode": "percent",
+      "trapTop": 70.0,
+      "trapLeft": 80.0,
+      "trapRight": 200.0,
+      "vertexRound": 0.0,
+      "fillStyle": {
+       "kind": "solid",
+       "color2": "#ff3b5c",
+       "angle": 90.0,
+       "image": "",
+       "fit": "cover"
+      },
+      "strokeStyle": {
+       "position": "inside",
+       "dash": "solid",
+       "join": "miter",
+       "cap": "butt"
+      },
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 6.0,
+       "height": 60.0,
+       "fill": [
+        0.898039,
+        0.129412,
+        0.168627,
+        1.0
+       ]
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "a120406adf59",
+      "name": "État",
+      "parent": null,
+      "type": "status",
+      "ptp": false,
+      "ntp": false,
+      "alarms": true,
+      "background": "#00000000",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 1504.0,
+       "y": 6.0,
+       "width": 400.0,
+       "height": 48.0
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "756e53da13eb",
+      "name": "Plateau B",
+      "parent": null,
+      "type": "text",
+      "text": "Plateau B",
+      "fontFamily": "Inter",
+      "fontWeight": 700,
+      "align": "left",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "speed": 120.0,
+      "separator": "   •   ",
+      "overflow": "fit",
+      "squeeze": 0.8,
+      "minSize": 0.6,
+      "warnBelow": 0.8,
+      "maxLines": 0,
+      "breakMode": "word",
+      "lang": "",
+      "fitEnd": "clip",
+      "italic": false,
+      "fillType": "solid",
+      "color2": "#a594ff",
+      "gradAngle": 90.0,
+      "strokeOutside": false,
+      "shadow": false,
+      "shadowColor": "#000000aa",
+      "shadowX": 0.0,
+      "shadowY": 4.0,
+      "shadowBlur": 12.0,
+      "band": false,
+      "bandColor": "#24164f",
+      "bandPadX": 26.0,
+      "bandGap": 10.0,
+      "bandRadius": 0.0,
+      "bandAccent": true,
+      "bandAccentColor": "#ff3b5c",
+      "justify": false,
+      "dir": "ltr",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 24.0,
+       "y": 6.0,
+       "width": 1464.0,
+       "height": 48.0,
+       "fill": [
+        0.960784,
+        0.968627,
+        0.980392,
+        1.0
+       ],
+       "fontSize": 30.0
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "31ca3afa8cf8",
+      "name": "Source 1",
+      "parent": null,
+      "type": "source",
+      "input": "{{input:1}}",
+      "fit": "contain",
+      "background": "#0b0d12",
+      "border": 8.0,
+      "tally": {
+       "border": true,
+       "program": "#e5212b",
+       "preview": "#17b14a",
+       "aux": "#f2b705",
+       "off": "#262a33"
+      },
+      "umd": {
+       "position": "top",
+       "size": 11.0,
+       "outside": false,
+       "text": "PROGRAMME",
+       "font": "Inter",
+       "weight": 600,
+       "align": "center",
+       "color": "#ffffff",
+       "background": "#000000b3",
+       "lamps": true
+      },
+      "vu": {
+       "position": "right",
+       "width": 6.0,
+       "gap": 2.0,
+       "margin": 6.0,
+       "min": -60.0,
+       "yellow": -18.0,
+       "red": -9.0,
+       "hold": true,
+       "max": 0,
+       "first": 0
+      },
+      "badge": false,
+      "noSignal": "",
+      "noSignalLook": "bars",
+      "timecode": "station",
+      "loudness": false,
+      "alarms": true,
+      "markers": {
+       "action": false,
+       "title": false,
+       "fourThree": false,
+       "fourteenNine": false,
+       "centre": false,
+       "afd": false,
+       "color": "#ffffffb3"
+      },
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 16.0,
+       "y": 72.0,
+       "width": 1120.0,
+       "height": 630.0
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "559d08e7d825",
+      "name": "Source 2",
+      "parent": null,
+      "type": "source",
+      "input": "{{input:2}}",
+      "fit": "contain",
+      "background": "#0b0d12",
+      "border": 4.0,
+      "tally": {
+       "border": true,
+       "program": "#e5212b",
+       "preview": "#17b14a",
+       "aux": "#f2b705",
+       "off": "#262a33"
+      },
+      "umd": {
+       "position": "top",
+       "size": 11.0,
+       "outside": false,
+       "text": "PROMPTEUR",
+       "font": "Inter",
+       "weight": 600,
+       "align": "center",
+       "color": "#ffffff",
+       "background": "#000000b3",
+       "lamps": true
+      },
+      "vu": {
+       "position": "right",
+       "width": 6.0,
+       "gap": 2.0,
+       "margin": 6.0,
+       "min": -60.0,
+       "yellow": -18.0,
+       "red": -9.0,
+       "hold": true,
+       "max": 0,
+       "first": 0
+      },
+      "badge": false,
+      "noSignal": "",
+      "noSignalLook": "bars",
+      "timecode": "off",
+      "loudness": false,
+      "alarms": true,
+      "markers": {
+       "action": false,
+       "title": false,
+       "fourThree": false,
+       "fourteenNine": false,
+       "centre": false,
+       "afd": false,
+       "color": "#ffffffb3"
+      },
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 1148.0,
+       "y": 72.0,
+       "width": 756.0,
+       "height": 425.0
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "139f0a637517",
+      "name": "Valeur · time",
+      "parent": null,
+      "type": "value",
+      "input": "",
+      "kind": "time",
+      "label": "",
+      "showLabel": false,
+      "stack": false,
+      "align": "center",
+      "warn": 0.0,
+      "crit": 0.0,
+      "color": "#ffffff",
+      "background": "#0b0d12d9",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 1148.0,
+       "y": 509.0,
+       "width": 756.0,
+       "height": 193.0
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "0f1d62c5267a",
+      "name": "Source 3",
+      "parent": null,
+      "type": "source",
+      "input": "{{input:3}}",
+      "fit": "contain",
+      "background": "#0b0d12",
+      "border": 8.0,
+      "tally": {
+       "border": true,
+       "program": "#e5212b",
+       "preview": "#17b14a",
+       "aux": "#f2b705",
+       "off": "#262a33"
+      },
+      "umd": {
+       "position": "top",
+       "size": 11.0,
+       "outside": false,
+       "text": "CAM 1",
+       "font": "Inter",
+       "weight": 600,
+       "align": "center",
+       "color": "#ffffff",
+       "background": "#000000b3",
+       "lamps": true
+      },
+      "vu": {
+       "position": "right",
+       "width": 6.0,
+       "gap": 2.0,
+       "margin": 6.0,
+       "min": -60.0,
+       "yellow": -18.0,
+       "red": -9.0,
+       "hold": true,
+       "max": 2,
+       "first": 0
+      },
+      "badge": false,
+      "noSignal": "",
+      "noSignalLook": "bars",
+      "timecode": "off",
+      "loudness": false,
+      "alarms": true,
+      "markers": {
+       "action": false,
+       "title": false,
+       "fourThree": false,
+       "fourteenNine": false,
+       "centre": false,
+       "afd": false,
+       "color": "#ffffffb3"
+      },
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 16.0,
+       "y": 714.0,
+       "width": 365.0,
+       "height": 169.0
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "f4197a706a9c",
+      "name": "Source 4",
+      "parent": null,
+      "type": "source",
+      "input": "{{input:4}}",
+      "fit": "contain",
+      "background": "#0b0d12",
+      "border": 8.0,
+      "tally": {
+       "border": true,
+       "program": "#e5212b",
+       "preview": "#17b14a",
+       "aux": "#f2b705",
+       "off": "#262a33"
+      },
+      "umd": {
+       "position": "top",
+       "size": 11.0,
+       "outside": false,
+       "text": "CAM 2",
+       "font": "Inter",
+       "weight": 600,
+       "align": "center",
+       "color": "#ffffff",
+       "background": "#000000b3",
+       "lamps": true
+      },
+      "vu": {
+       "position": "right",
+       "width": 6.0,
+       "gap": 2.0,
+       "margin": 6.0,
+       "min": -60.0,
+       "yellow": -18.0,
+       "red": -9.0,
+       "hold": true,
+       "max": 2,
+       "first": 0
+      },
+      "badge": false,
+      "noSignal": "",
+      "noSignalLook": "bars",
+      "timecode": "off",
+      "loudness": false,
+      "alarms": true,
+      "markers": {
+       "action": false,
+       "title": false,
+       "fourThree": false,
+       "fourteenNine": false,
+       "centre": false,
+       "afd": false,
+       "color": "#ffffffb3"
+      },
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 393.0,
+       "y": 714.0,
+       "width": 365.0,
+       "height": 169.0
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "7db13472d270",
+      "name": "Source 5",
+      "parent": null,
+      "type": "source",
+      "input": "{{input:5}}",
+      "fit": "contain",
+      "background": "#0b0d12",
+      "border": 8.0,
+      "tally": {
+       "border": true,
+       "program": "#e5212b",
+       "preview": "#17b14a",
+       "aux": "#f2b705",
+       "off": "#262a33"
+      },
+      "umd": {
+       "position": "top",
+       "size": 11.0,
+       "outside": false,
+       "text": "CAM 3",
+       "font": "Inter",
+       "weight": 600,
+       "align": "center",
+       "color": "#ffffff",
+       "background": "#000000b3",
+       "lamps": true
+      },
+      "vu": {
+       "position": "right",
+       "width": 6.0,
+       "gap": 2.0,
+       "margin": 6.0,
+       "min": -60.0,
+       "yellow": -18.0,
+       "red": -9.0,
+       "hold": true,
+       "max": 2,
+       "first": 0
+      },
+      "badge": false,
+      "noSignal": "",
+      "noSignalLook": "bars",
+      "timecode": "off",
+      "loudness": false,
+      "alarms": true,
+      "markers": {
+       "action": false,
+       "title": false,
+       "fourThree": false,
+       "fourteenNine": false,
+       "centre": false,
+       "afd": false,
+       "color": "#ffffffb3"
+      },
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 771.0,
+       "y": 714.0,
+       "width": 365.0,
+       "height": 169.0
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "896e573c3ab0",
+      "name": "Source 6",
+      "parent": null,
+      "type": "source",
+      "input": "{{input:6}}",
+      "fit": "contain",
+      "background": "#0b0d12",
+      "border": 8.0,
+      "tally": {
+       "border": true,
+       "program": "#e5212b",
+       "preview": "#17b14a",
+       "aux": "#f2b705",
+       "off": "#262a33"
+      },
+      "umd": {
+       "position": "top",
+       "size": 11.0,
+       "outside": false,
+       "text": "CAM 4",
+       "font": "Inter",
+       "weight": 600,
+       "align": "center",
+       "color": "#ffffff",
+       "background": "#000000b3",
+       "lamps": true
+      },
+      "vu": {
+       "position": "right",
+       "width": 6.0,
+       "gap": 2.0,
+       "margin": 6.0,
+       "min": -60.0,
+       "yellow": -18.0,
+       "red": -9.0,
+       "hold": true,
+       "max": 2,
+       "first": 0
+      },
+      "badge": false,
+      "noSignal": "",
+      "noSignalLook": "bars",
+      "timecode": "off",
+      "loudness": false,
+      "alarms": true,
+      "markers": {
+       "action": false,
+       "title": false,
+       "fourThree": false,
+       "fourteenNine": false,
+       "centre": false,
+       "afd": false,
+       "color": "#ffffffb3"
+      },
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 16.0,
+       "y": 895.0,
+       "width": 365.0,
+       "height": 169.0
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "922c24118b30",
+      "name": "Source 7",
+      "parent": null,
+      "type": "source",
+      "input": "{{input:7}}",
+      "fit": "contain",
+      "background": "#0b0d12",
+      "border": 8.0,
+      "tally": {
+       "border": true,
+       "program": "#e5212b",
+       "preview": "#17b14a",
+       "aux": "#f2b705",
+       "off": "#262a33"
+      },
+      "umd": {
+       "position": "top",
+       "size": 11.0,
+       "outside": false,
+       "text": "CAM 5",
+       "font": "Inter",
+       "weight": 600,
+       "align": "center",
+       "color": "#ffffff",
+       "background": "#000000b3",
+       "lamps": true
+      },
+      "vu": {
+       "position": "right",
+       "width": 6.0,
+       "gap": 2.0,
+       "margin": 6.0,
+       "min": -60.0,
+       "yellow": -18.0,
+       "red": -9.0,
+       "hold": true,
+       "max": 2,
+       "first": 0
+      },
+      "badge": false,
+      "noSignal": "",
+      "noSignalLook": "bars",
+      "timecode": "off",
+      "loudness": false,
+      "alarms": true,
+      "markers": {
+       "action": false,
+       "title": false,
+       "fourThree": false,
+       "fourteenNine": false,
+       "centre": false,
+       "afd": false,
+       "color": "#ffffffb3"
+      },
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 393.0,
+       "y": 895.0,
+       "width": 365.0,
+       "height": 169.0
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "fb854fc49e5e",
+      "name": "Source 8",
+      "parent": null,
+      "type": "source",
+      "input": "{{input:8}}",
+      "fit": "contain",
+      "background": "#0b0d12",
+      "border": 8.0,
+      "tally": {
+       "border": true,
+       "program": "#e5212b",
+       "preview": "#17b14a",
+       "aux": "#f2b705",
+       "off": "#262a33"
+      },
+      "umd": {
+       "position": "top",
+       "size": 11.0,
+       "outside": false,
+       "text": "CAM 6",
+       "font": "Inter",
+       "weight": 600,
+       "align": "center",
+       "color": "#ffffff",
+       "background": "#000000b3",
+       "lamps": true
+      },
+      "vu": {
+       "position": "right",
+       "width": 6.0,
+       "gap": 2.0,
+       "margin": 6.0,
+       "min": -60.0,
+       "yellow": -18.0,
+       "red": -9.0,
+       "hold": true,
+       "max": 2,
+       "first": 0
+      },
+      "badge": false,
+      "noSignal": "",
+      "noSignalLook": "bars",
+      "timecode": "off",
+      "loudness": false,
+      "alarms": true,
+      "markers": {
+       "action": false,
+       "title": false,
+       "fourThree": false,
+       "fourteenNine": false,
+       "centre": false,
+       "afd": false,
+       "color": "#ffffffb3"
+      },
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 771.0,
+       "y": 895.0,
+       "width": 365.0,
+       "height": 169.0
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "f79af6f8d90b",
+      "name": "Source 9",
+      "parent": null,
+      "type": "source",
+      "input": "{{input:9}}",
+      "fit": "contain",
+      "background": "#0b0d12",
+      "border": 8.0,
+      "tally": {
+       "border": true,
+       "program": "#e5212b",
+       "preview": "#17b14a",
+       "aux": "#f2b705",
+       "off": "#262a33"
+      },
+      "umd": {
+       "position": "top",
+       "size": 11.0,
+       "outside": false,
+       "text": "RETOUR ANTENNE",
+       "font": "Inter",
+       "weight": 600,
+       "align": "center",
+       "color": "#ffffff",
+       "background": "#000000b3",
+       "lamps": true
+      },
+      "vu": {
+       "position": "right",
+       "width": 6.0,
+       "gap": 2.0,
+       "margin": 6.0,
+       "min": -60.0,
+       "yellow": -18.0,
+       "red": -9.0,
+       "hold": true,
+       "max": 2,
+       "first": 0
+      },
+      "badge": false,
+      "noSignal": "",
+      "noSignalLook": "bars",
+      "timecode": "station",
+      "loudness": false,
+      "alarms": true,
+      "markers": {
+       "action": false,
+       "title": false,
+       "fourThree": false,
+       "fourteenNine": false,
+       "centre": false,
+       "afd": false,
+       "color": "#ffffffb3"
+      },
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 1148.0,
+       "y": 714.0,
+       "width": 756.0,
+       "height": 350.0
+      },
+      "tracks": {},
+      "bindings": {}
+     }
+    ],
+    "zone": "full-screen",
+    "revision": 1,
+    "markerModel": 2,
+    "background": {
+     "color": "#0b0d12",
+     "fillStyle": {
+      "kind": "solid",
+      "color2": "#000000",
+      "angle": 90.0,
+      "image": "",
+      "fit": "cover"
+     }
+    }
+   }
+  ],
+  "zones": [
+   {
+    "id": "full-screen",
+    "name": "Full screen",
+    "layer": 10,
+    "color": "#8fa3ff",
+    "transition": "sequential"
+   }
+  ],
+  "formats": [],
+  "language": "fr"
+ }
+}

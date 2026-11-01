@@ -8559,3 +8559,204 @@ textarea.tx-grow {
   padding-left: 20px;
   line-height: 1.6;
 }
+
+/* « New multiview »: blank, an example (two by row) or a file to import. */
+.modal.nmv {
+  width: min(1180px, 96vw);
+  height: min(860px, 92vh);
+  overflow: hidden;
+  position: relative;
+}
+.nmv-body {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 270px minmax(0, 1fr);
+  gap: 18px;
+}
+.nmv-side {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0;
+}
+.nmv-choice {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 14px;
+  text-align: left;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: var(--panel-2);
+  color: var(--text-2);
+  cursor: pointer;
+}
+.nmv-choice > svg {
+  flex: none;
+  margin-top: 1px;
+}
+.nmv-choice span {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.nmv-choice strong {
+  color: var(--text);
+  font-size: 14px;
+}
+.nmv-choice small,
+.nmv-drop small {
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--text-3);
+}
+.nmv-choice:hover {
+  border-color: var(--line-2);
+}
+.nmv-choice.on {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent-2);
+}
+.nmv-drop {
+  flex: 1;
+  min-height: 150px;
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 18px;
+  text-align: center;
+  border-radius: 12px;
+  border: 2px dashed var(--line-2);
+  background: transparent;
+  color: var(--text-2);
+  cursor: pointer;
+  transition:
+    border-color 0.12s,
+    background 0.12s;
+}
+.nmv-drop strong {
+  color: var(--text);
+  font-size: 14px;
+}
+.nmv-drop:hover,
+.nmv-drop.on {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent-2);
+}
+.nmv-drop:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+.nmv.nmv-over .nmv-main {
+  opacity: 0.35;
+  pointer-events: none;
+}
+.nmv-main {
+  min-height: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: auto;
+  transition: opacity 0.12s;
+}
+.nmv-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.nmv-main .nmv-form {
+  max-width: 720px;
+}
+.nmv-examples-wrap {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.nmv-cats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.nmv-cats button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--panel-2);
+  color: var(--text-2);
+  font-size: 12px;
+  cursor: pointer;
+}
+.nmv-cats button span {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-3);
+}
+.nmv-cats button.on {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent-2);
+}
+.example-grid.nmv-examples {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.nmv-examples .example-cover {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  cursor: pointer;
+}
+.nmv-examples .example-cover img {
+  position: absolute;
+}
+.nmv-examples .example-body p {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.nmv-examples .example-tags {
+  flex-wrap: nowrap;
+  overflow: hidden;
+}
+.nmv-examples .example-tags span {
+  flex: none;
+}
+@media (max-width: 760px) {
+  .modal.nmv {
+    height: 94vh;
+  }
+  .nmv-body {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto minmax(0, 1fr);
+  }
+  .nmv-side {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+  .nmv-drop {
+    grid-column: 1 / -1;
+    min-height: 0;
+    margin-top: 0;
+    flex-direction: row;
+    padding: 10px;
+  }
+  .nmv-drop small {
+    display: none;
+  }
+  .example-grid.nmv-examples {
+    grid-template-columns: 1fr;
+  }
+}

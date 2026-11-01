@@ -39,7 +39,7 @@ Un seul exécutable par plateforme, un moteur de rendu en Rust, une interface we
 
 - Les **entrées en direct** sont décodées en continu, et **analysées** : conteneur, programmes et EPG, codecs, images, timecode, sous-titres codés, tables MPEG-TS et TR 101 290, listes HLS, ANC SDI ; leur audio est mesuré canal par canal et en loudness EBU R128 ; leur image est surveillée (noir, image figée) ; une entrée qui tombe lève une alarme.
 - Le **tally** et les **UMD** viennent des mélangeurs et des contrôleurs de tally, aiguillés vers les entrées.
-- Le **Designer** compose les multiviews : vide, sur une **disposition** (2 × 2, 3 × 3, 1 + 5…) de **tuiles Source**, ou à partir d'un des **dix exemples** de régie de diffusion, puis les widgets de supervision (vu-mètres 16 canaux, loudness, timecode, état, journal des alarmes), des horloges, des logos et des textes.
+- Le **Designer** compose les multiviews : vide, sur une **disposition** (2 × 2, 3 × 3, 1 + 5…) de **tuiles Source**, ou à partir d'un des **vingt exemples** (régie finale, scopes et HDR, son 5.1 et Dante, SRT, PTP / ST 2110, UHD, mur de deux écrans, écran vertical…) — le tout depuis un seul bouton **+ Nouveau multiview**, qui accepte aussi un fichier `.json` déposé pour l'importer —, puis les widgets de supervision (vu-mètres 16 canaux, loudness, timecode, état, journal des alarmes), des horloges, des logos et des textes.
 - Une **chaîne** montre un multiview publié et l'envoie vers ses destinations.
 
 ### 1.2 Les pages
@@ -96,7 +96,7 @@ Guide complet, dossiers de données, pare-feu, proxy : [`docs/INSTALL.md`](docs/
 
 1. Ouvrez `http://<serveur>:8090`. Sur le serveur lui-même, la page propose de **créer le compte administrateur** ; à distance, utilisez `strata-mv-server user add admin`.
 2. **Diffusion › Entrées vidéo** : déclarez les sources (caméras en SDI, flux SRT d'un encodeur, sources NDI du réseau…).
-3. **Multiviews › Nouveau multiview** : nommez-le, choisissez sa résolution, partez d'une page **vide** ou d'une **disposition** (2 × 2, 1 + 5, 4 × 4…) dont les tuiles reçoivent les entrées dans l'ordre. Le multiview s'ouvre dans le **Designer**. Pour partir d'un multiview de régie complet : **Multiviews › Exemples**.
+3. **Multiviews › Nouveau multiview** : nommez-le, choisissez sa résolution, partez d'une page **vide** ou d'une **disposition** (2 × 2, 1 + 5, 4 × 4…) dont les tuiles reçoivent les entrées dans l'ordre. Le multiview s'ouvre dans le **Designer**. Pour partir d'un multiview complet, choisissez **Depuis un exemple** dans la même fenêtre ; pour importer, déposez-y le fichier `.json`.
 4. Ajustez les tuiles (entrée, UMD, vu-mètres, timecode, loudness), ajoutez des widgets, un logo, un titre, puis **Publiez**.
 5. **Diffusion › Flux vidéo** : choisissez le **multiview à l'antenne** de la chaîne : il passe aussitôt à l'antenne. Ajoutez les destinations (HTML5, NDI, SDI, ST 2110, flux).
 6. **Diffusion › Tally et UMD** : ajoutez la régie (TSL, ATEM ou GPI) et reliez ses afficheurs aux entrées.
@@ -125,22 +125,34 @@ Un multiview s'édite directement : une seule page, ni calques, ni timeline, ni 
 
 ![Les exemples](docs/screenshots/examples.png)
 
-La page **Multiviews** propose des **Exemples** : dix multiviews dessinés pour la **régie de diffusion** (pas de production). **Ajouter à mes multiviews** en fait une copie, dont les tuiles prennent les entrées du serveur dans l'ordre, et l'ouvre dans le Designer : tout y reste modifiable. Un nouveau multiview, lui, part d'une page vide ou d'une disposition.
+Le bouton **+ Nouveau multiview** (le seul de la page **Multiviews**) ouvre une fenêtre en deux colonnes : à gauche, **Vierge** (page vide ou disposition), **Depuis un exemple**, et une **zone de dépôt** où glisser un `.json` exporté de Strata Multiview pour l'importer (ou cliquer pour le choisir) ; à droite, le formulaire ou les exemples, deux par ligne, filtrables par catégorie. **Utiliser cet exemple** en fait une copie, dont les tuiles prennent les entrées du serveur dans l'ordre, et l'ouvre dans le Designer : tout y reste modifiable.
 
-| Exemple | Contenu |
-| --- | --- |
-| **Régie finale d'une chaîne** | PGM (timecode, loudness, alarmes), PVW, playout A et B, quatre retours, 16 canaux audio, loudness, état, journal |
-| **Seize chaînes** | 4 × 4 chaînes avec leur loudness et leurs alarmes, l'état de l'installation et le journal |
-| **Main et backup** | quatre chaînes, leur main et leur backup côte à côte, avec leur audio |
-| **Retours antenne** | le programme face à ses retours (TNT, satellite, IPTV, OTT), loudness et journal |
-| **Audio, 16 canaux** | les 16 canaux et le loudness d'une entrée, quatre autres entrées, avec ou sans image |
-| **IP, PTP et synchro** | neuf sources ST 2110, PTP et NTP, le timecode station et le journal |
-| **Contributions** | six arrivées avec leur timecode et leur loudness, le journal |
-| **Nuit, 25 sources** | 5 × 5 sources où seules les alarmes ressortent, le journal à côté |
-| **Habillage et sous-titres** | le programme avant et après habillage, son loudness, son audio et le journal |
-| **UHD HDR et SDR** | le programme UHD et sa conversion SDR, le loudness, 16 canaux, l'état de l'installation |
+Les vingt exemples utilisent tous les outils : tuiles avec repères (zones de sécurité, 4:3 / 14:9, centre, AFD) et badge de secours, scopes (waveform, parades, vecteurscope, histogramme, CIE, fausses couleurs, goniomètre), fiches signal, courbes (PTP, NTP, CPU, mémoire, rendu, images par seconde, loudness, RTT et pertes SRT) et valeurs.
 
-Les exemples sont des fichiers `crates/strata-mv-server/examples/ex-NN-*.json` embarqués dans le serveur (1920 × 1080, 50 i/s) ; leurs tuiles lisent `{{input:N}}`, la N-ième entrée du serveur.
+| N° | Exemple | Catégorie | Contenu |
+| --- | --- | --- | --- |
+| 01 | **Régie finale d’une chaîne** | Régie finale | PGM avec zones de sécurité, PVW, deux playouts, quatre retours, 16 canaux, loudness et fiche signal. |
+| 02 | **Mur de 16 sources** | Mosaïque | Seize sources en 4 × 4 avec UMD, vu-mètres et alarmes, et une barre d’état de l’installation. |
+| 03 | **Contrôle image et colorimétrie** | Vision | Une source en grand et ses six outils de mesure : waveform, parades, vecteurscope, histogramme, CIE. |
+| 04 | **Contrôle HDR / SDR** | Vision | Les versions HDR et SDR côte à côte, fausses couleurs, CIE, parade et métadonnées HDR. |
+| 05 | **Console audio 5.1** | Son | 16 canaux, loudness R128, courbe du loudness court terme, goniomètre et toutes les valeurs. |
+| 06 | **Supervision Dante / AES67** | Son | Quatre flux Dante / AES67 de 8 canaux : vu-mètres, goniomètres, loudness et alarmes. |
+| 07 | **Contributions SRT** | Réseau | Six arrivées SRT avec leur RTT et leurs pertes en courbes, et le journal des alarmes. |
+| 08 | **Redondance principal / secours** | Régie finale | Six chaînes en double, principal et secours côte à côte, avec la pire alarme de chacun. |
+| 09 | **Synchro et infrastructure ST 2110** | Réseau | L’écart PTP et NTP en courbes, l’état de la synchro, quatre flux ST 2110 et leurs formats. |
+| 10 | **Contrôle UHD 2160p** | Vision | Un multiview UHD : la source 4K en grand avec ses repères, waveform, vecteurscope et fiche signal. |
+| 11 | **Régie de journal télévisé** | Production | Programme avec repères 4:3 et 14:9, préparation, duplex, plateau, sujets et retour antenne. |
+| 12 | **Car régie sport** | Production | Programme et préparation, dix caméras, deux ralentis : une régie de match avec tally. |
+| 13 | **Plateau et prompteur** | Production | Six caméras plateau avec tally et UMD en haut, prompteur, programme et retour antenne. |
+| 14 | **Contrôle qualité (QC)** | Vision | Tout ce qu’on vérifie avant diffusion : image, waveform, histogramme, niveaux, loudness et fiche. |
+| 15 | **Diffusion OTT et plateformes** | Réseau | Le programme et ses sorties en ligne (YouTube, Twitch, HLS, Facebook) avec leurs images par seconde. |
+| 16 | **Tableau de bord du serveur** | Supervision | La santé de l’installation : processeurs, mémoire, décodeurs, rendu, alarmes et quatre sources. |
+| 17 | **Radio filmée** | Son | Trois caméras de studio radio, le programme stéréo, son goniomètre, son loudness et ses crêtes. |
+| 18 | **Mur de deux écrans** | Mosaïque | Un multiview de 3840 × 1080 découpé sur deux écrans : 20 sources et une barre d’état. |
+| 19 | **Veille de nuit · 30 chaînes** | Supervision | 30 chaînes en petit pour la veille de nuit, alarmes visibles de loin, journal et état. |
+| 20 | **Écran vertical réseaux sociaux** | Réseau | Un multiview vertical en 1080 × 1920 pour suivre les directs TikTok, Instagram et YouTube Shorts. |
+
+Les exemples sont des fichiers `crates/strata-mv-server/examples/ex-NN-*.json` embarqués dans le serveur, écrits par `python3 scripts/gen-examples.py` (qui refuse un widget hors de l'image ou sur un autre) ; leurs tuiles lisent `{{input:N}}`, la N-ième entrée du serveur. La plupart sont en 1920 × 1080 à 50 i/s ; « Contrôle UHD » est en 3840 × 2160, « Mur de deux écrans » en 3840 × 1080 et « Écran vertical » en 1080 × 1920 à 30 i/s.
 
 ![Le modèle « Régie finale » rendu par le moteur Rust](docs/screenshots/model-final.png)
 

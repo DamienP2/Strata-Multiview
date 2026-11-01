@@ -1,27 +1,31 @@
 {
  "meta": {
-  "id": "ex-06-ip",
-  "name": "IP, PTP et synchro",
-  "category": "Infrastructure",
+  "id": "ex-11-news",
+  "name": "Régie de journal télévisé",
+  "category": "Production",
   "tags": [
-   "9 tuiles"
+   "9 sources",
+   "4:3 / 14:9",
+   "Duplex"
   ],
-  "summary": "Neuf sources ST 2110, PTP et NTP, le timecode station et le journal.",
-  "description": "L’infrastructure IP : neuf sources ST 2110 avec leur format, l’état PTP et NTP, le timecode station, le loudness et les vu-mètres d’une source, le journal des alarmes.",
+  "description": "Pour le journal : le programme avec les repères 4:3 et 14:9 et la zone de titre pour placer les synthés, la préparation, deux duplex, trois caméras plateau et deux serveurs de sujets. En bas, l’heure, le loudness du programme et le journal des alarmes.",
+  "summary": "Programme avec repères 4:3 et 14:9, préparation, duplex, plateau, sujets et retour antenne.",
   "en": {
-   "name": "IP, PTP and sync",
-   "summary": "Nine ST 2110 sources, PTP and NTP, the station timecode and the log.",
-   "description": "The IP plant: nine ST 2110 sources with their format, PTP and NTP state, the station timecode, one source’s loudness and meters, the alarm log.",
-   "category": "Infrastructure",
+   "name": "News control room",
+   "category": "Production",
    "tags": [
-    "9 tiles"
-   ]
+    "9 sources",
+    "4:3 / 14:9",
+    "Live links"
+   ],
+   "summary": "Programme with 4:3 and 14:9 markers, preview, live links, studio, packages and air return.",
+   "description": "For the news: the programme with the 4:3 and 14:9 markers and the title area to place the graphics, preview, two live links, three studio cameras and two package servers. At the bottom, the time, the programme’s loudness and the alarm log."
   }
  },
  "project": {
   "id": "",
-  "name": "IP, PTP et synchro",
-  "description": "",
+  "name": "Régie de journal télévisé",
+  "description": "Programme avec repères 4:3 et 14:9, préparation, duplex, plateau, sujets et retour antenne.",
   "width": 1920,
   "height": 1080,
   "frameRate": {
@@ -30,21 +34,14 @@
   },
   "templates": [
    {
-    "id": "5136e3985242",
-    "name": "IP, PTP et synchro",
+    "id": "944f65ab8ef7",
+    "name": "Régie de journal télévisé",
     "duration": 50.0,
-    "markers": [
-     {
-      "id": "18800f734dae",
-      "frame": 25.0,
-      "name": "On air",
-      "kind": "out"
-     }
-    ],
+    "markers": [],
     "fields": [],
     "layers": [
      {
-      "id": "4oxvd06lvil6",
+      "id": "b65e70b20460",
       "name": "Bandeau",
       "parent": null,
       "type": "rect",
@@ -85,9 +82,9 @@
        "width": 1920.0,
        "height": 60.0,
        "fill": [
-        0.0627451,
-        0.078431375,
-        0.105882354,
+        0.062745,
+        0.078431,
+        0.105882,
         1.0
        ]
       },
@@ -95,11 +92,102 @@
       "bindings": {}
      },
      {
-      "id": "3ee44qhdvil6",
-      "name": "Infrastructure · ST 2110, PTP et synchro",
+      "id": "bdb04c00a86f",
+      "name": "Accent",
+      "parent": null,
+      "type": "rect",
+      "shape": "rect",
+      "perCorner": false,
+      "corners": [
+       0.0,
+       0.0,
+       0.0,
+       0.0
+      ],
+      "skewUnit": "px",
+      "skewPx": 120.0,
+      "skewDeg": 15.0,
+      "trapMode": "percent",
+      "trapTop": 70.0,
+      "trapLeft": 80.0,
+      "trapRight": 200.0,
+      "vertexRound": 0.0,
+      "fillStyle": {
+       "kind": "solid",
+       "color2": "#ff3b5c",
+       "angle": 90.0,
+       "image": "",
+       "fit": "cover"
+      },
+      "strokeStyle": {
+       "position": "inside",
+       "dash": "solid",
+       "join": "miter",
+       "cap": "butt"
+      },
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 6.0,
+       "height": 60.0,
+       "fill": [
+        1.0,
+        0.231373,
+        0.360784,
+        1.0
+       ]
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "13f5c69dbe82",
+      "name": "Heure station",
+      "parent": null,
+      "type": "timecode",
+      "input": "",
+      "label": "",
+      "color": "#ff3b5c",
+      "background": "#00000000",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 1564.0,
+       "y": 6.0,
+       "width": 340.0,
+       "height": 48.0
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "d75ee390e4c7",
+      "name": "État",
+      "parent": null,
+      "type": "status",
+      "ptp": false,
+      "ntp": false,
+      "alarms": true,
+      "background": "#00000000",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 1148.0,
+       "y": 6.0,
+       "width": 400.0,
+       "height": 48.0
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "7ac37a889900",
+      "name": "Journal · 20 h",
       "parent": null,
       "type": "text",
-      "text": "Infrastructure · ST 2110, PTP et synchro",
+      "text": "Journal · 20 h",
       "fontFamily": "Inter",
       "fontWeight": 700,
       "align": "left",
@@ -137,14 +225,14 @@
       "visible": true,
       "locked": false,
       "props": {
-       "x": 20.0,
+       "x": 24.0,
        "y": 6.0,
-       "width": 1000.0,
+       "width": 1108.0,
        "height": 48.0,
        "fill": [
-        0.9607843,
-        0.96862745,
-        0.98039216,
+        0.960784,
+        0.968627,
+        0.980392,
         1.0
        ],
        "fontSize": 30.0
@@ -153,47 +241,7 @@
       "bindings": {}
      },
      {
-      "id": "y4x3lt28vil6",
-      "name": "État",
-      "parent": null,
-      "type": "status",
-      "ptp": false,
-      "ntp": false,
-      "alarms": true,
-      "background": "#00000000",
-      "visible": true,
-      "locked": false,
-      "props": {
-       "x": 1060.0,
-       "y": 6.0,
-       "width": 420.0,
-       "height": 48.0
-      },
-      "tracks": {},
-      "bindings": {}
-     },
-     {
-      "id": "oapirktpvil6",
-      "name": "Timecode",
-      "parent": null,
-      "type": "timecode",
-      "input": "",
-      "label": "",
-      "color": "#fbbf24",
-      "background": "#00000000",
-      "visible": true,
-      "locked": false,
-      "props": {
-       "x": 1496.0,
-       "y": 6.0,
-       "width": 408.0,
-       "height": 48.0
-      },
-      "tracks": {},
-      "bindings": {}
-     },
-     {
-      "id": "syuz4dyhvil6",
+      "id": "791a7103d4e8",
       "name": "Source 1",
       "parent": null,
       "type": "source",
@@ -212,7 +260,7 @@
        "position": "bottom",
        "size": 11.0,
        "outside": false,
-       "text": "",
+       "text": "PGM",
        "font": "Inter",
        "weight": 600,
        "align": "center",
@@ -229,27 +277,37 @@
        "yellow": -18.0,
        "red": -9.0,
        "hold": true,
-       "max": 2
+       "max": 0,
+       "first": 0
       },
-      "badge": true,
+      "badge": false,
       "noSignal": "",
       "noSignalLook": "bars",
-      "timecode": "off",
-      "loudness": false,
+      "timecode": "station",
+      "loudness": true,
       "alarms": true,
+      "markers": {
+       "action": false,
+       "title": true,
+       "fourThree": true,
+       "fourteenNine": true,
+       "centre": false,
+       "afd": false,
+       "color": "#ffd84ecc"
+      },
       "visible": true,
       "locked": false,
       "props": {
        "x": 16.0,
        "y": 72.0,
-       "width": 395.0,
-       "height": 221.0
+       "width": 928.0,
+       "height": 522.0
       },
       "tracks": {},
       "bindings": {}
      },
      {
-      "id": "3cnwnskdvil6",
+      "id": "27bb7913b2fd",
       "name": "Source 2",
       "parent": null,
       "type": "source",
@@ -268,7 +326,7 @@
        "position": "bottom",
        "size": 11.0,
        "outside": false,
-       "text": "",
+       "text": "PVW",
        "font": "Inter",
        "weight": 600,
        "align": "center",
@@ -285,27 +343,37 @@
        "yellow": -18.0,
        "red": -9.0,
        "hold": true,
-       "max": 2
+       "max": 0,
+       "first": 0
       },
-      "badge": true,
+      "badge": false,
       "noSignal": "",
       "noSignalLook": "bars",
       "timecode": "off",
       "loudness": false,
       "alarms": true,
+      "markers": {
+       "action": false,
+       "title": false,
+       "fourThree": false,
+       "fourteenNine": false,
+       "centre": false,
+       "afd": false,
+       "color": "#ffffffb3"
+      },
       "visible": true,
       "locked": false,
       "props": {
-       "x": 419.0,
+       "x": 956.0,
        "y": 72.0,
-       "width": 395.0,
-       "height": 221.0
+       "width": 928.0,
+       "height": 522.0
       },
       "tracks": {},
       "bindings": {}
      },
      {
-      "id": "05lurh1uvil6",
+      "id": "5ad44cf81a59",
       "name": "Source 3",
       "parent": null,
       "type": "source",
@@ -324,7 +392,7 @@
        "position": "bottom",
        "size": 11.0,
        "outside": false,
-       "text": "",
+       "text": "DUPLEX 1",
        "font": "Inter",
        "weight": 600,
        "align": "center",
@@ -341,27 +409,37 @@
        "yellow": -18.0,
        "red": -9.0,
        "hold": true,
-       "max": 2
+       "max": 2,
+       "first": 0
       },
-      "badge": true,
+      "badge": false,
       "noSignal": "",
       "noSignalLook": "bars",
       "timecode": "off",
       "loudness": false,
       "alarms": true,
+      "markers": {
+       "action": false,
+       "title": false,
+       "fourThree": false,
+       "fourteenNine": false,
+       "centre": false,
+       "afd": false,
+       "color": "#ffffffb3"
+      },
       "visible": true,
       "locked": false,
       "props": {
-       "x": 821.0,
-       "y": 72.0,
-       "width": 395.0,
-       "height": 221.0
+       "x": 16.0,
+       "y": 606.0,
+       "width": 261.0,
+       "height": 147.0
       },
       "tracks": {},
       "bindings": {}
      },
      {
-      "id": "hwdv9vs3vil6",
+      "id": "88e3c7d55cfd",
       "name": "Source 4",
       "parent": null,
       "type": "source",
@@ -380,7 +458,7 @@
        "position": "bottom",
        "size": 11.0,
        "outside": false,
-       "text": "",
+       "text": "DUPLEX 2",
        "font": "Inter",
        "weight": 600,
        "align": "center",
@@ -397,27 +475,37 @@
        "yellow": -18.0,
        "red": -9.0,
        "hold": true,
-       "max": 2
+       "max": 2,
+       "first": 0
       },
-      "badge": true,
+      "badge": false,
       "noSignal": "",
       "noSignalLook": "bars",
       "timecode": "off",
       "loudness": false,
       "alarms": true,
+      "markers": {
+       "action": false,
+       "title": false,
+       "fourThree": false,
+       "fourteenNine": false,
+       "centre": false,
+       "afd": false,
+       "color": "#ffffffb3"
+      },
       "visible": true,
       "locked": false,
       "props": {
-       "x": 16.0,
-       "y": 301.0,
-       "width": 395.0,
-       "height": 221.0
+       "x": 287.0,
+       "y": 606.0,
+       "width": 261.0,
+       "height": 147.0
       },
       "tracks": {},
       "bindings": {}
      },
      {
-      "id": "nnyvddaovil6",
+      "id": "a6314b4977f7",
       "name": "Source 5",
       "parent": null,
       "type": "source",
@@ -436,7 +524,7 @@
        "position": "bottom",
        "size": 11.0,
        "outside": false,
-       "text": "",
+       "text": "CAM 1",
        "font": "Inter",
        "weight": 600,
        "align": "center",
@@ -453,27 +541,37 @@
        "yellow": -18.0,
        "red": -9.0,
        "hold": true,
-       "max": 2
+       "max": 2,
+       "first": 0
       },
-      "badge": true,
+      "badge": false,
       "noSignal": "",
       "noSignalLook": "bars",
       "timecode": "off",
       "loudness": false,
       "alarms": true,
+      "markers": {
+       "action": false,
+       "title": false,
+       "fourThree": false,
+       "fourteenNine": false,
+       "centre": false,
+       "afd": false,
+       "color": "#ffffffb3"
+      },
       "visible": true,
       "locked": false,
       "props": {
-       "x": 419.0,
-       "y": 301.0,
-       "width": 395.0,
-       "height": 221.0
+       "x": 558.0,
+       "y": 606.0,
+       "width": 261.0,
+       "height": 147.0
       },
       "tracks": {},
       "bindings": {}
      },
      {
-      "id": "w1s4ft7kvil6",
+      "id": "959417e374a6",
       "name": "Source 6",
       "parent": null,
       "type": "source",
@@ -492,7 +590,7 @@
        "position": "bottom",
        "size": 11.0,
        "outside": false,
-       "text": "",
+       "text": "CAM 2",
        "font": "Inter",
        "weight": 600,
        "align": "center",
@@ -509,27 +607,37 @@
        "yellow": -18.0,
        "red": -9.0,
        "hold": true,
-       "max": 2
+       "max": 2,
+       "first": 0
       },
-      "badge": true,
+      "badge": false,
       "noSignal": "",
       "noSignalLook": "bars",
       "timecode": "off",
       "loudness": false,
       "alarms": true,
+      "markers": {
+       "action": false,
+       "title": false,
+       "fourThree": false,
+       "fourteenNine": false,
+       "centre": false,
+       "afd": false,
+       "color": "#ffffffb3"
+      },
       "visible": true,
       "locked": false,
       "props": {
-       "x": 821.0,
-       "y": 301.0,
-       "width": 395.0,
-       "height": 221.0
+       "x": 829.0,
+       "y": 606.0,
+       "width": 261.0,
+       "height": 147.0
       },
       "tracks": {},
       "bindings": {}
      },
      {
-      "id": "2twcllazvil6",
+      "id": "c915412fac6d",
       "name": "Source 7",
       "parent": null,
       "type": "source",
@@ -548,7 +656,7 @@
        "position": "bottom",
        "size": 11.0,
        "outside": false,
-       "text": "",
+       "text": "CAM 3",
        "font": "Inter",
        "weight": 600,
        "align": "center",
@@ -565,27 +673,37 @@
        "yellow": -18.0,
        "red": -9.0,
        "hold": true,
-       "max": 2
+       "max": 2,
+       "first": 0
       },
-      "badge": true,
+      "badge": false,
       "noSignal": "",
       "noSignalLook": "bars",
       "timecode": "off",
       "loudness": false,
       "alarms": true,
+      "markers": {
+       "action": false,
+       "title": false,
+       "fourThree": false,
+       "fourteenNine": false,
+       "centre": false,
+       "afd": false,
+       "color": "#ffffffb3"
+      },
       "visible": true,
       "locked": false,
       "props": {
-       "x": 16.0,
-       "y": 531.0,
-       "width": 395.0,
-       "height": 221.0
+       "x": 1101.0,
+       "y": 606.0,
+       "width": 261.0,
+       "height": 147.0
       },
       "tracks": {},
       "bindings": {}
      },
      {
-      "id": "s93vsuizvil6",
+      "id": "270c75eed188",
       "name": "Source 8",
       "parent": null,
       "type": "source",
@@ -604,7 +722,7 @@
        "position": "bottom",
        "size": 11.0,
        "outside": false,
-       "text": "",
+       "text": "SUJETS A",
        "font": "Inter",
        "weight": 600,
        "align": "center",
@@ -621,27 +739,37 @@
        "yellow": -18.0,
        "red": -9.0,
        "hold": true,
-       "max": 2
+       "max": 2,
+       "first": 0
       },
-      "badge": true,
+      "badge": false,
       "noSignal": "",
       "noSignalLook": "bars",
       "timecode": "off",
       "loudness": false,
       "alarms": true,
+      "markers": {
+       "action": false,
+       "title": false,
+       "fourThree": false,
+       "fourteenNine": false,
+       "centre": false,
+       "afd": false,
+       "color": "#ffffffb3"
+      },
       "visible": true,
       "locked": false,
       "props": {
-       "x": 419.0,
-       "y": 531.0,
-       "width": 395.0,
-       "height": 221.0
+       "x": 1372.0,
+       "y": 606.0,
+       "width": 261.0,
+       "height": 147.0
       },
       "tracks": {},
       "bindings": {}
      },
      {
-      "id": "yotqkr6cvil6",
+      "id": "4d532929fcfa",
       "name": "Source 9",
       "parent": null,
       "type": "source",
@@ -660,7 +788,7 @@
        "position": "bottom",
        "size": 11.0,
        "outside": false,
-       "text": "",
+       "text": "SUJETS B",
        "font": "Inter",
        "weight": 600,
        "align": "center",
@@ -677,136 +805,115 @@
        "yellow": -18.0,
        "red": -9.0,
        "hold": true,
-       "max": 2
+       "max": 2,
+       "first": 0
       },
-      "badge": true,
+      "badge": false,
       "noSignal": "",
       "noSignalLook": "bars",
       "timecode": "off",
       "loudness": false,
       "alarms": true,
+      "markers": {
+       "action": false,
+       "title": false,
+       "fourThree": false,
+       "fourteenNine": false,
+       "centre": false,
+       "afd": false,
+       "color": "#ffffffb3"
+      },
       "visible": true,
       "locked": false,
       "props": {
-       "x": 821.0,
-       "y": 531.0,
-       "width": 395.0,
-       "height": 221.0
+       "x": 1643.0,
+       "y": 606.0,
+       "width": 261.0,
+       "height": 147.0
       },
       "tracks": {},
       "bindings": {}
      },
      {
-      "id": "h27kqpqdvil6",
-      "name": "État",
+      "id": "d6040f4bd8bf",
+      "name": "Valeur · Heure",
       "parent": null,
-      "type": "status",
-      "ptp": true,
-      "ntp": true,
-      "alarms": true,
-      "background": "#0b0d12d9",
-      "visible": true,
-      "locked": false,
-      "props": {
-       "x": 1228.0,
-       "y": 72.0,
-       "width": 676.0,
-       "height": 260.0
-      },
-      "tracks": {},
-      "bindings": {}
-     },
-     {
-      "id": "5ubg3ienvil6",
-      "name": "Timecode",
-      "parent": null,
-      "type": "timecode",
+      "type": "value",
       "input": "",
-      "label": "TC",
-      "color": "#fbbf24",
+      "kind": "time",
+      "label": "Heure",
+      "showLabel": true,
+      "stack": true,
+      "align": "center",
+      "warn": 0.0,
+      "crit": 0.0,
+      "color": "#ffd84e",
       "background": "#0b0d12d9",
       "visible": true,
       "locked": false,
       "props": {
-       "x": 1228.0,
-       "y": 344.0,
-       "width": 676.0,
-       "height": 140.0
+       "x": 16.0,
+       "y": 818.0,
+       "width": 360.0,
+       "height": 246.0
       },
       "tracks": {},
       "bindings": {}
      },
      {
-      "id": "ch5fvz56vil6",
-      "name": "Journal des alarmes",
-      "parent": null,
-      "type": "alarmLog",
-      "rows": 9,
-      "ended": true,
-      "background": "#0b0d12d9",
-      "visible": true,
-      "locked": false,
-      "props": {
-       "x": 1228.0,
-       "y": 496.0,
-       "width": 676.0,
-       "height": 576.0
-      },
-      "tracks": {},
-      "bindings": {}
-     },
-     {
-      "id": "j6cvfxqyvil6",
+      "id": "b91dce70e758",
       "name": "Loudness",
       "parent": null,
       "type": "loudness",
       "input": "{{input:1}}",
       "target": -23.0,
       "tolerance": 1.0,
-      "history": false,
+      "history": true,
       "background": "#0b0d12d9",
       "visible": true,
       "locked": false,
       "props": {
-       "x": 16.0,
-       "y": 764.0,
-       "width": 600.0,
-       "height": 308.0
+       "x": 388.0,
+       "y": 818.0,
+       "width": 556.0,
+       "height": 246.0
       },
       "tracks": {},
       "bindings": {}
      },
      {
-      "id": "fw9w3doavil6",
-      "name": "Vu-mètres",
+      "id": "7fb87de50e0b",
+      "name": "Journal des alarmes",
       "parent": null,
-      "type": "audioMeter",
-      "input": "{{input:1}}",
-      "channels": 0,
-      "labels": "L, R",
-      "scale": true,
-      "values": false,
-      "hold": true,
-      "loudness": true,
-      "min": -60.0,
-      "yellow": -18.0,
-      "red": -9.0,
+      "type": "alarmLog",
+      "rows": 6,
+      "ended": true,
       "background": "#0b0d12d9",
       "visible": true,
       "locked": false,
       "props": {
-       "x": 628.0,
-       "y": 764.0,
-       "width": 588.0,
-       "height": 308.0
+       "x": 956.0,
+       "y": 818.0,
+       "width": 948.0,
+       "height": 246.0
       },
       "tracks": {},
       "bindings": {}
      }
     ],
     "zone": "full-screen",
-    "revision": 2,
-    "markerModel": 2
+    "revision": 1,
+    "markerModel": 2,
+    "background": {
+     "color": "#0b0d12",
+     "fillStyle": {
+      "kind": "solid",
+      "color2": "#000000",
+      "angle": 90.0,
+      "image": "",
+      "fit": "cover"
+     }
+    }
    }
   ],
   "zones": [

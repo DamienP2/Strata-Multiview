@@ -119,7 +119,7 @@ mod tests {
     #[test]
     fn every_example_reads_and_takes_the_inputs_in_order() {
         let all = list();
-        assert_eq!(all.len(), 10, "the ten control-room multiviews");
+        assert_eq!(all.len(), 20, "the twenty example multiviews");
         let inputs = vec![
             ("cam1".to_string(), "CAM 1".to_string()),
             ("cam2".to_string(), "CAM 2".to_string()),
@@ -140,9 +140,14 @@ mod tests {
                 _ => None,
             })
             .collect();
+        // The programme on the first input, the preview on the second.
         assert_eq!(tiles[0], ("CAM 1", "cam1"));
-        assert_eq!(tiles[1], ("CAM 2", "cam2"));
-        assert_eq!(tiles[2].1, "", "no third input");
+        assert!(tiles.contains(&("CAM 2", "cam2")));
+        assert_eq!(
+            tiles.iter().filter(|t| t.1.is_empty()).count(),
+            tiles.len() - 2,
+            "no third input"
+        );
         assert_eq!(placeholder(3), "{{input:3}}");
     }
 }

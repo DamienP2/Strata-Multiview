@@ -1,27 +1,33 @@
 {
  "meta": {
   "id": "ex-05-audio",
-  "name": "Audio, 16 canaux",
-  "category": "Audio",
+  "name": "Console audio 5.1",
+  "category": "Son",
   "tags": [
-   "Audio seul"
+   "16 canaux",
+   "Goniomètre",
+   "Loudness",
+   "Courbe"
   ],
-  "summary": "Les 16 canaux et le loudness d’une entrée, quatre autres entrées, avec ou sans image.",
-  "description": "Le contrôle audio : les 16 canaux d’une entrée avec leurs valeurs, son loudness EBU R128 et sa courbe, et les vu-mètres de quatre autres entrées, sans image.",
+  "description": "Le contrôle du son d’un programme : ses 16 canaux (5.1, stéréo, audiodescription, version originale), son loudness EBU R128 et sa courbe sur deux minutes, le goniomètre et la corrélation de phase de la stéréo, et chaque mesure en valeur (M, S, I, LRA, true peak, crêtes gauche et droite, phase, piste écoutée).",
+  "summary": "16 canaux, loudness R128, courbe du loudness court terme, goniomètre et toutes les valeurs.",
   "en": {
-   "name": "Audio, 16 channels",
-   "summary": "An input’s 16 channels and loudness, four more inputs, with or without picture.",
-   "description": "Audio control: an input’s 16 channels with their values, its EBU R128 loudness and its curve, and the meters of four more inputs, without picture.",
-   "category": "Audio",
+   "name": "5.1 audio console",
+   "category": "Sound",
    "tags": [
-    "Audio only"
-   ]
+    "16 channels",
+    "Goniometer",
+    "Loudness",
+    "Chart"
+   ],
+   "summary": "16 channels, R128 loudness, short-term loudness chart, goniometer and every value.",
+   "description": "Checking the sound of a programme: its 16 channels (5.1, stereo, audio description, original version), its EBU R128 loudness and its curve over two minutes, the goniometer and phase correlation of the stereo, and each measure as a value (M, S, I, LRA, true peak, left and right peaks, phase, track listened to)."
   }
  },
  "project": {
   "id": "",
-  "name": "Audio, 16 canaux",
-  "description": "",
+  "name": "Console audio 5.1",
+  "description": "16 canaux, loudness R128, courbe du loudness court terme, goniomètre et toutes les valeurs.",
   "width": 1920,
   "height": 1080,
   "frameRate": {
@@ -30,21 +36,14 @@
   },
   "templates": [
    {
-    "id": "12595606fac0",
-    "name": "Audio, 16 canaux",
+    "id": "b8b97ec6b852",
+    "name": "Console audio 5.1",
     "duration": 50.0,
-    "markers": [
-     {
-      "id": "deac89470196",
-      "frame": 25.0,
-      "name": "On air",
-      "kind": "out"
-     }
-    ],
+    "markers": [],
     "fields": [],
     "layers": [
      {
-      "id": "39bhgckhvgr0",
+      "id": "7d139af01351",
       "name": "Bandeau",
       "parent": null,
       "type": "rect",
@@ -85,9 +84,9 @@
        "width": 1920.0,
        "height": 60.0,
        "fill": [
-        0.0627451,
-        0.078431375,
-        0.105882354,
+        0.062745,
+        0.078431,
+        0.105882,
         1.0
        ]
       },
@@ -95,11 +94,102 @@
       "bindings": {}
      },
      {
-      "id": "v4tdnkbuvgr0",
-      "name": "Contrôle audio · 16 canaux",
+      "id": "5891f5e92dae",
+      "name": "Accent",
+      "parent": null,
+      "type": "rect",
+      "shape": "rect",
+      "perCorner": false,
+      "corners": [
+       0.0,
+       0.0,
+       0.0,
+       0.0
+      ],
+      "skewUnit": "px",
+      "skewPx": 120.0,
+      "skewDeg": 15.0,
+      "trapMode": "percent",
+      "trapTop": 70.0,
+      "trapLeft": 80.0,
+      "trapRight": 200.0,
+      "vertexRound": 0.0,
+      "fillStyle": {
+       "kind": "solid",
+       "color2": "#ff3b5c",
+       "angle": 90.0,
+       "image": "",
+       "fit": "cover"
+      },
+      "strokeStyle": {
+       "position": "inside",
+       "dash": "solid",
+       "join": "miter",
+       "cap": "butt"
+      },
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 6.0,
+       "height": 60.0,
+       "fill": [
+        0.239216,
+        0.862745,
+        0.592157,
+        1.0
+       ]
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "3c90b8676029",
+      "name": "Heure station",
+      "parent": null,
+      "type": "timecode",
+      "input": "",
+      "label": "",
+      "color": "#3ddc97",
+      "background": "#00000000",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 1564.0,
+       "y": 6.0,
+       "width": 340.0,
+       "height": 48.0
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "9f9eba09933a",
+      "name": "État",
+      "parent": null,
+      "type": "status",
+      "ptp": false,
+      "ntp": false,
+      "alarms": true,
+      "background": "#00000000",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 1148.0,
+       "y": 6.0,
+       "width": 400.0,
+       "height": 48.0
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "b3a3b6fb59c0",
+      "name": "Son · programme 5.1",
       "parent": null,
       "type": "text",
-      "text": "Contrôle audio · 16 canaux",
+      "text": "Son · programme 5.1",
       "fontFamily": "Inter",
       "fontWeight": 700,
       "align": "left",
@@ -137,14 +227,14 @@
       "visible": true,
       "locked": false,
       "props": {
-       "x": 20.0,
+       "x": 24.0,
        "y": 6.0,
-       "width": 1000.0,
+       "width": 1108.0,
        "height": 48.0,
        "fill": [
-        0.9607843,
-        0.96862745,
-        0.98039216,
+        0.960784,
+        0.968627,
+        0.980392,
         1.0
        ],
        "fontSize": 30.0
@@ -153,47 +243,7 @@
       "bindings": {}
      },
      {
-      "id": "wxv26pc8vgr0",
-      "name": "État",
-      "parent": null,
-      "type": "status",
-      "ptp": false,
-      "ntp": false,
-      "alarms": true,
-      "background": "#00000000",
-      "visible": true,
-      "locked": false,
-      "props": {
-       "x": 1060.0,
-       "y": 6.0,
-       "width": 420.0,
-       "height": 48.0
-      },
-      "tracks": {},
-      "bindings": {}
-     },
-     {
-      "id": "ffk2cz88vgr0",
-      "name": "Timecode",
-      "parent": null,
-      "type": "timecode",
-      "input": "",
-      "label": "",
-      "color": "#fbbf24",
-      "background": "#00000000",
-      "visible": true,
-      "locked": false,
-      "props": {
-       "x": 1496.0,
-       "y": 6.0,
-       "width": 408.0,
-       "height": 48.0
-      },
-      "tracks": {},
-      "bindings": {}
-     },
-     {
-      "id": "n54msgl3vgr0",
+      "id": "f3e0c017c0c4",
       "name": "Vu-mètres",
       "parent": null,
       "type": "audioMeter",
@@ -213,14 +263,103 @@
       "props": {
        "x": 16.0,
        "y": 72.0,
-       "width": 1200.0,
-       "height": 640.0
+       "width": 760.0,
+       "height": 680.0
       },
       "tracks": {},
       "bindings": {}
      },
      {
-      "id": "is8ypnguvgr0",
+      "id": "de04be10bba0",
+      "name": "Source 1",
+      "parent": null,
+      "type": "source",
+      "input": "{{input:1}}",
+      "fit": "contain",
+      "background": "#0b0d12",
+      "border": 4.0,
+      "tally": {
+       "border": true,
+       "program": "#e5212b",
+       "preview": "#17b14a",
+       "aux": "#f2b705",
+       "off": "#262a33"
+      },
+      "umd": {
+       "position": "bottom",
+       "size": 11.0,
+       "outside": false,
+       "text": "PGM",
+       "font": "Inter",
+       "weight": 600,
+       "align": "center",
+       "color": "#ffffff",
+       "background": "#000000b3",
+       "lamps": true
+      },
+      "vu": {
+       "position": "right",
+       "width": 6.0,
+       "gap": 2.0,
+       "margin": 6.0,
+       "min": -60.0,
+       "yellow": -18.0,
+       "red": -9.0,
+       "hold": true,
+       "max": 0,
+       "first": 0
+      },
+      "badge": false,
+      "noSignal": "",
+      "noSignalLook": "bars",
+      "timecode": "off",
+      "loudness": false,
+      "alarms": true,
+      "markers": {
+       "action": false,
+       "title": false,
+       "fourThree": false,
+       "fourteenNine": false,
+       "centre": false,
+       "afd": false,
+       "color": "#ffffffb3"
+      },
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 788.0,
+       "y": 72.0,
+       "width": 560.0,
+       "height": 315.0
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "4bbd5c2b445d",
+      "name": "Goniomètre",
+      "parent": null,
+      "type": "scope",
+      "input": "{{input:1}}",
+      "kind": "goniometer",
+      "graticule": true,
+      "labels": true,
+      "intensity": 1.0,
+      "color": "#3ddc97",
+      "background": "#05070b",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 1360.0,
+       "y": 72.0,
+       "width": 544.0,
+       "height": 452.0
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "cb9e192e6fd3",
       "name": "Loudness",
       "parent": null,
       "type": "loudness",
@@ -232,126 +371,317 @@
       "visible": true,
       "locked": false,
       "props": {
-       "x": 1228.0,
-       "y": 72.0,
-       "width": 676.0,
-       "height": 640.0
+       "x": 788.0,
+       "y": 399.0,
+       "width": 560.0,
+       "height": 353.0
       },
       "tracks": {},
       "bindings": {}
      },
      {
-      "id": "z9prfjyovgr0",
-      "name": "Vu-mètres",
+      "id": "10b0008b5900",
+      "name": "Courbe · Loudness court terme",
       "parent": null,
-      "type": "audioMeter",
-      "input": "{{input:2}}",
-      "channels": 0,
-      "labels": "L, R",
-      "scale": true,
-      "values": true,
-      "hold": true,
-      "loudness": true,
-      "min": -60.0,
-      "yellow": -18.0,
-      "red": -9.0,
+      "type": "chart",
+      "metric": "loudness",
+      "input": "{{input:1}}",
+      "channel": "",
+      "title": "Loudness court terme",
+      "window": 120,
+      "min": -40.0,
+      "max": -10.0,
+      "warn": -22.0,
+      "crit": -20.0,
+      "color": "#3ddc97",
+      "fill": true,
+      "stats": true,
+      "background": "#0b0d12d9",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 1360.0,
+       "y": 536.0,
+       "width": 544.0,
+       "height": 216.0
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "4db0b99805f9",
+      "name": "Valeur · M",
+      "parent": null,
+      "type": "value",
+      "input": "{{input:1}}",
+      "kind": "momentary",
+      "label": "M",
+      "showLabel": true,
+      "stack": true,
+      "align": "center",
+      "warn": 0.0,
+      "crit": 0.0,
+      "color": "#ffffff",
       "background": "#0b0d12d9",
       "visible": true,
       "locked": false,
       "props": {
        "x": 16.0,
-       "y": 724.0,
-       "width": 462.0,
-       "height": 348.0
+       "y": 764.0,
+       "width": 368.0,
+       "height": 144.0
       },
       "tracks": {},
       "bindings": {}
      },
      {
-      "id": "bof3fom1vgr0",
-      "name": "Vu-mètres",
+      "id": "e78e89715531",
+      "name": "Valeur · S",
       "parent": null,
-      "type": "audioMeter",
-      "input": "{{input:3}}",
-      "channels": 0,
-      "labels": "L, R",
-      "scale": true,
-      "values": true,
-      "hold": true,
-      "loudness": true,
-      "min": -60.0,
-      "yellow": -18.0,
-      "red": -9.0,
+      "type": "value",
+      "input": "{{input:1}}",
+      "kind": "shortTerm",
+      "label": "S",
+      "showLabel": true,
+      "stack": true,
+      "align": "center",
+      "warn": 0.0,
+      "crit": 0.0,
+      "color": "#ffffff",
       "background": "#0b0d12d9",
       "visible": true,
       "locked": false,
       "props": {
-       "x": 490.0,
-       "y": 724.0,
-       "width": 462.0,
-       "height": 348.0
+       "x": 396.0,
+       "y": 764.0,
+       "width": 368.0,
+       "height": 144.0
       },
       "tracks": {},
       "bindings": {}
      },
      {
-      "id": "41dwqsrnvgr0",
-      "name": "Vu-mètres",
+      "id": "83071621a687",
+      "name": "Valeur · I",
       "parent": null,
-      "type": "audioMeter",
-      "input": "{{input:4}}",
-      "channels": 0,
-      "labels": "L, R",
-      "scale": true,
-      "values": true,
-      "hold": true,
-      "loudness": true,
-      "min": -60.0,
-      "yellow": -18.0,
-      "red": -9.0,
+      "type": "value",
+      "input": "{{input:1}}",
+      "kind": "integrated",
+      "label": "I",
+      "showLabel": true,
+      "stack": true,
+      "align": "center",
+      "warn": 0.0,
+      "crit": 0.0,
+      "color": "#ffffff",
       "background": "#0b0d12d9",
       "visible": true,
       "locked": false,
       "props": {
-       "x": 964.0,
-       "y": 724.0,
-       "width": 462.0,
-       "height": 348.0
+       "x": 776.0,
+       "y": 764.0,
+       "width": 368.0,
+       "height": 144.0
       },
       "tracks": {},
       "bindings": {}
      },
      {
-      "id": "58cl56u2vgr0",
-      "name": "Vu-mètres",
+      "id": "d78d40913c3c",
+      "name": "Valeur · LRA",
       "parent": null,
-      "type": "audioMeter",
-      "input": "{{input:5}}",
-      "channels": 0,
-      "labels": "L, R",
-      "scale": true,
-      "values": true,
-      "hold": true,
-      "loudness": true,
-      "min": -60.0,
-      "yellow": -18.0,
-      "red": -9.0,
+      "type": "value",
+      "input": "{{input:1}}",
+      "kind": "loudnessRange",
+      "label": "LRA",
+      "showLabel": true,
+      "stack": true,
+      "align": "center",
+      "warn": 0.0,
+      "crit": 0.0,
+      "color": "#ffffff",
       "background": "#0b0d12d9",
       "visible": true,
       "locked": false,
       "props": {
-       "x": 1438.0,
-       "y": 724.0,
-       "width": 462.0,
-       "height": 348.0
+       "x": 1156.0,
+       "y": 764.0,
+       "width": 368.0,
+       "height": 144.0
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "c4f5cd7d46fa",
+      "name": "Valeur · TP",
+      "parent": null,
+      "type": "value",
+      "input": "{{input:1}}",
+      "kind": "truePeak",
+      "label": "TP",
+      "showLabel": true,
+      "stack": true,
+      "align": "center",
+      "warn": 0.0,
+      "crit": 0.0,
+      "color": "#ffffff",
+      "background": "#0b0d12d9",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 1536.0,
+       "y": 764.0,
+       "width": 368.0,
+       "height": 144.0
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "19d0ec2e0715",
+      "name": "Valeur · peakLeft",
+      "parent": null,
+      "type": "value",
+      "input": "{{input:1}}",
+      "kind": "peakLeft",
+      "label": "",
+      "showLabel": true,
+      "stack": true,
+      "align": "center",
+      "warn": 0.0,
+      "crit": 0.0,
+      "color": "#ffffff",
+      "background": "#0b0d12d9",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 16.0,
+       "y": 920.0,
+       "width": 368.0,
+       "height": 144.0
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "14e78fba0c3c",
+      "name": "Valeur · peakRight",
+      "parent": null,
+      "type": "value",
+      "input": "{{input:1}}",
+      "kind": "peakRight",
+      "label": "",
+      "showLabel": true,
+      "stack": true,
+      "align": "center",
+      "warn": 0.0,
+      "crit": 0.0,
+      "color": "#ffffff",
+      "background": "#0b0d12d9",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 396.0,
+       "y": 920.0,
+       "width": 368.0,
+       "height": 144.0
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "1acb0116f66d",
+      "name": "Valeur · phase",
+      "parent": null,
+      "type": "value",
+      "input": "{{input:1}}",
+      "kind": "phase",
+      "label": "",
+      "showLabel": true,
+      "stack": true,
+      "align": "center",
+      "warn": 0.0,
+      "crit": 0.0,
+      "color": "#ffffff",
+      "background": "#0b0d12d9",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 776.0,
+       "y": 920.0,
+       "width": 368.0,
+       "height": 144.0
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "bf6030481ee1",
+      "name": "Valeur · audio",
+      "parent": null,
+      "type": "value",
+      "input": "{{input:1}}",
+      "kind": "audio",
+      "label": "",
+      "showLabel": true,
+      "stack": true,
+      "align": "center",
+      "warn": 0.0,
+      "crit": 0.0,
+      "color": "#ffffff",
+      "background": "#0b0d12d9",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 1156.0,
+       "y": 920.0,
+       "width": 368.0,
+       "height": 144.0
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "4a68f08dad04",
+      "name": "Valeur · Son",
+      "parent": null,
+      "type": "value",
+      "input": "{{input:1}}",
+      "kind": "alarm",
+      "label": "Son",
+      "showLabel": true,
+      "stack": true,
+      "align": "center",
+      "warn": 0.0,
+      "crit": 0.0,
+      "color": "#ffffff",
+      "background": "#0b0d12d9",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 1536.0,
+       "y": 920.0,
+       "width": 368.0,
+       "height": 144.0
       },
       "tracks": {},
       "bindings": {}
      }
     ],
     "zone": "full-screen",
-    "revision": 2,
-    "markerModel": 2
+    "revision": 1,
+    "markerModel": 2,
+    "background": {
+     "color": "#0b0d12",
+     "fillStyle": {
+      "kind": "solid",
+      "color2": "#000000",
+      "angle": 90.0,
+      "image": "",
+      "fit": "cover"
+     }
+    }
    }
   ],
   "zones": [

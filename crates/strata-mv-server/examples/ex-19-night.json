@@ -1,27 +1,31 @@
 {
  "meta": {
-  "id": "ex-08-night",
-  "name": "Nuit, 25 sources",
-  "category": "Veille",
+  "id": "ex-19-night",
+  "name": "Veille de nuit · 30 chaînes",
+  "category": "Supervision",
   "tags": [
-   "25 tuiles"
+   "30 sources",
+   "Alarmes",
+   "Fond sobre"
   ],
-  "summary": "5 × 5 sources où seules les alarmes ressortent, le journal à côté.",
-  "description": "La veille de nuit : vingt-cinq sources discrètes où seules les alarmes ressortent, le timecode station, l’état de l’installation et le journal des alarmes en cours.",
+  "description": "Pour la veille de nuit d’une tête de réseau : trente chaînes en petit, sans vu-mètre, où seules les alarmes (noir, figé, silence, perte de signal) se voient de loin. À droite, le nombre d’alarmes en cours en grand, le journal et l’état de la synchro.",
+  "summary": "30 chaînes en petit pour la veille de nuit, alarmes visibles de loin, journal et état.",
   "en": {
-   "name": "Night shift, 25 sources",
-   "summary": "5 × 5 sources where only the faults stand out, the log beside them.",
-   "description": "The night shift: twenty-five quiet sources where only the faults stand out, the station timecode, the state of the plant and the log of the faults on now.",
-   "category": "Night watch",
+   "name": "Night watch · 30 channels",
+   "category": "Supervision",
    "tags": [
-    "25 tiles"
-   ]
+    "30 sources",
+    "Alarms",
+    "Quiet background"
+   ],
+   "summary": "30 channels small for the night watch, alarms visible from afar, log and state.",
+   "description": "For the night watch of a headend: thirty channels small, without meters, where only the faults (black, frozen, silence, lost signal) show from afar. On the right, the number of faults on large, the log and the state of sync."
   }
  },
  "project": {
   "id": "",
-  "name": "Nuit, 25 sources",
-  "description": "",
+  "name": "Veille de nuit · 30 chaînes",
+  "description": "30 chaînes en petit pour la veille de nuit, alarmes visibles de loin, journal et état.",
   "width": 1920,
   "height": 1080,
   "frameRate": {
@@ -30,21 +34,14 @@
   },
   "templates": [
    {
-    "id": "24e9763cdfb5",
-    "name": "Nuit, 25 sources",
+    "id": "c313b2f9976d",
+    "name": "Veille de nuit · 30 chaînes",
     "duration": 50.0,
-    "markers": [
-     {
-      "id": "54c112fd695b",
-      "frame": 25.0,
-      "name": "On air",
-      "kind": "out"
-     }
-    ],
+    "markers": [],
     "fields": [],
     "layers": [
      {
-      "id": "jy54wgn0vm8t",
+      "id": "4699cb6441a7",
       "name": "Bandeau",
       "parent": null,
       "type": "rect",
@@ -85,9 +82,9 @@
        "width": 1920.0,
        "height": 60.0,
        "fill": [
-        0.0627451,
-        0.078431375,
-        0.105882354,
+        0.043137,
+        0.05098,
+        0.070588,
         1.0
        ]
       },
@@ -95,11 +92,102 @@
       "bindings": {}
      },
      {
-      "id": "i3nz0m8dvm8t",
-      "name": "Veille de nuit · 25 sources",
+      "id": "48345823323c",
+      "name": "Accent",
+      "parent": null,
+      "type": "rect",
+      "shape": "rect",
+      "perCorner": false,
+      "corners": [
+       0.0,
+       0.0,
+       0.0,
+       0.0
+      ],
+      "skewUnit": "px",
+      "skewPx": 120.0,
+      "skewDeg": 15.0,
+      "trapMode": "percent",
+      "trapTop": 70.0,
+      "trapLeft": 80.0,
+      "trapRight": 200.0,
+      "vertexRound": 0.0,
+      "fillStyle": {
+       "kind": "solid",
+       "color2": "#ff3b5c",
+       "angle": 90.0,
+       "image": "",
+       "fit": "cover"
+      },
+      "strokeStyle": {
+       "position": "inside",
+       "dash": "solid",
+       "join": "miter",
+       "cap": "butt"
+      },
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 6.0,
+       "height": 60.0,
+       "fill": [
+        0.541176,
+        0.576471,
+        0.639216,
+        1.0
+       ]
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "58121e672634",
+      "name": "Heure station",
+      "parent": null,
+      "type": "timecode",
+      "input": "",
+      "label": "",
+      "color": "#8a93a3",
+      "background": "#00000000",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 1564.0,
+       "y": 6.0,
+       "width": 340.0,
+       "height": 48.0
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "dd33cd04c05d",
+      "name": "État",
+      "parent": null,
+      "type": "status",
+      "ptp": false,
+      "ntp": false,
+      "alarms": true,
+      "background": "#00000000",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 1148.0,
+       "y": 6.0,
+       "width": 400.0,
+       "height": 48.0
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "80fa2a95138e",
+      "name": "Veille de nuit · tête de réseau",
       "parent": null,
       "type": "text",
-      "text": "Veille de nuit · 25 sources",
+      "text": "Veille de nuit · tête de réseau",
       "fontFamily": "Inter",
       "fontWeight": 700,
       "align": "left",
@@ -137,14 +225,14 @@
       "visible": true,
       "locked": false,
       "props": {
-       "x": 20.0,
+       "x": 24.0,
        "y": 6.0,
-       "width": 1000.0,
+       "width": 1108.0,
        "height": 48.0,
        "fill": [
-        0.9607843,
-        0.96862745,
-        0.98039216,
+        0.960784,
+        0.968627,
+        0.980392,
         1.0
        ],
        "fontSize": 30.0
@@ -153,54 +241,14 @@
       "bindings": {}
      },
      {
-      "id": "3agom3wcvm8t",
-      "name": "État",
-      "parent": null,
-      "type": "status",
-      "ptp": false,
-      "ntp": false,
-      "alarms": true,
-      "background": "#00000000",
-      "visible": true,
-      "locked": false,
-      "props": {
-       "x": 1060.0,
-       "y": 6.0,
-       "width": 420.0,
-       "height": 48.0
-      },
-      "tracks": {},
-      "bindings": {}
-     },
-     {
-      "id": "vqh61t62vm8t",
-      "name": "Timecode",
-      "parent": null,
-      "type": "timecode",
-      "input": "",
-      "label": "",
-      "color": "#fbbf24",
-      "background": "#00000000",
-      "visible": true,
-      "locked": false,
-      "props": {
-       "x": 1496.0,
-       "y": 6.0,
-       "width": 408.0,
-       "height": 48.0
-      },
-      "tracks": {},
-      "bindings": {}
-     },
-     {
-      "id": "it6ke1qxvm8t",
+      "id": "43d0e748a98f",
       "name": "Source 1",
       "parent": null,
       "type": "source",
       "input": "{{input:1}}",
       "fit": "contain",
       "background": "#0b0d12",
-      "border": 4.0,
+      "border": 3.0,
       "tally": {
        "border": true,
        "program": "#e5212b",
@@ -210,9 +258,9 @@
       },
       "umd": {
        "position": "bottom",
-       "size": 11.0,
+       "size": 10.0,
        "outside": false,
-       "text": "",
+       "text": "CH 01",
        "font": "Inter",
        "weight": 600,
        "align": "center",
@@ -221,42 +269,52 @@
        "lamps": true
       },
       "vu": {
-       "position": "right",
-       "width": 4.0,
+       "position": "off",
+       "width": 6.0,
        "gap": 2.0,
        "margin": 6.0,
        "min": -60.0,
        "yellow": -18.0,
        "red": -9.0,
        "hold": true,
-       "max": 2
+       "max": 0,
+       "first": 0
       },
       "badge": false,
       "noSignal": "",
-      "noSignalLook": "bars",
+      "noSignalLook": "plain",
       "timecode": "off",
       "loudness": false,
       "alarms": true,
+      "markers": {
+       "action": false,
+       "title": false,
+       "fourThree": false,
+       "fourteenNine": false,
+       "centre": false,
+       "afd": false,
+       "color": "#ffffffb3"
+      },
       "visible": true,
       "locked": false,
       "props": {
        "x": 16.0,
        "y": 72.0,
-       "width": 283.0,
-       "height": 195.0
+       "width": 290.0,
+       "height": 159.0
       },
       "tracks": {},
       "bindings": {}
      },
      {
-      "id": "b9g66824vm8t",
+      "id": "874cff1e5daa",
       "name": "Source 2",
       "parent": null,
       "type": "source",
       "input": "{{input:2}}",
       "fit": "contain",
       "background": "#0b0d12",
-      "border": 4.0,
+      "border": 3.0,
       "tally": {
        "border": true,
        "program": "#e5212b",
@@ -266,9 +324,9 @@
       },
       "umd": {
        "position": "bottom",
-       "size": 11.0,
+       "size": 10.0,
        "outside": false,
-       "text": "",
+       "text": "CH 02",
        "font": "Inter",
        "weight": 600,
        "align": "center",
@@ -277,42 +335,52 @@
        "lamps": true
       },
       "vu": {
-       "position": "right",
-       "width": 4.0,
+       "position": "off",
+       "width": 6.0,
        "gap": 2.0,
        "margin": 6.0,
        "min": -60.0,
        "yellow": -18.0,
        "red": -9.0,
        "hold": true,
-       "max": 2
+       "max": 0,
+       "first": 0
       },
       "badge": false,
       "noSignal": "",
-      "noSignalLook": "bars",
+      "noSignalLook": "plain",
       "timecode": "off",
       "loudness": false,
       "alarms": true,
+      "markers": {
+       "action": false,
+       "title": false,
+       "fourThree": false,
+       "fourteenNine": false,
+       "centre": false,
+       "afd": false,
+       "color": "#ffffffb3"
+      },
       "visible": true,
       "locked": false,
       "props": {
-       "x": 305.0,
+       "x": 314.0,
        "y": 72.0,
-       "width": 283.0,
-       "height": 195.0
+       "width": 290.0,
+       "height": 159.0
       },
       "tracks": {},
       "bindings": {}
      },
      {
-      "id": "e8bpnguavm8t",
+      "id": "66877f348b26",
       "name": "Source 3",
       "parent": null,
       "type": "source",
       "input": "{{input:3}}",
       "fit": "contain",
       "background": "#0b0d12",
-      "border": 4.0,
+      "border": 3.0,
       "tally": {
        "border": true,
        "program": "#e5212b",
@@ -322,9 +390,9 @@
       },
       "umd": {
        "position": "bottom",
-       "size": 11.0,
+       "size": 10.0,
        "outside": false,
-       "text": "",
+       "text": "CH 03",
        "font": "Inter",
        "weight": 600,
        "align": "center",
@@ -333,42 +401,52 @@
        "lamps": true
       },
       "vu": {
-       "position": "right",
-       "width": 4.0,
+       "position": "off",
+       "width": 6.0,
        "gap": 2.0,
        "margin": 6.0,
        "min": -60.0,
        "yellow": -18.0,
        "red": -9.0,
        "hold": true,
-       "max": 2
+       "max": 0,
+       "first": 0
       },
       "badge": false,
       "noSignal": "",
-      "noSignalLook": "bars",
+      "noSignalLook": "plain",
       "timecode": "off",
       "loudness": false,
       "alarms": true,
+      "markers": {
+       "action": false,
+       "title": false,
+       "fourThree": false,
+       "fourteenNine": false,
+       "centre": false,
+       "afd": false,
+       "color": "#ffffffb3"
+      },
       "visible": true,
       "locked": false,
       "props": {
-       "x": 594.0,
+       "x": 611.0,
        "y": 72.0,
-       "width": 283.0,
-       "height": 195.0
+       "width": 290.0,
+       "height": 159.0
       },
       "tracks": {},
       "bindings": {}
      },
      {
-      "id": "ekw29x9jvm8t",
+      "id": "20d3c09a8ccf",
       "name": "Source 4",
       "parent": null,
       "type": "source",
       "input": "{{input:4}}",
       "fit": "contain",
       "background": "#0b0d12",
-      "border": 4.0,
+      "border": 3.0,
       "tally": {
        "border": true,
        "program": "#e5212b",
@@ -378,9 +456,9 @@
       },
       "umd": {
        "position": "bottom",
-       "size": 11.0,
+       "size": 10.0,
        "outside": false,
-       "text": "",
+       "text": "CH 04",
        "font": "Inter",
        "weight": 600,
        "align": "center",
@@ -389,42 +467,52 @@
        "lamps": true
       },
       "vu": {
-       "position": "right",
-       "width": 4.0,
+       "position": "off",
+       "width": 6.0,
        "gap": 2.0,
        "margin": 6.0,
        "min": -60.0,
        "yellow": -18.0,
        "red": -9.0,
        "hold": true,
-       "max": 2
+       "max": 0,
+       "first": 0
       },
       "badge": false,
       "noSignal": "",
-      "noSignalLook": "bars",
+      "noSignalLook": "plain",
       "timecode": "off",
       "loudness": false,
       "alarms": true,
+      "markers": {
+       "action": false,
+       "title": false,
+       "fourThree": false,
+       "fourteenNine": false,
+       "centre": false,
+       "afd": false,
+       "color": "#ffffffb3"
+      },
       "visible": true,
       "locked": false,
       "props": {
-       "x": 884.0,
+       "x": 909.0,
        "y": 72.0,
-       "width": 283.0,
-       "height": 195.0
+       "width": 290.0,
+       "height": 159.0
       },
       "tracks": {},
       "bindings": {}
      },
      {
-      "id": "36cydmr7vm8t",
+      "id": "5a98524673df",
       "name": "Source 5",
       "parent": null,
       "type": "source",
       "input": "{{input:5}}",
       "fit": "contain",
       "background": "#0b0d12",
-      "border": 4.0,
+      "border": 3.0,
       "tally": {
        "border": true,
        "program": "#e5212b",
@@ -434,9 +522,9 @@
       },
       "umd": {
        "position": "bottom",
-       "size": 11.0,
+       "size": 10.0,
        "outside": false,
-       "text": "",
+       "text": "CH 05",
        "font": "Inter",
        "weight": 600,
        "align": "center",
@@ -445,42 +533,52 @@
        "lamps": true
       },
       "vu": {
-       "position": "right",
-       "width": 4.0,
+       "position": "off",
+       "width": 6.0,
        "gap": 2.0,
        "margin": 6.0,
        "min": -60.0,
        "yellow": -18.0,
        "red": -9.0,
        "hold": true,
-       "max": 2
+       "max": 0,
+       "first": 0
       },
       "badge": false,
       "noSignal": "",
-      "noSignalLook": "bars",
+      "noSignalLook": "plain",
       "timecode": "off",
       "loudness": false,
       "alarms": true,
+      "markers": {
+       "action": false,
+       "title": false,
+       "fourThree": false,
+       "fourteenNine": false,
+       "centre": false,
+       "afd": false,
+       "color": "#ffffffb3"
+      },
       "visible": true,
       "locked": false,
       "props": {
-       "x": 1173.0,
+       "x": 1206.0,
        "y": 72.0,
-       "width": 283.0,
-       "height": 195.0
+       "width": 290.0,
+       "height": 159.0
       },
       "tracks": {},
       "bindings": {}
      },
      {
-      "id": "ajc8bor8vm8t",
+      "id": "1753e4dde3e1",
       "name": "Source 6",
       "parent": null,
       "type": "source",
       "input": "{{input:6}}",
       "fit": "contain",
       "background": "#0b0d12",
-      "border": 4.0,
+      "border": 3.0,
       "tally": {
        "border": true,
        "program": "#e5212b",
@@ -490,9 +588,9 @@
       },
       "umd": {
        "position": "bottom",
-       "size": 11.0,
+       "size": 10.0,
        "outside": false,
-       "text": "",
+       "text": "CH 06",
        "font": "Inter",
        "weight": 600,
        "align": "center",
@@ -501,42 +599,52 @@
        "lamps": true
       },
       "vu": {
-       "position": "right",
-       "width": 4.0,
+       "position": "off",
+       "width": 6.0,
        "gap": 2.0,
        "margin": 6.0,
        "min": -60.0,
        "yellow": -18.0,
        "red": -9.0,
        "hold": true,
-       "max": 2
+       "max": 0,
+       "first": 0
       },
       "badge": false,
       "noSignal": "",
-      "noSignalLook": "bars",
+      "noSignalLook": "plain",
       "timecode": "off",
       "loudness": false,
       "alarms": true,
+      "markers": {
+       "action": false,
+       "title": false,
+       "fourThree": false,
+       "fourteenNine": false,
+       "centre": false,
+       "afd": false,
+       "color": "#ffffffb3"
+      },
       "visible": true,
       "locked": false,
       "props": {
        "x": 16.0,
-       "y": 273.0,
-       "width": 283.0,
-       "height": 195.0
+       "y": 239.0,
+       "width": 290.0,
+       "height": 159.0
       },
       "tracks": {},
       "bindings": {}
      },
      {
-      "id": "j6bebx44vm8t",
+      "id": "55dda3dd8b68",
       "name": "Source 7",
       "parent": null,
       "type": "source",
       "input": "{{input:7}}",
       "fit": "contain",
       "background": "#0b0d12",
-      "border": 4.0,
+      "border": 3.0,
       "tally": {
        "border": true,
        "program": "#e5212b",
@@ -546,9 +654,9 @@
       },
       "umd": {
        "position": "bottom",
-       "size": 11.0,
+       "size": 10.0,
        "outside": false,
-       "text": "",
+       "text": "CH 07",
        "font": "Inter",
        "weight": 600,
        "align": "center",
@@ -557,42 +665,52 @@
        "lamps": true
       },
       "vu": {
-       "position": "right",
-       "width": 4.0,
+       "position": "off",
+       "width": 6.0,
        "gap": 2.0,
        "margin": 6.0,
        "min": -60.0,
        "yellow": -18.0,
        "red": -9.0,
        "hold": true,
-       "max": 2
+       "max": 0,
+       "first": 0
       },
       "badge": false,
       "noSignal": "",
-      "noSignalLook": "bars",
+      "noSignalLook": "plain",
       "timecode": "off",
       "loudness": false,
       "alarms": true,
+      "markers": {
+       "action": false,
+       "title": false,
+       "fourThree": false,
+       "fourteenNine": false,
+       "centre": false,
+       "afd": false,
+       "color": "#ffffffb3"
+      },
       "visible": true,
       "locked": false,
       "props": {
-       "x": 305.0,
-       "y": 273.0,
-       "width": 283.0,
-       "height": 195.0
+       "x": 314.0,
+       "y": 239.0,
+       "width": 290.0,
+       "height": 159.0
       },
       "tracks": {},
       "bindings": {}
      },
      {
-      "id": "0h06vmjzvm8t",
+      "id": "9df3a36b9ec1",
       "name": "Source 8",
       "parent": null,
       "type": "source",
       "input": "{{input:8}}",
       "fit": "contain",
       "background": "#0b0d12",
-      "border": 4.0,
+      "border": 3.0,
       "tally": {
        "border": true,
        "program": "#e5212b",
@@ -602,9 +720,9 @@
       },
       "umd": {
        "position": "bottom",
-       "size": 11.0,
+       "size": 10.0,
        "outside": false,
-       "text": "",
+       "text": "CH 08",
        "font": "Inter",
        "weight": 600,
        "align": "center",
@@ -613,42 +731,52 @@
        "lamps": true
       },
       "vu": {
-       "position": "right",
-       "width": 4.0,
+       "position": "off",
+       "width": 6.0,
        "gap": 2.0,
        "margin": 6.0,
        "min": -60.0,
        "yellow": -18.0,
        "red": -9.0,
        "hold": true,
-       "max": 2
+       "max": 0,
+       "first": 0
       },
       "badge": false,
       "noSignal": "",
-      "noSignalLook": "bars",
+      "noSignalLook": "plain",
       "timecode": "off",
       "loudness": false,
       "alarms": true,
+      "markers": {
+       "action": false,
+       "title": false,
+       "fourThree": false,
+       "fourteenNine": false,
+       "centre": false,
+       "afd": false,
+       "color": "#ffffffb3"
+      },
       "visible": true,
       "locked": false,
       "props": {
-       "x": 594.0,
-       "y": 273.0,
-       "width": 283.0,
-       "height": 195.0
+       "x": 611.0,
+       "y": 239.0,
+       "width": 290.0,
+       "height": 159.0
       },
       "tracks": {},
       "bindings": {}
      },
      {
-      "id": "2wjo5bl6vm8t",
+      "id": "b3b4208e0d52",
       "name": "Source 9",
       "parent": null,
       "type": "source",
       "input": "{{input:9}}",
       "fit": "contain",
       "background": "#0b0d12",
-      "border": 4.0,
+      "border": 3.0,
       "tally": {
        "border": true,
        "program": "#e5212b",
@@ -658,9 +786,9 @@
       },
       "umd": {
        "position": "bottom",
-       "size": 11.0,
+       "size": 10.0,
        "outside": false,
-       "text": "",
+       "text": "CH 09",
        "font": "Inter",
        "weight": 600,
        "align": "center",
@@ -669,42 +797,52 @@
        "lamps": true
       },
       "vu": {
-       "position": "right",
-       "width": 4.0,
+       "position": "off",
+       "width": 6.0,
        "gap": 2.0,
        "margin": 6.0,
        "min": -60.0,
        "yellow": -18.0,
        "red": -9.0,
        "hold": true,
-       "max": 2
+       "max": 0,
+       "first": 0
       },
       "badge": false,
       "noSignal": "",
-      "noSignalLook": "bars",
+      "noSignalLook": "plain",
       "timecode": "off",
       "loudness": false,
       "alarms": true,
+      "markers": {
+       "action": false,
+       "title": false,
+       "fourThree": false,
+       "fourteenNine": false,
+       "centre": false,
+       "afd": false,
+       "color": "#ffffffb3"
+      },
       "visible": true,
       "locked": false,
       "props": {
-       "x": 884.0,
-       "y": 273.0,
-       "width": 283.0,
-       "height": 195.0
+       "x": 909.0,
+       "y": 239.0,
+       "width": 290.0,
+       "height": 159.0
       },
       "tracks": {},
       "bindings": {}
      },
      {
-      "id": "22bstrrwvm8t",
+      "id": "4479895fae59",
       "name": "Source 10",
       "parent": null,
       "type": "source",
       "input": "{{input:10}}",
       "fit": "contain",
       "background": "#0b0d12",
-      "border": 4.0,
+      "border": 3.0,
       "tally": {
        "border": true,
        "program": "#e5212b",
@@ -714,9 +852,9 @@
       },
       "umd": {
        "position": "bottom",
-       "size": 11.0,
+       "size": 10.0,
        "outside": false,
-       "text": "",
+       "text": "CH 10",
        "font": "Inter",
        "weight": 600,
        "align": "center",
@@ -725,42 +863,52 @@
        "lamps": true
       },
       "vu": {
-       "position": "right",
-       "width": 4.0,
+       "position": "off",
+       "width": 6.0,
        "gap": 2.0,
        "margin": 6.0,
        "min": -60.0,
        "yellow": -18.0,
        "red": -9.0,
        "hold": true,
-       "max": 2
+       "max": 0,
+       "first": 0
       },
       "badge": false,
       "noSignal": "",
-      "noSignalLook": "bars",
+      "noSignalLook": "plain",
       "timecode": "off",
       "loudness": false,
       "alarms": true,
+      "markers": {
+       "action": false,
+       "title": false,
+       "fourThree": false,
+       "fourteenNine": false,
+       "centre": false,
+       "afd": false,
+       "color": "#ffffffb3"
+      },
       "visible": true,
       "locked": false,
       "props": {
-       "x": 1173.0,
-       "y": 273.0,
-       "width": 283.0,
-       "height": 195.0
+       "x": 1206.0,
+       "y": 239.0,
+       "width": 290.0,
+       "height": 159.0
       },
       "tracks": {},
       "bindings": {}
      },
      {
-      "id": "lkpfkid8vm8t",
+      "id": "d272944613c1",
       "name": "Source 11",
       "parent": null,
       "type": "source",
       "input": "{{input:11}}",
       "fit": "contain",
       "background": "#0b0d12",
-      "border": 4.0,
+      "border": 3.0,
       "tally": {
        "border": true,
        "program": "#e5212b",
@@ -770,9 +918,9 @@
       },
       "umd": {
        "position": "bottom",
-       "size": 11.0,
+       "size": 10.0,
        "outside": false,
-       "text": "",
+       "text": "CH 11",
        "font": "Inter",
        "weight": 600,
        "align": "center",
@@ -781,42 +929,52 @@
        "lamps": true
       },
       "vu": {
-       "position": "right",
-       "width": 4.0,
+       "position": "off",
+       "width": 6.0,
        "gap": 2.0,
        "margin": 6.0,
        "min": -60.0,
        "yellow": -18.0,
        "red": -9.0,
        "hold": true,
-       "max": 2
+       "max": 0,
+       "first": 0
       },
       "badge": false,
       "noSignal": "",
-      "noSignalLook": "bars",
+      "noSignalLook": "plain",
       "timecode": "off",
       "loudness": false,
       "alarms": true,
+      "markers": {
+       "action": false,
+       "title": false,
+       "fourThree": false,
+       "fourteenNine": false,
+       "centre": false,
+       "afd": false,
+       "color": "#ffffffb3"
+      },
       "visible": true,
       "locked": false,
       "props": {
        "x": 16.0,
-       "y": 474.0,
-       "width": 283.0,
-       "height": 195.0
+       "y": 405.0,
+       "width": 290.0,
+       "height": 159.0
       },
       "tracks": {},
       "bindings": {}
      },
      {
-      "id": "e8uoapy7vm8t",
+      "id": "f951d90f12fc",
       "name": "Source 12",
       "parent": null,
       "type": "source",
       "input": "{{input:12}}",
       "fit": "contain",
       "background": "#0b0d12",
-      "border": 4.0,
+      "border": 3.0,
       "tally": {
        "border": true,
        "program": "#e5212b",
@@ -826,9 +984,9 @@
       },
       "umd": {
        "position": "bottom",
-       "size": 11.0,
+       "size": 10.0,
        "outside": false,
-       "text": "",
+       "text": "CH 12",
        "font": "Inter",
        "weight": 600,
        "align": "center",
@@ -837,42 +995,52 @@
        "lamps": true
       },
       "vu": {
-       "position": "right",
-       "width": 4.0,
+       "position": "off",
+       "width": 6.0,
        "gap": 2.0,
        "margin": 6.0,
        "min": -60.0,
        "yellow": -18.0,
        "red": -9.0,
        "hold": true,
-       "max": 2
+       "max": 0,
+       "first": 0
       },
       "badge": false,
       "noSignal": "",
-      "noSignalLook": "bars",
+      "noSignalLook": "plain",
       "timecode": "off",
       "loudness": false,
       "alarms": true,
+      "markers": {
+       "action": false,
+       "title": false,
+       "fourThree": false,
+       "fourteenNine": false,
+       "centre": false,
+       "afd": false,
+       "color": "#ffffffb3"
+      },
       "visible": true,
       "locked": false,
       "props": {
-       "x": 305.0,
-       "y": 474.0,
-       "width": 283.0,
-       "height": 195.0
+       "x": 314.0,
+       "y": 405.0,
+       "width": 290.0,
+       "height": 159.0
       },
       "tracks": {},
       "bindings": {}
      },
      {
-      "id": "gmn54c10vm8t",
+      "id": "970427bb5fc6",
       "name": "Source 13",
       "parent": null,
       "type": "source",
       "input": "{{input:13}}",
       "fit": "contain",
       "background": "#0b0d12",
-      "border": 4.0,
+      "border": 3.0,
       "tally": {
        "border": true,
        "program": "#e5212b",
@@ -882,9 +1050,9 @@
       },
       "umd": {
        "position": "bottom",
-       "size": 11.0,
+       "size": 10.0,
        "outside": false,
-       "text": "",
+       "text": "CH 13",
        "font": "Inter",
        "weight": 600,
        "align": "center",
@@ -893,42 +1061,52 @@
        "lamps": true
       },
       "vu": {
-       "position": "right",
-       "width": 4.0,
+       "position": "off",
+       "width": 6.0,
        "gap": 2.0,
        "margin": 6.0,
        "min": -60.0,
        "yellow": -18.0,
        "red": -9.0,
        "hold": true,
-       "max": 2
+       "max": 0,
+       "first": 0
       },
       "badge": false,
       "noSignal": "",
-      "noSignalLook": "bars",
+      "noSignalLook": "plain",
       "timecode": "off",
       "loudness": false,
       "alarms": true,
+      "markers": {
+       "action": false,
+       "title": false,
+       "fourThree": false,
+       "fourteenNine": false,
+       "centre": false,
+       "afd": false,
+       "color": "#ffffffb3"
+      },
       "visible": true,
       "locked": false,
       "props": {
-       "x": 594.0,
-       "y": 474.0,
-       "width": 283.0,
-       "height": 195.0
+       "x": 611.0,
+       "y": 405.0,
+       "width": 290.0,
+       "height": 159.0
       },
       "tracks": {},
       "bindings": {}
      },
      {
-      "id": "s67im95hvm8t",
+      "id": "a44a0c8bcb14",
       "name": "Source 14",
       "parent": null,
       "type": "source",
       "input": "{{input:14}}",
       "fit": "contain",
       "background": "#0b0d12",
-      "border": 4.0,
+      "border": 3.0,
       "tally": {
        "border": true,
        "program": "#e5212b",
@@ -938,9 +1116,9 @@
       },
       "umd": {
        "position": "bottom",
-       "size": 11.0,
+       "size": 10.0,
        "outside": false,
-       "text": "",
+       "text": "CH 14",
        "font": "Inter",
        "weight": 600,
        "align": "center",
@@ -949,42 +1127,52 @@
        "lamps": true
       },
       "vu": {
-       "position": "right",
-       "width": 4.0,
+       "position": "off",
+       "width": 6.0,
        "gap": 2.0,
        "margin": 6.0,
        "min": -60.0,
        "yellow": -18.0,
        "red": -9.0,
        "hold": true,
-       "max": 2
+       "max": 0,
+       "first": 0
       },
       "badge": false,
       "noSignal": "",
-      "noSignalLook": "bars",
+      "noSignalLook": "plain",
       "timecode": "off",
       "loudness": false,
       "alarms": true,
+      "markers": {
+       "action": false,
+       "title": false,
+       "fourThree": false,
+       "fourteenNine": false,
+       "centre": false,
+       "afd": false,
+       "color": "#ffffffb3"
+      },
       "visible": true,
       "locked": false,
       "props": {
-       "x": 884.0,
-       "y": 474.0,
-       "width": 283.0,
-       "height": 195.0
+       "x": 909.0,
+       "y": 405.0,
+       "width": 290.0,
+       "height": 159.0
       },
       "tracks": {},
       "bindings": {}
      },
      {
-      "id": "hg6cxg43vm8t",
+      "id": "d9c831f112cc",
       "name": "Source 15",
       "parent": null,
       "type": "source",
       "input": "{{input:15}}",
       "fit": "contain",
       "background": "#0b0d12",
-      "border": 4.0,
+      "border": 3.0,
       "tally": {
        "border": true,
        "program": "#e5212b",
@@ -994,9 +1182,9 @@
       },
       "umd": {
        "position": "bottom",
-       "size": 11.0,
+       "size": 10.0,
        "outside": false,
-       "text": "",
+       "text": "CH 15",
        "font": "Inter",
        "weight": 600,
        "align": "center",
@@ -1005,42 +1193,52 @@
        "lamps": true
       },
       "vu": {
-       "position": "right",
-       "width": 4.0,
+       "position": "off",
+       "width": 6.0,
        "gap": 2.0,
        "margin": 6.0,
        "min": -60.0,
        "yellow": -18.0,
        "red": -9.0,
        "hold": true,
-       "max": 2
+       "max": 0,
+       "first": 0
       },
       "badge": false,
       "noSignal": "",
-      "noSignalLook": "bars",
+      "noSignalLook": "plain",
       "timecode": "off",
       "loudness": false,
       "alarms": true,
+      "markers": {
+       "action": false,
+       "title": false,
+       "fourThree": false,
+       "fourteenNine": false,
+       "centre": false,
+       "afd": false,
+       "color": "#ffffffb3"
+      },
       "visible": true,
       "locked": false,
       "props": {
-       "x": 1173.0,
-       "y": 474.0,
-       "width": 283.0,
-       "height": 195.0
+       "x": 1206.0,
+       "y": 405.0,
+       "width": 290.0,
+       "height": 159.0
       },
       "tracks": {},
       "bindings": {}
      },
      {
-      "id": "3mju3v0hvm8t",
+      "id": "77f83819f58a",
       "name": "Source 16",
       "parent": null,
       "type": "source",
       "input": "{{input:16}}",
       "fit": "contain",
       "background": "#0b0d12",
-      "border": 4.0,
+      "border": 3.0,
       "tally": {
        "border": true,
        "program": "#e5212b",
@@ -1050,9 +1248,9 @@
       },
       "umd": {
        "position": "bottom",
-       "size": 11.0,
+       "size": 10.0,
        "outside": false,
-       "text": "",
+       "text": "CH 16",
        "font": "Inter",
        "weight": 600,
        "align": "center",
@@ -1061,42 +1259,52 @@
        "lamps": true
       },
       "vu": {
-       "position": "right",
-       "width": 4.0,
+       "position": "off",
+       "width": 6.0,
        "gap": 2.0,
        "margin": 6.0,
        "min": -60.0,
        "yellow": -18.0,
        "red": -9.0,
        "hold": true,
-       "max": 2
+       "max": 0,
+       "first": 0
       },
       "badge": false,
       "noSignal": "",
-      "noSignalLook": "bars",
+      "noSignalLook": "plain",
       "timecode": "off",
       "loudness": false,
       "alarms": true,
+      "markers": {
+       "action": false,
+       "title": false,
+       "fourThree": false,
+       "fourteenNine": false,
+       "centre": false,
+       "afd": false,
+       "color": "#ffffffb3"
+      },
       "visible": true,
       "locked": false,
       "props": {
        "x": 16.0,
-       "y": 676.0,
-       "width": 283.0,
-       "height": 195.0
+       "y": 572.0,
+       "width": 290.0,
+       "height": 159.0
       },
       "tracks": {},
       "bindings": {}
      },
      {
-      "id": "36zgh32bvm8t",
+      "id": "89f0fe883436",
       "name": "Source 17",
       "parent": null,
       "type": "source",
       "input": "{{input:17}}",
       "fit": "contain",
       "background": "#0b0d12",
-      "border": 4.0,
+      "border": 3.0,
       "tally": {
        "border": true,
        "program": "#e5212b",
@@ -1106,9 +1314,9 @@
       },
       "umd": {
        "position": "bottom",
-       "size": 11.0,
+       "size": 10.0,
        "outside": false,
-       "text": "",
+       "text": "CH 17",
        "font": "Inter",
        "weight": 600,
        "align": "center",
@@ -1117,42 +1325,52 @@
        "lamps": true
       },
       "vu": {
-       "position": "right",
-       "width": 4.0,
+       "position": "off",
+       "width": 6.0,
        "gap": 2.0,
        "margin": 6.0,
        "min": -60.0,
        "yellow": -18.0,
        "red": -9.0,
        "hold": true,
-       "max": 2
+       "max": 0,
+       "first": 0
       },
       "badge": false,
       "noSignal": "",
-      "noSignalLook": "bars",
+      "noSignalLook": "plain",
       "timecode": "off",
       "loudness": false,
       "alarms": true,
+      "markers": {
+       "action": false,
+       "title": false,
+       "fourThree": false,
+       "fourteenNine": false,
+       "centre": false,
+       "afd": false,
+       "color": "#ffffffb3"
+      },
       "visible": true,
       "locked": false,
       "props": {
-       "x": 305.0,
-       "y": 676.0,
-       "width": 283.0,
-       "height": 195.0
+       "x": 314.0,
+       "y": 572.0,
+       "width": 290.0,
+       "height": 159.0
       },
       "tracks": {},
       "bindings": {}
      },
      {
-      "id": "cbvz78uevm8t",
+      "id": "77af0c543ec5",
       "name": "Source 18",
       "parent": null,
       "type": "source",
       "input": "{{input:18}}",
       "fit": "contain",
       "background": "#0b0d12",
-      "border": 4.0,
+      "border": 3.0,
       "tally": {
        "border": true,
        "program": "#e5212b",
@@ -1162,9 +1380,9 @@
       },
       "umd": {
        "position": "bottom",
-       "size": 11.0,
+       "size": 10.0,
        "outside": false,
-       "text": "",
+       "text": "CH 18",
        "font": "Inter",
        "weight": 600,
        "align": "center",
@@ -1173,42 +1391,52 @@
        "lamps": true
       },
       "vu": {
-       "position": "right",
-       "width": 4.0,
+       "position": "off",
+       "width": 6.0,
        "gap": 2.0,
        "margin": 6.0,
        "min": -60.0,
        "yellow": -18.0,
        "red": -9.0,
        "hold": true,
-       "max": 2
+       "max": 0,
+       "first": 0
       },
       "badge": false,
       "noSignal": "",
-      "noSignalLook": "bars",
+      "noSignalLook": "plain",
       "timecode": "off",
       "loudness": false,
       "alarms": true,
+      "markers": {
+       "action": false,
+       "title": false,
+       "fourThree": false,
+       "fourteenNine": false,
+       "centre": false,
+       "afd": false,
+       "color": "#ffffffb3"
+      },
       "visible": true,
       "locked": false,
       "props": {
-       "x": 594.0,
-       "y": 676.0,
-       "width": 283.0,
-       "height": 195.0
+       "x": 611.0,
+       "y": 572.0,
+       "width": 290.0,
+       "height": 159.0
       },
       "tracks": {},
       "bindings": {}
      },
      {
-      "id": "77aiiil5vm8t",
+      "id": "ab2b0508b2c5",
       "name": "Source 19",
       "parent": null,
       "type": "source",
       "input": "{{input:19}}",
       "fit": "contain",
       "background": "#0b0d12",
-      "border": 4.0,
+      "border": 3.0,
       "tally": {
        "border": true,
        "program": "#e5212b",
@@ -1218,9 +1446,9 @@
       },
       "umd": {
        "position": "bottom",
-       "size": 11.0,
+       "size": 10.0,
        "outside": false,
-       "text": "",
+       "text": "CH 19",
        "font": "Inter",
        "weight": 600,
        "align": "center",
@@ -1229,42 +1457,52 @@
        "lamps": true
       },
       "vu": {
-       "position": "right",
-       "width": 4.0,
+       "position": "off",
+       "width": 6.0,
        "gap": 2.0,
        "margin": 6.0,
        "min": -60.0,
        "yellow": -18.0,
        "red": -9.0,
        "hold": true,
-       "max": 2
+       "max": 0,
+       "first": 0
       },
       "badge": false,
       "noSignal": "",
-      "noSignalLook": "bars",
+      "noSignalLook": "plain",
       "timecode": "off",
       "loudness": false,
       "alarms": true,
+      "markers": {
+       "action": false,
+       "title": false,
+       "fourThree": false,
+       "fourteenNine": false,
+       "centre": false,
+       "afd": false,
+       "color": "#ffffffb3"
+      },
       "visible": true,
       "locked": false,
       "props": {
-       "x": 884.0,
-       "y": 676.0,
-       "width": 283.0,
-       "height": 195.0
+       "x": 909.0,
+       "y": 572.0,
+       "width": 290.0,
+       "height": 159.0
       },
       "tracks": {},
       "bindings": {}
      },
      {
-      "id": "mlnu8lxtvm8t",
+      "id": "79952a1e8ef3",
       "name": "Source 20",
       "parent": null,
       "type": "source",
       "input": "{{input:20}}",
       "fit": "contain",
       "background": "#0b0d12",
-      "border": 4.0,
+      "border": 3.0,
       "tally": {
        "border": true,
        "program": "#e5212b",
@@ -1274,9 +1512,9 @@
       },
       "umd": {
        "position": "bottom",
-       "size": 11.0,
+       "size": 10.0,
        "outside": false,
-       "text": "",
+       "text": "CH 20",
        "font": "Inter",
        "weight": 600,
        "align": "center",
@@ -1285,42 +1523,52 @@
        "lamps": true
       },
       "vu": {
-       "position": "right",
-       "width": 4.0,
+       "position": "off",
+       "width": 6.0,
        "gap": 2.0,
        "margin": 6.0,
        "min": -60.0,
        "yellow": -18.0,
        "red": -9.0,
        "hold": true,
-       "max": 2
+       "max": 0,
+       "first": 0
       },
       "badge": false,
       "noSignal": "",
-      "noSignalLook": "bars",
+      "noSignalLook": "plain",
       "timecode": "off",
       "loudness": false,
       "alarms": true,
+      "markers": {
+       "action": false,
+       "title": false,
+       "fourThree": false,
+       "fourteenNine": false,
+       "centre": false,
+       "afd": false,
+       "color": "#ffffffb3"
+      },
       "visible": true,
       "locked": false,
       "props": {
-       "x": 1173.0,
-       "y": 676.0,
-       "width": 283.0,
-       "height": 195.0
+       "x": 1206.0,
+       "y": 572.0,
+       "width": 290.0,
+       "height": 159.0
       },
       "tracks": {},
       "bindings": {}
      },
      {
-      "id": "xcq8lf4qvm8t",
+      "id": "402bed70c134",
       "name": "Source 21",
       "parent": null,
       "type": "source",
       "input": "{{input:21}}",
       "fit": "contain",
       "background": "#0b0d12",
-      "border": 4.0,
+      "border": 3.0,
       "tally": {
        "border": true,
        "program": "#e5212b",
@@ -1330,9 +1578,9 @@
       },
       "umd": {
        "position": "bottom",
-       "size": 11.0,
+       "size": 10.0,
        "outside": false,
-       "text": "",
+       "text": "CH 21",
        "font": "Inter",
        "weight": 600,
        "align": "center",
@@ -1341,42 +1589,52 @@
        "lamps": true
       },
       "vu": {
-       "position": "right",
-       "width": 4.0,
+       "position": "off",
+       "width": 6.0,
        "gap": 2.0,
        "margin": 6.0,
        "min": -60.0,
        "yellow": -18.0,
        "red": -9.0,
        "hold": true,
-       "max": 2
+       "max": 0,
+       "first": 0
       },
       "badge": false,
       "noSignal": "",
-      "noSignalLook": "bars",
+      "noSignalLook": "plain",
       "timecode": "off",
       "loudness": false,
       "alarms": true,
+      "markers": {
+       "action": false,
+       "title": false,
+       "fourThree": false,
+       "fourteenNine": false,
+       "centre": false,
+       "afd": false,
+       "color": "#ffffffb3"
+      },
       "visible": true,
       "locked": false,
       "props": {
        "x": 16.0,
-       "y": 877.0,
-       "width": 283.0,
-       "height": 195.0
+       "y": 739.0,
+       "width": 290.0,
+       "height": 159.0
       },
       "tracks": {},
       "bindings": {}
      },
      {
-      "id": "q9sf9896vm8t",
+      "id": "ed34500a4f93",
       "name": "Source 22",
       "parent": null,
       "type": "source",
       "input": "{{input:22}}",
       "fit": "contain",
       "background": "#0b0d12",
-      "border": 4.0,
+      "border": 3.0,
       "tally": {
        "border": true,
        "program": "#e5212b",
@@ -1386,9 +1644,9 @@
       },
       "umd": {
        "position": "bottom",
-       "size": 11.0,
+       "size": 10.0,
        "outside": false,
-       "text": "",
+       "text": "CH 22",
        "font": "Inter",
        "weight": 600,
        "align": "center",
@@ -1397,42 +1655,52 @@
        "lamps": true
       },
       "vu": {
-       "position": "right",
-       "width": 4.0,
+       "position": "off",
+       "width": 6.0,
        "gap": 2.0,
        "margin": 6.0,
        "min": -60.0,
        "yellow": -18.0,
        "red": -9.0,
        "hold": true,
-       "max": 2
+       "max": 0,
+       "first": 0
       },
       "badge": false,
       "noSignal": "",
-      "noSignalLook": "bars",
+      "noSignalLook": "plain",
       "timecode": "off",
       "loudness": false,
       "alarms": true,
+      "markers": {
+       "action": false,
+       "title": false,
+       "fourThree": false,
+       "fourteenNine": false,
+       "centre": false,
+       "afd": false,
+       "color": "#ffffffb3"
+      },
       "visible": true,
       "locked": false,
       "props": {
-       "x": 305.0,
-       "y": 877.0,
-       "width": 283.0,
-       "height": 195.0
+       "x": 314.0,
+       "y": 739.0,
+       "width": 290.0,
+       "height": 159.0
       },
       "tracks": {},
       "bindings": {}
      },
      {
-      "id": "2s9o9776vm8t",
+      "id": "4d2b3a37dd73",
       "name": "Source 23",
       "parent": null,
       "type": "source",
       "input": "{{input:23}}",
       "fit": "contain",
       "background": "#0b0d12",
-      "border": 4.0,
+      "border": 3.0,
       "tally": {
        "border": true,
        "program": "#e5212b",
@@ -1442,9 +1710,9 @@
       },
       "umd": {
        "position": "bottom",
-       "size": 11.0,
+       "size": 10.0,
        "outside": false,
-       "text": "",
+       "text": "CH 23",
        "font": "Inter",
        "weight": 600,
        "align": "center",
@@ -1453,42 +1721,52 @@
        "lamps": true
       },
       "vu": {
-       "position": "right",
-       "width": 4.0,
+       "position": "off",
+       "width": 6.0,
        "gap": 2.0,
        "margin": 6.0,
        "min": -60.0,
        "yellow": -18.0,
        "red": -9.0,
        "hold": true,
-       "max": 2
+       "max": 0,
+       "first": 0
       },
       "badge": false,
       "noSignal": "",
-      "noSignalLook": "bars",
+      "noSignalLook": "plain",
       "timecode": "off",
       "loudness": false,
       "alarms": true,
+      "markers": {
+       "action": false,
+       "title": false,
+       "fourThree": false,
+       "fourteenNine": false,
+       "centre": false,
+       "afd": false,
+       "color": "#ffffffb3"
+      },
       "visible": true,
       "locked": false,
       "props": {
-       "x": 594.0,
-       "y": 877.0,
-       "width": 283.0,
-       "height": 195.0
+       "x": 611.0,
+       "y": 739.0,
+       "width": 290.0,
+       "height": 159.0
       },
       "tracks": {},
       "bindings": {}
      },
      {
-      "id": "4j1u07povm8t",
+      "id": "a93bfc5d7f4c",
       "name": "Source 24",
       "parent": null,
       "type": "source",
       "input": "{{input:24}}",
       "fit": "contain",
       "background": "#0b0d12",
-      "border": 4.0,
+      "border": 3.0,
       "tally": {
        "border": true,
        "program": "#e5212b",
@@ -1498,9 +1776,9 @@
       },
       "umd": {
        "position": "bottom",
-       "size": 11.0,
+       "size": 10.0,
        "outside": false,
-       "text": "",
+       "text": "CH 24",
        "font": "Inter",
        "weight": 600,
        "align": "center",
@@ -1509,42 +1787,52 @@
        "lamps": true
       },
       "vu": {
-       "position": "right",
-       "width": 4.0,
+       "position": "off",
+       "width": 6.0,
        "gap": 2.0,
        "margin": 6.0,
        "min": -60.0,
        "yellow": -18.0,
        "red": -9.0,
        "hold": true,
-       "max": 2
+       "max": 0,
+       "first": 0
       },
       "badge": false,
       "noSignal": "",
-      "noSignalLook": "bars",
+      "noSignalLook": "plain",
       "timecode": "off",
       "loudness": false,
       "alarms": true,
+      "markers": {
+       "action": false,
+       "title": false,
+       "fourThree": false,
+       "fourteenNine": false,
+       "centre": false,
+       "afd": false,
+       "color": "#ffffffb3"
+      },
       "visible": true,
       "locked": false,
       "props": {
-       "x": 884.0,
-       "y": 877.0,
-       "width": 283.0,
-       "height": 195.0
+       "x": 909.0,
+       "y": 739.0,
+       "width": 290.0,
+       "height": 159.0
       },
       "tracks": {},
       "bindings": {}
      },
      {
-      "id": "cbbtgv6rvm8t",
+      "id": "e70d7de1b68f",
       "name": "Source 25",
       "parent": null,
       "type": "source",
       "input": "{{input:25}}",
       "fit": "contain",
       "background": "#0b0d12",
-      "border": 4.0,
+      "border": 3.0,
       "tally": {
        "border": true,
        "program": "#e5212b",
@@ -1554,9 +1842,9 @@
       },
       "umd": {
        "position": "bottom",
-       "size": 11.0,
+       "size": 10.0,
        "outside": false,
-       "text": "",
+       "text": "CH 25",
        "font": "Inter",
        "weight": 600,
        "align": "center",
@@ -1565,96 +1853,484 @@
        "lamps": true
       },
       "vu": {
-       "position": "right",
-       "width": 4.0,
+       "position": "off",
+       "width": 6.0,
        "gap": 2.0,
        "margin": 6.0,
        "min": -60.0,
        "yellow": -18.0,
        "red": -9.0,
        "hold": true,
-       "max": 2
+       "max": 0,
+       "first": 0
       },
       "badge": false,
       "noSignal": "",
-      "noSignalLook": "bars",
+      "noSignalLook": "plain",
       "timecode": "off",
       "loudness": false,
       "alarms": true,
+      "markers": {
+       "action": false,
+       "title": false,
+       "fourThree": false,
+       "fourteenNine": false,
+       "centre": false,
+       "afd": false,
+       "color": "#ffffffb3"
+      },
       "visible": true,
       "locked": false,
       "props": {
-       "x": 1173.0,
-       "y": 877.0,
-       "width": 283.0,
-       "height": 195.0
+       "x": 1206.0,
+       "y": 739.0,
+       "width": 290.0,
+       "height": 159.0
       },
       "tracks": {},
       "bindings": {}
      },
      {
-      "id": "xhr7vppjvm8t",
-      "name": "Timecode",
+      "id": "e4e189724d8a",
+      "name": "Source 26",
       "parent": null,
-      "type": "timecode",
-      "input": "",
-      "label": "TC",
-      "color": "#fbbf24",
-      "background": "#0b0d12d9",
-      "visible": true,
-      "locked": false,
-      "props": {
-       "x": 1468.0,
-       "y": 72.0,
-       "width": 436.0,
-       "height": 120.0
+      "type": "source",
+      "input": "{{input:26}}",
+      "fit": "contain",
+      "background": "#0b0d12",
+      "border": 3.0,
+      "tally": {
+       "border": true,
+       "program": "#e5212b",
+       "preview": "#17b14a",
+       "aux": "#f2b705",
+       "off": "#262a33"
       },
-      "tracks": {},
-      "bindings": {}
-     },
-     {
-      "id": "ihv2k8hqvm8t",
-      "name": "État",
-      "parent": null,
-      "type": "status",
-      "ptp": true,
-      "ntp": true,
+      "umd": {
+       "position": "bottom",
+       "size": 10.0,
+       "outside": false,
+       "text": "CH 26",
+       "font": "Inter",
+       "weight": 600,
+       "align": "center",
+       "color": "#ffffff",
+       "background": "#000000b3",
+       "lamps": true
+      },
+      "vu": {
+       "position": "off",
+       "width": 6.0,
+       "gap": 2.0,
+       "margin": 6.0,
+       "min": -60.0,
+       "yellow": -18.0,
+       "red": -9.0,
+       "hold": true,
+       "max": 0,
+       "first": 0
+      },
+      "badge": false,
+      "noSignal": "",
+      "noSignalLook": "plain",
+      "timecode": "off",
+      "loudness": false,
       "alarms": true,
-      "background": "#0b0d12d9",
+      "markers": {
+       "action": false,
+       "title": false,
+       "fourThree": false,
+       "fourteenNine": false,
+       "centre": false,
+       "afd": false,
+       "color": "#ffffffb3"
+      },
       "visible": true,
       "locked": false,
       "props": {
-       "x": 1468.0,
-       "y": 204.0,
-       "width": 436.0,
-       "height": 200.0
+       "x": 16.0,
+       "y": 905.0,
+       "width": 290.0,
+       "height": 159.0
       },
       "tracks": {},
       "bindings": {}
      },
      {
-      "id": "nosud0hgvm8t",
+      "id": "bc468303ac93",
+      "name": "Source 27",
+      "parent": null,
+      "type": "source",
+      "input": "{{input:27}}",
+      "fit": "contain",
+      "background": "#0b0d12",
+      "border": 3.0,
+      "tally": {
+       "border": true,
+       "program": "#e5212b",
+       "preview": "#17b14a",
+       "aux": "#f2b705",
+       "off": "#262a33"
+      },
+      "umd": {
+       "position": "bottom",
+       "size": 10.0,
+       "outside": false,
+       "text": "CH 27",
+       "font": "Inter",
+       "weight": 600,
+       "align": "center",
+       "color": "#ffffff",
+       "background": "#000000b3",
+       "lamps": true
+      },
+      "vu": {
+       "position": "off",
+       "width": 6.0,
+       "gap": 2.0,
+       "margin": 6.0,
+       "min": -60.0,
+       "yellow": -18.0,
+       "red": -9.0,
+       "hold": true,
+       "max": 0,
+       "first": 0
+      },
+      "badge": false,
+      "noSignal": "",
+      "noSignalLook": "plain",
+      "timecode": "off",
+      "loudness": false,
+      "alarms": true,
+      "markers": {
+       "action": false,
+       "title": false,
+       "fourThree": false,
+       "fourteenNine": false,
+       "centre": false,
+       "afd": false,
+       "color": "#ffffffb3"
+      },
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 314.0,
+       "y": 905.0,
+       "width": 290.0,
+       "height": 159.0
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "0bc9a198af88",
+      "name": "Source 28",
+      "parent": null,
+      "type": "source",
+      "input": "{{input:28}}",
+      "fit": "contain",
+      "background": "#0b0d12",
+      "border": 3.0,
+      "tally": {
+       "border": true,
+       "program": "#e5212b",
+       "preview": "#17b14a",
+       "aux": "#f2b705",
+       "off": "#262a33"
+      },
+      "umd": {
+       "position": "bottom",
+       "size": 10.0,
+       "outside": false,
+       "text": "CH 28",
+       "font": "Inter",
+       "weight": 600,
+       "align": "center",
+       "color": "#ffffff",
+       "background": "#000000b3",
+       "lamps": true
+      },
+      "vu": {
+       "position": "off",
+       "width": 6.0,
+       "gap": 2.0,
+       "margin": 6.0,
+       "min": -60.0,
+       "yellow": -18.0,
+       "red": -9.0,
+       "hold": true,
+       "max": 0,
+       "first": 0
+      },
+      "badge": false,
+      "noSignal": "",
+      "noSignalLook": "plain",
+      "timecode": "off",
+      "loudness": false,
+      "alarms": true,
+      "markers": {
+       "action": false,
+       "title": false,
+       "fourThree": false,
+       "fourteenNine": false,
+       "centre": false,
+       "afd": false,
+       "color": "#ffffffb3"
+      },
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 611.0,
+       "y": 905.0,
+       "width": 290.0,
+       "height": 159.0
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "597366b38dc4",
+      "name": "Source 29",
+      "parent": null,
+      "type": "source",
+      "input": "{{input:29}}",
+      "fit": "contain",
+      "background": "#0b0d12",
+      "border": 3.0,
+      "tally": {
+       "border": true,
+       "program": "#e5212b",
+       "preview": "#17b14a",
+       "aux": "#f2b705",
+       "off": "#262a33"
+      },
+      "umd": {
+       "position": "bottom",
+       "size": 10.0,
+       "outside": false,
+       "text": "CH 29",
+       "font": "Inter",
+       "weight": 600,
+       "align": "center",
+       "color": "#ffffff",
+       "background": "#000000b3",
+       "lamps": true
+      },
+      "vu": {
+       "position": "off",
+       "width": 6.0,
+       "gap": 2.0,
+       "margin": 6.0,
+       "min": -60.0,
+       "yellow": -18.0,
+       "red": -9.0,
+       "hold": true,
+       "max": 0,
+       "first": 0
+      },
+      "badge": false,
+      "noSignal": "",
+      "noSignalLook": "plain",
+      "timecode": "off",
+      "loudness": false,
+      "alarms": true,
+      "markers": {
+       "action": false,
+       "title": false,
+       "fourThree": false,
+       "fourteenNine": false,
+       "centre": false,
+       "afd": false,
+       "color": "#ffffffb3"
+      },
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 909.0,
+       "y": 905.0,
+       "width": 290.0,
+       "height": 159.0
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "343a2fb434d3",
+      "name": "Source 30",
+      "parent": null,
+      "type": "source",
+      "input": "{{input:30}}",
+      "fit": "contain",
+      "background": "#0b0d12",
+      "border": 3.0,
+      "tally": {
+       "border": true,
+       "program": "#e5212b",
+       "preview": "#17b14a",
+       "aux": "#f2b705",
+       "off": "#262a33"
+      },
+      "umd": {
+       "position": "bottom",
+       "size": 10.0,
+       "outside": false,
+       "text": "CH 30",
+       "font": "Inter",
+       "weight": 600,
+       "align": "center",
+       "color": "#ffffff",
+       "background": "#000000b3",
+       "lamps": true
+      },
+      "vu": {
+       "position": "off",
+       "width": 6.0,
+       "gap": 2.0,
+       "margin": 6.0,
+       "min": -60.0,
+       "yellow": -18.0,
+       "red": -9.0,
+       "hold": true,
+       "max": 0,
+       "first": 0
+      },
+      "badge": false,
+      "noSignal": "",
+      "noSignalLook": "plain",
+      "timecode": "off",
+      "loudness": false,
+      "alarms": true,
+      "markers": {
+       "action": false,
+       "title": false,
+       "fourThree": false,
+       "fourteenNine": false,
+       "centre": false,
+       "afd": false,
+       "color": "#ffffffb3"
+      },
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 1206.0,
+       "y": 905.0,
+       "width": 290.0,
+       "height": 159.0
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "04cf025d33a0",
+      "name": "Valeur · Alarmes en cours",
+      "parent": null,
+      "type": "value",
+      "input": "",
+      "kind": "alarmsOn",
+      "label": "Alarmes en cours",
+      "showLabel": true,
+      "stack": true,
+      "align": "center",
+      "warn": 1.0,
+      "crit": 3.0,
+      "color": "#ffffff",
+      "background": "#0b0d12d9",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 1508.0,
+       "y": 72.0,
+       "width": 396.0,
+       "height": 220.0
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "4d9c7b6d0d3e",
       "name": "Journal des alarmes",
       "parent": null,
       "type": "alarmLog",
       "rows": 12,
-      "ended": false,
+      "ended": true,
       "background": "#0b0d12d9",
       "visible": true,
       "locked": false,
       "props": {
-       "x": 1468.0,
-       "y": 416.0,
-       "width": 436.0,
-       "height": 656.0
+       "x": 1508.0,
+       "y": 304.0,
+       "width": 396.0,
+       "height": 552.0
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "ca642b9a5586",
+      "name": "Valeur · Synchro",
+      "parent": null,
+      "type": "value",
+      "input": "",
+      "kind": "ptp",
+      "label": "Synchro",
+      "showLabel": true,
+      "stack": true,
+      "align": "center",
+      "warn": 0.0,
+      "crit": 0.0,
+      "color": "#ffffff",
+      "background": "#0b0d12d9",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 1508.0,
+       "y": 868.0,
+       "width": 192.0,
+       "height": 196.0
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "ade2f43c28ef",
+      "name": "Valeur · Heure",
+      "parent": null,
+      "type": "value",
+      "input": "",
+      "kind": "time",
+      "label": "Heure",
+      "showLabel": true,
+      "stack": true,
+      "align": "center",
+      "warn": 0.0,
+      "crit": 0.0,
+      "color": "#ffffff",
+      "background": "#0b0d12d9",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 1712.0,
+       "y": 868.0,
+       "width": 192.0,
+       "height": 196.0
       },
       "tracks": {},
       "bindings": {}
      }
     ],
     "zone": "full-screen",
-    "revision": 2,
-    "markerModel": 2
+    "revision": 1,
+    "markerModel": 2,
+    "background": {
+     "color": "#050608",
+     "fillStyle": {
+      "kind": "solid",
+      "color2": "#000000",
+      "angle": 90.0,
+      "image": "",
+      "fit": "cover"
+     }
+    }
    }
   ],
   "zones": [

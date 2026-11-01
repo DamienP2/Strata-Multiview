@@ -1,5 +1,5 @@
 import { FormatButtons } from '../designer/MultiviewSettings';
-import { ArrowLeft, Check, CheckSquare, ChevronRight, Clock, Copy, Download, Folder, FolderInput, FolderOpen, FolderPlus, GraduationCap, Inbox, LayoutGrid, MonitorPlay, MoreHorizontal, Pencil, Plus, Radio, Search, Trash2, Upload, X } from 'lucide-react';
+import { ArrowLeft, Check, CheckSquare, ChevronRight, Clock, Copy, Download, FilePlus2, Folder, FolderInput, FolderOpen, FolderPlus, GraduationCap, Inbox, LayoutGrid, MonitorPlay, MoreHorizontal, Pencil, Plus, Radio, Search, Trash2, Upload, X } from 'lucide-react';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { FrameRate, Project, ProjectSummary } from '../engine/types';
 import { applyLayout, LayoutPicker, PRESETS } from '../designer/Layouts';
@@ -13,7 +13,15 @@ import { NavItem, NavSection } from './SidePage';
 
 const fps = (r: FrameRate) => +(r.num / r.den).toFixed(2);
 
-function NewProject({ from, folder, onClose }: { from?: ProjectSummary; folder?: string; onClose: () => void }) {
+/** Puts a new multiview in the folder shown. */
+async function file(id: string, folder?: string) {
+  if (!folder) return;
+  const f = useApp.getState().folders;
+  await useApp.getState().saveFolders({ ...f, assign: { ...f.assign, [id]: folder } });
+}
+
+/** The fields of a new multiview (blank, or on a layout), or of a copy. */
+function ProjectForm({ from, folder, onClose }: { from?: ProjectSummary; folder?: string; onClose: () => void }) {
   const toast = useApp((s) => s.toast);
   const [name, setName] = useState(from ? t('{name} copy', { name: from.name }) : '');
   const [description, setDescription] = useState(from?.description ?? '');
@@ -53,11 +61,8 @@ function NewProject({ from, folder, onClose }: { from?: ProjectSummary; folder?:
         }
       }
       onClose();
-      if (folder) {
-        const f = useApp.getState().folders;
-        await useApp.getState().saveFolders({ ...f, assign: { ...f.assign, [p.id]: folder } });
-      }
-      // A new multiview opens in its own tab (a copy stays in the list).
+      await file(p.id, folder);
+      // A new multiview opens (a copy stays in the list).
       if (!from) openInTab(projectPath(p.id));
     } catch (err) {
       toast((err as Error).message, 'error');
@@ -66,43 +71,51 @@ function NewProject({ from, folder, onClose }: { from?: ProjectSummary; folder?:
     }
   };
   return (
+    <form className="nmv-form" onSubmit={create}>
+      <label className="set-field">
+        <span className="set-label">{t('Name')}</span>
+        <input autoFocus value={name} placeholder={t('Control room A, Studio 2…')} onChange={(e) => setName(e.target.value)} />
+      </label>
+      <label className="set-field">
+        <span className="set-label">{t('Description')}</span>
+        <input value={description} onChange={(e) => setDescription(e.target.value)} />
+      </label>
+      {!from && (
+        <div className="set-field">
+          <span className="set-label">{t('Resolution')}</span>
+          <FormatButtons width={size.width} height={size.height} rate={rate} onSize={(width, height) => setSize({ width, height })} onRate={setRate} />
+        </div>
+      )}
+      {!from && (
+        <div className="set-field">
+          <span className="set-label">{t('Layout')}</span>
+          <LayoutPicker value={layout} onChange={setLayout} gap={gap} margin={margin} onGap={setGap} onMargin={setMargin} none />
+        </div>
+      )}
+      <footer>
+        <button type="button" className="btn" onClick={onClose}>
+          {t('Cancel')}
+        </button>
+        <button className="btn primary" disabled={busy || !name.trim()}>
+          <Plus size={14} /> {from ? t('Duplicate') : t('Create')}
+        </button>
+      </footer>
+    </form>
+  );
+}
+
+function DuplicateProject({ from, folder, onClose }: { from: ProjectSummary; folder?: string; onClose: () => void }) {
+  return (
     <div className="modal-back" onPointerDown={onClose}>
-      <form className={`modal ${from ? '' : 'new-mv'}`} onSubmit={create} onPointerDown={(e) => e.stopPropagation()}>
+      <div className="modal" onPointerDown={(e) => e.stopPropagation()}>
         <header>
-          <h2>{from ? t('Duplicate “{name}”', { name: from.name }) : t('New multiview')}</h2>
+          <h2>{t('Duplicate “{name}”', { name: from.name })}</h2>
           <button type="button" className="icon-btn ghost" onClick={onClose}>
             <X size={16} />
           </button>
         </header>
-        <label className="set-field">
-          <span className="set-label">{t('Name')}</span>
-          <input autoFocus value={name} placeholder={t('Control room A, Studio 2…')} onChange={(e) => setName(e.target.value)} />
-        </label>
-        <label className="set-field">
-          <span className="set-label">{t('Description')}</span>
-          <input value={description} onChange={(e) => setDescription(e.target.value)} />
-        </label>
-        {!from && (
-          <div className="set-field">
-            <span className="set-label">{t('Resolution')}</span>
-            <FormatButtons width={size.width} height={size.height} rate={rate} onSize={(width, height) => setSize({ width, height })} onRate={setRate} />
-          </div>
-        )}
-        {!from && (
-          <div className="set-field">
-            <span className="set-label">{t('Layout')}</span>
-            <LayoutPicker value={layout} onChange={setLayout} gap={gap} margin={margin} onGap={setGap} onMargin={setMargin} none />
-          </div>
-        )}
-        <footer>
-          <button type="button" className="btn" onClick={onClose}>
-            {t('Cancel')}
-          </button>
-          <button className="btn primary" disabled={busy || !name.trim()}>
-            <Plus size={14} /> {from ? t('Duplicate') : t('Create')}
-          </button>
-        </footer>
-      </form>
+        <ProjectForm from={from} folder={folder} onClose={onClose} />
+      </div>
     </div>
   );
 }
@@ -117,28 +130,33 @@ interface ExampleInfo {
   en?: { name: string; description: string; summary?: string; category?: string; tags?: string[] };
 }
 
-/** The example multiviews of a playout control room: a copy of one becomes a multiview of the user, its tiles on the inputs in order. */
-function ExampleBank({ onClose }: { onClose: () => void }) {
+/** An example in the language of the page. */
+function localized(d: ExampleInfo) {
+  const fr = lang().startsWith('fr');
+  const description = (!fr && d.en?.description) || d.description;
+  return {
+    name: (!fr && d.en?.name) || d.name,
+    description,
+    summary: (!fr && d.en?.summary) || d.summary || description,
+    category: (!fr && d.en?.category) || d.category,
+    tags: (!fr && d.en?.tags) || d.tags,
+  };
+}
+
+/** The ready-made multiviews, two by row: a copy of one becomes a multiview of the user, its tiles on the inputs in order. */
+function ExampleList({ examples, folder, onClose }: { examples: ExampleInfo[] | null; folder?: string; onClose: () => void }) {
   const toast = useApp((s) => s.toast);
-  const [examples, setExamples] = useState<ExampleInfo[] | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
-  const french = lang().startsWith('fr');
-  useEffect(() => {
-    api<ExampleInfo[]>('GET', '/api/examples')
-      .then(setExamples)
-      .catch((e) => toast((e as Error).message, 'error'));
-  }, []);
-  useEffect(() => {
-    const key = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
-    window.addEventListener('keydown', key);
-    return () => window.removeEventListener('keydown', key);
-  }, [onClose]);
+  const [category, setCategory] = useState('');
+  const shown = examples?.map((d) => ({ d, l: localized(d) })) ?? null;
+  const categories = [...new Set(shown?.map((x) => x.l.category).filter(Boolean))];
   const create = async (d: ExampleInfo) => {
     setBusy(d.id);
     try {
       const p = await api<ProjectSummary>('POST', `/api/examples/${encodeURIComponent(d.id)}`);
       toast(t('“{name}” added to your multiviews', { name: p.name }), 'info');
       onClose();
+      await file(p.id, folder);
       openInTab(projectPath(p.id));
     } catch (e) {
       toast((e as Error).message, 'error');
@@ -147,47 +165,154 @@ function ExampleBank({ onClose }: { onClose: () => void }) {
     }
   };
   return (
+    <div className="nmv-examples-wrap">
+      {categories.length > 1 && (
+        <div className="nmv-cats" role="radiogroup" aria-label={t('Category')}>
+          {['', ...categories].map((c) => (
+            <button key={c || '@all'} role="radio" aria-checked={category === c} className={category === c ? 'on' : ''} onClick={() => setCategory(c)}>
+              {c || t('Every one')}
+              <span>{c ? shown?.filter((x) => x.l.category === c).length : shown?.length}</span>
+            </button>
+          ))}
+        </div>
+      )}
+      <div className="example-grid nmv-examples">
+        {shown === null && <p className="muted">{t('Loading…')}</p>}
+        {shown
+          ?.filter((x) => !category || x.l.category === category)
+          .map(({ d, l }) => (
+            <div key={d.id} className="example-card">
+              <button className="example-cover" title={l.description} disabled={busy !== null} onClick={() => create(d)}>
+                <Thumb src={`/api/examples/${encodeURIComponent(d.id)}/cover.png?w=640`} />
+                <span className="example-num">{d.id.match(/^ex-(\d+)/)?.[1] ?? ''}</span>
+              </button>
+              <div className="example-body">
+                <div className="example-top">
+                  <strong>{l.name}</strong>
+                  {l.category && <span className="example-cat">{l.category}</span>}
+                </div>
+                <p title={l.description}>{l.summary}</p>
+                <div className="example-tags">
+                  {l.tags.map((x) => (
+                    <span key={x}>{x}</span>
+                  ))}
+                </div>
+                <button className="btn primary small" disabled={busy !== null} onClick={() => create(d)}>
+                  <Plus size={13} /> {busy === d.id ? t('Adding…') : t('Use this example')}
+                </button>
+              </div>
+            </div>
+          ))}
+      </div>
+    </div>
+  );
+}
+
+/** « New multiview »: blank, from an example, or a file dropped (or chosen) to import. */
+function NewMultiview({ folder, onClose }: { folder?: string; onClose: () => void }) {
+  const toast = useApp((s) => s.toast);
+  const [mode, setMode] = useState<'blank' | 'example'>('blank');
+  const [examples, setExamples] = useState<ExampleInfo[] | null>(null);
+  const [over, setOver] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const pick = useRef<HTMLInputElement>(null);
+  // Over a child, a drag leaves the parent: count them.
+  const depth = useRef(0);
+  useEffect(() => {
+    api<ExampleInfo[]>('GET', '/api/examples')
+      .then(setExamples)
+      .catch((e) => toast((e as Error).message, 'error'));
+  }, []);
+  useEffect(() => {
+    const key = (e: KeyboardEvent) => e.key === 'Escape' && !e.defaultPrevented && onClose();
+    window.addEventListener('keydown', key);
+    return () => window.removeEventListener('keydown', key);
+  }, [onClose]);
+  const importFile = async (f: File) => {
+    if (!/\.json$/i.test(f.name) && f.type !== 'application/json') return toast(t('Only .json files exported from Strata Multiview'), 'error');
+    setImporting(true);
+    try {
+      const p = await api<ProjectSummary>('POST', '/api/projects/import', JSON.parse(await f.text()));
+      toast(t('Imported “{name}”', { name: p.name }));
+      onClose();
+      await file(p.id, folder);
+      openInTab(projectPath(p.id));
+    } catch (e) {
+      toast(t('Import failed: {error}', { error: (e as Error).message }), 'error');
+    } finally {
+      setImporting(false);
+    }
+  };
+  const hasFile = (e: React.DragEvent) => e.dataTransfer.types.includes('Files');
+  return (
     <div className="modal-back" onPointerDown={onClose}>
-      <div className="modal wide example-bank" onPointerDown={(e) => e.stopPropagation()}>
+      <div
+        className={`modal nmv ${over ? 'nmv-over' : ''}`}
+        onPointerDown={(e) => e.stopPropagation()}
+        onDragEnter={(e) => {
+          if (!hasFile(e)) return;
+          e.preventDefault();
+          depth.current++;
+          setOver(true);
+        }}
+        onDragOver={(e) => {
+          if (!hasFile(e)) return;
+          e.preventDefault();
+          e.dataTransfer.dropEffect = 'copy';
+        }}
+        onDragLeave={() => {
+          depth.current = Math.max(0, depth.current - 1);
+          if (!depth.current) setOver(false);
+        }}
+        onDrop={(e) => {
+          if (!hasFile(e)) return;
+          e.preventDefault();
+          depth.current = 0;
+          setOver(false);
+          const f = e.dataTransfer.files[0];
+          if (f) void importFile(f);
+        }}
+      >
         <header>
-          <GraduationCap size={18} />
-          <h2>{t('Examples')}</h2>
-          <div className="spacer" />
-          <button className="icon-btn ghost" title={t('Close (Esc)')} onClick={onClose}>
+          <h2>{t('New multiview')}</h2>
+          <button type="button" className="icon-btn ghost" title={t('Close (Esc)')} onClick={onClose}>
             <X size={16} />
           </button>
         </header>
-        <div className="example-grid ux3-examples">
-          {examples === null && <p className="muted">{t('Loading…')}</p>}
-          {examples?.map((d) => {
-            const name = (!french && d.en?.name) || d.name;
-            const description = (!french && d.en?.description) || d.description;
-            const summary = (!french && d.en?.summary) || d.summary || description;
-            const category = (!french && d.en?.category) || d.category;
-            return (
-              <div key={d.id} className="example-card">
-                <div className="example-cover">
-                  <Thumb src={`/api/examples/${encodeURIComponent(d.id)}/cover.png?w=640`} />
-                  <span className="example-num">{d.id.match(/^ex-(\d+)/)?.[1] ?? ''}</span>
-                </div>
-                <div className="example-body">
-                  <div className="example-top">
-                    <strong>{name}</strong>
-                    {category && <span className="example-cat">{category}</span>}
-                  </div>
-                  <p title={description}>{summary}</p>
-                  <div className="example-tags">
-                    {((!french && d.en?.tags) || d.tags).map((x) => (
-                      <span key={x}>{x}</span>
-                    ))}
-                  </div>
-                  <button className="btn primary small" disabled={busy !== null} onClick={() => create(d)}>
-                    <Plus size={13} /> {busy === d.id ? t('Adding…') : t('Add to my multiviews')}
-                  </button>
-                </div>
-              </div>
-            );
-          })}
+        <div className="nmv-body">
+          <aside className="nmv-side">
+            <button className={`nmv-choice ${mode === 'blank' ? 'on' : ''}`} aria-pressed={mode === 'blank'} onClick={() => setMode('blank')}>
+              <FilePlus2 size={20} />
+              <span>
+                <strong>{t('Blank')}</strong>
+                <small>{t('An empty multiview, or its tiles on a layout')}</small>
+              </span>
+            </button>
+            <button className={`nmv-choice ${mode === 'example' ? 'on' : ''}`} aria-pressed={mode === 'example'} onClick={() => setMode('example')}>
+              <GraduationCap size={20} />
+              <span>
+                <strong>{t('From an example')}</strong>
+                <small>{examples ? tn(examples.length, '{n} ready-made multiview', '{n} ready-made multiviews') : t('Ready-made multiviews of a playout control room to start from')}</small>
+              </span>
+            </button>
+            <button className={`nmv-drop ${over ? 'on' : ''}`} disabled={importing} onClick={() => pick.current?.click()}>
+              <Upload size={22} />
+              <strong>{importing ? t('Importing…') : over ? t('Drop the file to import it') : t('Import a file')}</strong>
+              <small>{t('Drop a .json exported from Strata Multiview here, or click to choose it')}</small>
+            </button>
+            <input
+              ref={pick}
+              type="file"
+              accept=".json,application/json"
+              hidden
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                e.target.value = '';
+                if (f) void importFile(f);
+              }}
+            />
+          </aside>
+          <section className="nmv-main">{mode === 'blank' ? <ProjectForm folder={folder} onClose={onClose} /> : <ExampleList examples={examples} folder={folder} onClose={onClose} />}</section>
         </div>
       </div>
     </div>
@@ -217,7 +342,16 @@ function Thumb({ src, style }: { src: string; style?: React.CSSProperties }) {
   const ok = loaded === src;
   return (
     <>
-      <img src={src} alt="" loading="lazy" draggable={false} style={style} ref={(el) => void (el?.complete && el.naturalWidth && !ok && setLoaded(src))} onLoad={() => setLoaded(src)} onError={() => setLoaded(src)} />
+      <img
+        src={src}
+        alt=""
+        loading="lazy"
+        draggable={false}
+        style={style}
+        ref={(el) => void (el?.complete && el.naturalWidth && !ok && setLoaded(src))}
+        onLoad={() => setLoaded(src)}
+        onError={() => setLoaded(src)}
+      />
       {!ok && <span className="ux3-skel" aria-hidden />}
     </>
   );
@@ -246,11 +380,12 @@ function CardMenu({ children, page }: { children: React.ReactNode; page: number 
 
 export function Projects() {
   // Not the channels' live state: the list is not drawn again on each frame on air.
-  const { projects, channels, auth, toast, folders, saveFolders } = useApp(useShallow((s) => ({ projects: s.projects, channels: s.channels, auth: s.auth, toast: s.toast, folders: s.folders, saveFolders: s.saveFolders })));
+  const { projects, channels, auth, toast, folders, saveFolders } = useApp(
+    useShallow((s) => ({ projects: s.projects, channels: s.channels, auth: s.auth, toast: s.toast, folders: s.folders, saveFolders: s.saveFolders })),
+  );
   const user = auth?.user;
   const design = can.design(user);
   const [dialog, setDialog] = useState<{ from?: ProjectSummary } | null>(null);
-  const [examples, setExamples] = useState(false);
   const [view, setView] = useState<View>({ kind: 'all' });
   const [query, setQuery] = useState('');
   const [sort, setSort] = useState<Sort>('recent');
@@ -372,7 +507,12 @@ export function Projects() {
   };
   const moveSelection = (folder: string | null) => {
     moveAll([...selected], folder);
-    toast(folder ? tn(selected.size, '{n} project moved to “{folder}”', '{n} projects moved to “{folder}”', { folder }) : tn(selected.size, '{n} project moved to the top level', '{n} projects moved to the top level'), 'info');
+    toast(
+      folder
+        ? tn(selected.size, '{n} project moved to “{folder}”', '{n} projects moved to “{folder}”', { folder })
+        : tn(selected.size, '{n} project moved to the top level', '{n} projects moved to the top level'),
+      'info',
+    );
     endPick();
     setMenu(null);
   };
@@ -406,16 +546,6 @@ export function Projects() {
     setView({ kind: 'all' });
   };
 
-  const importRef = useRef<HTMLInputElement>(null);
-  const importFile = async (file: File) => {
-    try {
-      const p = await api<ProjectSummary>('POST', '/api/projects/import', JSON.parse(await file.text()));
-      if (view.kind === 'folder') moveTo(p.id, view.name);
-      toast(t('Imported “{name}”', { name: p.name }));
-    } catch (e) {
-      toast(t('Import failed: {error}', { error: (e as Error).message }), 'error');
-    }
-  };
   /** Deletes projects after one question (with the channels they are loaded on). */
   const removeAll = async (list: ProjectSummary[]) => {
     if (!list.length) return;
@@ -434,8 +564,7 @@ export function Projects() {
                 {list.length > 8 && <span className="muted">{t('and {n} more', { n: list.length - 8 })}</span>}
               </span>
             )}
-            {list.length === 1 ? t('Its media are deleted too.') : t('Their media are deleted too.')}{' '}
-            {t('This cannot be undone.')}
+            {list.length === 1 ? t('Its media are deleted too.') : t('Their media are deleted too.')} {t('This cannot be undone.')}
             {warn}
           </>
         ),
@@ -541,28 +670,9 @@ export function Projects() {
             </div>
             <div className="spacer" />
             {design && (
-              <>
-                <button className="btn" title={t('Ready-made multiviews of a playout control room to start from')} onClick={() => setExamples(true)}>
-                  <GraduationCap size={14} /> {t('Examples')}
-                </button>
-                <button className="btn" title={t('A multiview exported from Strata Multiview (.json)')} onClick={() => importRef.current?.click()}>
-                  <Upload size={14} /> {t('Import')}
-                </button>
-                <input
-                  ref={importRef}
-                  type="file"
-                  accept=".json"
-                  hidden
-                  onChange={(e) => {
-                    const f = e.target.files?.[0];
-                    e.target.value = '';
-                    if (f) void importFile(f);
-                  }}
-                />
-                <button className="btn primary" onClick={() => setDialog({})}>
-                  <Plus size={14} /> {t('New multiview')}
-                </button>
-              </>
+              <button className="btn primary" onClick={() => setDialog({})}>
+                <Plus size={14} /> {t('New multiview')}
+              </button>
             )}
           </div>
 
@@ -774,9 +884,12 @@ export function Projects() {
           </div>
         </div>
       </main>
-      {examples && <ExampleBank onClose={() => setExamples(false)} />}
-      {dialog && <NewProject from={dialog.from} folder={view.kind === 'folder' ? view.name : undefined} onClose={() => setDialog(null)} />}
+      {dialog &&
+        (dialog.from ? (
+          <DuplicateProject from={dialog.from} folder={view.kind === 'folder' ? view.name : undefined} onClose={() => setDialog(null)} />
+        ) : (
+          <NewMultiview folder={view.kind === 'folder' ? view.name : undefined} onClose={() => setDialog(null)} />
+        ))}
     </div>
   );
 }
-

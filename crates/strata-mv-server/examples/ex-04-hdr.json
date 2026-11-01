@@ -1,0 +1,691 @@
+{
+ "meta": {
+  "id": "ex-04-hdr",
+  "name": "Contrôle HDR / SDR",
+  "category": "Vision",
+  "tags": [
+   "HDR",
+   "Fausses couleurs",
+   "CIE",
+   "Fiche signal"
+  ],
+  "description": "Pour une production en HDR avec une version SDR : les deux programmes côte à côte, leurs fausses couleurs pour juger l’exposition, le diagramme CIE pour vérifier que le BT.2020 reste dans son gamut, la parade Y’CbCr et les fiches signal avec les métadonnées HDR (PQ / HLG, MaxCLL, MaxFALL, mastering display).",
+  "summary": "Les versions HDR et SDR côte à côte, fausses couleurs, CIE, parade et métadonnées HDR.",
+  "en": {
+   "name": "HDR / SDR control",
+   "category": "Vision",
+   "tags": [
+    "HDR",
+    "False colour",
+    "CIE",
+    "Signal sheet"
+   ],
+   "summary": "HDR and SDR versions side by side, false colour, CIE, parade and HDR metadata.",
+   "description": "For a production in HDR with an SDR version: both programmes side by side, their false colour to judge exposure, the CIE diagram to check BT.2020 stays in its gamut, the Y’CbCr parade and the signal sheets with the HDR metadata (PQ / HLG, MaxCLL, MaxFALL, mastering display)."
+  }
+ },
+ "project": {
+  "id": "",
+  "name": "Contrôle HDR / SDR",
+  "description": "Les versions HDR et SDR côte à côte, fausses couleurs, CIE, parade et métadonnées HDR.",
+  "width": 1920,
+  "height": 1080,
+  "frameRate": {
+   "num": 50,
+   "den": 1
+  },
+  "templates": [
+   {
+    "id": "d90df844cebd",
+    "name": "Contrôle HDR / SDR",
+    "duration": 50.0,
+    "markers": [],
+    "fields": [],
+    "layers": [
+     {
+      "id": "c02358ceb44b",
+      "name": "Bandeau",
+      "parent": null,
+      "type": "rect",
+      "shape": "rect",
+      "perCorner": false,
+      "corners": [
+       0.0,
+       0.0,
+       0.0,
+       0.0
+      ],
+      "skewUnit": "px",
+      "skewPx": 120.0,
+      "skewDeg": 15.0,
+      "trapMode": "percent",
+      "trapTop": 70.0,
+      "trapLeft": 80.0,
+      "trapRight": 200.0,
+      "vertexRound": 0.0,
+      "fillStyle": {
+       "kind": "solid",
+       "color2": "#ff3b5c",
+       "angle": 90.0,
+       "image": "",
+       "fit": "cover"
+      },
+      "strokeStyle": {
+       "position": "inside",
+       "dash": "solid",
+       "join": "miter",
+       "cap": "butt"
+      },
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 1920.0,
+       "height": 60.0,
+       "fill": [
+        0.062745,
+        0.078431,
+        0.105882,
+        1.0
+       ]
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "41c1d3030f23",
+      "name": "Accent",
+      "parent": null,
+      "type": "rect",
+      "shape": "rect",
+      "perCorner": false,
+      "corners": [
+       0.0,
+       0.0,
+       0.0,
+       0.0
+      ],
+      "skewUnit": "px",
+      "skewPx": 120.0,
+      "skewDeg": 15.0,
+      "trapMode": "percent",
+      "trapTop": 70.0,
+      "trapLeft": 80.0,
+      "trapRight": 200.0,
+      "vertexRound": 0.0,
+      "fillStyle": {
+       "kind": "solid",
+       "color2": "#ff3b5c",
+       "angle": 90.0,
+       "image": "",
+       "fit": "cover"
+      },
+      "strokeStyle": {
+       "position": "inside",
+       "dash": "solid",
+       "join": "miter",
+       "cap": "butt"
+      },
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 6.0,
+       "height": 60.0,
+       "fill": [
+        1.0,
+        0.847059,
+        0.305882,
+        1.0
+       ]
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "c2b7bbe5f009",
+      "name": "Heure station",
+      "parent": null,
+      "type": "timecode",
+      "input": "",
+      "label": "",
+      "color": "#ffd84e",
+      "background": "#00000000",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 1564.0,
+       "y": 6.0,
+       "width": 340.0,
+       "height": 48.0
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "a1d7b90e07fe",
+      "name": "État",
+      "parent": null,
+      "type": "status",
+      "ptp": false,
+      "ntp": false,
+      "alarms": true,
+      "background": "#00000000",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 1148.0,
+       "y": 6.0,
+       "width": 400.0,
+       "height": 48.0
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "b1b8b204c2d9",
+      "name": "HDR · PQ / HLG et version SDR",
+      "parent": null,
+      "type": "text",
+      "text": "HDR · PQ / HLG et version SDR",
+      "fontFamily": "Inter",
+      "fontWeight": 700,
+      "align": "left",
+      "verticalAlign": "middle",
+      "uppercase": false,
+      "speed": 120.0,
+      "separator": "   •   ",
+      "overflow": "fit",
+      "squeeze": 0.8,
+      "minSize": 0.6,
+      "warnBelow": 0.8,
+      "maxLines": 0,
+      "breakMode": "word",
+      "lang": "",
+      "fitEnd": "clip",
+      "italic": false,
+      "fillType": "solid",
+      "color2": "#a594ff",
+      "gradAngle": 90.0,
+      "strokeOutside": false,
+      "shadow": false,
+      "shadowColor": "#000000aa",
+      "shadowX": 0.0,
+      "shadowY": 4.0,
+      "shadowBlur": 12.0,
+      "band": false,
+      "bandColor": "#24164f",
+      "bandPadX": 26.0,
+      "bandGap": 10.0,
+      "bandRadius": 0.0,
+      "bandAccent": true,
+      "bandAccentColor": "#ff3b5c",
+      "justify": false,
+      "dir": "ltr",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 24.0,
+       "y": 6.0,
+       "width": 1108.0,
+       "height": 48.0,
+       "fill": [
+        0.960784,
+        0.968627,
+        0.980392,
+        1.0
+       ],
+       "fontSize": 30.0
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "89f0b336f17c",
+      "name": "Source 1",
+      "parent": null,
+      "type": "source",
+      "input": "{{input:1}}",
+      "fit": "contain",
+      "background": "#0b0d12",
+      "border": 4.0,
+      "tally": {
+       "border": true,
+       "program": "#e5212b",
+       "preview": "#17b14a",
+       "aux": "#f2b705",
+       "off": "#262a33"
+      },
+      "umd": {
+       "position": "bottom",
+       "size": 11.0,
+       "outside": false,
+       "text": "HDR · BT.2100",
+       "font": "Inter",
+       "weight": 600,
+       "align": "center",
+       "color": "#ffffff",
+       "background": "#000000b3",
+       "lamps": true
+      },
+      "vu": {
+       "position": "right",
+       "width": 6.0,
+       "gap": 2.0,
+       "margin": 6.0,
+       "min": -60.0,
+       "yellow": -18.0,
+       "red": -9.0,
+       "hold": true,
+       "max": 0,
+       "first": 0
+      },
+      "badge": false,
+      "noSignal": "",
+      "noSignalLook": "bars",
+      "timecode": "off",
+      "loudness": false,
+      "alarms": true,
+      "markers": {
+       "action": false,
+       "title": false,
+       "fourThree": false,
+       "fourteenNine": false,
+       "centre": false,
+       "afd": false,
+       "color": "#ffffffb3"
+      },
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 16.0,
+       "y": 72.0,
+       "width": 938.0,
+       "height": 528.0
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "691b31174028",
+      "name": "Source 2",
+      "parent": null,
+      "type": "source",
+      "input": "{{input:2}}",
+      "fit": "contain",
+      "background": "#0b0d12",
+      "border": 4.0,
+      "tally": {
+       "border": true,
+       "program": "#e5212b",
+       "preview": "#17b14a",
+       "aux": "#f2b705",
+       "off": "#262a33"
+      },
+      "umd": {
+       "position": "bottom",
+       "size": 11.0,
+       "outside": false,
+       "text": "SDR · BT.709",
+       "font": "Inter",
+       "weight": 600,
+       "align": "center",
+       "color": "#ffffff",
+       "background": "#000000b3",
+       "lamps": true
+      },
+      "vu": {
+       "position": "right",
+       "width": 6.0,
+       "gap": 2.0,
+       "margin": 6.0,
+       "min": -60.0,
+       "yellow": -18.0,
+       "red": -9.0,
+       "hold": true,
+       "max": 0,
+       "first": 0
+      },
+      "badge": false,
+      "noSignal": "",
+      "noSignalLook": "bars",
+      "timecode": "off",
+      "loudness": false,
+      "alarms": true,
+      "markers": {
+       "action": false,
+       "title": false,
+       "fourThree": false,
+       "fourteenNine": false,
+       "centre": false,
+       "afd": false,
+       "color": "#ffffffb3"
+      },
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 966.0,
+       "y": 72.0,
+       "width": 938.0,
+       "height": 528.0
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "8d90979c0945",
+      "name": "Fausses couleurs HDR",
+      "parent": null,
+      "type": "scope",
+      "input": "{{input:1}}",
+      "kind": "falseColor",
+      "graticule": true,
+      "labels": true,
+      "intensity": 1.0,
+      "color": "#6dff8f",
+      "background": "#05070b",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 16.0,
+       "y": 612.0,
+       "width": 300.0,
+       "height": 220.0
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "389fbede6146",
+      "name": "CIE HDR",
+      "parent": null,
+      "type": "scope",
+      "input": "{{input:1}}",
+      "kind": "cie",
+      "graticule": true,
+      "labels": true,
+      "intensity": 1.0,
+      "color": "#6dff8f",
+      "background": "#05070b",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 328.0,
+       "y": 612.0,
+       "width": 300.0,
+       "height": 220.0
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "d09182d628aa",
+      "name": "Parade Y'CbCr HDR",
+      "parent": null,
+      "type": "scope",
+      "input": "{{input:1}}",
+      "kind": "ycbcrParade",
+      "graticule": true,
+      "labels": true,
+      "intensity": 1.0,
+      "color": "#6dff8f",
+      "background": "#05070b",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 640.0,
+       "y": 612.0,
+       "width": 314.0,
+       "height": 220.0
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "dcd86908ba65",
+      "name": "Fausses couleurs SDR",
+      "parent": null,
+      "type": "scope",
+      "input": "{{input:2}}",
+      "kind": "falseColor",
+      "graticule": true,
+      "labels": true,
+      "intensity": 1.0,
+      "color": "#6dff8f",
+      "background": "#05070b",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 966.0,
+       "y": 612.0,
+       "width": 300.0,
+       "height": 220.0
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "c6c903ed07a0",
+      "name": "CIE SDR",
+      "parent": null,
+      "type": "scope",
+      "input": "{{input:2}}",
+      "kind": "cie",
+      "graticule": true,
+      "labels": true,
+      "intensity": 1.0,
+      "color": "#6dff8f",
+      "background": "#05070b",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 1278.0,
+       "y": 612.0,
+       "width": 300.0,
+       "height": 220.0
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "ea6d6af37e9b",
+      "name": "Waveform SDR",
+      "parent": null,
+      "type": "scope",
+      "input": "{{input:2}}",
+      "kind": "waveform",
+      "graticule": true,
+      "labels": true,
+      "intensity": 1.0,
+      "color": "#6dff8f",
+      "background": "#05070b",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 1590.0,
+       "y": 612.0,
+       "width": 314.0,
+       "height": 220.0
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "87fa5006927b",
+      "name": "Fiche HDR",
+      "parent": null,
+      "type": "signalInfo",
+      "input": "{{input:1}}",
+      "video": true,
+      "color": true,
+      "hdr": true,
+      "audio": false,
+      "background": "#0b0d12d9",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 16.0,
+       "y": 844.0,
+       "width": 616.0,
+       "height": 220.0
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "908f0e0e22c2",
+      "name": "Valeur · dynamic",
+      "parent": null,
+      "type": "value",
+      "input": "{{input:1}}",
+      "kind": "dynamic",
+      "label": "",
+      "showLabel": true,
+      "stack": true,
+      "align": "center",
+      "warn": 0.0,
+      "crit": 0.0,
+      "color": "#ffffff",
+      "background": "#0b0d12d9",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 644.0,
+       "y": 844.0,
+       "width": 149.0,
+       "height": 220.0
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "4c466d2ef93a",
+      "name": "Valeur · colorSpace",
+      "parent": null,
+      "type": "value",
+      "input": "{{input:1}}",
+      "kind": "colorSpace",
+      "label": "",
+      "showLabel": true,
+      "stack": true,
+      "align": "center",
+      "warn": 0.0,
+      "crit": 0.0,
+      "color": "#ffffff",
+      "background": "#0b0d12d9",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 805.0,
+       "y": 844.0,
+       "width": 149.0,
+       "height": 220.0
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "ce279418f614",
+      "name": "Fiche SDR",
+      "parent": null,
+      "type": "signalInfo",
+      "input": "{{input:2}}",
+      "video": true,
+      "color": true,
+      "hdr": false,
+      "audio": false,
+      "background": "#0b0d12d9",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 966.0,
+       "y": 844.0,
+       "width": 616.0,
+       "height": 220.0
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "9c977bdb8d14",
+      "name": "Valeur · dynamic",
+      "parent": null,
+      "type": "value",
+      "input": "{{input:2}}",
+      "kind": "dynamic",
+      "label": "",
+      "showLabel": true,
+      "stack": true,
+      "align": "center",
+      "warn": 0.0,
+      "crit": 0.0,
+      "color": "#ffffff",
+      "background": "#0b0d12d9",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 1594.0,
+       "y": 844.0,
+       "width": 149.0,
+       "height": 220.0
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "379ef098a16f",
+      "name": "Valeur · levels",
+      "parent": null,
+      "type": "value",
+      "input": "{{input:2}}",
+      "kind": "levels",
+      "label": "",
+      "showLabel": true,
+      "stack": true,
+      "align": "center",
+      "warn": 0.0,
+      "crit": 0.0,
+      "color": "#ffffff",
+      "background": "#0b0d12d9",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 1755.0,
+       "y": 844.0,
+       "width": 149.0,
+       "height": 220.0
+      },
+      "tracks": {},
+      "bindings": {}
+     }
+    ],
+    "zone": "full-screen",
+    "revision": 1,
+    "markerModel": 2,
+    "background": {
+     "color": "#08090c",
+     "fillStyle": {
+      "kind": "solid",
+      "color2": "#000000",
+      "angle": 90.0,
+      "image": "",
+      "fit": "cover"
+     }
+    }
+   }
+  ],
+  "zones": [
+   {
+    "id": "full-screen",
+    "name": "Full screen",
+    "layer": 10,
+    "color": "#8fa3ff",
+    "transition": "sequential"
+   }
+  ],
+  "formats": [],
+  "language": "fr"
+ }
+}

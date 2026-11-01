@@ -1,27 +1,33 @@
 {
  "meta": {
-  "id": "ex-07-contributions",
-  "name": "Contributions",
-  "category": "Arrivées",
+  "id": "ex-17-radio",
+  "name": "Radio filmée",
+  "category": "Son",
   "tags": [
-   "6 tuiles"
+   "Radio",
+   "Stéréo",
+   "Goniomètre",
+   "Loudness"
   ],
-  "summary": "Six arrivées avec leur timecode et leur loudness, le journal.",
-  "description": "Les arrivées et liaisons réservées : six contributions avec leur format, leur timecode et leur loudness, l’état de la synchro, le timecode station et le journal.",
+  "description": "Pour une matinale radio filmée : le programme vidéo et trois caméras du studio, le son stéréo avec ses vu-mètres et ses valeurs crête, le goniomètre et la corrélation de phase, le loudness avec une cible à -23 LUFS et sa courbe, et l’heure pour les tops horaires.",
+  "summary": "Trois caméras de studio radio, le programme stéréo, son goniomètre, son loudness et ses crêtes.",
   "en": {
-   "name": "Contributions",
-   "summary": "Six incoming feeds with their timecode and loudness, the log.",
-   "description": "Incoming feeds and booked links: six contributions with their format, timecode and loudness, the state of sync, the station timecode and the log.",
-   "category": "Incoming",
+   "name": "Visual radio",
+   "category": "Sound",
    "tags": [
-    "6 tiles"
-   ]
+    "Radio",
+    "Stereo",
+    "Goniometer",
+    "Loudness"
+   ],
+   "summary": "Three radio studio cameras, the stereo programme, its goniometer, loudness and peaks.",
+   "description": "For a filmed radio morning show: the video programme and three studio cameras, the stereo sound with its meters and peak values, the goniometer and phase correlation, the loudness with a −23 LUFS target and its curve, and the time for the top of the hour."
   }
  },
  "project": {
   "id": "",
-  "name": "Contributions",
-  "description": "",
+  "name": "Radio filmée",
+  "description": "Trois caméras de studio radio, le programme stéréo, son goniomètre, son loudness et ses crêtes.",
   "width": 1920,
   "height": 1080,
   "frameRate": {
@@ -30,21 +36,14 @@
   },
   "templates": [
    {
-    "id": "003595a4ea3f",
-    "name": "Contributions",
+    "id": "0600668346ae",
+    "name": "Radio filmée",
     "duration": 50.0,
-    "markers": [
-     {
-      "id": "fe109a267040",
-      "frame": 25.0,
-      "name": "On air",
-      "kind": "out"
-     }
-    ],
+    "markers": [],
     "fields": [],
     "layers": [
      {
-      "id": "jd2pemb6vkgl",
+      "id": "e6193fba1d6a",
       "name": "Bandeau",
       "parent": null,
       "type": "rect",
@@ -85,9 +84,9 @@
        "width": 1920.0,
        "height": 60.0,
        "fill": [
-        0.0627451,
-        0.078431375,
-        0.105882354,
+        0.062745,
+        0.078431,
+        0.105882,
         1.0
        ]
       },
@@ -95,11 +94,82 @@
       "bindings": {}
      },
      {
-      "id": "98jmd47xvkgl",
-      "name": "Arrivées et liaisons réservées",
+      "id": "f54e44e70ab4",
+      "name": "Accent",
+      "parent": null,
+      "type": "rect",
+      "shape": "rect",
+      "perCorner": false,
+      "corners": [
+       0.0,
+       0.0,
+       0.0,
+       0.0
+      ],
+      "skewUnit": "px",
+      "skewPx": 120.0,
+      "skewDeg": 15.0,
+      "trapMode": "percent",
+      "trapTop": 70.0,
+      "trapLeft": 80.0,
+      "trapRight": 200.0,
+      "vertexRound": 0.0,
+      "fillStyle": {
+       "kind": "solid",
+       "color2": "#ff3b5c",
+       "angle": 90.0,
+       "image": "",
+       "fit": "cover"
+      },
+      "strokeStyle": {
+       "position": "inside",
+       "dash": "solid",
+       "join": "miter",
+       "cap": "butt"
+      },
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 0.0,
+       "y": 0.0,
+       "width": 6.0,
+       "height": 60.0,
+       "fill": [
+        1.0,
+        0.541176,
+        0.239216,
+        1.0
+       ]
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "d3800b3f41cb",
+      "name": "État",
+      "parent": null,
+      "type": "status",
+      "ptp": false,
+      "ntp": false,
+      "alarms": true,
+      "background": "#00000000",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 1504.0,
+       "y": 6.0,
+       "width": 400.0,
+       "height": 48.0
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "26228b35e107",
+      "name": "Radio filmée · matinale",
       "parent": null,
       "type": "text",
-      "text": "Arrivées et liaisons réservées",
+      "text": "Radio filmée · matinale",
       "fontFamily": "Inter",
       "fontWeight": 700,
       "align": "left",
@@ -137,14 +207,14 @@
       "visible": true,
       "locked": false,
       "props": {
-       "x": 20.0,
+       "x": 24.0,
        "y": 6.0,
-       "width": 1000.0,
+       "width": 1464.0,
        "height": 48.0,
        "fill": [
-        0.9607843,
-        0.96862745,
-        0.98039216,
+        0.960784,
+        0.968627,
+        0.980392,
         1.0
        ],
        "fontSize": 30.0
@@ -153,47 +223,7 @@
       "bindings": {}
      },
      {
-      "id": "usu6djh1vkgl",
-      "name": "État",
-      "parent": null,
-      "type": "status",
-      "ptp": false,
-      "ntp": false,
-      "alarms": true,
-      "background": "#00000000",
-      "visible": true,
-      "locked": false,
-      "props": {
-       "x": 1060.0,
-       "y": 6.0,
-       "width": 420.0,
-       "height": 48.0
-      },
-      "tracks": {},
-      "bindings": {}
-     },
-     {
-      "id": "gzmiw2vhvkgl",
-      "name": "Timecode",
-      "parent": null,
-      "type": "timecode",
-      "input": "",
-      "label": "",
-      "color": "#fbbf24",
-      "background": "#00000000",
-      "visible": true,
-      "locked": false,
-      "props": {
-       "x": 1496.0,
-       "y": 6.0,
-       "width": 408.0,
-       "height": 48.0
-      },
-      "tracks": {},
-      "bindings": {}
-     },
-     {
-      "id": "u6tcwtf9vkgl",
+      "id": "e98170dd165b",
       "name": "Source 1",
       "parent": null,
       "type": "source",
@@ -212,7 +242,7 @@
        "position": "bottom",
        "size": 11.0,
        "outside": false,
-       "text": "",
+       "text": "PROGRAMME",
        "font": "Inter",
        "weight": 600,
        "align": "center",
@@ -229,48 +259,37 @@
        "yellow": -18.0,
        "red": -9.0,
        "hold": true,
-       "max": 0
+       "max": 0,
+       "first": 0
       },
-      "badge": true,
+      "badge": false,
       "noSignal": "",
       "noSignalLook": "bars",
-      "timecode": "input",
+      "timecode": "station",
       "loudness": false,
       "alarms": true,
+      "markers": {
+       "action": false,
+       "title": false,
+       "fourThree": false,
+       "fourteenNine": false,
+       "centre": false,
+       "afd": false,
+       "color": "#ffffffb3"
+      },
       "visible": true,
       "locked": false,
       "props": {
        "x": 16.0,
        "y": 72.0,
-       "width": 450.0,
-       "height": 300.0
+       "width": 1104.0,
+       "height": 621.0
       },
       "tracks": {},
       "bindings": {}
      },
      {
-      "id": "o3aqm937vkgl",
-      "name": "Loudness",
-      "parent": null,
-      "type": "loudness",
-      "input": "{{input:1}}",
-      "target": -23.0,
-      "tolerance": 1.0,
-      "history": true,
-      "background": "#0b0d12d9",
-      "visible": true,
-      "locked": false,
-      "props": {
-       "x": 16.0,
-       "y": 380.0,
-       "width": 450.0,
-       "height": 170.0
-      },
-      "tracks": {},
-      "bindings": {}
-     },
-     {
-      "id": "medtmu5jvkgl",
+      "id": "8080c65d1081",
       "name": "Source 2",
       "parent": null,
       "type": "source",
@@ -289,7 +308,7 @@
        "position": "bottom",
        "size": 11.0,
        "outside": false,
-       "text": "",
+       "text": "CAM ANIMATEUR",
        "font": "Inter",
        "weight": 600,
        "align": "center",
@@ -306,48 +325,37 @@
        "yellow": -18.0,
        "red": -9.0,
        "hold": true,
-       "max": 0
+       "max": 2,
+       "first": 0
       },
-      "badge": true,
+      "badge": false,
       "noSignal": "",
       "noSignalLook": "bars",
-      "timecode": "input",
+      "timecode": "off",
       "loudness": false,
       "alarms": true,
+      "markers": {
+       "action": false,
+       "title": false,
+       "fourThree": false,
+       "fourteenNine": false,
+       "centre": false,
+       "afd": false,
+       "color": "#ffffffb3"
+      },
       "visible": true,
       "locked": false,
       "props": {
-       "x": 475.0,
-       "y": 72.0,
-       "width": 450.0,
-       "height": 300.0
+       "x": 16.0,
+       "y": 705.0,
+       "width": 360.0,
+       "height": 200.0
       },
       "tracks": {},
       "bindings": {}
      },
      {
-      "id": "vappde93vkgl",
-      "name": "Loudness",
-      "parent": null,
-      "type": "loudness",
-      "input": "{{input:2}}",
-      "target": -23.0,
-      "tolerance": 1.0,
-      "history": true,
-      "background": "#0b0d12d9",
-      "visible": true,
-      "locked": false,
-      "props": {
-       "x": 475.0,
-       "y": 380.0,
-       "width": 450.0,
-       "height": 170.0
-      },
-      "tracks": {},
-      "bindings": {}
-     },
-     {
-      "id": "vqbn5nw9vkgl",
+      "id": "4b94a70f9c4d",
       "name": "Source 3",
       "parent": null,
       "type": "source",
@@ -366,7 +374,7 @@
        "position": "bottom",
        "size": 11.0,
        "outside": false,
-       "text": "",
+       "text": "CAM INVITÉS",
        "font": "Inter",
        "weight": 600,
        "align": "center",
@@ -383,48 +391,37 @@
        "yellow": -18.0,
        "red": -9.0,
        "hold": true,
-       "max": 0
+       "max": 2,
+       "first": 0
       },
-      "badge": true,
+      "badge": false,
       "noSignal": "",
       "noSignalLook": "bars",
-      "timecode": "input",
+      "timecode": "off",
       "loudness": false,
       "alarms": true,
+      "markers": {
+       "action": false,
+       "title": false,
+       "fourThree": false,
+       "fourteenNine": false,
+       "centre": false,
+       "afd": false,
+       "color": "#ffffffb3"
+      },
       "visible": true,
       "locked": false,
       "props": {
-       "x": 934.0,
-       "y": 72.0,
-       "width": 450.0,
-       "height": 300.0
+       "x": 388.0,
+       "y": 705.0,
+       "width": 360.0,
+       "height": 200.0
       },
       "tracks": {},
       "bindings": {}
      },
      {
-      "id": "4fnv9rd6vkgl",
-      "name": "Loudness",
-      "parent": null,
-      "type": "loudness",
-      "input": "{{input:3}}",
-      "target": -23.0,
-      "tolerance": 1.0,
-      "history": true,
-      "background": "#0b0d12d9",
-      "visible": true,
-      "locked": false,
-      "props": {
-       "x": 934.0,
-       "y": 380.0,
-       "width": 450.0,
-       "height": 170.0
-      },
-      "tracks": {},
-      "bindings": {}
-     },
-     {
-      "id": "ade4a0wdvkgl",
+      "id": "dc6edb4f0b5d",
       "name": "Source 4",
       "parent": null,
       "type": "source",
@@ -443,7 +440,7 @@
        "position": "bottom",
        "size": 11.0,
        "outside": false,
-       "text": "",
+       "text": "CAM LARGE",
        "font": "Inter",
        "weight": 600,
        "align": "center",
@@ -460,263 +457,253 @@
        "yellow": -18.0,
        "red": -9.0,
        "hold": true,
-       "max": 0
+       "max": 2,
+       "first": 0
       },
-      "badge": true,
+      "badge": false,
       "noSignal": "",
       "noSignalLook": "bars",
-      "timecode": "input",
+      "timecode": "off",
       "loudness": false,
       "alarms": true,
+      "markers": {
+       "action": false,
+       "title": false,
+       "fourThree": false,
+       "fourteenNine": false,
+       "centre": false,
+       "afd": false,
+       "color": "#ffffffb3"
+      },
       "visible": true,
       "locked": false,
       "props": {
-       "x": 16.0,
-       "y": 562.0,
-       "width": 450.0,
-       "height": 300.0
-      },
-      "tracks": {},
-      "bindings": {}
-     },
-     {
-      "id": "q90b7ot1vkgl",
-      "name": "Loudness",
-      "parent": null,
-      "type": "loudness",
-      "input": "{{input:4}}",
-      "target": -23.0,
-      "tolerance": 1.0,
-      "history": true,
-      "background": "#0b0d12d9",
-      "visible": true,
-      "locked": false,
-      "props": {
-       "x": 16.0,
-       "y": 870.0,
-       "width": 450.0,
-       "height": 170.0
-      },
-      "tracks": {},
-      "bindings": {}
-     },
-     {
-      "id": "3cz8uidevkgl",
-      "name": "Source 5",
-      "parent": null,
-      "type": "source",
-      "input": "{{input:5}}",
-      "fit": "contain",
-      "background": "#0b0d12",
-      "border": 4.0,
-      "tally": {
-       "border": true,
-       "program": "#e5212b",
-       "preview": "#17b14a",
-       "aux": "#f2b705",
-       "off": "#262a33"
-      },
-      "umd": {
-       "position": "bottom",
-       "size": 11.0,
-       "outside": false,
-       "text": "",
-       "font": "Inter",
-       "weight": 600,
-       "align": "center",
-       "color": "#ffffff",
-       "background": "#000000b3",
-       "lamps": true
-      },
-      "vu": {
-       "position": "right",
-       "width": 6.0,
-       "gap": 2.0,
-       "margin": 6.0,
-       "min": -60.0,
-       "yellow": -18.0,
-       "red": -9.0,
-       "hold": true,
-       "max": 0
-      },
-      "badge": true,
-      "noSignal": "",
-      "noSignalLook": "bars",
-      "timecode": "input",
-      "loudness": false,
-      "alarms": true,
-      "visible": true,
-      "locked": false,
-      "props": {
-       "x": 475.0,
-       "y": 562.0,
-       "width": 450.0,
-       "height": 300.0
-      },
-      "tracks": {},
-      "bindings": {}
-     },
-     {
-      "id": "pp8aevhtvkgl",
-      "name": "Loudness",
-      "parent": null,
-      "type": "loudness",
-      "input": "{{input:5}}",
-      "target": -23.0,
-      "tolerance": 1.0,
-      "history": true,
-      "background": "#0b0d12d9",
-      "visible": true,
-      "locked": false,
-      "props": {
-       "x": 475.0,
-       "y": 870.0,
-       "width": 450.0,
-       "height": 170.0
-      },
-      "tracks": {},
-      "bindings": {}
-     },
-     {
-      "id": "ndxksjdxvkgl",
-      "name": "Source 6",
-      "parent": null,
-      "type": "source",
-      "input": "{{input:6}}",
-      "fit": "contain",
-      "background": "#0b0d12",
-      "border": 4.0,
-      "tally": {
-       "border": true,
-       "program": "#e5212b",
-       "preview": "#17b14a",
-       "aux": "#f2b705",
-       "off": "#262a33"
-      },
-      "umd": {
-       "position": "bottom",
-       "size": 11.0,
-       "outside": false,
-       "text": "",
-       "font": "Inter",
-       "weight": 600,
-       "align": "center",
-       "color": "#ffffff",
-       "background": "#000000b3",
-       "lamps": true
-      },
-      "vu": {
-       "position": "right",
-       "width": 6.0,
-       "gap": 2.0,
-       "margin": 6.0,
-       "min": -60.0,
-       "yellow": -18.0,
-       "red": -9.0,
-       "hold": true,
-       "max": 0
-      },
-      "badge": true,
-      "noSignal": "",
-      "noSignalLook": "bars",
-      "timecode": "input",
-      "loudness": false,
-      "alarms": true,
-      "visible": true,
-      "locked": false,
-      "props": {
-       "x": 934.0,
-       "y": 562.0,
-       "width": 450.0,
-       "height": 300.0
-      },
-      "tracks": {},
-      "bindings": {}
-     },
-     {
-      "id": "tayo5m4vvkgl",
-      "name": "Loudness",
-      "parent": null,
-      "type": "loudness",
-      "input": "{{input:6}}",
-      "target": -23.0,
-      "tolerance": 1.0,
-      "history": true,
-      "background": "#0b0d12d9",
-      "visible": true,
-      "locked": false,
-      "props": {
-       "x": 934.0,
-       "y": 870.0,
-       "width": 450.0,
-       "height": 170.0
-      },
-      "tracks": {},
-      "bindings": {}
-     },
-     {
-      "id": "gmwqmo2xvkgl",
-      "name": "État",
-      "parent": null,
-      "type": "status",
-      "ptp": true,
-      "ntp": true,
-      "alarms": true,
-      "background": "#0b0d12d9",
-      "visible": true,
-      "locked": false,
-      "props": {
-       "x": 1396.0,
-       "y": 72.0,
-       "width": 508.0,
+       "x": 760.0,
+       "y": 705.0,
+       "width": 360.0,
        "height": 200.0
       },
       "tracks": {},
       "bindings": {}
      },
      {
-      "id": "7uqti6bmvkgl",
-      "name": "Timecode",
+      "id": "4589323c0c3f",
+      "name": "Valeur · time",
       "parent": null,
-      "type": "timecode",
+      "type": "value",
       "input": "",
-      "label": "TC",
-      "color": "#fbbf24",
+      "kind": "time",
+      "label": "",
+      "showLabel": false,
+      "stack": false,
+      "align": "center",
+      "warn": 0.0,
+      "crit": 0.0,
+      "color": "#ff8a3d",
       "background": "#0b0d12d9",
       "visible": true,
       "locked": false,
       "props": {
-       "x": 1396.0,
-       "y": 284.0,
-       "width": 508.0,
-       "height": 130.0
+       "x": 1132.0,
+       "y": 72.0,
+       "width": 772.0,
+       "height": 180.0
       },
       "tracks": {},
       "bindings": {}
      },
      {
-      "id": "tbwa31vnvkgl",
-      "name": "Journal des alarmes",
+      "id": "3b4a23eebddf",
+      "name": "Vu-mètres",
       "parent": null,
-      "type": "alarmLog",
-      "rows": 10,
-      "ended": true,
+      "type": "audioMeter",
+      "input": "{{input:1}}",
+      "channels": 2,
+      "labels": "L, R",
+      "scale": true,
+      "values": true,
+      "hold": true,
+      "loudness": true,
+      "min": -60.0,
+      "yellow": -18.0,
+      "red": -9.0,
       "background": "#0b0d12d9",
       "visible": true,
       "locked": false,
       "props": {
-       "x": 1396.0,
-       "y": 426.0,
-       "width": 508.0,
-       "height": 646.0
+       "x": 1132.0,
+       "y": 264.0,
+       "width": 240.0,
+       "height": 641.0
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "3cc2a6fa53df",
+      "name": "Goniomètre",
+      "parent": null,
+      "type": "scope",
+      "input": "{{input:1}}",
+      "kind": "goniometer",
+      "graticule": true,
+      "labels": true,
+      "intensity": 1.0,
+      "color": "#ff8a3d",
+      "background": "#05070b",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 1384.0,
+       "y": 264.0,
+       "width": 520.0,
+       "height": 420.0
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "55d83044b23f",
+      "name": "Valeur · peakLeft",
+      "parent": null,
+      "type": "value",
+      "input": "{{input:1}}",
+      "kind": "peakLeft",
+      "label": "",
+      "showLabel": true,
+      "stack": true,
+      "align": "center",
+      "warn": 0.0,
+      "crit": 0.0,
+      "color": "#ffffff",
+      "background": "#0b0d12d9",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 1384.0,
+       "y": 696.0,
+       "width": 165.0,
+       "height": 209.0
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "269e8827fdc5",
+      "name": "Valeur · peakRight",
+      "parent": null,
+      "type": "value",
+      "input": "{{input:1}}",
+      "kind": "peakRight",
+      "label": "",
+      "showLabel": true,
+      "stack": true,
+      "align": "center",
+      "warn": 0.0,
+      "crit": 0.0,
+      "color": "#ffffff",
+      "background": "#0b0d12d9",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 1561.0,
+       "y": 696.0,
+       "width": 165.0,
+       "height": 209.0
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "bfdec272374d",
+      "name": "Valeur · phase",
+      "parent": null,
+      "type": "value",
+      "input": "{{input:1}}",
+      "kind": "phase",
+      "label": "",
+      "showLabel": true,
+      "stack": true,
+      "align": "center",
+      "warn": 0.0,
+      "crit": 0.0,
+      "color": "#ffffff",
+      "background": "#0b0d12d9",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 1739.0,
+       "y": 696.0,
+       "width": 165.0,
+       "height": 209.0
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "2417c81e799b",
+      "name": "Loudness",
+      "parent": null,
+      "type": "loudness",
+      "input": "{{input:1}}",
+      "target": -23.0,
+      "tolerance": 1.0,
+      "history": false,
+      "background": "#0b0d12d9",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 16.0,
+       "y": 917.0,
+       "width": 940.0,
+       "height": 147.0
+      },
+      "tracks": {},
+      "bindings": {}
+     },
+     {
+      "id": "0bd8dc004a23",
+      "name": "Courbe · Loudness",
+      "parent": null,
+      "type": "chart",
+      "metric": "loudness",
+      "input": "{{input:1}}",
+      "channel": "",
+      "title": "Loudness",
+      "window": 120,
+      "min": -40.0,
+      "max": -10.0,
+      "warn": -22.0,
+      "crit": -20.0,
+      "color": "#ff8a3d",
+      "fill": true,
+      "stats": true,
+      "background": "#0b0d12d9",
+      "visible": true,
+      "locked": false,
+      "props": {
+       "x": 968.0,
+       "y": 917.0,
+       "width": 936.0,
+       "height": 147.0
       },
       "tracks": {},
       "bindings": {}
      }
     ],
     "zone": "full-screen",
-    "revision": 2,
-    "markerModel": 2
+    "revision": 1,
+    "markerModel": 2,
+    "background": {
+     "color": "#0b0d12",
+     "fillStyle": {
+      "kind": "solid",
+      "color2": "#000000",
+      "angle": 90.0,
+      "image": "",
+      "fit": "cover"
+     }
+    }
    }
   ],
   "zones": [
