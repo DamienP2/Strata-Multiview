@@ -187,6 +187,10 @@ export interface ServerConfig {
   ldap?: LdapConfig;
   /** Signing in with an OpenID Connect provider. */
   oidc?: OidcConfig;
+  /** AMWA NMOS IS-04 / IS-05 (crates/strata-mv-server/src/nmos.rs). */
+  nmos?: { enabled: boolean; registry: string; host: string };
+  /** Ember+ provider (crates/strata-mv-server/src/ember.rs). */
+  ember?: { enabled: boolean; port: number };
 }
 
 export interface LdapConfig {

@@ -13,7 +13,7 @@ serde_json = { version = "1", features = ["preserve_order"] }
 thiserror = "2"
 anyhow = "1"
 tracing = "0.1"
-uuid = { version = "1", features = ["v4", "serde"] }
+uuid = { version = "1", features = ["v4", "v5", "serde"] }
 strata-mv-core = { path = "crates/strata-mv-core" }
 strata-mv-render = { path = "crates/strata-mv-render" }
 strata-mv-output = { path = "crates/strata-mv-output" }

@@ -261,6 +261,12 @@ pub struct ServerConfig {
     /// Signing in with an OpenID Connect provider.
     #[serde(default)]
     pub oidc: crate::security::OidcConfig,
+    /// AMWA NMOS IS-04 / IS-05.
+    #[serde(default)]
+    pub nmos: crate::nmos::NmosConfig,
+    /// Ember+ provider.
+    #[serde(default)]
+    pub ember: crate::ember::EmberConfig,
     /// Pre-0.2 single-channel outputs, moved into the first channel on load.
     #[serde(default, skip_serializing)]
     outputs: Option<OutputsConfig>,
@@ -290,6 +296,8 @@ impl Default for ServerConfig {
             tls: Default::default(),
             ldap: Default::default(),
             oidc: Default::default(),
+            nmos: Default::default(),
+            ember: Default::default(),
             outputs: None,
         }
     }

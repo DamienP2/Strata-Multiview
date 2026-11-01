@@ -708,6 +708,8 @@ pub fn action_of(method: &str, path: &str) -> String {
     let seg: Vec<&str> = p.split('/').filter(|s| !s.is_empty()).collect();
     let has = |s: &str| seg.contains(&s);
     let what = match () {
+        _ if p.starts_with("/x-nmos/connection") => "NMOS · connexion IS-05",
+        _ if p.starts_with("/x-nmos") => "NMOS",
         _ if p == "/api/auth/login" => "Connexion",
         _ if p == "/api/auth/logout" => "Déconnexion",
         _ if p.starts_with("/api/auth/oidc") => "Connexion SSO",

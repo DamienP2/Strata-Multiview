@@ -137,6 +137,10 @@ pub fn router() -> Router<Shared> {
         .route("/api/system", get(get_system))
         .route("/api/system/metrics", get(crate::perf::metrics))
         .route("/metrics", get(crate::metrics::metrics))
+        .route("/api/nmos", get(crate::nmos::info))
+        .route("/x-nmos", axum::routing::any(crate::nmos::handle_root))
+        .route("/x-nmos/", axum::routing::any(crate::nmos::handle_root))
+        .route("/x-nmos/{*rest}", axum::routing::any(crate::nmos::handle))
         .route("/api/system/logs", get(crate::perf::logs))
         .route("/api/system/logs/download", get(crate::perf::logs_download))
         .route("/api/system/config", put(put_system_config))
@@ -438,8 +442,8 @@ pub async fn audit_layer(
 ) -> Response {
     let method = req.method().clone();
     let path = req.uri().path().to_string();
-    let changes =
-        matches!(method.as_str(), "POST" | "PUT" | "PATCH" | "DELETE") && path.starts_with("/api/");
+    let changes = matches!(method.as_str(), "POST" | "PUT" | "PATCH" | "DELETE")
+        && (path.starts_with("/api/") || path.starts_with("/x-nmos/"));
     // Reading, and the live pages' own chatter: not audited.
     if !changes || path.starts_with("/api/alarms/test") {
         return next.run(req).await;

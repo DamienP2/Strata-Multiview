@@ -2945,6 +2945,20 @@
           }
         }
       }
+    },
+    "/api/nmos": {
+      "get": {
+        "tags": [
+          "System"
+        ],
+        "summary": "NMOS node",
+        "description": "Id of the NMOS node, addresses of its Node and Connection APIs, number of senders and receivers.",
+        "responses": {
+          "200": {
+            "description": "`{nodeId, nodeApi, connectionApi, senders, receivers}`"
+          }
+        }
+      }
     }
   },
   "components": {

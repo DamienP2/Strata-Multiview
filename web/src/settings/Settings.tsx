@@ -1,4 +1,4 @@
-import { Clock, CloudDownload, Cpu, Lock, Network, RotateCcw, Server, ShieldCheck, SlidersHorizontal, Timer } from 'lucide-react';
+import { Clock, CloudDownload, Cpu, Lock, Network, Plug, RotateCcw, Server, ShieldCheck, SlidersHorizontal, Timer } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { t } from '../i18n';
 import { NavItem, NavSection, PageHead, SidePage } from '../pages/SidePage';
@@ -12,6 +12,7 @@ import { VideoSync } from './VideoSync';
 import { Updates } from './Updates';
 import { LibraryUpdates } from './LibraryUpdates';
 import { AuditJournal, Security } from './Security';
+import { Integrations } from './Integrations';
 import '../alarms/alarms.css';
 
 const TIMEZONES: string[] = (() => {
@@ -29,8 +30,8 @@ function uptime(s: number) {
   return d ? `${d}d ${h}h` : h ? `${h}h ${m}m` : `${m}m ${s % 60}s`;
 }
 
-type Section = 'general' | 'network' | 'time' | 'sync' | 'security' | 'audit' | 'updates' | 'system';
-const SECTIONS: Section[] = ['general', 'network', 'time', 'sync', 'security', 'audit', 'updates', 'system'];
+type Section = 'general' | 'network' | 'time' | 'sync' | 'integrations' | 'security' | 'audit' | 'updates' | 'system';
+const SECTIONS: Section[] = ['general', 'network', 'time', 'sync', 'integrations', 'security', 'audit', 'updates', 'system'];
 const sectionOf = (hash: string): Section => SECTIONS.find((s) => `#${s}` === hash) ?? 'general';
 
 /** The server's settings (admins). */
@@ -79,6 +80,7 @@ function ServerSettings() {
       {item('network', <Network size={15} />, t('Networks'))}
       {item('time', <Clock size={15} />, t('Time'))}
       {item('sync', <Timer size={15} />, t('Video sync'))}
+      {item('integrations', <Plug size={15} />, t('Integrations'))}
       {item('security', <Lock size={15} />, t('Security'))}
       {item('audit', <ShieldCheck size={15} />, t('Audit journal'))}
       {item('updates', <CloudDownload size={15} />, t('Updates'))}
@@ -121,6 +123,8 @@ function ServerSettings() {
       {section === 'time' && <TimePage cfg={cfg} edit={edit} det={det} zone={info.timezone} timezones={TIMEZONES} onRefresh={() => void detect()} />}
 
       {section === 'sync' && <VideoSync cfg={cfg} edit={edit} det={det} onRefresh={() => void detect()} />}
+
+      {section === 'integrations' && <Integrations cfg={cfg} edit={edit} saved={info?.config} />}
 
       {section === 'security' && <Security cfg={cfg} edit={edit} />}
 

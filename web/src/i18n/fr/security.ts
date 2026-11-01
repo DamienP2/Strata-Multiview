@@ -53,4 +53,21 @@ export const security: Record<string, string> = {
   User: 'Utilisateur',
   Action: 'Action',
   Result: 'Résultat',
+  // Settings › Integrations: NMOS and Ember+.
+  'Controllers and registries of the IP plant see the server: its ST 2110 outputs as senders, its UDP / RTP inputs as receivers.':
+    'Les contrôleurs et registres de l’installation IP voient le serveur : ses sorties ST 2110 comme émetteurs (senders), ses entrées UDP / RTP comme récepteurs (receivers).',
+  Registry: 'Registre',
+  'Its address (IS-04 registration API). Empty: no registration, the Node API is still served for direct control.':
+    'Son adresse (API d’enregistrement IS-04). Vide : pas d’enregistrement, l’API Node reste servie pour un contrôle direct.',
+  'Address announced': 'Adresse annoncée',
+  'The address controllers reach the server at. Empty: the first one of the machine.': 'L’adresse par laquelle les contrôleurs joignent le serveur. Vide : la première de la machine.',
+  'Node {id}: {s} sender(s), {r} receiver(s).': 'Nœud {id} : {s} émetteur(s), {r} récepteur(s).',
+  'Activating a sender changes its destination or turns it on or off; a receiver, the multicast group its input joins. Both are saved in the settings. The NMOS APIs are open (no key), as is usual on a media network.':
+    'Activer un émetteur change sa destination ou l’allume / l’éteint ; un récepteur, le groupe multicast que rejoint son entrée. Les deux sont enregistrés dans les réglages. Les API NMOS sont ouvertes (sans clé), comme d’usage sur un réseau média.',
+  'Control panels and control systems (VSM, Lawo, Cerebrum…) browse the server: multiview on air of each channel, state and faults of each input, acknowledgement.':
+    'Les panneaux et systèmes de contrôle (VSM, Lawo, Cerebrum…) parcourent le serveur : multiview à l’antenne de chaque chaîne, état et alarmes de chaque entrée, acquittement.',
+  'TCP port': 'Port TCP',
+  'Tree: strata › info (name, version, uptime, faults, acknowledgeAll), channels › <channel> › multiview, inputs › <input> › live, status, alarms, loudness.':
+    'Arbre : strata › info (name, version, uptime, alarms, acknowledgeAll), channels › <chaîne> › multiview, inputs › <entrée> › live, status, alarms, loudness.',
+  Integrations: 'Intégrations',
 };

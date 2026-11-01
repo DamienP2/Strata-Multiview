@@ -4,6 +4,7 @@ mod auth;
 mod colors;
 mod config;
 mod decklink;
+mod ember;
 mod engine;
 mod examples;
 mod firewall;
@@ -16,6 +17,7 @@ mod locks;
 mod logs;
 mod media;
 mod metrics;
+mod nmos;
 mod notify;
 mod paths;
 mod perf;
@@ -540,6 +542,7 @@ pub async fn serve(
         }
         let events = state::Events::new(256);
         let (closing, _) = watch::channel(false);
+        nmos::cycle_started();
         let shared: Shared = Arc::new(AppState {
             data_dir: data_dir.clone(),
             library: RwLock::new(library),
@@ -603,6 +606,8 @@ pub async fn serve(
             .with_state(shared.clone());
 
         tracing::info!("listening on http://{bind} — projects: /projects, outputs: /outputs, settings: /settings, HTML5 output: /output/<channel>");
+        nmos::spawn_registration(shared.clone());
+        ember::spawn(shared.clone());
         let stop = state::until_true(stop_rx.clone());
         let cycle = shared.clone();
         let loopback = local.map(|l| {
