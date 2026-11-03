@@ -20,6 +20,7 @@ mod locks;
 mod logs;
 mod loudlog;
 mod media;
+mod meter;
 mod metrics;
 mod nmos;
 mod notify;

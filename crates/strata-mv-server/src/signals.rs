@@ -16,13 +16,14 @@ use serde::Serialize;
 use strata_mv_core::alarm::AlarmSettings;
 use strata_mv_core::signal::{
     Alarm, AlarmKind, JournalEntry, Level, Loudness, NtpView, PtpView, Severity, SystemView, Tally,
-    SILENCE, TARGET,
+    SILENCE,
 };
 
 /// The hold mark stays this long on a peak, then falls.
 const HOLD: Duration = Duration::from_secs(2);
-/// How fast a meter falls back, dB a second (peak meters fall slowly).
-const FALL: f32 = 24.0;
+/// How fast a meter falls back, dB a second: 20 dB in 1.7 s, the return
+/// time of a digital peak meter (IEC 60268-18; the meters rise at once).
+const FALL: f32 = 20.0 / 1.7;
 /// Without a measure for this long, the input has no audio (no meters).
 const GONE: Duration = Duration::from_secs(3);
 /// The short-term loudness kept, one a second.
@@ -258,6 +259,10 @@ pub struct SignalView {
     /// Lost its signal: the id of the backup its tiles show.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub backup: Option<String>,
+    /// Its loudness standard when not EBU R128: target, tolerance, highest
+    /// true peak.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub norm: Option<[f32; 3]>,
     /// What its caption channels show (with the picture on show).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub captions:
@@ -616,6 +621,14 @@ impl Signals {
             .collect()
     }
 
+    /// The loudness standard of an input (its alarm profile's).
+    pub fn norm_of(&self, id: &str) -> strata_mv_core::signal::LoudnessNorm {
+        read(&self.settings)
+            .profile_of(id)
+            .map(|p| p.loudness.clone())
+            .unwrap_or_default()
+    }
+
     /// The meters of an input (none: no audio lately).
     pub fn levels(&self, id: &str) -> Vec<Level> {
         match read(&self.audio).get(id) {
@@ -798,15 +811,22 @@ impl Signals {
                     }
                 }
                 if let Some(l) = loud.get(&w.id).filter(|l| l.at.elapsed() < GONE) {
+                    // From the target of the input's standard (its profile's).
+                    let norm = settings
+                        .profile_of(&w.id)
+                        .map(|p| p.loudness.clone())
+                        .unwrap_or_default();
                     let st = l.now.short_term;
-                    if st > TARGET + rule(AlarmKind::Loud).threshold {
+                    if st > norm.target + rule(AlarmKind::Loud).threshold {
                         on(AlarmKind::Loud, None);
                     }
-                    if !silent && st > -70.0 && st < TARGET - rule(AlarmKind::Quiet).threshold {
+                    if !silent && st > -70.0 && st < norm.target - rule(AlarmKind::Quiet).threshold
+                    {
                         on(AlarmKind::Quiet, None);
                     }
-                    // The highest true peak of the last seconds.
-                    if l.now.true_peak > rule(AlarmKind::Peak).threshold {
+                    // The highest true peak of the last three seconds, over
+                    // the standard's.
+                    if l.now.true_peak > norm.max_true_peak {
                         on(AlarmKind::Peak, None);
                     }
                 }
@@ -1076,10 +1096,22 @@ impl Signals {
                 v.levels_at = Some(epoch_ms(m.shown_at).round());
             }
         }
+        let settings = read(&self.settings).clone();
+        let ebu = strata_mv_core::signal::LoudnessNorm::default();
         for (id, l) in write(&self.loud).iter_mut() {
             if l.at.elapsed() < GONE {
                 let n = l.now;
                 let v = out.entry(id.clone()).or_default();
+                // Its standard, when not EBU R128's.
+                let norm = settings
+                    .profile_of(id)
+                    .map(|p| p.loudness.clone())
+                    .unwrap_or_default();
+                if (norm.target, norm.tolerance, norm.max_true_peak)
+                    != (ebu.target, ebu.tolerance, ebu.max_true_peak)
+                {
+                    v.norm = Some([norm.target, norm.tolerance, norm.max_true_peak]);
+                }
                 v.loudness = Some([
                     round(n.momentary),
                     round(n.short_term),

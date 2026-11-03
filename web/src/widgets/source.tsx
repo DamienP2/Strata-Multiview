@@ -7,7 +7,7 @@ import { AlignCenter, AlignLeft, AlignRight, ArrowUpToLine, BellRing, Crosshair,
 import { interpolateText, num } from '../engine/evaluate';
 import { LiveCanvas } from '../engine/LiveCanvas';
 import { alarmText, streamWidth, useInputs, useLiveFrame, useLiveStream, useSignal, type Alarm, type InputInfo, type SignalView, type Tally } from '../engine/liveInputs';
-import { CRIT, loudColor, num1, stationTimecode, TARGET, WARN } from './broadcast';
+import { CRIT, loudColor, normOf, num1, stationTimecode, WARN } from './broadcast';
 import type { Data } from '../engine/types';
 import { FontPick } from '../ui/FontPick';
 import { t, tc, tl } from '../i18n';
@@ -530,7 +530,7 @@ function SourceView({ layer, w, h, data, designer, lang, nowMs, tz, fps, seed }:
       {/* At the display's rate, the peaks falling smoothly (on the outputs' timeline, with the picture). */}
       {l.meters.length > 0 && <SmoothMeters id={info ? id : ''} areas={l.meters} vu={c.vu} />}
       {tc && tag(o.tc, tc, o.size, '#000000b3', '#fbbf24', true)}
-      {c.loudness && lo && tag(o.lufs, num1(lo[1]), o.size, '#000000b3', loudColor(lo[1], lo[4], TARGET, 1), true)}
+      {c.loudness && lo && tag(o.lufs, num1(lo[1]), o.size, '#000000b3', loudColor(lo[1], lo[4], ...normOf(signal)), true)}
       {c.alarms && alarms.length > 0 && picture && tag(o.banner, alarmBanner(alarms, lang), o.size * 1.1, ...((alarms[0].severity === 'critical' ? CRIT : WARN) as [string, string]), false)}
       {l.umd && (
         <>

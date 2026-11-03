@@ -421,11 +421,13 @@ pub(crate) fn draw(d: &mut Draw) -> bool {
     }
     if c.loudness {
         if let Some(lo) = view.as_ref().and_then(|v| v.loudness) {
+            let n = view.as_ref().map(|v| v.norm.clone()).unwrap_or_default();
             let col = loud_color(
                 lo.short_term,
                 lo.true_peak,
-                strata_mv_core::signal::TARGET,
-                1.0,
+                n.target,
+                n.tolerance,
+                n.max_true_peak,
             );
             tag(
                 d,

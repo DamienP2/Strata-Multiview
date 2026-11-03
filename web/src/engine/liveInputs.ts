@@ -552,6 +552,8 @@ export interface SignalView {
   correlation?: number;
   /** Lost its signal: the id of the backup its tiles show. */
   backup?: string;
+  /** Its loudness standard when not EBU R128 (its alarm profile's): target LUFS, tolerance LU, highest true peak dBTP. */
+  norm?: [number, number, number];
   /** What its caption channels show ("cc1"…"cc4", "s1"…"s6"; those showing nothing left out). */
   captions?: Record<string, CaptionScreen>;
 }
@@ -661,8 +663,8 @@ type Levels = [number, number, number][];
 /** Each input's meters waiting for their time, and the ones shown. */
 const levelQueue = new Map<string, { t: number; levels: Levels }[]>();
 const levelShown = new Map<string, Levels>();
-/** dB a second a peak falls (mirrors signals.rs FALL). */
-const FALL = 24;
+/** dB a second a peak falls: 20 dB in 1.7 s, IEC 60268-18 (mirrors signals.rs FALL). */
+const FALL = 20 / 1.7;
 const smooth = new Map<string, { at: number; peaks: number[]; out: Levels }>();
 
 /** An input's meters at this moment of the timeline. */

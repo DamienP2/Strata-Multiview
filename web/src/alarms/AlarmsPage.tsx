@@ -24,6 +24,7 @@ import {
   Network,
   ScrollText,
   Activity,
+  AudioLines,
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useAlarmSound } from '../engine/alarmSound';
@@ -42,10 +43,13 @@ import {
   KIND_INFO,
   SYSTEM_ALARMS,
   defaultRule,
+  normOf,
+  NORMS,
   ruleOf,
   thresholdUnit,
   SNMP_BASE_OID,
   type AlarmSettings,
+  type LoudnessNorm,
   type Profile,
   type Rule,
   type SnmpTarget,
@@ -305,6 +309,7 @@ export function AlarmsPage() {
           </div>
           {profile.id === DEFAULT_PROFILE && <p className="muted">{t('The profile of every input not given another.')}</p>}
         </Card>
+        <NormCard norm={normOf(profile)} set={(n) => setP((p) => void (p.loudness = n))} />
         <Card
           icon={<BellRing size={16} />}
           title={t('Faults of the inputs')}
@@ -314,7 +319,7 @@ export function AlarmsPage() {
             </button>
           }
         >
-          <RulesTable kinds={INPUT_ALARMS} get={(k) => profile.rules[k] ?? defaultRule(k)} set={(k, r) => setP((p) => void (p.rules[k] = r))} />
+          <RulesTable kinds={INPUT_ALARMS} get={(k) => profile.rules[k] ?? defaultRule(k)} set={(k, r) => setP((p) => void (p.rules[k] = r))} fixed={{ peak: normOf(profile).maxTruePeak }} />
         </Card>
       </>
     );
@@ -583,7 +588,52 @@ function StatsView({ journal }: { journal: JournalEntry[] }) {
 }
 
 /** Each fault: on or off, after how long, how grave, from what threshold. */
-function RulesTable({ kinds, get, set }: { kinds: AlarmKind[]; get: (k: AlarmKind) => Rule; set: (k: AlarmKind, r: Rule) => void }) {
+/** The loudness standard of a profile: a broadcast one, or set by hand. */
+function NormCard({ norm, set }: { norm: LoudnessNorm; set: (n: LoudnessNorm) => void }) {
+  const known = NORMS.find((n) => n[0] === norm.standard);
+  return (
+    <Card icon={<AudioLines size={16} />} title={t('Loudness standard')}>
+      <div className="al-grid">
+        <Field label={t('Standard')}>
+          <select
+            value={known ? norm.standard : 'custom'}
+            onChange={(e) => {
+              const n = NORMS.find((x) => x[0] === e.target.value);
+              set(n ? { standard: n[0], target: n[2], tolerance: n[3], maxTruePeak: n[4] } : { ...norm, standard: 'custom' });
+            }}
+          >
+            {NORMS.map(([id, name, target, , tp, where]) => (
+              <option key={id} value={id}>
+                {name} · {target} LUFS · {tp} dBTP ({t(where)})
+              </option>
+            ))}
+            <option value="custom">{t('Set by hand')}</option>
+          </select>
+        </Field>
+        <Field label={t('Target')}>
+          <span className="al-num">
+            <input type="number" step={0.5} value={norm.target} disabled={!!known} onChange={(e) => set({ ...norm, target: +e.target.value || 0 })} /> LUFS
+          </span>
+        </Field>
+        <Field label={t('Tolerance')}>
+          <span className="al-num">
+            ± <input type="number" step={0.5} min={0} value={norm.tolerance} disabled={!!known} onChange={(e) => set({ ...norm, tolerance: Math.max(0, +e.target.value || 0) })} /> LU
+          </span>
+        </Field>
+        <Field label={t('Highest true peak')}>
+          <span className="al-num">
+            <input type="number" step={0.5} value={norm.maxTruePeak} disabled={!!known} onChange={(e) => set({ ...norm, maxTruePeak: +e.target.value || 0 })} /> dBTP
+          </span>
+        </Field>
+      </div>
+      <p className="muted">
+        {t('Measured as ITU-R BS.1770-4 / EBU Tech 3341 say: momentary 400 ms, short-term 3 s, integrated (gated) since the input started, range (EBU Tech 3342), true peak 4 × oversampled. The Too loud, Too quiet and True peak faults and the colours of the loudness shown follow this standard.')}
+      </p>
+    </Card>
+  );
+}
+
+function RulesTable({ kinds, get, set, fixed }: { kinds: AlarmKind[]; get: (k: AlarmKind) => Rule; set: (k: AlarmKind, r: Rule) => void; fixed?: Partial<Record<AlarmKind, number>> }) {
   return (
     <table className="al-table al-rules">
       <thead>
@@ -629,6 +679,10 @@ function RulesTable({ kinds, get, set }: { kinds: AlarmKind[]; get: (k: AlarmKin
                       </option>
                     ))}
                   </select>
+                ) : fixed?.[k] !== undefined ? (
+                  <span className="al-num" title={t("The profile's loudness standard")}>
+                    <input type="number" value={fixed[k]} disabled /> {unit}
+                  </span>
                 ) : unit ? (
                   <span className="al-num">
                     <input type="number" step={k === 'phase' || k === 'clipping' ? 0.1 : 1} value={r.threshold} disabled={!r.enabled} onChange={(e) => put({ threshold: +e.target.value || 0 })} />{' '}

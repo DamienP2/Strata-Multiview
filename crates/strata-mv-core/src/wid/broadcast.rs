@@ -11,9 +11,7 @@
 use serde::{Deserialize, Serialize};
 
 use crate::model::TextAlign;
-use crate::signal::{
-    AlarmKind, Level, Severity, SourceView, SystemView, MAX_TRUE_PEAK, SILENCE, TARGET,
-};
+use crate::signal::{AlarmKind, Level, Severity, SourceView, SystemView, SILENCE, TARGET};
 
 /// A box: x, y, width, height (layer pixels).
 pub type Area = [f32; 4];
@@ -301,8 +299,16 @@ pub fn meters(c: &MeterConfig, w: f32, h: f32, v: Option<&SourceView>) -> Vec<It
             None => "LUFS \u{2014}".into(),
         };
         let col = v
-            .and_then(|v| v.loudness)
-            .map_or(DIM, |l| loud_color(l.integrated, l.true_peak, TARGET, 1.0));
+            .and_then(|v| v.loudness.map(|l| (l, &v.norm)))
+            .map_or(DIM, |(l, n)| {
+                loud_color(
+                    l.integrated,
+                    l.true_peak,
+                    n.target,
+                    n.tolerance,
+                    n.max_true_peak,
+                )
+            });
         out.push(text(
             [pad, y + fs * 0.3, w - 2.0 * pad, fs * 1.3],
             s,
@@ -318,8 +324,14 @@ pub fn meters(c: &MeterConfig, w: f32, h: f32, v: Option<&SourceView>) -> Vec<It
 
 /// The colour of a loudness: on target (green), off it (amber), the true
 /// peak over the limit (red).
-pub fn loud_color(lufs: f32, true_peak: f32, target: f32, tolerance: f32) -> &'static str {
-    if true_peak > MAX_TRUE_PEAK {
+pub fn loud_color(
+    lufs: f32,
+    true_peak: f32,
+    target: f32,
+    tolerance: f32,
+    max_true_peak: f32,
+) -> &'static str {
+    if true_peak > max_true_peak {
         RED
     } else if (lufs - target).abs() <= tolerance {
         GREEN
@@ -335,6 +347,9 @@ pub fn loud_color(lufs: f32, true_peak: f32, target: f32, tolerance: f32) -> &'s
 #[serde(default, rename_all = "camelCase")]
 pub struct LoudnessConfig {
     pub input: String,
+    /// The target and tolerance of the input's standard (its alarm
+    /// profile's), or the ones below.
+    pub follow: bool,
     /// LUFS, and the tolerance either side, LU.
     pub target: f32,
     pub tolerance: f32,
@@ -347,10 +362,25 @@ impl Default for LoudnessConfig {
     fn default() -> Self {
         Self {
             input: String::new(),
+            follow: true,
             target: TARGET,
             tolerance: 1.0,
             history: true,
             background: "#0b0d12d9".into(),
+        }
+    }
+}
+
+impl LoudnessConfig {
+    /// Target, tolerance and highest true peak shown, for an input of
+    /// standard `n`.
+    pub fn norm(&self, n: Option<&crate::signal::LoudnessNorm>) -> (f32, f32, f32) {
+        let d = crate::signal::LoudnessNorm::default();
+        let n = n.unwrap_or(&d);
+        if self.follow {
+            (n.target, n.tolerance, n.max_true_peak)
+        } else {
+            (self.target, self.tolerance, n.max_true_peak)
         }
     }
 }
@@ -365,12 +395,13 @@ pub fn loudness(
     let pad = pad_of(w, h);
     let mut out = vec![rect([0.0, 0.0, w, h], pad * 0.6, &c.background)];
     let l = v.and_then(|v| v.loudness);
+    let (target, tolerance, max_tp) = c.norm(v.map(|v| &v.norm));
     let fr = lang.to_lowercase().starts_with("fr");
     let inner = w - 2.0 * pad;
     // The integrated loudness, big, and the target.
     let big = (h * 0.16).clamp(12.0, 96.0).round();
     let col = l.map_or(DIM, |l| {
-        loud_color(l.integrated, l.true_peak, c.target, c.tolerance)
+        loud_color(l.integrated, l.true_peak, target, tolerance, max_tp)
     });
     out.push(text(
         [pad, pad, inner * 0.62, big * 1.15],
@@ -410,8 +441,8 @@ pub fn loudness(
         format!(
             "{} {} ±{}",
             if fr { "CIBLE" } else { "TARGET" },
-            num1(c.target),
-            c.tolerance
+            num1(target),
+            tolerance
         ),
         small,
         600,
@@ -440,13 +471,7 @@ pub fn loudness(
         (
             "TP",
             l.map_or("\u{2014}".into(), |l| format!("{} dBTP", num1(l.true_peak))),
-            l.map_or(WHITE, |l| {
-                if l.true_peak > MAX_TRUE_PEAK {
-                    RED
-                } else {
-                    WHITE
-                }
-            }),
+            l.map_or(WHITE, |l| if l.true_peak > max_tp { RED } else { WHITE }),
         ),
     ];
     let cw = (inner - pad * 3.0) / 4.0;
@@ -478,7 +503,7 @@ pub fn loudness(
     let hh = h - hy - pad;
     if c.history && hh > 12.0 {
         out.push(rect([pad, hy, inner, hh], pad * 0.4, "#ffffff0d"));
-        let (lo, hi) = (c.target - 13.0, c.target + 11.0);
+        let (lo, hi) = (target - 13.0, target + 11.0);
         let k = |v: f32| ((v - lo) / (hi - lo)).clamp(0.0, 1.0);
         let hist: &[f32] = v.map_or(&[], |v| &v.history);
         let slots = 120usize;
@@ -490,7 +515,7 @@ pub fn loudness(
                 continue;
             }
             let x = pad + (first + i) as f32 * sw;
-            let colr = if (*s - c.target) > c.tolerance {
+            let colr = if (*s - target) > tolerance {
                 AMBER
             } else {
                 GREEN
@@ -501,7 +526,7 @@ pub fn loudness(
                 colr,
             ));
         }
-        let ty = hy + hh * (1.0 - k(c.target));
+        let ty = hy + hh * (1.0 - k(target));
         out.push(rect([pad, ty, inner, 1.0], 0.0, "#93c5fd"));
     }
     out

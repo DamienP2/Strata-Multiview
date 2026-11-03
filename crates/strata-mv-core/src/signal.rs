@@ -102,6 +102,57 @@ pub const TOLERANCE: f32 = 1.0;
 /// The true peak not to go over, dBTP.
 pub const MAX_TRUE_PEAK: f32 = -1.0;
 
+/// A loudness standard: its programme loudness target, the tolerance either
+/// side (live programmes), the true peak not to go over.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(default, rename_all = "camelCase")]
+pub struct LoudnessNorm {
+    /// One of [`NORMS`] ("" or another: set by hand).
+    pub standard: String,
+    /// LUFS (= LKFS).
+    pub target: f32,
+    /// LU either side.
+    pub tolerance: f32,
+    /// dBTP.
+    pub max_true_peak: f32,
+}
+
+impl Default for LoudnessNorm {
+    fn default() -> Self {
+        norm("ebu-r128")
+    }
+}
+
+/// The broadcast loudness standards: id, name, target (LUFS), tolerance
+/// (LU), highest true peak (dBTP).
+pub const NORMS: [(&str, &str, f32, f32, f32); 5] = [
+    // EBU R128 (2023): -23 LUFS, ±1 LU for live programmes, -1 dBTP.
+    ("ebu-r128", "EBU R128", TARGET, TOLERANCE, MAX_TRUE_PEAK),
+    // ATSC A/85 (2013, US CALM Act): -24 LKFS ±2 dB, -2 dBTP.
+    ("atsc-a85", "ATSC A/85", -24.0, 2.0, -2.0),
+    // ARIB TR-B32 (Japan): -24 LKFS ±1 dB, -1 dBTP.
+    ("arib-tr-b32", "ARIB TR-B32", -24.0, 1.0, -1.0),
+    // Free TV Australia OP-59: -24 LKFS ±1 LU, -2 dBTP.
+    ("op-59", "OP-59", -24.0, 1.0, -2.0),
+    // The web platforms (YouTube, Spotify…): -14 LUFS, -1 dBTP.
+    ("streaming", "Streaming", -14.0, 1.0, -1.0),
+];
+
+/// A standard by its id (EBU R128 when unknown).
+pub fn norm(id: &str) -> LoudnessNorm {
+    let (id, _, target, tolerance, max_true_peak) = NORMS
+        .iter()
+        .copied()
+        .find(|n| n.0 == id)
+        .unwrap_or(NORMS[0]);
+    LoudnessNorm {
+        standard: id.into(),
+        target,
+        tolerance,
+        max_true_peak,
+    }
+}
+
 /// A fault the server sees on a source, or on the plant (the last ones).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -308,6 +359,8 @@ pub struct SourceView {
     /// Shown instead: its backup's name (the picture, sound and faults
     /// are the backup's; "" = itself).
     pub backup: String,
+    /// The loudness standard it is measured against (its alarm profile's).
+    pub norm: LoudnessNorm,
     /// What its caption channels show now ("cc1"…"cc4", "s1"…"s6"; those
     /// showing nothing left out).
     #[serde(skip_serializing_if = "std::collections::BTreeMap::is_empty")]

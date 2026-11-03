@@ -117,6 +117,8 @@ export interface InputConfig {
   hwDecode: boolean;
   /** Streams: read the closed captions the pictures carry (CEA-608 / 708). Absent: on. */
   captions?: boolean;
+  /** The programme whose loudness is measured: '' auto, '1-2'…, '5.1', '5.1:3', 'all'. */
+  loudnessChannels?: string;
   /** Another input its tiles show when it loses its signal ('' = none). */
   backup?: string;
   /** Seconds without a picture before switching to the backup (2). */

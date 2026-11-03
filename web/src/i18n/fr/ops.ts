@@ -145,4 +145,11 @@ export const ops: Record<string, string> = {
   'The input carries no captions (read from SRT, UDP, RTMP, HLS, RTSP… streams in H.264, HEVC or MPEG-2).': 'L’entrée ne porte pas de sous-titres (lus dans les flux SRT, UDP, RTMP, HLS, RTSP… en H.264, HEVC ou MPEG-2).',
   'Automatic (the first carrying captions)': 'Automatique (le premier qui en porte)',
   'Service {n} (CEA-708)': 'Service {n} (CEA-708)',
+  'Loudness measured on': 'Loudness mesuré sur',
+  'The programme whose loudness (EBU R128 / ITU-R BS.1770) and true peak are measured, with the weights of its channels. Automatic: a mono (counted twice, as heard on both sides), a stereo or a 5.1 as they are; the first pair of a track of more channels (the other pairs: other languages, audio description…).': 'Le programme dont le loudness (EBU R128 / ITU-R BS.1770) et le true peak sont mesurés, avec les pondérations de ses canaux. Automatique : un mono (compté deux fois, comme entendu des deux côtés), une stéréo ou un 5.1 tels quels ; la première paire d’une piste de plus de canaux (les autres paires : autres langues, audiodescription…).',
+  '5.1 on channels 1-6': '5.1 sur les canaux 1-6',
+  '5.1 on channels 3-8': '5.1 sur les canaux 3-8',
+  'Every channel': 'Tous les canaux',
+  "The input's standard (its alarm profile)": 'La norme de l’entrée (son profil d’alarme)',
+  'Its own': 'La sienne',
 };

@@ -264,10 +264,15 @@ impl Facts {
                 let i = match k {
                     "YMIN" => Some(0),
                     "YMAX" => Some(1),
-                    "BRNG" => Some(2),
+                    // The share out of EBU R103 (inputs.rs r103: 255 out).
+                    "YAVG" => Some(2),
                     _ => None,
                 };
-                if let (Some(i), Ok(v)) = (i, v.trim().parse::<f32>()) {
+                let v = v
+                    .trim()
+                    .parse::<f32>()
+                    .map(|v| if i == Some(2) { v / 255.0 } else { v });
+                if let (Some(i), Ok(v)) = (i, v) {
                     let l = self.levels.get_or_insert(([f32::NAN; 3], now));
                     l.0[i] = v;
                     l.1 = now;

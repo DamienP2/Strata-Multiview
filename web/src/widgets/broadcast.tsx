@@ -47,6 +47,8 @@ export const CRIT = ['#dc2626', '#ffffff'];
 /** EBU R128 (mirrors signal::TARGET, MAX_TRUE_PEAK). */
 export const TARGET = -23;
 const MAX_TRUE_PEAK = -1;
+/** An input's loudness standard: target, tolerance, highest true peak (EBU R128 unless its alarm profile says otherwise). */
+export const normOf = (v: SignalView): [number, number, number] => v.norm ?? [TARGET, 1, MAX_TRUE_PEAK];
 const SILENCE = -120;
 const DASH = '—';
 
@@ -61,7 +63,7 @@ const padOf = (w: number, h: number) => Math.round(clamp(Math.min(w, h) * 0.04, 
 const fr = (lang: string) => lang.toLowerCase().startsWith('fr');
 
 /** On target (green), off it (amber), the true peak over the limit (red) (mirrors loud_color). */
-export const loudColor = (lufs: number, tp: number, target: number, tol: number) => (tp > MAX_TRUE_PEAK ? RED : Math.abs(lufs - target) <= tol ? GREEN : AMBER);
+export const loudColor = (lufs: number, tp: number, target: number, tol: number, maxTp: number) => (tp > maxTp ? RED : Math.abs(lufs - target) <= tol ? GREEN : AMBER);
 
 // ------------------------------------------------------------ meters --
 
@@ -140,7 +142,7 @@ export function meters(cfg: MeterConfig, w: number, h: number, v: SignalView): I
     const y = h - pad - lufsH;
     const l = v.loudness;
     const s = l ? `I ${num1(l[2])}  S ${num1(l[1])}  TP ${num1(l[4])}` : `LUFS ${DASH}`;
-    out.push(text([pad, y + fs * 0.3, w - 2 * pad, fs * 1.3], s, fs, 700, true, l ? loudColor(l[2], l[4], TARGET, 1) : DIM, 'center'));
+    out.push(text([pad, y + fs * 0.3, w - 2 * pad, fs * 1.3], s, fs, 700, true, l ? loudColor(l[2], l[4], ...normOf(v)) : DIM, 'center'));
   }
   return out;
 }
@@ -149,31 +151,36 @@ export function meters(cfg: MeterConfig, w: number, h: number, v: SignalView): I
 
 export interface LoudnessConfig {
   input?: string;
+  /** The target and tolerance of the input's standard, or the ones below. */
+  follow?: boolean;
   target?: number;
   tolerance?: number;
   history?: boolean;
   background?: string;
 }
-const D_LOUD = { input: '', target: TARGET, tolerance: 1, history: true, background: '#0b0d12d9' };
+const D_LOUD = { input: '', follow: true, target: TARGET, tolerance: 1, history: true, background: '#0b0d12d9' };
 
 export function loudness(cfg: LoudnessConfig, w: number, h: number, v: SignalView, lang: string): Item[] {
   const c = withDefaults(D_LOUD, cfg);
   const pad = padOf(w, h);
   const out: Item[] = [rect([0, 0, w, h], pad * 0.6, c.background)];
   const l = v.loudness;
+  // Mirrors LoudnessConfig::norm.
+  const n = normOf(v);
+  const [target, tolerance, maxTp] = c.follow ? n : [c.target, c.tolerance, n[2]];
   const f = fr(lang);
   const inner = w - 2 * pad;
   const big = Math.round(clamp(h * 0.16, 12, 96));
-  out.push(text([pad, pad, inner * 0.62, big * 1.15], l ? num1(l[2]) : DASH, big, 700, true, l ? loudColor(l[2], l[4], c.target, c.tolerance) : DIM, 'left'));
+  out.push(text([pad, pad, inner * 0.62, big * 1.15], l ? num1(l[2]) : DASH, big, 700, true, l ? loudColor(l[2], l[4], target, tolerance, maxTp) : DIM, 'left'));
   const small = Math.round(Math.max(big * 0.3, 7));
   out.push(text([pad + inner * 0.62, pad + big * 0.1, inner * 0.38, small * 1.3], f ? 'LUFS INTÉGRÉ' : 'LUFS INTEGRATED', small, 700, false, DIM, 'right'));
-  out.push(text([pad + inner * 0.62, pad + big * 0.1 + small * 1.4, inner * 0.38, small * 1.3], `${f ? 'CIBLE' : 'TARGET'} ${num1(c.target)} ±${c.tolerance}`, small, 600, false, DIM, 'right'));
+  out.push(text([pad + inner * 0.62, pad + big * 0.1 + small * 1.4, inner * 0.38, small * 1.3], `${f ? 'CIBLE' : 'TARGET'} ${num1(target)} ±${tolerance}`, small, 600, false, DIM, 'right'));
   const y = pad + big * 1.3;
   const cells: [string, string, string][] = [
     ['M', l ? num1(l[0]) : DASH, WHITE],
     ['S', l ? num1(l[1]) : DASH, WHITE],
     ['LRA', l ? `${num1(l[3])} LU` : DASH, WHITE],
-    ['TP', l ? `${num1(l[4])} dBTP` : DASH, l && l[4] > MAX_TRUE_PEAK ? RED : WHITE],
+    ['TP', l ? `${num1(l[4])} dBTP` : DASH, l && l[4] > maxTp ? RED : WHITE],
   ];
   const cw = (inner - pad * 3) / 4;
   const ch = Math.round(small * 3.6);
@@ -187,7 +194,7 @@ export function loudness(cfg: LoudnessConfig, w: number, h: number, v: SignalVie
   const hh = h - hy - pad;
   if (c.history && hh > 12) {
     out.push(rect([pad, hy, inner, hh], pad * 0.4, '#ffffff0d'));
-    const [lo, hi] = [c.target - 13, c.target + 11];
+    const [lo, hi] = [target - 13, target + 11];
     const k = (x: number) => clamp((x - lo) / (hi - lo), 0, 1);
     const hist = v.history ?? [];
     const slots = 120;
@@ -197,9 +204,9 @@ export function loudness(cfg: LoudnessConfig, w: number, h: number, v: SignalVie
     shown.forEach((s, i) => {
       const tt = k(s);
       if (tt <= 0) return;
-      out.push(rect([pad + (first + i) * sw, hy + hh * (1 - tt), Math.max(1, sw - 1), hh * tt], 0, s - c.target > c.tolerance ? AMBER : GREEN));
+      out.push(rect([pad + (first + i) * sw, hy + hh * (1 - tt), Math.max(1, sw - 1), hh * tt], 0, s - target > tolerance ? AMBER : GREEN));
     });
-    out.push(rect([pad, hy + hh * (1 - k(c.target)), inner, 1], 0, '#93c5fd'));
+    out.push(rect([pad, hy + hh * (1 - k(target)), inner, 1], 0, '#93c5fd'));
   }
   return out;
 }
@@ -461,8 +468,21 @@ export const loudnessWidget = defineWidget({
     return (
       <Section id="loudness" title={t('Loudness')}>
         <InputPick value={c.input} onChange={(v) => set('input', v)} />
-        <Num label={t('Target')} value={c.target} min={-40} max={-10} step={0.5} precision={1} unit=" LUFS" onChange={(v) => set('target', v)} />
-        <Num label={t('Tolerance')} value={c.tolerance} min={0} max={5} step={0.5} precision={1} unit=" LU" onChange={(v) => set('tolerance', v)} />
+        <Select
+          label={t('Target')}
+          value={c.follow ? 'norm' : 'own'}
+          onChange={(v) => set('follow', v === 'norm')}
+          options={[
+            ['norm', t("The input's standard (its alarm profile)")],
+            ['own', t('Its own')],
+          ]}
+        />
+        {!c.follow && (
+          <>
+            <Num label={t('Target')} value={c.target} min={-40} max={-10} step={0.5} precision={1} unit=" LUFS" onChange={(v) => set('target', v)} />
+            <Num label={t('Tolerance')} value={c.tolerance} min={0} max={5} step={0.5} precision={1} unit=" LU" onChange={(v) => set('tolerance', v)} />
+          </>
+        )}
         <Flags label={t('Show')} items={[{ icon: <ChartLine size={14} />, title: t('History: the last two minutes'), value: c.history, onChange: (v) => set('history', v) }]} />
       </Section>
     );

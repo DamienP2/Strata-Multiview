@@ -627,6 +627,24 @@ function Inspector({
           </select>
         </Field>
       )}
+      {(isStream(i.kind) || isAudio(i.kind) || i.kind === 'ndi') && (
+        <Field
+          label={t('Loudness measured on')}
+          hint={t('The programme whose loudness (EBU R128 / ITU-R BS.1770) and true peak are measured, with the weights of its channels. Automatic: a mono (counted twice, as heard on both sides), a stereo or a 5.1 as they are; the first pair of a track of more channels (the other pairs: other languages, audio description…).')}
+        >
+          <select value={i.loudnessChannels ?? ''} onChange={(e) => editInput((x) => void (x.loudnessChannels = e.target.value || undefined))}>
+            <option value="">{t('Automatic')}</option>
+            {Array.from({ length: 8 }, (_, n) => (
+              <option key={n} value={`${2 * n + 1}-${2 * n + 2}`}>
+                {t('Channels {a}-{b}', { a: 2 * n + 1, b: 2 * n + 2 })}
+              </option>
+            ))}
+            <option value="5.1">{t('5.1 on channels 1-6')}</option>
+            <option value="5.1:3">{t('5.1 on channels 3-8')}</option>
+            <option value="all">{t('Every channel')}</option>
+          </select>
+        </Field>
+      )}
       {(isStream(i.kind) || isAudio(i.kind)) && (
         <Field label={t('Pair listened to')} hint={t('What is heard when this input is listened to: the whole track mixed down to stereo (a 5.1), or one pair of channels as it is (the pairs of a multichannel track).')}>
           <select value={i.listenPair ?? 0} onChange={(e) => editInput((x) => void (x.listenPair = +e.target.value))}>

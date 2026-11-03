@@ -257,19 +257,31 @@ pub struct Report {
     pub max_true_peak: Option<f32>,
     pub max_momentary: Option<f32>,
     pub max_short_term: Option<f32>,
+    /// The standard measured against (the input's alarm profile's).
+    pub standard: String,
     pub target: f32,
+    pub tolerance: f32,
+    pub max_true_peak_allowed: f32,
     /// Seconds with the short-term loudness above target + 3 LU.
     pub loud_seconds: usize,
-    /// Seconds with the true peak above −1 dBTP.
+    /// Seconds with the true peak above the standard's.
     pub peak_seconds: usize,
-    /// Integrated within ±1 LU of the target and true peak ≤ −1 dBTP.
+    /// Integrated within the tolerance of the target, the true peak at
+    /// most the standard's.
     pub compliant: Option<bool>,
     /// Minute by minute: [start ms, short-term mean, short-term max, true peak max].
     pub minutes: Vec<Minute>,
 }
 
-pub fn report(input: &str, name: &str, from: i64, to: i64, s: &[Sample]) -> Report {
-    let target = strata_mv_core::signal::TARGET;
+pub fn report(
+    input: &str,
+    name: &str,
+    from: i64,
+    to: i64,
+    s: &[Sample],
+    norm: &strata_mv_core::signal::LoudnessNorm,
+) -> Report {
+    let target = norm.target;
     let m: Vec<f32> = s.iter().filter_map(|x| x.momentary).collect();
     let st: Vec<f32> = s.iter().filter_map(|x| x.short_term).collect();
     let tp: Vec<f32> = s.iter().filter_map(|x| x.true_peak).collect();
@@ -319,11 +331,15 @@ pub fn report(input: &str, name: &str, from: i64, to: i64, s: &[Sample]) -> Repo
         max_true_peak: r1(max_tp),
         max_momentary: r1(max(&m)),
         max_short_term: r1(max(&st)),
+        standard: norm.standard.clone(),
         target,
+        tolerance: norm.tolerance,
+        max_true_peak_allowed: norm.max_true_peak,
         loud_seconds: st.iter().filter(|v| **v > target + 3.0).count(),
-        peak_seconds: tp.iter().filter(|v| **v > -1.0).count(),
-        compliant: integrated
-            .map(|i| (i - target).abs() <= 1.0 && max_tp.is_none_or(|p| p <= -1.0)),
+        peak_seconds: tp.iter().filter(|v| **v > norm.max_true_peak).count(),
+        compliant: integrated.map(|i| {
+            (i - target).abs() <= norm.tolerance && max_tp.is_none_or(|p| p <= norm.max_true_peak)
+        }),
         minutes,
     }
 }
@@ -398,7 +414,8 @@ pub async fn get_report(
         )
             .into_response());
     }
-    Ok(axum::Json(report(&q.input, &name, from, to, &samples)).into_response())
+    let norm = s.inputs.signals().norm_of(&q.input);
+    Ok(axum::Json(report(&q.input, &name, from, to, &samples, &norm)).into_response())
 }
 
 #[cfg(test)]
@@ -443,7 +460,7 @@ mod tests {
                 true_peak: Some(if i == 5 { -0.5 } else { -6.0 }),
             })
             .collect();
-        let r = report("cam1", "Caméra 1", 0, 180_000, &s);
+        let r = report("cam1", "Caméra 1", 0, 180_000, &s, &Default::default());
         assert_eq!(r.seconds, 180);
         assert_eq!(r.integrated, Some(-23.0));
         assert_eq!(r.loud_seconds, 10);

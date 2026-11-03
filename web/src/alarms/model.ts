@@ -26,7 +26,28 @@ export interface Profile {
   id: string;
   name: string;
   rules: Partial<Record<AlarmKind, Rule>>;
+  /** The loudness standard of its inputs (absent: EBU R128). */
+  loudness?: LoudnessNorm;
 }
+
+/** A loudness standard (mirrors signal::LoudnessNorm). */
+export interface LoudnessNorm {
+  standard: string;
+  target: number;
+  tolerance: number;
+  maxTruePeak: number;
+}
+
+/** The broadcast loudness standards (mirrors signal::NORMS): id, name, target LUFS, tolerance LU, highest true peak dBTP, where. */
+export const NORMS: [string, string, number, number, number, string][] = [
+  ['ebu-r128', 'EBU R128', -23, 1, -1, 'Europe'],
+  ['atsc-a85', 'ATSC A/85', -24, 2, -2, 'United States (CALM Act)'],
+  ['arib-tr-b32', 'ARIB TR-B32', -24, 1, -1, 'Japan'],
+  ['op-59', 'OP-59', -24, 1, -2, 'Australia'],
+  ['streaming', 'Streaming', -14, 1, -1, 'YouTube, Spotify…'],
+];
+
+export const normOf = (p?: Profile): LoudnessNorm => p?.loudness ?? { standard: 'ebu-r128', target: -23, tolerance: 1, maxTruePeak: -1 };
 
 export interface Webhook {
   id: string;
@@ -225,9 +246,9 @@ export const KIND_INFO: Record<AlarmKind, [string, string]> = {
   onBackup: ['On backup', 'The input lost its signal: its tiles show its backup input.'],
   silence: ['Silence', 'Every audio channel under the threshold.'],
   channelSilent: ['Channel silent', 'One channel under the threshold while another is heard (the LFE of 5.1 aside).'],
-  loud: ['Too loud', 'Short-term loudness above the target (−23 LUFS) by more than the threshold.'],
+  loud: ['Too loud', "Short-term loudness above the target of the profile's standard by more than the threshold."],
   quiet: ['Too quiet', 'Short-term loudness under the target by more than the threshold (not silent).'],
-  peak: ['True peak', 'True peak above the threshold.'],
+  peak: ['True peak', "True peak of the last 3 s above the highest of the profile's standard."],
   clipping: ['Clipping', 'Sample peak reaching the threshold.'],
   phase: ['Out of phase', 'Phase correlation of left and right under the threshold.'],
   noTimecode: ['No timecode', 'The pictures carry no timecode.'],

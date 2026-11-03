@@ -159,6 +159,10 @@ pub struct Profile {
     pub name: String,
     /// The faults set apart from their default.
     pub rules: BTreeMap<AlarmKind, Rule>,
+    /// The loudness standard of its inputs: the target the Loud and Quiet
+    /// faults are measured from, the true peak of the Peak fault, the
+    /// colours of the loudness shown.
+    pub loudness: crate::signal::LoudnessNorm,
 }
 
 impl Default for Profile {
@@ -167,6 +171,7 @@ impl Default for Profile {
             id: DEFAULT_PROFILE.into(),
             name: "Standard".into(),
             rules: BTreeMap::new(),
+            loudness: Default::default(),
         }
     }
 }

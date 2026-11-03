@@ -133,6 +133,11 @@ pub struct InputConfig {
     /// CEA-708 in H.264, HEVC or MPEG-2).
     #[serde(default = "strata_mv_output::on")]
     pub captions: bool,
+    /// The channels whose loudness is measured (the programme): "" a mono,
+    /// a stereo or a 5.1 as they are and the first pair of more, "3-4"…,
+    /// "5.1" (1-6), "5.1:3" (3-8), "all" (see meter::Programme).
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub loudness_channels: String,
 }
 
 fn is_zero(v: &u32) -> bool {
@@ -191,8 +196,12 @@ fn default_fps() -> u32 {
 }
 
 /// The levels of the audio, measured by ffmpeg every 40 ms (at 48 kHz) and
-/// written to its log (read by [`MeterLog`]).
-const METER_FILTER: &str = "ebur128=metadata=1:peak=true,asetnsamples=n=1920:p=0,astats=metadata=1:reset=1:measure_overall=none:measure_perchannel=Peak_level+RMS_level,ametadata=mode=print";
+/// sent to the meter (meter.rs) as 32-bit float WAV on a local port.
+/// The sound measured (meter.rs): as decoded, without gaps (a lost frame
+/// becomes silence, so that the count of samples is the sound's own time),
+/// the time of its first sample told once in the log (`ashowinfo`).
+const METER_AF: &str =
+    "aresample=async=1,asplit[m][s];[s]atrim=end_sample=1,ashowinfo,anullsink;[m]anull";
 
 /// Where a stream is read from, once looked up (`prepare`).
 #[derive(Debug, Default, Clone)]
@@ -205,6 +214,8 @@ pub struct Pull {
     pub audio: Option<String>,
     /// Where ffmpeg sends the sound to be listened to (a local port).
     pub pcm: Option<u16>,
+    /// Where ffmpeg sends the sound to be measured (a local port).
+    pub meter: Option<u16>,
     /// This ffmpeg knows `-fps_mode` (5.1 and later).
     pub fps_mode: bool,
     /// The levels measured before any conversion (`signalstats`, five
@@ -219,19 +230,66 @@ pub struct Pull {
     pub pipe: bool,
 }
 
+/// The output of the sound measured: 32-bit float WAV to the meter's port
+/// (none: decoded, not measured).
+fn meter_output(a: &mut Vec<String>, port: Option<u16>) {
+    a.extend(["-af".to_string(), METER_AF.to_string()]);
+    match port {
+        Some(port) => {
+            a.extend(["-c:a", "pcm_f32le", "-flush_packets", "1", "-f", "wav"].map(String::from));
+            a.push(format!("tcp://127.0.0.1:{port}"));
+        }
+        None => a.extend(["-f", "null", "-"].map(String::from)),
+    }
+}
+
 /// The decoder's filters: each picture told (`showinfo`), and its levels
-/// measured apart (the colour alarms, the Signal widget).
+/// measured apart (the colour alarms, the Signal widget): the lowest and
+/// highest luma, and the share of the picture out of EBU R103 ([`r103`]).
 fn info_filter(levels: bool) -> String {
     if levels {
-        "showinfo=checksum=0,split=2[o][s];[s]select='not(mod(n\\,5))',\
-         scale=320:-2:flags=neighbor,signalstats=stat=brng,\
-         metadata=mode=print:key=lavfi.signalstats.YMIN,\
-         metadata=mode=print:key=lavfi.signalstats.YMAX,\
-         metadata=mode=print:key=lavfi.signalstats.BRNG,nullsink;[o]null"
-            .into()
+        format!(
+            "showinfo=checksum=0,split=2[o][s];[s]select='not(mod(n\\,5))',\
+             scale=320:-2:flags=neighbor,split[a][b];\
+             [a]signalstats,metadata=mode=print:key=lavfi.signalstats.YMIN,\
+             metadata=mode=print:key=lavfi.signalstats.YMAX,nullsink;\
+             [b]{},signalstats,metadata=mode=print:key=lavfi.signalstats.YAVG,nullsink;[o]null",
+            r103()
+        )
     } else {
         "showinfo=checksum=0".into()
     }
+}
+
+/// The pixels out of EBU R103 (2020) white, the others black: luma out of
+/// -1 %…103 %, or R, G or B out of -5 %…105 % (the colours the picture
+/// makes once shown: out of gamut). The matrix a stream uses is often not
+/// told: a pixel counts when out with BT.709, BT.601 and BT.2020 alike (no
+/// false alarm from a matrix mistaken). The share of the picture is the
+/// mean of what comes out (`YAVG` / 255).
+fn r103() -> String {
+    // R = Y + 2(1-Kr) Pr, B = Y + 2(1-Kb) Pb, G from both.
+    let out = |kr: f64, kb: f64| {
+        let kg = 1.0 - kr - kb;
+        let (cr, cb) = (2.0 * (1.0 - kr), 2.0 * (1.0 - kb));
+        let (gb, gr) = (2.0 * kb * (1.0 - kb) / kg, 2.0 * kr * (1.0 - kr) / kg);
+        let r = format!("ld(0)+{cr:.4}*ld(2)");
+        let g = format!("ld(0)-{gb:.4}*ld(1)-{gr:.4}*ld(2)");
+        let b = format!("ld(0)+{cb:.4}*ld(1)");
+        let any = [r, g, b]
+            .iter()
+            .map(|x| format!("lt({x},-0.05)+gt({x},1.05)"))
+            .collect::<Vec<_>>()
+            .join("+");
+        format!("gt({any},0)")
+    };
+    format!(
+        "format=yuv420p,geq=lum='st(0,(lum(X,Y)-16)/219);st(1,(cb(X/2,Y/2)-128)/224);\
+         st(2,(cr(X/2,Y/2)-128)/224);255*gt(lt(ld(0),-0.01)+gt(ld(0),1.03)+{}*{}*{},0)':cb=128:cr=128",
+        out(0.2126, 0.0722),
+        out(0.299, 0.114),
+        out(0.2627, 0.0593)
+    )
 }
 
 /// The sound of an input as listened to: 16-bit stereo at 48 kHz.
@@ -312,7 +370,8 @@ impl InputConfig {
             .map(String::from),
         );
         if audio {
-            a.extend(["-map", "1:a:0", "-af", METER_FILTER, "-f", "null", "-"].map(String::from));
+            a.extend(["-map".into(), "1:a:0".into()]);
+            meter_output(&mut a, pull.meter);
             if let Some(port) = pull.pcm {
                 a.extend(["-map".into(), "1:a:0".into()]);
                 let pair = self.listen_pair.min(32);
@@ -504,7 +563,7 @@ impl InputConfig {
         if audio {
             let track = format!("{from}:a:{}", self.audio_track);
             a.extend(["-map".into(), track.clone()]);
-            a.extend(["-af", METER_FILTER, "-f", "null", "-"].map(String::from));
+            meter_output(&mut a, pull.meter);
             // The sound, to be listened to (Strata reads it on that port).
             if let Some(port) = pull.pcm {
                 a.extend(["-map".into(), track]);
@@ -1803,6 +1862,7 @@ impl Inputs {
             video: l.video(),
             correlation: l.correlation(),
             backup: String::new(),
+            norm: self.signals.norm_of(id),
             captions: (*l.captions_now()).clone(),
         })
     }
@@ -2647,70 +2707,6 @@ fn ndi_timecode(tc: i64, fps: f64) -> Option<String> {
     ))
 }
 
-/// EBU R128 loudness of NDI audio (ffmpeg measures the streams'), and the
-/// highest true peak of the last three seconds.
-#[derive(Default)]
-struct R128 {
-    meter: Option<(ebur128::EbuR128, usize, u32)>,
-    peaks: std::collections::VecDeque<(Instant, f32)>,
-}
-
-impl R128 {
-    fn add(
-        &mut self,
-        a: &strata_mv_output::ndi::ReceivedAudio,
-    ) -> Option<strata_mv_core::signal::Loudness> {
-        use ebur128::{EbuR128, Mode};
-        let (ch, rate) = (a.channels, a.sample_rate);
-        if ch == 0 || rate == 0 || a.samples == 0 {
-            return None;
-        }
-        if !matches!(&self.meter, Some((_, c, r)) if *c == ch && *r == rate) {
-            let m = EbuR128::new(
-                ch as u32,
-                rate,
-                // Histogram: the integrated loudness and the range cost the same
-                // after hours as after a second.
-                Mode::M | Mode::S | Mode::I | Mode::LRA | Mode::TRUE_PEAK | Mode::HISTOGRAM,
-            )
-            .ok()?;
-            self.meter = Some((m, ch, rate));
-        }
-        let (m, _, _) = self.meter.as_mut()?;
-        let planes: Vec<&[f32]> = (0..ch).map(|c| a.channel(c)).collect();
-        m.add_frames_planar_f32(&planes).ok()?;
-        let now = Instant::now();
-        let tp = (0..ch as u32)
-            .filter_map(|c| m.prev_true_peak(c).ok())
-            .fold(0.0f64, f64::max) as f32;
-        self.peaks.push_back((now, tp));
-        while self
-            .peaks
-            .front()
-            .is_some_and(|(t, _)| t.elapsed() > Duration::from_secs(3))
-        {
-            self.peaks.pop_front();
-        }
-        let peak = self.peaks.iter().map(|(_, p)| *p).fold(0.0, f32::max);
-        let lufs = |r: Result<f64, ebur128::Error>| {
-            r.ok()
-                .filter(|v| v.is_finite())
-                .map_or(-70.0, |v| (v as f32).max(-70.0))
-        };
-        Some(strata_mv_core::signal::Loudness {
-            momentary: lufs(m.loudness_momentary()),
-            short_term: lufs(m.loudness_shortterm()),
-            integrated: lufs(m.loudness_global()),
-            range: m
-                .loudness_range()
-                .ok()
-                .filter(|v| v.is_finite())
-                .unwrap_or(0.0) as f32,
-            true_peak: strata_mv_core::signal::db(peak),
-        })
-    }
-}
-
 /// A stream through ffmpeg, started again 2 s after it stops.
 /// Where a stream is read from: a web page's stream (looked for again at
 /// each start: it expires), the variant of a master playlist.
@@ -2807,6 +2803,14 @@ fn run_stream(l: &Live) {
             .then(|| std::net::TcpListener::bind("127.0.0.1:0").ok())
             .flatten();
         pull.pcm = pcm
+            .as_ref()
+            .and_then(|t| t.local_addr().ok())
+            .map(|a| a.port());
+        // The sound measured: ffmpeg sends it to this port.
+        let meter = audio
+            .then(|| std::net::TcpListener::bind("127.0.0.1:0").ok())
+            .flatten();
+        pull.meter = meter
             .as_ref()
             .and_then(|t| t.local_addr().ok())
             .map(|a| a.port());
@@ -2943,26 +2947,13 @@ fn run_stream(l: &Live) {
             std::thread::spawn(move || {
                 let mut sent = false;
                 let mut in_output = false;
-                let mut meters = MeterLog::default();
                 let lock = || media.lock().unwrap_or_else(|p| p.into_inner());
                 for line in log_lines(err) {
-                    // The audio levels: to the meters, not to the log; timed
-                    // by the sound's own time (with the pictures).
-                    if let Some(levels) = meters.line(&line) {
-                        if let Some(pts) = meters.pts {
-                            let mut m = lock();
-                            m.audio_start.get_or_insert(pts);
-                        }
-                        if let Some(levels) = levels {
-                            let at = meters.done_pts.and_then(|pts| {
-                                let mut m = lock();
-                                m.saw_sound(pts + 0.04);
-                                m.at(pts)
-                            });
-                            signals.measure_at(&id, &levels, at.unwrap_or_else(Instant::now));
-                            if let Some(l) = meters.loudness.take() {
-                                signals.loudness(&id, l);
-                            }
+                    // The time of the first sample measured (the meter
+                    // counts the others from it).
+                    if line.starts_with("[Parsed_ashowinfo") {
+                        if let Some(pts) = pts_time(&line) {
+                            lock().audio_start.get_or_insert(pts);
                         }
                         continue;
                     }
@@ -3008,6 +2999,9 @@ fn run_stream(l: &Live) {
         std::thread::scope(|scope| {
             if let Some(listener) = pcm {
                 scope.spawn(move || read_pcm(l, listener));
+            }
+            if let Some(listener) = meter {
+                scope.spawn(move || read_meter(l, listener));
             }
             if let Some(listener) = cc {
                 scope.spawn(move || read_cc(l, listener));
@@ -3316,6 +3310,94 @@ fn stream_error(log: &str) -> String {
     }
 }
 
+/// The sound ffmpeg sends to be measured on `listener` (32-bit float WAV,
+/// as decoded): the meters and the loudness, each measure timed by the
+/// sound's own time (the time of its first sample, told in ffmpeg's log,
+/// and the samples counted since), shown with the pictures of that time.
+fn read_meter(l: &Live, listener: std::net::TcpListener) {
+    use crate::meter::{Meter, Programme, WavHeader};
+    let _ = listener.set_nonblocking(true);
+    let gone = || l.stopped() || l.child.lock().unwrap_or_else(|p| p.into_inner()).is_none();
+    let mut conn = loop {
+        match listener.accept() {
+            Ok((c, _)) => break c,
+            Err(e) if e.kind() == std::io::ErrorKind::WouldBlock && !gone() => {
+                std::thread::sleep(Duration::from_millis(100));
+            }
+            Err(_) => return,
+        }
+    };
+    let _ = conn.set_nonblocking(false);
+    let _ = conn.set_read_timeout(Some(Duration::from_secs(1)));
+    let mut buf: Vec<u8> = Vec::with_capacity(1 << 16);
+    let mut chunk = vec![0u8; 1 << 15];
+    let mut meter: Option<Meter> = None;
+    let mut clock = RateClock::default();
+    let programme = Programme::parse(&l.config.loudness_channels);
+    loop {
+        match conn.read(&mut chunk) {
+            Ok(0) => return,
+            Ok(n) => buf.extend_from_slice(&chunk[..n]),
+            Err(e)
+                if matches!(
+                    e.kind(),
+                    std::io::ErrorKind::WouldBlock | std::io::ErrorKind::TimedOut
+                ) =>
+            {
+                if gone() {
+                    return;
+                }
+                continue;
+            }
+            Err(_) => return,
+        }
+        if meter.is_none() {
+            match WavHeader::parse(&buf) {
+                Ok(Some(h)) => {
+                    buf.drain(..h.len);
+                    meter = Some(Meter::new(h.channels, h.rate, programme));
+                }
+                Ok(None) => continue,
+                Err(e) => {
+                    tracing::warn!("input {}: the sound measured: {e}", l.config.id);
+                    return;
+                }
+            }
+        }
+        let Some(m) = meter.as_mut() else { continue };
+        let frame = 4 * m.channels().max(1);
+        let whole = buf.len() - buf.len() % frame;
+        if whole == 0 {
+            continue;
+        }
+        let samples: Vec<f32> = buf[..whole]
+            .as_chunks::<4>()
+            .0
+            .iter()
+            .map(|b| f32::from_le_bytes(*b))
+            .collect();
+        buf.drain(..whole);
+        let rate = m.rate().max(1) as f64;
+        let window = Duration::from_secs_f64(1.0 / crate::meter::RATE as f64);
+        for measure in m.add_interleaved(&samples) {
+            let fallback = clock.time(1.0, window);
+            let at = {
+                let mut mc = l.media.lock().unwrap_or_else(|p| p.into_inner());
+                mc.audio_start.and_then(|a0| {
+                    let end = measure.end as f64 / rate;
+                    mc.saw_sound(a0 + end);
+                    mc.at(a0 + end - 1.0 / crate::meter::RATE as f64)
+                })
+            }
+            .unwrap_or(fallback);
+            l.signals.measure_at(&l.config.id, &measure.levels, at);
+            if let Some(v) = measure.loudness {
+                l.signals.loudness(&l.config.id, v);
+            }
+        }
+    }
+}
+
 /// The pictures ffmpeg copies into MPEG-TS on `listener`: their captions.
 fn read_cc(l: &Live, listener: std::net::TcpListener) {
     let _ = listener.set_nonblocking(true);
@@ -3390,89 +3472,6 @@ fn keep_log(log: &Mutex<String>, line: &str) {
     }
 }
 
-/// Reads the levels ffmpeg writes in its log (`ametadata=mode=print` after
-/// `astats`): `frame:… pts:…`, then `lavfi.astats.<channel>.Peak_level=…` and
-/// `RMS_level=…` for each channel.
-#[derive(Default)]
-struct MeterLog {
-    /// Peak and power of each channel (1-based) of the frame being read.
-    frame: BTreeMap<usize, (f32, f32)>,
-    /// `ebur128`'s values of the frame being read (`M`, `S`, `I`, `LRA`, `true_peak`).
-    r128: BTreeMap<String, f32>,
-    /// The loudness of the last frame read whole (taken by the caller).
-    loudness: Option<strata_mv_core::signal::Loudness>,
-    /// The time (PTS) of the frame being read, and of the last one read whole.
-    pts: Option<f64>,
-    done_pts: Option<f64>,
-}
-
-impl MeterLog {
-    /// None: not a line of the meters. Some(Some(levels)): a frame read
-    /// whole (the next one starts).
-    fn line(&mut self, line: &str) -> Option<Option<Vec<strata_mv_core::signal::Level>>> {
-        use strata_mv_core::signal::{Level, SILENCE};
-        if !line.contains("Parsed_ametadata") {
-            return None;
-        }
-        if let Some(rest) = line.split("lavfi.r128.").nth(1) {
-            let (key, value) = rest.split_once('=')?;
-            if let Ok(v) = value.trim().parse::<f32>() {
-                self.r128.insert(key.to_string(), v);
-            }
-            return Some(None);
-        }
-        if let Some(rest) = line.split("lavfi.astats.").nth(1) {
-            let (key, value) = rest.split_once('=')?;
-            let (ch, what) = key.split_once('.')?;
-            let ch: usize = ch.parse().ok()?;
-            let v = value
-                .trim()
-                .parse::<f32>()
-                .ok()
-                .filter(|v| v.is_finite())
-                .unwrap_or(SILENCE)
-                .max(SILENCE);
-            let e = self.frame.entry(ch).or_insert((SILENCE, SILENCE));
-            match what {
-                "Peak_level" => e.0 = v,
-                "RMS_level" => e.1 = v,
-                _ => {}
-            }
-            return Some(None);
-        }
-        if line.contains("frame:") && !self.r128.is_empty() {
-            let r = std::mem::take(&mut self.r128);
-            let get = |k: &str| r.get(k).copied().filter(|v| v.is_finite());
-            if let (Some(m), Some(st), Some(i)) = (get("M"), get("S"), get("I")) {
-                self.loudness = Some(strata_mv_core::signal::Loudness {
-                    momentary: m.max(-70.0),
-                    short_term: st.max(-70.0),
-                    integrated: i.max(-70.0),
-                    range: get("LRA").unwrap_or(0.0),
-                    // Linear: in dBTP.
-                    true_peak: strata_mv_core::signal::db(get("true_peak").unwrap_or(0.0)),
-                });
-            }
-        }
-        if line.contains("frame:") {
-            self.done_pts = self.pts;
-            self.pts = pts_time(line);
-        }
-        if line.contains("frame:") && !self.frame.is_empty() {
-            let levels = std::mem::take(&mut self.frame)
-                .into_values()
-                .map(|(peak, rms)| Level {
-                    peak,
-                    rms,
-                    hold: peak,
-                })
-                .collect();
-            return Some(Some(levels));
-        }
-        Some(None)
-    }
-}
-
 /// The lines of ffmpeg's log, read to the end: a line that is not UTF-8
 /// (stream metadata in another charset) is kept as best it can be, not
 /// taken as the end, which would leave ffmpeg's log unread.
@@ -3527,7 +3526,7 @@ fn run_ndi(l: &Live) {
         };
         l.say(format!("Connecting to {source}…"));
         let mut shown = None;
-        let mut loudness = R128::default();
+        let mut ndi_meter: Option<crate::meter::Meter> = None;
         let mut ndi_clock = SampleClock::default();
         l.facts().reset(false);
         let (mut video_frames, mut audio_frames) = (0u64, 0u64);
@@ -3556,12 +3555,25 @@ fn run_ndi(l: &Live) {
                         let at = ndi_clock.time(pcm.len() / 4);
                         l.sound(at, axum::body::Bytes::from(pcm));
                     }
-                    let levels: Vec<_> = (0..a.channels)
-                        .map(|c| strata_mv_core::signal::Level::of(a.channel(c).iter().copied()))
-                        .collect();
-                    signals.measure(&l.config.id, &levels);
-                    if let Some(v) = loudness.add(&a) {
-                        signals.loudness(&l.config.id, v);
+                    // The same meter as the streams' (meter.rs).
+                    let (ch, rate) = (a.channels, a.sample_rate);
+                    if !ndi_meter.as_ref().is_some_and(|m: &crate::meter::Meter| {
+                        m.channels() == ch && m.rate() == rate
+                    }) {
+                        ndi_meter = Some(crate::meter::Meter::new(
+                            ch,
+                            rate,
+                            crate::meter::Programme::parse(&l.config.loudness_channels),
+                        ));
+                    }
+                    if let Some(m) = ndi_meter.as_mut() {
+                        let planes: Vec<&[f32]> = (0..ch).map(|c| a.channel(c)).collect();
+                        for measure in m.add_planar(&planes) {
+                            signals.measure(&l.config.id, &measure.levels);
+                            if let Some(v) = measure.loudness {
+                                signals.loudness(&l.config.id, v);
+                            }
+                        }
                     }
                 },
             ) {
@@ -3927,6 +3939,7 @@ mod tests {
             channels: 2,
             encoding: String::new(),
             captions: true,
+            loudness_channels: String::new(),
         }
     }
 
@@ -4189,33 +4202,74 @@ mod tests {
             .is_none());
     }
 
+    /// The share of a flat picture out of EBU R103, measured by ffmpeg with
+    /// the decoder's own filters.
+    fn r103_share(y: u8, u: u8, v: u8) -> Option<f32> {
+        let out = strata_mv_output::ffmpeg::command()
+            .args(["-loglevel", "info", "-f", "lavfi", "-i"])
+            .arg(format!(
+                "color=c=gray:s=640x360:r=25,format=yuv420p,lutyuv=y={y}:u={u}:v={v}"
+            ))
+            .args(["-frames:v", "6", "-vf"])
+            .arg(info_filter(true))
+            .args(["-f", "null", "-"])
+            .output()
+            .ok()?;
+        let mut f = crate::probe::Facts::default();
+        for line in String::from_utf8_lossy(&out.stderr).lines() {
+            f.line(line, Instant::now(), |_| {});
+        }
+        f.levels.map(|(l, _)| l[2] * 100.0)
+    }
+
     #[test]
-    fn the_meters_are_read_from_the_log() {
-        let mut m = MeterLog::default();
-        assert!(m.line("Input #0, mpegts, from 'udp://…':").is_none());
-        let p = "[Parsed_ametadata_2 @ 0x55d0c]";
-        assert_eq!(
-            m.line(&format!("{p} frame:0    pts:0       pts_time:0")),
-            Some(None)
-        );
-        assert_eq!(
-            m.line(&format!("{p} lavfi.astats.1.Peak_level=-6.020600")),
-            Some(None)
-        );
-        assert_eq!(
-            m.line(&format!("{p} lavfi.astats.1.RMS_level=-9.031400")),
-            Some(None)
-        );
-        assert_eq!(
-            m.line(&format!("{p} lavfi.astats.2.Peak_level=-inf")),
-            Some(None)
-        );
-        let Some(Some(l)) = m.line(&format!("{p} frame:1    pts:1920    pts_time:0.04")) else {
-            panic!("a frame read whole")
+    fn levels_out_of_ebu_r103() {
+        let Some(white_102) = r103_share(240, 128, 128) else {
+            return eprintln!("no ffmpeg: skipped");
         };
-        assert_eq!(l.len(), 2);
-        assert!((l[0].peak + 6.0206).abs() < 1e-3 && (l[0].rms + 9.0314).abs() < 1e-3);
-        assert_eq!(l[1].peak, strata_mv_core::signal::SILENCE);
+        // 102 %: allowed (103 %); 105 %: out; -1.8 %: out; a red past 105 %.
+        assert_eq!(white_102, 0.0);
+        assert_eq!(r103_share(246, 128, 128), Some(100.0));
+        assert_eq!(r103_share(12, 128, 128), Some(100.0));
+        assert_eq!(r103_share(120, 128, 255), Some(100.0));
+        // Mid grey: in.
+        assert_eq!(r103_share(126, 128, 128), Some(0.0));
+    }
+
+    #[test]
+    fn the_sound_is_measured_from_a_local_port() {
+        let pull = Pull {
+            meter: Some(4321),
+            ..Pull::default()
+        };
+        let d = input(InputKind::Udp, "rtp://239.1.1.1:5000", false)
+            .ffmpeg_args_from(&pull, true, false)
+            .unwrap()
+            .decode;
+        let at = d
+            .iter()
+            .position(|a| a == METER_AF)
+            .expect("the meter's filters");
+        assert_eq!(
+            &d[at + 1..at + 8],
+            [
+                "-c:a",
+                "pcm_f32le",
+                "-flush_packets",
+                "1",
+                "-f",
+                "wav",
+                "tcp://127.0.0.1:4321"
+            ]
+        );
+        assert_eq!(d[at - 3..at], ["-map", "0:a:0", "-af"]);
+        // Without a port: decoded, not measured.
+        let d = input(InputKind::Udp, "rtp://239.1.1.1:5000", false)
+            .ffmpeg_args(true, false)
+            .unwrap()
+            .decode;
+        let at = d.iter().position(|a| a == METER_AF).unwrap();
+        assert_eq!(&d[at + 1..at + 4], ["-f", "null", "-"]);
     }
 
     #[test]

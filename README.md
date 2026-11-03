@@ -266,21 +266,42 @@ La clé d'API (Système › API) agit avec les droits de son utilisateur : un co
 
 ### 7.1 Niveaux
 
-L'audio de chaque entrée est mesuré à la réception, canal par canal : **crête** et **puissance moyenne** toutes les 40 ms environ. Les vu-mètres montent aussitôt, redescendent de 24 dB par seconde et gardent leur crête deux secondes.
+L'audio de chaque entrée est mesuré par le serveur lui-même (`meter.rs`), de la même façon pour toutes les entrées, sur le son tel que décodé :
+
+| Mesure | Norme | Détail |
+| --- | --- | --- |
+| **Crête** par canal | crête-mètre numérique IEC 60268-18 | crête d'échantillon, 25 mesures par seconde (40 ms) ; montée instantanée, **retour de 20 dB en 1,7 s**, maintien de la crête 2 s |
+| **RMS** par canal | AES17 | un sinus lit la même valeur que sa crête (+3,01 dB sur la puissance moyenne) |
+| **True peak** du programme | ITU-R BS.1770-4 annexe 2, EBU Tech 3341 | suréchantillonné 4 ×, le plus haut des 3 dernières secondes |
+| Échelle et couleurs | EBU R68 | vert jusqu'à −18 dBFS (alignement), jaune jusqu'à −9 dBFS (niveau maximal permis), rouge au-delà ; réglables dans les tuiles et le widget Vu-mètres |
 
 | Entrée | Audio mesuré |
 | --- | --- |
-| **Flux** (SRT, UDP, RTMP, HLS, RTSP, URL) | la première piste audio, tous ses canaux (filtres `ebur128` et `astats` d'ffmpeg) ; une source sans audio est reconnue et décodée sans mesure |
+| **Flux** (SRT, UDP, RTMP, HLS, RTSP, URL), **AES67 / Dante**, **cartes son** | la piste audio choisie, tous ses canaux : ffmpeg la décode et l'envoie en WAV 32 bits flottant sur un port local, sans trou (une trame perdue devient du silence) ; l'heure de son premier échantillon cale les mesures sur les images |
 | **NDI** | l'audio de la source, tous ses canaux |
-| **SDI** (DeckLink) | l'audio embarqué : 16, 8 ou 2 canaux selon la carte, 48 kHz |
+| **SDI** (DeckLink) | l'audio embarqué (16, 8 ou 2 canaux) : crête et RMS seulement, calculés par la carte (pas de loudness pour l'instant) |
 
 **Écouter un multiview** : sur la page web d'une sortie, un clic sur une tuile fait entendre le son de son entrée (encore un clic : silence) ; la barre d'écoute (source entendue, volume, liste des sources) n'apparaît que lorsque la souris bouge. Une sortie **NDI** peut aussi emporter le son d'une entrée avec l'image (Diffusion › sortie NDI › Son). Le serveur tient le son de chaque entrée en PCM 16 bits stéréo 48 kHz (`GET /api/inputs/{id}/audio`). Les tuiles Source montrent toujours leurs vu-mètres (au repos sans son).
 
-Les niveaux arrivent au moteur et aux navigateurs (une douzaine de fois par seconde) avec le tally. Une entrée sans audio depuis trois secondes n'a plus de vu-mètres.
+Les niveaux arrivent au moteur et aux navigateurs avec le tally. Une entrée sans audio depuis trois secondes n'a plus de vu-mètres.
 
-### 7.2 Loudness et timecode
+### 7.2 Loudness, normes et timecode
 
-Le **loudness EBU R128** de chaque entrée est mesuré en continu : momentary (400 ms), short-term (3 s), intégré, LRA et true peak. Les flux passent par le filtre `ebur128` d'ffmpeg, NDI et SDI par la même mesure en Rust. La cible est **−23 LUFS ± 1** et **−1 dBTP**. L'historique short-term (une valeur par seconde, deux minutes) nourrit la courbe du widget Loudness.
+Le **loudness** de chaque entrée est mesuré en continu selon l'**ITU-R BS.1770-4** et l'**EBU Tech 3341 / 3342** : momentary (400 ms), short-term (3 s), intégré (portes −70 LUFS et −10 LU, depuis le démarrage de l'entrée), LRA et true peak. Vérifié sur les signaux de l'EBU Tech 3341 (1 kHz stéréo à −23 dBFS : −23,0 LUFS ; 5 canaux du cas 6 : −23,0 LUFS ; sinus à fs/4 décalé de 45° : −6,05 dBTP pour −6,02).
+
+- **Le programme mesuré** (Entrées vidéo › l'entrée › Loudness mesuré sur) : *automatique* — un mono compté deux fois (entendu des deux côtés, R128), une stéréo, un 5.1 (L R C LFE Ls Rs : LFE exclu, surround +1,5 dB) ; la **première paire** d'une piste de plus de canaux (les autres paires d'une piste 8 ou 16 canaux portent d'autres langues, l'audiodescription…, et ne s'additionnent pas au programme) — ou une paire, un 5.1 sur 1-6 ou 3-8, tous les canaux.
+- **La norme** (Alarmes › un profil › Norme de loudness), propre à chaque profil d'alarme :
+
+| Norme | Cible | Tolérance | True peak max |
+| --- | --- | --- | --- |
+| **EBU R128** (Europe, par défaut) | −23 LUFS | ±1 LU (direct) | −1 dBTP |
+| **ATSC A/85** (États-Unis, CALM Act) | −24 LKFS | ±2 dB | −2 dBTP |
+| **ARIB TR-B32** (Japon) | −24 LKFS | ±1 dB | −1 dBTP |
+| **OP-59** (Australie) | −24 LKFS | ±1 LU | −2 dBTP |
+| **Streaming** (YouTube, Spotify…) | −14 LUFS | ±1 LU | −1 dBTP |
+| **Personnalisée** | au choix | au choix | au choix |
+
+Les alarmes Trop fort, Trop faible et True peak, la couleur des loudness affichés (tuiles, widgets État, Vu-mètres et Loudness — ce dernier peut aussi garder sa propre cible) et le rapport de loudness suivent la norme du profil de l'entrée. L'historique short-term (une valeur par seconde, deux minutes) nourrit la courbe du widget Loudness.
 
 Le **timecode** d'une entrée est celui de NDI ; le **timecode station** est l'heure locale du serveur à la cadence de la chaîne.
 
@@ -297,13 +318,13 @@ Chaque entrée et l'installation sont surveillées en permanence (**Diffusion �
 | **Reconnexions** | alerte | l'entrée a redémarré 3 fois dans la minute |
 | **Silence** | critique | tous les canaux sous −60 dBFS depuis 5 s |
 | **Canal muet** | alerte | un canal sous −60 dBFS alors qu'un autre s'entend, depuis 10 s (hors LFE du 5.1) |
-| **Trop fort** / **Trop faible** | alerte | short-term au-dessus de la cible de plus de 3 LU depuis 10 s / en dessous de plus de 10 LU depuis 30 s |
-| **True peak** | alerte | au-dessus de −1 dBTP |
+| **Trop fort** / **Trop faible** | alerte | short-term au-dessus de la cible de la norme du profil de plus de 3 LU depuis 10 s / en dessous de plus de 10 LU depuis 30 s |
+| **True peak** | alerte | le plus haut des 3 dernières secondes au-dessus du maximum de la norme du profil (−1 dBTP en EBU R128) |
 | **Saturation** | alerte | crête d'échantillon à −0,1 dBFS |
 | **Opposition de phase** | alerte | corrélation gauche/droite sous −0,3 depuis 3 s |
 | **Sans timecode** / **Sans sous-titres** | alerte | désactivées par défaut (à activer pour les entrées qui doivent en porter) |
 | **Espace couleur** | alerte | colorimétrie ou transfert autre que celui attendu par le profil : SDR BT.709 (BT.601 accepté en SD, par défaut), SDR BT.2020, HDR10 PQ, HLG, HDR (PQ ou HLG) ou tous |
-| **Niveaux hors normes** | alerte | plus de 1 % des pixels hors de la plage broadcast (EBU R103 : luminance 16–235, chrominance 16–240 en 8 bits) depuis 5 s, mesurés avant toute conversion (`signalstats`, 5 images par seconde) |
+| **Niveaux hors normes** | alerte | plus de 1 % de l'image hors de l'**EBU R103** (2020) depuis 5 s : luminance hors de −1 % à 103 % (8 bits : 14 à 241), ou R, G ou B hors de −5 % à 105 % (hors gamut) ; mesuré avant toute conversion, 5 images par seconde. La matrice d'un flux n'étant souvent pas signalée, un pixel ne compte que s'il est hors gamut en BT.709, BT.601 et BT.2020 à la fois (pas de fausse alarme). Le PLUGE des mires SMPTE (−2 %, −4 %) en est volontairement : un profil « mire » peut monter le seuil |
 | **Métadonnées HDR absentes** | alerte | HDR10 (PQ) sans ST 2086 ni MaxCLL / MaxFALL |
 | **Plage complète** / **Colorimétrie non signalée** | alerte | image en plage PC au lieu de TV / flux sans espace couleur, primaires ni transfert ; désactivées par défaut |
 | **TR 101 290 P1** / **P2** | alerte | erreurs de priorité 1 (synchro, PAT, continuité, PMT, PID) ; P2 (transport, CRC, PCR) désactivée par défaut, beaucoup de contributions IP espaçant leur PCR de plus de 40 ms |
@@ -320,7 +341,7 @@ Chaque entrée et l'installation sont surveillées en permanence (**Diffusion �
   - **Syslog** RFC 5424 en UDP ou TCP (Graylog, Splunk, ELK, rsyslog), facility local0 à local7 : les alarmes (`ALARM`, gravité syslog critique, alerte ou notice) et, au choix, le **journal d'audit** (`AUDIT`).
   - **Prometheus** : `GET /metrics` avec une clé d'API (`authorization: credentials: smv_…` dans `scrape_configs`) : machine, PTP / NTP, chaque entrée (images par seconde, pertes, niveaux par canal, loudness, true peak), chaînes (temps de rendu, retard d'horloge), sorties (cadence, pertes, état) et alarmes en cours (`strata_alarm{input,kind,severity,acknowledged}`), pour des tableaux Grafana.
 - **Enregistrement des incidents** : l'image de chaque entrée est gardée deux fois par seconde sur les 15 dernières secondes. À chaque alarme d'une entrée, ces images et les 20 secondes suivantes sont enregistrées (`<données>/incidents/`, les 300 plus récents gardés ; les alarmes levées ensemble partagent un enregistrement). Le journal affiche une vignette (l'image au début de l'alarme) qui ouvre une visionneuse : lecture, curseur, saut à l'instant de l'alarme. `GET /api/incidents`, `/api/incidents/{id}/{n}.jpg`, `DELETE /api/incidents/{id}`.
-- **Loudness** (Alarmes › Loudness) : le loudness de chaque entrée est enregistré chaque seconde (`<données>/loudness/<entrée>/<jour>.csv`, gardé 90 jours). Rapport EBU R128 d'une période (dernière heure, 6 h, 24 h, 7 jours) : intégré (porte absolue −70 LUFS et relative −10 LU sur les valeurs momentanées), plage LRA (EBU Tech 3342), true peak le plus haut, durée au-dessus de la cible +3 LU et au-dessus de −1 dBTP, verdict de conformité (−23 LUFS ±1 LU, true peak ≤ −1 dBTP), courbe minute par minute, export CSV. `GET /api/loudness/report?input=…&from=…&to=…[&csv=true]`. Les valeurs étant relevées une fois par seconde, l'intégré peut différer de quelques dixièmes de LU d'un mesureur à 10 Hz.
+- **Loudness** (Alarmes › Loudness) : le loudness de chaque entrée est enregistré chaque seconde (`<données>/loudness/<entrée>/<jour>.csv`, gardé 90 jours). Rapport EBU R128 d'une période (dernière heure, 6 h, 24 h, 7 jours) : intégré (porte absolue −70 LUFS et relative −10 LU sur les valeurs momentanées), plage LRA (EBU Tech 3342), true peak le plus haut, durée au-dessus de la cible +3 LU et au-dessus de −1 dBTP, verdict de conformité selon la norme du profil de l'entrée (en EBU R128 : −23 LUFS ±1 LU, true peak ≤ −1 dBTP), courbe minute par minute, export CSV. `GET /api/loudness/report?input=…&from=…&to=…[&csv=true]`. Les valeurs étant relevées une fois par seconde, l'intégré peut différer de quelques dixièmes de LU d'un mesureur à 10 Hz.
 - **Journal** : les mille dernières alarmes (début, fin, durée, source, gravité, acquittement), gardées au redémarrage (`alarms-journal.json`), filtrables, exportables en **CSV** ; **statistiques** par alarme et par source sur l'heure, le jour ou la semaine.
 
 Les alarmes s'affichent aussi sur les tuiles (cadre et bandeau), dans le widget **État** et dans le widget **Journal des alarmes**.
